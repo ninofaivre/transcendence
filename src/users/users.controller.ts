@@ -67,6 +67,7 @@ export class UsersController
 	@Sse('/sse')
 	getUpdate(@Request() req: any): Observable<MessageEvent> 
 	{
+		this.usersService.updateTest[req.user.username] = { discussions: [], messages: [] }
 		return interval(100).pipe(map((_) => ({ data: this.usersService.getUpdate(req.user.username) })))
 	}
 }

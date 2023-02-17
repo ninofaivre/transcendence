@@ -21,7 +21,10 @@ export class MessagesService
 	{
 		const res = await this.prisma.message.create({ data: { from: username, content: content, discussionId: discussionId } })
 		for (let user of (await this.prisma.discussion.findUnique({ where: { id: discussionId } }).users()))
-			this.usersService.updateTest[user.name]["messages"].push(res)
+		{
+			if (this.usersService.updateTest[user.name])
+				this.usersService.updateTest[user.name]["messages"].push(res)
+		}
 		return res
 	}
 }

@@ -48,8 +48,6 @@ export class UsersService {
 
 	getUpdate(username: string)
 	{
-		if (!this.updateTest[username])
-			this.updateTest[username] = { discussions: [], messages: [] }
 		let tmp = this.updateTest[username]
 		this.updateTest[username] = { discussions: [], messages: [] }
 		return { test: tmp }

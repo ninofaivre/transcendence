@@ -38,8 +38,6 @@ export class UsersController
 		return this.usersService.getAllDiscussions(req.user.username)
 	}
 
-	@UseGuards(JwtAuthGuard)
-	@ApiBearerAuth('JWT-auth')
 	@Post('/createDiscussion')
 	async createDiscussion(@Request() req: any, @Body(ValidationPipe)createDiscussionDTO: CreateDiscussionDTO)
 	{

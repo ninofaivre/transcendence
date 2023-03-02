@@ -22,7 +22,6 @@ export async function logedInFetchGetNoInfo(apiEndPoint)
 {
 	return (await fetch(apiEndPoint,
 		{
-			"headers": { "Authorization": "Bearer " + getCookie('access_token') },
 			"method": "GET"
 		}))
 		.json()
@@ -30,7 +29,7 @@ export async function logedInFetchGetNoInfo(apiEndPoint)
 
 export async function logedInFetchPostJSON(apiEndPoint, jsBody)
 {
-	let header = { "Authorization": "Bearer " + getCookie('access_token'), "Content-Type": "application/json" }
+	let header = { "Content-Type": "application/json" }
 	let body = JSON.stringify(jsBody)
 	header["Content-Length"] = toString(body.length)
 	return fetch(apiEndPoint,

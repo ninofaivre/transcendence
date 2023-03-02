@@ -126,10 +126,7 @@ window.createDiscussion = async function ()
 	}
 }
 
-const update = new EventSourcePolyfill('http://88.172.94.204:49153/users/sse',
-	{
-		headers: { 'Authorization': 'Bearer ' + getCookie('access_token') }
-	});
+const update = new EventSource('http://88.172.94.204:49153/users/sse');
 
 update.onmessage = ({ data }) =>
 {

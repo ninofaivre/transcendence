@@ -2,6 +2,11 @@
 // for information about these interfaces
 declare global {
 	namespace App {
+		interface Discussion {
+			users: string[]
+			name?: string
+			messages: string[]
+		}
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}

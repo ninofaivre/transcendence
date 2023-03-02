@@ -1,12 +1,25 @@
-<h1>Transcendance Chat</h1>
+<script>
+	import DiscussionList from './DiscussionList.svelte'
+	import Discussion from './Discussion.svelte'
 
-<textarea name="chatbox" id="1" cols={window.innerWidth} rows="2"></textarea>
+</script>
+
+<h1>
+	CHAT
+</h1>
+
+<DiscussionList/>
+<Discussion/>
+<textarea>
+</textarea>
 
 <style>
 
-textarea {
-    position: fixed;
-    bottom: 1%;
-}
+	textarea {
+		position: fixed;
+		bottom: 1%;
+	}
 
 </style>
+
+

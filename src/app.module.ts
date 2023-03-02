@@ -11,7 +11,8 @@ import { MessagesModule } from './messages/messages.module';
 	[
 		ServeStaticModule.forRoot(
 		{
-			rootPath: join(__dirname, '..', 'client'),
+			//rootPath: join(__dirname, '..', 'client'),
+			rootPath: join(__dirname, '..', 'frontend/build'),
 			exclude: ['/api*'],
 		}),
 		AuthModule,

@@ -1,6 +1,10 @@
 <script lang="ts">
 
-	export let discussion = {
+	import type Discussion from '$types'
+
+	//Add type
+
+	export let discussion: Discussion = {
 		name: "Example discussion",
 		users: ['alice', 'bob', 'charlotte'],
 		messages: [
@@ -13,7 +17,7 @@
 </script>
 
 <h2>
-	{discussion.name}
+	{ discussion.name || discussion.users }
 </h2>
 
 {#each discussion.messages as message}

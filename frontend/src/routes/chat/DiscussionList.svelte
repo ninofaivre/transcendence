@@ -1,10 +1,12 @@
 <script lang="ts">
 
-	export let discussions = 
+	import type { Discussion } from '$types'
+
+	export let curr_disc_idx = 0
+
+	export let discussions: Discussion[] = 
 	[
-		{ name: "Discussion 1", users: ["alice", "bob"] },
-		{ name: "Discussion 2", users: ["bob", "charlotte"] },
-		{ name: "Discussion 3", users: ["alice", "charlotte"] },
+		{ id: 0, name: "Example Discussion", users: ["user1", "user2"], messages: ['Hi user1!', 'Hi user2!'] },
 	]
 
 </script>
@@ -13,11 +15,17 @@
 	Discussions	
 </h2>
 
-{#each discussions as d}
-	{#if d.name}
-		<div>{d.name}</div>
+{#each discussions as d (d.id)}
+	{#if d.id != curr_disc_idx }
+		<button
+		  on:click={ () => curr_disc_idx = d.id }
+		  on:keyup={ () => { if (curr_disc_idx > 0) curr_disc_idx-- } }
+		  on:keydown={ () => { if (curr_disc_idx < discussions.length) curr_disc_idx++ } }
+		>
+			{ d.name || d.users }
+		</button>
 	{:else}
-		<div>{d.users}</div>
+		<button style:background-color="red"> { d.name || d.users } </button>
 	{/if}
 {/each}
 

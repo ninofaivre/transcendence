@@ -4,7 +4,7 @@
 	import DiscussionDisplay from './DiscussionDisplay.svelte'
 	import ChatBox from './ChatBox.svelte'
 	//import { writable } from 'svelte/store'
-	import { Discussion as DiscussionType } from '$types'
+	import type { Discussion as DiscussionType } from '$types'
 
 	export let discussions: DiscussionType[] = 
 	[

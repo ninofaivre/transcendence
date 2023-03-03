@@ -1,6 +1,6 @@
 <script lang="ts">
 
-	export const messages: string[]
+	export let messages: string[] 
 
 </script>
 

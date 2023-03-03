@@ -42,6 +42,11 @@ window.logout = async function ()
 	document.location.href = '/index.html'
 }
 
+window.testWebSocket = async function ()
+{
+	document.location.href = '/testWebSocket.html'
+}
+
 async function populateDiscussion(index)
 {
 	console.log("populate discussion")

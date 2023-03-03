@@ -16,4 +16,10 @@ export class AuthController
 		res.cookie('access_token', await this.authService.login(req.user))
 	}
 
+	@Get('/logout')
+	async logout(@Res({ passthrough: true }) res: any)
+	{
+		res.cookie('access_token', '', { expires: new Date(0) })
+	}
+
 }

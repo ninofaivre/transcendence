@@ -1,4 +1,4 @@
-import { getCookie, deleteCookie, logedInFetchGetNoInfo, logedInFetchPostJSON } from './global.js'
+import { getCookie, logedInFetchGetNoInfo, logedInFetchPostJSON } from './global.js'
 
 if (!getCookie('access_token'))
 	window.location.href = '/index.html'
@@ -38,7 +38,7 @@ async function wheelTrigger()
 
 window.logout = async function ()
 {
-	deleteCookie('access_token')
+	await fetch('/auth/logout', { "method": "GET" })
 	document.location.href = '/index.html'
 }
 

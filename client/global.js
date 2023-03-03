@@ -13,16 +13,11 @@ export function getCookie(cname) {
 	return "";
 }
 
-export function deleteCookie( cname ) {
-  if( getCookie( cname ) )
-    document.cookie = cname + "=" + ";path=/" + ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
-}
-
 export async function logedInFetchGetNoInfo(apiEndPoint)
 {
 	return (await fetch(apiEndPoint,
 		{
-			"method": "GET"
+			"method": "GET",
 		}))
 		.json()
 }

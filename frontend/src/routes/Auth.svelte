@@ -15,23 +15,27 @@
 		return await loggedInFetchPostJSON(
 					"/auth/login",
 					{
-						username: username,
-						password: password
+						username,
+						password
 					}
 		)
 	}
 
 	async function loggedInFetchPostJSON(apiEndPoint, jsBody)
 	{
-		let header = { "Content-Type": "application/json" }
 		let body = JSON.stringify(jsBody)
-		header["Content-Length"] = toString(body.length)
-		return fetch(apiEndPoint,
-			{
-				"headers": header,
-				"body": body,
-				"method": "POST"
-			})
+		let headers = {
+			"Content-Type": "application/json",
+			"Content-Length": toString(body.length),
+		}
+		return fetch(
+						apiEndPoint,
+						{
+							headers,
+							body,
+							"method": "POST"
+						}
+		)
 	}
 
 	async function formSubmit(e: SubmitEvent)
@@ -44,6 +48,8 @@
 				console.log("Log-in failed")
 				return
 			}
+			else
+				logged_in = true;
 		}
 		else if (e.submitter.id === '1')
 		{

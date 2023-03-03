@@ -2,8 +2,6 @@
 
 	import type Discussion from '$types'
 
-	//Add type
-
 	export let discussion: Discussion = {
 		name: "Example discussion",
 		users: ['alice', 'bob', 'charlotte'],

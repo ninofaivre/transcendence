@@ -18,8 +18,8 @@
 
 </script>
 
-<!--<textarea bind:value={msg} on:keypress={ handleKeypress }/>-->
-<textarea bind:value={msg} />
+<textarea bind:value={msg} on:keypress={ handleKeypress }/>
+<!--<textarea bind:value={msg} />-->
 <button on:click={ sendMessage }> Send </button>
 
 <style>

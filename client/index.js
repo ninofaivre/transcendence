@@ -5,14 +5,13 @@ if (getCookie('access_token'))
 
 window.loginFormSubmit = async function ()
 {
-	let accessToken = (await login()).access_token
-	if (accessToken)
-		document.cookie = `access_token=${accessToken}; path=/;`
-	console.log('access token :', accessToken)
-	if (accessToken)
-		window.location.href = '/test.html'
-	else
-		console.log("failed to log")
+	if (!((await login()).ok))
+	{
+		console.log("login failed")
+		return
+	}
+	window.location.href = '/test.html'
+
 }
 
 window.registerFormSubmit = async function ()
@@ -22,5 +21,5 @@ window.registerFormSubmit = async function ()
 
 async function login()
 {
-	return (await logedInFetchPostJSON("/auth/login", { username: document.forms["login"]["username"].value, password: document.forms["login"]["password"].value })).json()
+	return (await logedInFetchPostJSON("/auth/login", { username: document.forms["login"]["username"].value, password: document.forms["login"]["password"].value }))
 }

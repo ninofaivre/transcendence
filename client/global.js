@@ -13,24 +13,18 @@ export function getCookie(cname) {
 	return "";
 }
 
-export function deleteCookie( cname ) {
-  if( getCookie( cname ) )
-    document.cookie = cname + "=" + ";path=/" + ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
-}
-
 export async function logedInFetchGetNoInfo(apiEndPoint)
 {
 	return (await fetch(apiEndPoint,
 		{
-			"headers": { "Authorization": "Bearer " + getCookie('access_token') },
-			"method": "GET"
+			"method": "GET",
 		}))
 		.json()
 }
 
 export async function logedInFetchPostJSON(apiEndPoint, jsBody)
 {
-	let header = { "Authorization": "Bearer " + getCookie('access_token'), "Content-Type": "application/json" }
+	let header = { "Content-Type": "application/json" }
 	let body = JSON.stringify(jsBody)
 	header["Content-Length"] = toString(body.length)
 	return fetch(apiEndPoint,

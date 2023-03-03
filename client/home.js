@@ -1,4 +1,4 @@
-import { getCookie, deleteCookie, logedInFetchGetNoInfo, logedInFetchPostJSON } from './global.js'
+import { getCookie, logedInFetchGetNoInfo, logedInFetchPostJSON } from './global.js'
 
 if (!getCookie('access_token'))
 	window.location.href = '/index.html'
@@ -38,8 +38,13 @@ async function wheelTrigger()
 
 window.logout = async function ()
 {
-	deleteCookie('access_token')
+	await fetch('/auth/logout', { "method": "GET" })
 	document.location.href = '/index.html'
+}
+
+window.testWebSocket = async function ()
+{
+	document.location.href = '/testWebSocket.html'
 }
 
 async function populateDiscussion(index)
@@ -126,10 +131,7 @@ window.createDiscussion = async function ()
 	}
 }
 
-const update = new EventSourcePolyfill('http://88.172.94.204:49153/users/sse',
-	{
-		headers: { 'Authorization': 'Bearer ' + getCookie('access_token') }
-	});
+const update = new EventSource('http://88.172.94.204:49153/users/sse');
 
 update.onmessage = ({ data }) =>
 {

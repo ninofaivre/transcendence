@@ -1,25 +1,82 @@
-<script>
+<script lang=ts >
+
+	import { getCookie } from '$lib/global'
+
+	export let logged_in = false;
+
+	if (getCookie('access_token'))
+		logged_in = true
+
+	let username = '';
+	let password = '';
+
+	async function login()
+	{
+		return await loggedInFetchPostJSON(
+					"/auth/login",
+					{
+						username: username,
+						password: password
+					}
+		)
+	}
+
+	async function loggedInFetchPostJSON(apiEndPoint, jsBody)
+	{
+		let header = { "Content-Type": "application/json" }
+		let body = JSON.stringify(jsBody)
+		header["Content-Length"] = toString(body.length)
+		return fetch(apiEndPoint,
+			{
+				"headers": header,
+				"body": body,
+				"method": "POST"
+			})
+	}
+
+	async function formSubmit(e: SubmitEvent)
+	{
+		if (e.submitter.id === '0')
+		{
+			console.log('Logging in...')
+			if (!((await login()).ok))
+			{
+				console.log("Log-in failed")
+				return
+			}
+		}
+		else if (e.submitter.id === '1')
+		{
+			console.log('Registering...')
+			loggedInFetchPostJSON(
+				"/users/sign-up",
+				{
+					name: username,
+					password: password
+				}
+			)
+		}
+		else
+			throw new Error(`Trying to submit data from unknown submitter with id=${e.submitter.id}`)
+	}
 </script>
 
-<div>
-	<form method="POST" action="?/login">
-		<label>
-			Username
-			<input name="username" type="username" required>
-		</label>
-		<label>
-			Password
-			<input name="password" type="password" required>
-		</label>
-		<button>Log in</button>
-		<button formaction="?/register">Register</button>
-	</form>
-</div>
+<form method="POST" on:submit|preventDefault={ formSubmit }>
+	<label>
+		Username
+		<input bind:value={username} type="text" required>
+	</label>
+	<label>
+		Password
+		<input bind:value={password} type="password" required>
+	</label>
+	<button id=0 type=submit>
+		Log in
+	</button>
+	<button id=1 type=submit>
+		Register
+	</button>
+</form>
 
 <style>
-	div {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-	}
 </style>

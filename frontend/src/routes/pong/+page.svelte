@@ -6,12 +6,12 @@
 
 	export const game_socket = writable( io(PUBLIC_BACKEND_URL) )
 
-	$game_socket.on('ennemy_paddle', (message) => {
-	  })
-
-	$: {
-		$game_socket.emit('eventFromClient', $reactiveValue)
-	} 
+//	$game_socket.on('ennemy_paddle', (message) => {
+//	  })
+//
+//	$: {
+//		$game_socket.emit('eventFromClient', $reactiveValue)
+//	} 
 
 	// General parameters
 	export const interval = 1

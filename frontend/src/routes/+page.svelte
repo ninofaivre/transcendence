@@ -6,9 +6,9 @@
 
 </script>
 
-{#if logged_in}
-
 <h1> TRANSCENDANCE </h1>
+
+{#if logged_in}
 
 <div><a href="/pong">PLAY</a></div>
 
@@ -16,7 +16,7 @@
 
 {:else}
 
-	<Auth/>
+	<Auth bind:logged_in/>
 
 {/if}
 

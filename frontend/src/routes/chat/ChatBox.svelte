@@ -11,7 +11,7 @@
 	}
 
 	function sendMessage() {
-		messages = [...messages, msg]
+		messages = [...messages, {...msg}] // Shallow copy
 		msg.data = "";
 	}
 
@@ -24,19 +24,20 @@
 
 </script>
 
-<textarea bind:value={msg.data} on:keypress={ handleKeypress }/>
-<!--<textarea bind:value={msg} />-->
-<button on:click={ sendMessage }> Send </button>
+<div style:position=fixed style:bottom=5%>
+	<textarea bind:value={msg.data} on:keypress={ handleKeypress }/>
+	<button on:click={ sendMessage }> Send </button>
+</div>
 
 <style>
 
-	textarea {
+	/* textarea {
 		position: fixed;
 		bottom: 5%;
 	}
 	button {
 		position: fixed;
 		bottom: 1%;
-	}
+	} */
 
 </style>

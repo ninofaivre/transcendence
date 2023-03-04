@@ -31,7 +31,6 @@
 	div {
 		border: solid 1px black;
 		border-radius: 5px;
-		display: inline block;
 	}
 	
 	.my-messages   {

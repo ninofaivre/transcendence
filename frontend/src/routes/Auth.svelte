@@ -9,16 +9,29 @@
 
 	let username = '';
 	let password = '';
+	let login_failed = false;
+	let signup_failed = false;
 
 	async function login()
 	{
-		return await loggedInFetchPostJSON(
+		return loggedInFetchPostJSON(
 					"/auth/login",
 					{
 						username,
 						password
 					}
 		)
+	}
+
+	async function signup()
+	{
+		return loggedInFetchPostJSON(
+				"/users/sign-up",
+				{
+					username,
+					password,
+				}
+			)
 	}
 
 	async function loggedInFetchPostJSON(apiEndPoint, jsBody)
@@ -42,8 +55,8 @@
 	{
 		if (e.submitter.id === '0')
 		{
-			console.log('Logging in...')
-			if (!((await login()).ok))
+			console.log(`${username} is logging in...`)
+			if ( !( ( await login() ).ok ) )
 			{
 				console.log("Log-in failed")
 				return
@@ -53,14 +66,12 @@
 		}
 		else if (e.submitter.id === '1')
 		{
-			console.log('Registering...')
-			loggedInFetchPostJSON(
-				"/users/sign-up",
-				{
-					name: username,
-					password: password
-				}
-			)
+			if ( !( ( await signup() ).ok ) )
+			{
+				console.log("Sign-up failed")
+				return
+			}
+			console.log(`Signing up ${username}...`)
 		}
 		else
 			throw new Error(`Trying to submit data from unknown submitter with id=${e.submitter.id}`)
@@ -80,9 +91,18 @@
 		Log in
 	</button>
 	<button id=1 type=submit>
-		Register
+		Sign up
 	</button>
 </form>
+
+
+{#if signup_failed}
+	<p> Signed up failed</p>
+{/if}
+
+{#if login_failed}
+	<p> Log in failed</p>
+{/if}
 
 <style>
 </style>

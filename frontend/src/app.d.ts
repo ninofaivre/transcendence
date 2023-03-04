@@ -6,8 +6,14 @@ declare global {
 		interface Discussion {
 			id: number
 			users: string[]
-			messages: string[]
+			messages: message[]
 			name?: string
+		}
+
+		interface message  {
+			data: string
+			author: string
+			authorId: number
 		}
 
 		// interface Error {}

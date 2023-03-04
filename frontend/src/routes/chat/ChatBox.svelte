@@ -1,12 +1,18 @@
 <script lang="ts">
 
-	export let messages: string[] 
+	import type { message } from '$types'
+	import { current_user } from '$lib/stores'
 
-	let msg = ""
+	export let messages: message[] 
+
+	let msg: message = {
+		author: $current_user,
+		data: ""
+	}
 
 	function sendMessage() {
 		messages = [...messages, msg]
-		msg = "";
+		msg.data = "";
 	}
 
 	function handleKeypress(event: KeyboardEvent) {
@@ -18,7 +24,7 @@
 
 </script>
 
-<textarea bind:value={msg} on:keypress={ handleKeypress }/>
+<textarea bind:value={msg.data} on:keypress={ handleKeypress }/>
 <!--<textarea bind:value={msg} />-->
 <button on:click={ sendMessage }> Send </button>
 

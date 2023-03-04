@@ -9,7 +9,7 @@
     "build": "cd frontend && npm run build && cd .. && nest build",
     "start": "cd frontend && npm run build && cd .. && nest start",
     "start:dev": "cd frontend && npm run build && cd .. && nest start --watch",
-    "start:debug": "cd frontend && npm run build && cd .. && start --debug --watch",
+    "start:debug": "cd frontend && npm run build && cd .. && nest start --debug --watch",
     "start:prod": "node dist/main",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",

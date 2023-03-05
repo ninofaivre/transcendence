@@ -25,7 +25,7 @@ export class UsersController
 	}
 
 	@Post('/sign-up')
-	async createUser(@Body()user : CreateUserDTO)
+	async createUser(@Body(ValidationPipe)user : CreateUserDTO)
 	{
 		return this.usersService.createUser(user)
 	}
@@ -38,9 +38,11 @@ export class UsersController
 		return this.usersService.getAllDiscussions(req.user.username)
 	}
 
+	@UseGuards(JwtAuthGuard)
 	@Post('/createDiscussion')
 	async createDiscussion(@Request() req: any, @Body(ValidationPipe)createDiscussionDTO: CreateDiscussionDTO)
 	{
+		console.log(req.user)
 		return this.discussionsService.createDiscussion(req.user.username, createDiscussionDTO)
 	}
 

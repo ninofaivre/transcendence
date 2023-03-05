@@ -36,9 +36,10 @@ const messages_alice_and_me = [
 //}) satisfies PageLoad;
 
  
-export const load = (async ({ fetch }) => {
+export const load = (async ({ fetch, url }) => {
 
-  const res = await fetch('/users/getAllDiscussions');
+  console.log( url.origin + '/users/getAllDiscussions' )
+  const res = await fetch( url.origin + '/users/getAllDiscussions');
   const item = await res.json();
 
   console.log("Loaded ", item)

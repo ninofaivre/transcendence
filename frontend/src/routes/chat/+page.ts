@@ -24,23 +24,25 @@ const messages_alice_and_me = [
 	{author: user, data: 'Good morning dear'},
 ]
 
-export const load = (({ params }) => {
-  return {
-    discussion: [
-		{ id: 0, name: "Discussion with Bob and Alice", users: ["alice", "bob", user], messages: messages_alice_bob},
-		{ id: 1, users: ["Bob", "Charlotte", user], messages: messages_bob_charlotte },
-		{ id: 2, name: "Charlotte and I", users: ["alice", user], messages: messages_alice_and_me}
-	],
-	unsubscribe,
-   }
+//export const load = (({ params }) => {
+//  return {
+//    discussion: [
+//        { id: 0, name: "Discussion with Bob and Alice", users: ["alice", "bob", user], messages: messages_alice_bob},
+//        { id: 1, users: ["Bob", "Charlotte", user], messages: messages_bob_charlotte },
+//        { id: 2, name: "Charlotte and I", users: ["alice", user], messages: messages_alice_and_me}
+//    ],
+//    unsubscribe,
+//   }
+//}) satisfies PageLoad;
+
+ 
+export const load = (async ({ fetch }) => {
+
+  const res = await fetch('/users/getAllDiscussions');
+  const item = await res.json();
+
+  console.log("Loaded ", item)
+ 
+  return { item };
 }) satisfies PageLoad;
 
- 
-//export const load = (async ({ fetch, params }) => {
-
-//  const res = await fetch(`/api/items/${params.id}`);
-//  const item = await res.json();
- 
-//  return { item };
-//}) satisfies PageLoad;
-//

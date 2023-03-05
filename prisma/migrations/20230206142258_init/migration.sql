@@ -2,7 +2,6 @@
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -32,6 +31,9 @@ CREATE TABLE "_DiscussionToUser" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_name_key" ON "User"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Message_discussionId_key" ON "Message"("discussionId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_DiscussionToUser_AB_unique" ON "_DiscussionToUser"("A", "B");

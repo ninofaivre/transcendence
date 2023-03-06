@@ -1,6 +1,7 @@
 <script lang="ts">
 
 	import type { Discussion } from '$types'
+	import CreateDiscussion from './CreateDiscussion.svelte'
 
 	export let curr_disc_idx = 0
 
@@ -28,6 +29,7 @@
 		<button style:background-color="red"> { d.name || d.users } </button>
 	{/if}
 {/each}
+<CreateDiscussion/>
 
 <style>
 </style>

@@ -17,7 +17,7 @@
 		return loggedInFetchPostJSON(
 					"/auth/login",
 					{
-						name: username,
+						username,
 						password
 					},
 		)

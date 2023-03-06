@@ -1,17 +1,21 @@
 <script lang=ts>
 
-	async function handleDiscussionCreation(e: SubmitEvent)
+	async function handleDiscussionCreation()
 	{
-		show_discussion_creation_form = false
 		let users = {
 			users: Object.values( Object.fromEntries( new FormData( form ) ) ).filter( str => str.trim() != '')
 		}
+		const body = JSON.stringify(users)
+		const headers =  {
+			"Content-Type": "application/json",
+		}
+		show_discussion_creation_form = false
 		console.log(JSON.stringify(users))
 		fetch('/users/createDiscussion', {
 				method: 'POST',
-				body: JSON.stringify(users),
+				headers,
+				body,
 			})
-			.then(reponse => response.json())
 			.catch(error => alert(`Could not create discussion: ${error}`))
 	}
 

@@ -8,17 +8,17 @@
 
 <h1> TRANSCENDANCE </h1>
 
-{#if logged_in}
+<!--{#if logged_in}-->
 
 <div><a href="/pong">PLAY</a></div>
 
 <div><a href="/chat">CHAT</a></div>
 
-{:else}
+<!--{:else}-->
 
 	<Auth bind:logged_in/>
 
-{/if}
+<!--{/if}-->
 
 <style>
 </style>

@@ -17,9 +17,9 @@
 		return loggedInFetchPostJSON(
 					"/auth/login",
 					{
-						username,
+						name: username,
 						password
-					}
+					},
 		)
 	}
 
@@ -28,9 +28,9 @@
 		return loggedInFetchPostJSON(
 				"/users/sign-up",
 				{
-					username,
+					name: username,
 					password,
-				}
+				},
 			)
 	}
 

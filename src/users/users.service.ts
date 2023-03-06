@@ -26,7 +26,8 @@ export class UsersService {
 		if (await this.getUserByName(user.name))
 			throw new UnauthorizedException("user already exist")
 		user.password = await hash(user.password, 10)
-		return this.prisma.user.create({ data: user })
+		const { password, ...result } = await this.prisma.user.create({ data: user })
+		return result
 	}
 
 	async getAllDiscussions(username: string)

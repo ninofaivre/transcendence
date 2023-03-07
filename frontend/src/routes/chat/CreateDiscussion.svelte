@@ -18,9 +18,7 @@
 				body,
 			})
 			.catch(error => alert(`Could not create discussion: ${error}`))
-		invalidate(url => url.pathname === '/chat')
-		//invalidate(url => url.pathname.includes('chat'))
-		//invalidateAll()
+		invalidate('discussions')
 	}
 
 	let i = 0;

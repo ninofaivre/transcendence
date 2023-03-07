@@ -35,12 +35,13 @@ const unsubscribe = current_user.subscribe( (value: string) => {
 //   }
 //}) satisfies PageLoad;
  
-export const load = (async ({ fetch, url }) => {
+export const load = (async ({ fetch, url, depends }) => {
 
   const res = await fetch( url.origin + '/users/getAllDiscussions');
   const item = await res.json();
 
   console.log( "Loaded", url.origin + '/users/getAllDiscussions', item )
+  depends('discussions')
  
   return item ;
 }) satisfies PageLoad;

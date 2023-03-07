@@ -29,6 +29,7 @@
 		<button style:background-color="red"> { d.name || d.users } </button>
 	{/if}
 {/each}
+<br>
 <CreateDiscussion/>
 
 <style>

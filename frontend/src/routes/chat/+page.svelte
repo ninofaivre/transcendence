@@ -27,7 +27,6 @@
 <h1>
 	CHAT
 </h1>
-<p>{data}</p>
 {@debug discussions}
 {#if discussions.length }
 	<DiscussionList bind:discussions={ discussions } bind:curr_disc_idx={idx} />

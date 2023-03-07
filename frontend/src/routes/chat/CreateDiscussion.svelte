@@ -2,6 +2,8 @@
 
 	import { invalidate, invalidateAll } from '$app/navigation'
 
+	let i = 0;
+
 	async function handleDiscussionCreation()
 	{
 		let users = {
@@ -19,9 +21,9 @@
 			})
 			.catch(error => alert(`Could not create discussion: ${error}`))
 		invalidate('discussions')
+		i = 0
 	}
 
-	let i = 0;
 	async function addUserFormInput()
 	{
 		++i;

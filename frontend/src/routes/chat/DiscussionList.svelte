@@ -17,9 +17,9 @@
 </h2>
 
 {#each discussions as d (d.id)}
-	{#if d.id != curr_disc_idx }
+	{#if d.id - 1 != curr_disc_idx }
 		<button
-		  on:click={ () => curr_disc_idx = d.id }
+		  on:click={ () => curr_disc_idx = d.id - 1}
 		  on:keyup={ () => { if (curr_disc_idx > 0) curr_disc_idx-- } }
 		  on:keydown={ () => { if (curr_disc_idx < discussions.length) curr_disc_idx++ } }
 		>

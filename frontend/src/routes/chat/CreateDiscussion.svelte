@@ -14,13 +14,17 @@
 			"Content-Type": "application/json",
 		}
 		show_discussion_creation_form = false
-		fetch('/users/createDiscussion', {
+		let res = await fetch('/users/createDiscussion', {
 				method: 'POST',
 				headers,
 				body,
 			})
-			.catch(error => alert(`Could not create discussion: ${error}`))
-		invalidate('discussions')
+		if (! res.ok ) {
+			let body = await res.json()
+			alert(`Error: ${res.statusText}\nCould not create new discussion because ${body.message}`)
+		}
+		else
+			invalidate('discussions')
 		i = 0
 	}
 

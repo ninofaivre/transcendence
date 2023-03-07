@@ -15,7 +15,9 @@
 
 	export let data: PageData
 
-	let discussions: DiscussionType[] = Object.values(data);
+	let discussions: DiscussionType[]; // = Object.values(data);
+	$: discussions = Object.values(data);
+
 	console.log("Mounting chat: ", discussions)
 
 	let idx = 0

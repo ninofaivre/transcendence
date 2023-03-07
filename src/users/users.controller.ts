@@ -42,7 +42,6 @@ export class UsersController
 	@Post('/createDiscussion')
 	async createDiscussion(@Request() req: any, @Body(ValidationPipe)createDiscussionDTO: CreateDiscussionDTO)
 	{
-		console.log(req.user)
 		return this.discussionsService.createDiscussion(req.user.username, createDiscussionDTO)
 	}
 

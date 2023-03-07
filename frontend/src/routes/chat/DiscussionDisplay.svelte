@@ -19,13 +19,17 @@
 	{ discussion.name || discussion.users }
 </h2>
 
-{#each discussion.messages as message}
-	{#if message.author == $current_user }
-		<div class="my-messages" > { `${message.data}` } </div>
-	{:else}
-		<div class="other-messages"  > { `${message.author}: ${message.data}` } </div>
-	{/if}
-{/each}
+{#if !discussion.messages?.length }
+	<p> This conversation has not started yet </p>
+{:else}
+	{#each discussion.messages as message}
+		{#if message.author == $current_user }
+			<div class="my-messages" > { `${message.data}` } </div>
+		{:else}
+			<div class="other-messages"  > { `${message.author}: ${message.data}` } </div>
+		{/if}
+	{/each}
+{/if}
 
 <style>
 	div {

@@ -1,5 +1,7 @@
 <script lang=ts>
 
+	import { invalidate, invalidateAll } from '$app/navigation'
+
 	async function handleDiscussionCreation()
 	{
 		let users = {
@@ -10,13 +12,15 @@
 			"Content-Type": "application/json",
 		}
 		show_discussion_creation_form = false
-		console.log(JSON.stringify(users))
 		fetch('/users/createDiscussion', {
 				method: 'POST',
 				headers,
 				body,
 			})
 			.catch(error => alert(`Could not create discussion: ${error}`))
+		invalidate(url => url.pathname === '/chat')
+		//invalidate(url => url.pathname.includes('chat'))
+		//invalidateAll()
 	}
 
 	let i = 0;

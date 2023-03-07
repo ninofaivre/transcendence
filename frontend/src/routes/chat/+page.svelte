@@ -15,20 +15,22 @@
 
 	export let data: PageData
 
-	let discussions: DiscussionType[] = data.discussion;
+	let discussions: DiscussionType[] = Object.values(data);
+	console.log("Mounting chat: ", discussions)
 
 	let idx = 0
 
-	onDestroy(data.unsubscribe);
+	//onDestroy(data.unsubscribe);
 
 </script>
 
 <h1>
 	CHAT
 </h1>
-
-{#if discussions }
-	<DiscussionList { discussions } bind:curr_disc_idx={idx} />
+<p>{data}</p>
+{@debug discussions}
+{#if discussions.length }
+	<DiscussionList bind:discussions={ discussions } bind:curr_disc_idx={idx} />
 	<DiscussionDisplay discussion={ discussions[idx] } />
 	<ChatBox bind:messages={ discussions[idx].messages }/>
 {:else}

@@ -8,21 +8,21 @@ const unsubscribe = current_user.subscribe( (value: string) => {
 	user = value;
 });
 
-const messages_alice_bob = [
-	{author: `Alice`, data: `Hi Bob, hi ${ user } !`},
-	{author: `Bob`, data: `Hi ${ user }, hi Alice !`},
-]
+/*const messages_alice_bob = [*/
+/*    {author: `Alice`, data: `Hi Bob, hi ${ user } !`},*/
+/*    {author: `Bob`, data: `Hi ${ user }, hi Alice !`},*/
+/*]*/
 
-const messages_bob_charlotte = [
-	{author: 'Bob', data: 'Anyone here ?'},
-	{author: user, data: 'Hello Everyone !'},
-	{author: 'Charlotte', data: 'Here I am'},
-]
+/*const messages_bob_charlotte = [*/
+/*    {author: 'Bob', data: 'Anyone here ?'},*/
+/*    {author: user, data: 'Hello Everyone !'},*/
+/*    {author: 'Charlotte', data: 'Here I am'},*/
+/*]*/
 
-const messages_alice_and_me = [
-	{author: `Charlotte`, data: `Good morning ${ user }`},
-	{author: user, data: 'Good morning dear'},
-]
+/*const messages_alice_and_me = [*/
+/*    {author: `Charlotte`, data: `Good morning ${ user }`},*/
+/*    {author: user, data: 'Good morning dear'},*/
+/*]*/
 
 //export const load = (({ params }) => {
 //  return {
@@ -37,12 +37,11 @@ const messages_alice_and_me = [
  
 export const load = (async ({ fetch, url }) => {
 
-  console.log( url.origin + '/users/getAllDiscussions' )
   const res = await fetch( url.origin + '/users/getAllDiscussions');
   const item = await res.json();
 
-  console.log("Loaded ", item)
+  console.log( "Loaded", url.origin + '/users/getAllDiscussions', item )
  
-  return { item };
+  return item ;
 }) satisfies PageLoad;
 

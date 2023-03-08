@@ -6,6 +6,7 @@ import { DiscussionsService } from '../discussions/discussions.service'
 import { MessagesService } from '../messages/messages.service'
 import { CreateUserDTO } from './dto/createUser.dto'
 import { CreateDiscussionDTO } from '../discussions/dto/createDiscussion.dto'
+import { LeaveDiscussionDTO } from './dto/leaveDiscussion.dto'
 import { ApiBearerAuth } from '@nestjs/swagger'
 import { Observable, interval, map } from 'rxjs'
 
@@ -42,8 +43,14 @@ export class UsersController
 	@Post('/createDiscussion')
 	async createDiscussion(@Request() req: any, @Body(ValidationPipe)createDiscussionDTO: CreateDiscussionDTO)
 	{
-		console.log(req.user)
 		return this.discussionsService.createDiscussion(req.user.username, createDiscussionDTO)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('/leaveDiscussion')
+	async leaveDiscussion(@Request() req: any, @Body(ValidationPipe)leaveDiscussionDTO: LeaveDiscussionDTO)
+	{
+		this.discussionsService.removeOneUserFromDiscussion(req.user.username, leaveDiscussionDTO.discussionID)
 	}
 
 	@UseGuards(JwtAuthGuard)

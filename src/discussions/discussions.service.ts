@@ -46,4 +46,17 @@ export class DiscussionsService
 		}
 		return tmp
 	}
+
+	async removeOneUserFromDiscussion(username: string, discussionID: number)
+	{
+		this.removeUsersFromDiscussion({ discussionID: discussionID, users: [ username ] })
+	}
+
+	async removeUsersFromDiscussion(dto: any)
+	{
+		let usersID: { id: number }[] = []
+		for (let currUser of dto.users)
+			usersID.push({ id: (await this.usersService.getUserByName(currUser)).id })
+		return this.prisma.discussion.update({ where: { id: dto.discussionID }, data: { users: { disconnect: usersID } } })
+	}
 }

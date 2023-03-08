@@ -124,7 +124,7 @@ async function getAllDiscussions ()
 window.createDiscussion = async function ()
 {
 	const res = await logedInFetchPostJSON("/users/createDiscussion", { users: document.forms["createDiscussionForm"]["name"].value.split(' ') })
-	if (res.status != 201)
+	if (!res.ok)
 	{
 		console.log(`can't create discussion : status : ${res.status}`)
 		return

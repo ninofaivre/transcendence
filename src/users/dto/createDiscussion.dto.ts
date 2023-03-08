@@ -16,5 +16,3 @@ export class CreateDiscussionDTO
 	@Length(3, 50, { each: true })
 	users: number[]
 }
-/*
-*/

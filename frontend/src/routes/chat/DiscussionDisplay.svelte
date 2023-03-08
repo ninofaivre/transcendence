@@ -3,14 +3,20 @@
 	import type Discussion from '$types'
 	import { current_user } from '$lib/stores'
 
-	export let discussion: Discussion = {
-		name: "Example discussion",
-		users: ['alice', 'bob', 'charlotte'],
-		messages: [
-			'Hi alice !',
-				'Hi bob. How are you ?',
-			'I am fine, thx',
-		]
+	let discussion = [];
+	export let discussionId: number
+	$:  {
+		fetch(window.location.origin + '/users/getnMessages', {
+			method: 'POST',
+			headers: { 'Content-Type' : 'application/json', }
+			body: JSON.stringifgy({
+				discussionId,
+				start: discussion.length
+			})
+		})
+			.catch( () => {})
+			.then( () => {})
+			.catch( () => {})
 	}
 
 </script>
@@ -24,9 +30,9 @@
 {:else}
 	{#each discussion.messages as message}
 		{#if message.author == $current_user }
-			<div class="my-messages" > { `${message.data}` } </div>
+			<div class="my-messages" > { `${message.content}` } </div>
 		{:else}
-			<div class="other-messages"  > { `${message.author}: ${message.data}` } </div>
+			<div class="other-messages"  > { `${message.from}: ${message.content}` } </div>
 		{/if}
 	{/each}
 {/if}

@@ -10,7 +10,7 @@
 	import ChatBox from './ChatBox.svelte'
 	import CreateDiscussion from './CreateDiscussion.svelte'
 
-	/* */
+	/* utils */
 	import { onDestroy } from 'svelte'
 
 	export let data: PageData
@@ -28,7 +28,7 @@
 </h1>
 {#if discussions.length }
 	<DiscussionList bind:discussions={ discussions } bind:curr_disc_idx={idx} />
-	<DiscussionDisplay discussion={ discussions[idx] } />
+	<DiscussionDisplay discussionId={ idx + 1 } />
 	<ChatBox discussionId={ idx + 1} />
 {:else}
 	<p>You haven't started any conversation yet</p>

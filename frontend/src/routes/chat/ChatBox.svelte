@@ -24,7 +24,7 @@
 			headers,
 			body: JSON.stringify( {
 				discussionId,
-				new_message,
+				content: new_message,
 			}),
 		})
 		.then(() => { new_message = "" })

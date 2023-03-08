@@ -1,4 +1,4 @@
-import { Body, Get, Post, UseGuards, ValidationPipe, Param, Sse, MessageEvent } from '@nestjs/common';
+import { Body, Get, Post, UseGuards, ValidationPipe, Param, Sse, MessageEvent, Query, ParseIntPipe } from '@nestjs/common';
 import { Controller, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { UsersService } from './users.service'
@@ -7,8 +7,12 @@ import { MessagesService } from '../messages/messages.service'
 import { CreateUserDTO } from './dto/createUser.dto'
 import { CreateDiscussionDTO } from '../discussions/dto/createDiscussion.dto'
 import { LeaveDiscussionDTO } from './dto/leaveDiscussion.dto'
-import { ApiBearerAuth } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiProperty, ApiResponse } from '@nestjs/swagger'
 import { Observable, interval, map } from 'rxjs'
+import { TestParamsQueryDTO } from './dto/testParams.query.dto';
+import { UsernameListDTO } from './dto/usernameList.dto';
+import { CreateMessageDTO } from 'src/messages/dto/createMessage.dto';
+import { GetnMessagesQueryDTO } from 'src/messages/dto/getnMessages.query.dto';
 
 @Controller('users')
 export class UsersController
@@ -30,6 +34,20 @@ export class UsersController
 	{
 		return this.usersService.createUser(user)
 	}
+
+	// @UseGuards(JwtAuthGuard)
+	// @Post('/testDto')
+	// async testDto(@Body(ValidationPipe)usernameListDTO: UsernameListDTO)
+	// {
+	// 	console.log(usernameListDTO)
+	// }
+
+	// @UseGuards(JwtAuthGuard)
+	// @Get('/testParams/:id/:name')
+	// async testParams(@Query()testParamsQueryDTO: TestParamsQueryDTO)
+	// {
+	// 	console.log(testParamsQueryDTO)
+	// }
 
 	@UseGuards(JwtAuthGuard)
 	@ApiBearerAuth('JWT-auth')
@@ -56,17 +74,23 @@ export class UsersController
 	@UseGuards(JwtAuthGuard)
 	@ApiBearerAuth('JWT-auth')
 	@Post('/createMessage')
-	async createMessage(@Request() req: any, @Body(ValidationPipe)dto: { discussionId: number, content: string })
+	async createMessage(@Request() req: any, @Body(ValidationPipe)createMessageDTO: CreateMessageDTO)
 	{
-		return this.messagesService.createMessage(dto.discussionId, req.user.username, dto.content)
+		return this.messagesService.createMessage(req.user.username, createMessageDTO)
 	}
 
 	@UseGuards(JwtAuthGuard)
 	@ApiBearerAuth('JWT-auth')
-	@Post('/getnMessages')
-	async getnMessages(@Request() req: any, @Body(ValidationPipe)dto: { discussionId: number, start: number, n: number })
+	@ApiParam({
+		name: 'discussionId',
+		type: 'integer',
+	})
+	@Get('/getnMessages/:discussionId')
+	async getnMessages(@Request() req: any, 
+					   @Param('discussionId', ParseIntPipe)discussionId: number,
+					   @Query(ValidationPipe)getnMessagesQueryDTO: GetnMessagesQueryDTO)
 	{
-		return this.messagesService.getnMessages(dto.discussionId, dto.start, dto.n)
+		return this.messagesService.getnMessages(discussionId, getnMessagesQueryDTO)
 	}
 
 	@UseGuards(JwtAuthGuard)

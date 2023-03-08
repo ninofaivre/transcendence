@@ -18,23 +18,19 @@
 	let discussions: DiscussionType[]; // = Object.values(data);
 	$: discussions = Object.values(data);
 
-	console.log("Mounting chat: ", discussions)
-
 	let idx = 0
 
 	//onDestroy(data.unsubscribe);
-
 </script>
 
 <h1>
 	CHAT
 </h1>
-{@debug discussions}
 {#if discussions.length }
 	<DiscussionList bind:discussions={ discussions } bind:curr_disc_idx={idx} />
 	<DiscussionDisplay discussion={ discussions[idx] } />
-	<ChatBox bind:messages={ discussions[idx].messages }/>
+	<ChatBox discussionId={ idx + 1} />
 {:else}
 	<p>You haven't started any conversation yet</p>
-	<CreateDiscussion/>
+	<CreateDiscussion />
 {/if}

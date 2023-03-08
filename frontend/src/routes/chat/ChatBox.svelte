@@ -2,42 +2,72 @@
 
 	import type { message } from '$types'
 	import { current_user } from '$lib/stores'
+	import { onMount } from 'svelte'
 
-	export let messages: message[] 
+	export let margin = 10
+	export let rows = 1;
+	export let cols = window.innerWidth - ( margin * 2 );
+	export let placeholder = "Message"
 
-	let msg: message = {
-		author: $current_user,
-		data: ""
+	export let discussionId: number;
+	let new_message: string;
+	let disabled = false;
+
+	async function sendMessage() {
+		const headers =  {
+			"Content-Type": "application/json",
+		}
+		disabled = true
+		console.log("Fetching ", window.location.host + '/users/createMessage')
+		fetch(window.location.host + '/users/createMessage', {
+			method: 'POST',
+			headers,
+			body: JSON.stringify( {
+				discussionId,
+				new_message,
+			}),
+		})
+		.then(() => { new_message = "" })
+		.catch((err) =>  { 
+			console.log(err)
+			alert(`Could not send message because ${err.message}`)
+		})
+		disabled = false
 	}
 
-	function sendMessage() {
-		messages = [...messages, {...msg}] // Shallow copy
-		msg.data = "";
-	}
-
-	function handleKeypress(event: KeyboardEvent) {
+	// Do I really need this to handle Enter ?
+	async function handleKeypress(event: KeyboardEvent) {
 		switch (event.key) {
 			case 'Enter':
 				sendMessage();
 		}
 	}
 
+	onMount( () =>  {
+	})
+
 </script>
 
-<div style:position=fixed style:bottom=5%>
-	<textarea bind:value={msg.data} on:keypress={ handleKeypress }/>
+<div style:bottom=10px style:left={`${margin}px`} >
+	<label for="textarea-input" hidden>
+		Type your message here
+	</label>
+		<textarea id="textarea-input"
+			bind:value={ new_message }
+			on:keypress={ handleKeypress }
+			{ rows }
+			{ cols }
+			{ disabled }
+			{ placeholder }
+			autofocus
+		/>
 	<button on:click={ sendMessage }> Send </button>
 </div>
 
 <style>
 
-	/* textarea {
+	div {
 		position: fixed;
-		bottom: 5%;
 	}
-	button {
-		position: fixed;
-		bottom: 1%;
-	} */
 
 </style>

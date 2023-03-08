@@ -11,9 +11,9 @@ declare global {
 		}
 
 		interface message  {
-			data: string
-			author: string
-			authorId: number
+			content: string
+			from: string
+			discussionId: number
 		}
 
 		// interface Error {}

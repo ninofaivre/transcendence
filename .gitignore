@@ -37,3 +37,6 @@ tags
 !.vscode/extensions.json
 
 .env
+pnpm-lock.yaml
+package-lock.json
+Session.vim

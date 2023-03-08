@@ -19,7 +19,7 @@
 		}
 		disabled = true
 		console.log("Fetching ", window.location.host + '/users/createMessage')
-		fetch(window.location.host + '/users/createMessage', {
+		fetch(window.location.origin + '/users/createMessage', {
 			method: 'POST',
 			headers,
 			body: JSON.stringify( {

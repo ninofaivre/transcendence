@@ -1,17 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger'
-import { IsString, Length, ArrayMinSize, ArrayMaxSize, ArrayUnique } from 'class-validator'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { IsString } from 'class-validator';
+import { UsernameListDTO } from 'src/users/dto/usernameList.dto';
 
-export class CreateDiscussionDTO
+export class CreateDiscussionDTO extends UsernameListDTO
 {
-	@ApiProperty({
-		description: 'list of usernames',
-		default: '["bob"]',
-		minimum: 1,
-		maximum: 1
+	@ApiPropertyOptional({
+		default: 'The best discussion title !'
 	})
-	@IsString({ each: true })
-	@Length(3, 50, { each: true })
-	@ArrayMinSize(1)
-	@ArrayUnique()
-	users: string[]
+	@IsString()
+	title?: string
 }

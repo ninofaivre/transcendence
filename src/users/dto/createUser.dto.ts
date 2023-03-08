@@ -1,23 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { IsString, Length } from 'class-validator'
+import { Username } from '../decorator/username.decorator'
 
 export class CreateUserDTO 
 {
-	@ApiProperty({
-		description: 'username',
-		default: 'bob',
-		minimum: 3,
-		maximum: 50
-	})
-	@IsString()
-	@Length(3, 50)
+	@Username()
 	name: string
 
 	@ApiProperty({
 		description: 'password',
 		default: 'my-secret-password',
 		minimum: 8,
-		maximum: 150
+		maximum: 150,
+		format: 'password'
 	})
 	@IsString()
 	@Length(8, 150)

@@ -11,14 +11,14 @@ datasource db {
 }
 
 model User {
-  id			Int @id @default(autoincrement())
-  name			String @unique
+  name			String @id
   password		String
   discussions	Discussion[]
 }
 
 model Discussion {
   id			Int @id @default(autoincrement())
+  title			String?
   users			User[]
   messages		Message[]
 }

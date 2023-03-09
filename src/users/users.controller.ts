@@ -90,7 +90,7 @@ export class UsersController
 					   @Param('discussionId', ParseIntPipe)discussionId: number,
 					   @Query(ValidationPipe)getnMessagesQueryDTO: GetnMessagesQueryDTO)
 	{
-		return this.messagesService.getnMessages(discussionId, getnMessagesQueryDTO)
+		return this.messagesService.getnMessages(req.user.username, discussionId, getnMessagesQueryDTO)
 	}
 
 	@UseGuards(JwtAuthGuard)

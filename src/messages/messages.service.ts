@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service'
 import { UsersService } from '../users/users.service'
 import { CreateMessageDTO } from './dto/createMessage.dto';
@@ -10,13 +10,14 @@ export class MessagesService
 	constructor(private readonly prisma: PrismaService,
 				private usersService: UsersService) {}
 
-	async getnMessages(discussionId: number, getnMessagesQueryDTO: GetnMessagesQueryDTO)// need to add pagination
+	async getnMessages(username, discussionId: number, getnMessagesQueryDTO: GetnMessagesQueryDTO)// need to add pagination
 	{
-		// en théorie il faudrait ici vérifier que l'user qui fait la requête fait bien partie des users de la discussion
-		const messages = await this.prisma.discussion.findUnique({ where: { id: discussionId } }).messages({ orderBy: { id: 'desc' } })
-		if (!messages)
+		const res = await this.prisma.discussion.findUnique({ where: { id: discussionId }, include: { users: true, messages: { orderBy: { id: 'desc' } } } })
+		if (!res)
 			throw new NotFoundException("discussion not found !")
-		return messages.slice(getnMessagesQueryDTO.start, getnMessagesQueryDTO.start + getnMessagesQueryDTO.n).reverse()
+		if (!res.users.some(el => el.name === username))
+			throw new UnauthorizedException("you must be in the discussion to get messages from it !")
+		return res.messages.slice(getnMessagesQueryDTO.start, getnMessagesQueryDTO.start + getnMessagesQueryDTO.n).reverse()
 	}
 
 	// need to check if users is in discussion first

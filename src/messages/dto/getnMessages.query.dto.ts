@@ -1,24 +1,27 @@
-import { ApiProperty } from "@nestjs/swagger"
-import { Type } from "class-transformer"
-import { IsInt, Max } from "class-validator"
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
+import { IsInt, IsOptional, Max, Min } from "class-validator"
 
 export class GetnMessagesQueryDTO
 {
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'the start index from the most recent message to the oldest',
-		type: 'integer'
+		type: 'integer',
+		minimum: 0
 	})
-	@Type(() => Number)
 	@IsInt()
-	start: number
+	@Min(0)
+	@IsOptional()
+	start: number = 0
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		description: 'the number of messages you want to get',
-		maximum: 1000,
-		type: 'integer'
+		type: 'integer',
+		minimum: 1,
+		maximum: 1000
 	})
-	@Type(() => Number)
 	@IsInt()
 	@Max(1000)
-	n: number
+	@Min(1)
+	@IsOptional()
+	n: number = 50
 }

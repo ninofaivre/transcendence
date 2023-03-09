@@ -14,7 +14,7 @@
 		let title = formdata.get('title')
 		formdata.delete('title')
 		//let users = Object.values( Object.fromEntries( formdata ) ).filter( str => str.trim() != '')
-		let users = Array.from( formdata.values()).filter( str => str.trim() != '' )
+		let users = Array.from( formdata.values() ).filter( str => str.trim() != '' )
 		const body = JSON.stringify({
 			title,
 			users,

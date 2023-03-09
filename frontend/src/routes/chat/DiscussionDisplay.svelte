@@ -6,17 +6,12 @@
 	let discussion = [];
 	export let discussionId: number
 	$: {
-		fetch(window.location.origin + '/users/getnMessages', {
-			method: 'POST',
-			headers: { 'Content-Type' : 'application/json', },
-			body: JSON.stringify({
-
-				discussionId,
-				start: discussion.length
-			})
-		})
+		fetch(window.location.origin + '/users/getnMessages/' + discussionId
+			+ '?start=' + 1
+			+ '&n=' + 1
+		)
 		.catch( (err) => { alert(err) })
-		.then( (response) => { response.json() })
+		.then( (response) => { discussion = response.json() })
 		.catch( (json_err) => { alert(`Could not parse jsons: ${json_err}`) })
 	}
 

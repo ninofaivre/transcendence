@@ -7,7 +7,7 @@
 
 	export let discussions: Discussion[] = 
 	[
-		{ id: 0, name: "Example Discussion", users: ["user1", "user2"], messages: ['Hi user1!', 'Hi user2!'] },
+		{ id: 0, title: "Example Discussion", users: ["user1", "user2"], messages: ['Hi user1!', 'Hi user2!'] },
 	]
 
 </script>
@@ -23,10 +23,10 @@
 		  on:keyup={ () => { if (curr_disc_idx > 0) curr_disc_idx-- } }
 		  on:keydown={ () => { if (curr_disc_idx < discussions.length) curr_disc_idx++ } }
 		>
-			{ d.name || d.users }
+			{ d.title || d.users }
 		</button>
 	{:else}
-		<button style:background-color="red"> { d.name || d.users } </button>
+		<button style:background-color="red"> { d.title || d.users } </button>
 	{/if}
 	<br>
 {/each}

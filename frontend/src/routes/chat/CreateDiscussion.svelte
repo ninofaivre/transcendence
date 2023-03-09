@@ -2,14 +2,23 @@
 
 	import { invalidate, invalidateAll } from '$app/navigation'
 
+	let form: HTMLFormElement;
+	let show_discussion_creation_form = false;
+	let minlength = 3
+	let maxlength = 100
 	let i = 0;
 
 	async function handleDiscussionCreation()
 	{
-		let users = {
-			users: Object.values( Object.fromEntries( new FormData( form ) ) ).filter( str => str.trim() != '')
-		}
-		const body = JSON.stringify(users)
+		let formdata = new FormData( form )
+		let title = formdata.get('title')
+		formdata.delete('title')
+		//let users = Object.values( Object.fromEntries( formdata ) ).filter( str => str.trim() != '')
+		let users = Array.from( formdata.values()).filter( str => str.trim() != '' )
+		const body = JSON.stringify({
+			title,
+			users,
+		})
 		const headers =  {
 			"Content-Type": "application/json",
 		}
@@ -43,10 +52,6 @@
 		input.focus()
 	}
 
-	let form: HTMLFormElement;
-	let show_discussion_creation_form = false;
-	let minlength = 3
-	let maxlength = 100
 
 </script>
 
@@ -62,6 +67,10 @@
 		<button type=submit>
 			Create Discussion
 		</button>
+		<label>
+			Choose a name for the conversation
+			<input type=text name=title required {minlength} {maxlength}>
+		</label>
 		<label>
 			User 1
 			<input type=text name=0 required {minlength} {maxlength}>

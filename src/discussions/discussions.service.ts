@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service'
-import { CreateDiscussionDTO } from './dto/createDiscussion.dto'
 import { UsersService } from '../users/users.service'
 import { NotFoundException, UnauthorizedException } from '@nestjs/common'
+import { CreateDiscussionDTO } from './dto/createDiscussion.dto';
 
 @Injectable()
 export class DiscussionsService
@@ -33,9 +33,9 @@ export class DiscussionsService
 				currDiscussion.users.every((val: any) => createDiscussionDTO.users.includes(val)))
 				throw new UnauthorizedException("Discussion already exist !")
 		}
-		let connect: { id: number }[] = []
+		let connect: { name: string }[] = []
 		for (let currUser of createDiscussionDTO.users)
-			connect.push({ id: (await this.usersService.getUserByName(currUser)).id })
+			connect.push({ name: currUser })
 		// need polish tmp dirty test
 		let tmp = await this.prisma.discussion.create({ data: { users: { connect: connect } } })
 		tmp["users"] = createDiscussionDTO.users
@@ -54,9 +54,9 @@ export class DiscussionsService
 
 	async removeUsersFromDiscussion(dto: any)
 	{
-		let usersID: { id: number }[] = []
+		let disconnect: { name: string}[] = []
 		for (let currUser of dto.users)
-			usersID.push({ id: (await this.usersService.getUserByName(currUser)).id })
-		return this.prisma.discussion.update({ where: { id: dto.discussionID }, data: { users: { disconnect: usersID } } })
+			disconnect.push({ name: currUser })
+		return this.prisma.discussion.update({ where: { id: dto.discussionID }, data: { users: { disconnect: disconnect } } })
 	}
 }

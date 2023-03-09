@@ -28,7 +28,7 @@
 </h1>
 {#if discussions.length }
 	<DiscussionList bind:discussions={ discussions } bind:curr_disc_idx={idx} />
-	<DiscussionDisplay discussionId={ idx + 1 } />
+	<DiscussionDisplay discussion={ discussions[idx] } discussionId={ idx + 1 } />
 	<ChatBox discussionId={ idx + 1} />
 {:else}
 	<p>You haven't started any conversation yet</p>

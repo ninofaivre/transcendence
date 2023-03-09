@@ -3,17 +3,18 @@
 	import type Discussion from '$types'
 	import { current_user } from '$lib/stores'
 
-	let discussion = [];
+	let messages = [];
+	export let discussion
 	export let discussionId: number
-	$: {
-		fetch(window.location.origin + '/users/getnMessages/' + discussionId
-			+ '?start=' + 1
-			+ '&n=' + 1
-		)
-		.catch( (err) => { alert(err) })
-		.then( (response) => { discussion = response.json() })
-		.catch( (json_err) => { alert(`Could not parse jsons: ${json_err}`) })
-	}
+
+	fetch(window.location.origin + '/users/getnMessages/' + discussionId
+		//+ '?start=' + 1
+		//+ '&n=' + 1
+	)
+	.catch( (err) => { alert(err) })
+	.then( (response) =>  response.json() )
+	.catch( (json_err) => { alert(`Could not parse json: ${json_err}`) })
+	.then( (message) => { messages = [...messages, message] })
 
 </script>
 
@@ -21,10 +22,10 @@
 	{ discussion.title || discussion.users }
 </h2>
 
-{#if !discussion.messages?.length }
+{#if !messages?.length }
 	<p> This conversation has not started yet </p>
 {:else}
-	{#each discussion.messages as message}
+	{#each messages as message}
 		{#if message.author == $current_user }
 			<div class="my-messages" > { `${message.content}` } </div>
 		{:else}

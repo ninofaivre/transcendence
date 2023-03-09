@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service'
 import { UsersService } from '../users/users.service'
 import { CreateMessageDTO } from './dto/createMessage.dto';
@@ -13,8 +13,9 @@ export class MessagesService
 	async getnMessages(discussionId: number, getnMessagesQueryDTO: GetnMessagesQueryDTO)// need to add pagination
 	{
 		// en théorie il faudrait ici vérifier que l'user qui fait la requête fait bien partie des users de la discussion
-		//console.log(`On m'a demandé ${n} messages à partir de ${start}`)
 		const messages = await this.prisma.discussion.findUnique({ where: { id: discussionId } }).messages({ orderBy: { id: 'desc' } })
+		if (!messages)
+			throw new NotFoundException("discussion not found !")
 		return messages.slice(getnMessagesQueryDTO.start, getnMessagesQueryDTO.start + getnMessagesQueryDTO.n).reverse()
 	}
 

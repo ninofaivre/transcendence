@@ -85,7 +85,7 @@ export class UsersController
 		name: 'discussionId',
 		type: 'integer',
 	})
-	@Get('/getnMessages/:discussionId')
+	@Get('/getnMessages/:discussionId/')
 	async getnMessages(@Request() req: any, 
 					   @Param('discussionId', ParseIntPipe)discussionId: number,
 					   @Query(ValidationPipe)getnMessagesQueryDTO: GetnMessagesQueryDTO)

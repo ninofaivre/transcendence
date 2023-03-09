@@ -59,7 +59,6 @@
 			{ cols }
 			{ disabled }
 			{ placeholder }
-			autofocus
 		/>
 	<button on:click={ sendMessage }> Send </button>
 </div>

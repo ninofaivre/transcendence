@@ -1,20 +1,27 @@
 <script lang="ts">
 
+	// DiscussionDisplay.svelte 
+
+	const fetchMessages = async ( discussionId ) => 
+	{
+		fetch(window.location.origin + '/users/getnMessages/' + discussionId
+		//+ '?start=' + 1
+		//+ '&n=' + 1
+		)
+		.catch( (err) => { alert(err) })
+		.then( (response) =>  response.json() )
+		.catch( (json_err) => { alert(`Could not parse json: ${json_err}`) })
+		.then( (new_messages) => { messages = new_messages })
+		//.then( (new_messages) => { messages = [...messages, ...new_messages] })
+	}
+
 	import type Discussion from '$types'
 	import { current_user } from '$lib/stores'
 
 	let messages = [];
 	export let discussion
 	export let discussionId: number
-
-	fetch(window.location.origin + '/users/getnMessages/' + discussionId
-		//+ '?start=' + 1
-		//+ '&n=' + 1
-	)
-	.catch( (err) => { alert(err) })
-	.then( (response) =>  response.json() )
-	.catch( (json_err) => { alert(`Could not parse json: ${json_err}`) })
-	.then( (message) => { messages = [...messages, message] })
+	$: fetchMessages(discussionId)
 
 </script>
 

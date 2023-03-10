@@ -3,8 +3,8 @@ import { Controller, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { UsersService } from './users.service'
 import { CreateUserDTO } from './dto/createUser.dto'
-import { ApiBearerAuth } from '@nestjs/swagger'
 import { Observable, interval, map } from 'rxjs'
+import { CreateFriendInvitationDTO } from './dto/createFriendInvitation.dto';
 
 @Controller('users')
 export class UsersController
@@ -19,9 +19,23 @@ export class UsersController
 	}
 
 	@Post('/sign-up')
-	async createUser(@Body(ValidationPipe)user : CreateUserDTO)
+	async createUser(@Body(ValidationPipe)user: CreateUserDTO)
 	{
 		return this.usersService.createUser(user)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('/friendList')
+	async getFriendList(@Request() req: any)
+	{
+		return this.usersService.getFriendList(req.user.username)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('/friendInvitation')
+	async createFriendInvitation(@Request() req: any, @Body(ValidationPipe)createFriendInvitationDTO: CreateFriendInvitationDTO)
+	{
+		return this.usersService.createFriendInvitation(req.user.username, createFriendInvitationDTO.username)
 	}
 
 	// @UseGuards(JwtAuthGuard)

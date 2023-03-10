@@ -15,22 +15,31 @@ datasource db {
 }
 
 model User {
-  name			String @id
-  password		String
-  discussions	Discussion[]
+  name        String       @id
+  password    String
+  discussions Discussion[]
+
+  friendList   User[] @relation("friendList")
+  friendOfList User[] @relation("friendList")
+
+  incomingFriendInvitation  User[] @relation("friendInvitation")
+  outcomingFriendInvitation User[] @relation("friendInvitation")
+
+  blockedUserList   User[] @relation("blockedUser")
+  blockedByUserList User[] @relation("blockedUser")
 }
 
 model Discussion {
-  id			Int @id @default(autoincrement())
-  title			String?
-  users			User[]
-  messages		Message[]
+  id       Int       @id @default(autoincrement())
+  title    String?
+  users    User[]
+  messages Message[]
 }
 
 model Message {
-	id				Int @default(autoincrement()) @id
-	from			String // relation user pas se brûler les ailes tt de suite
-	content			String
-	discussion		Discussion @relation(fields: [discussionId], references: [id])
-	discussionId	Int
+  id           Int        @id @default(autoincrement())
+  from         String // relation user pas se brûler les ailes tt de suite
+  content      String
+  discussion   Discussion @relation(fields: [discussionId], references: [id])
+  discussionId Int
 }

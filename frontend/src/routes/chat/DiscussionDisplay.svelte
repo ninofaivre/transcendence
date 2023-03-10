@@ -2,37 +2,36 @@
 
 	// DiscussionDisplay.svelte 
 
-	const fetchMessages = async ( discussionId ) => 
+	const switchMessages = async ( _discussionId ) => 
 	{
-		fetch(window.location.origin + '/users/getnMessages/' + discussionId
-		//+ '?start=' + 1
-		//+ '&n=' + 1
-		)
-		.catch( (err) => { alert(err) })
-		.then( (response) =>  response.json() )
-		.catch( (json_err) => { alert(`Could not parse json: ${json_err}`) })
-		.then( (new_messages) => { messages = new_messages })
-		//.then( (new_messages) => { messages = [...messages, ...new_messages] })
+		let fetched_messages;
+		try   {
+			const response = await fetch(window.location.origin + '/users/getnMessages/' + discussionId
+			//+ '?start=' + 1
+			//+ '&n=' + 1
+			)
+			fetched_messages = await response.json()
+		} catch (err) {
+			alert("Could not fetch conversation:" + err.message + "\n Try to reload the page")
+			return;
+		}
+		if (_discussionId === discussionId)
+			displayed_messages = fetched_messages
 	}
 
-	import type Discussion from '$types'
 	import { current_user } from '$lib/stores'
 
-	let messages = [];
-	export let discussion
-	export let discussionId: number
-	$: fetchMessages(discussionId)
+	export let discussionId: number // To detect change of current conversation
+	$: switchMessages(discussionId)
+
+	export let displayed_messages = []; // Exported so that incoming messages can be added
 
 </script>
 
-<h2>
-	{ discussion.title || discussion.users }
-</h2>
-
-{#if !messages?.length }
+{#if !displayed_messages?.length }
 	<p> This conversation has not started yet </p>
 {:else}
-	{#each messages as message}
+	{#each displayed_messages as message}
 		{#if message.author == $current_user }
 			<div class="my-messages" > { `${message.content}` } </div>
 		{:else}

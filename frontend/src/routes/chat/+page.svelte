@@ -18,19 +18,54 @@
 	let discussions: DiscussionType[]; // = Object.values(data);
 	$: discussions = Object.values(data);
 
-	let idx = 0
+	let idx = 0 
+	let all_messages = []
 
 	//onDestroy(data.unsubscribe);
+
+	const update = new EventSource(window.location.origin + '/users/sse');
+
+	update.onmessage = ({ data }) =>
+	{
+		const parsedData = JSON.parse(data)
+		const new_discussions = parsedData.test.discussions
+		const new_messages = parsedData.test.messages
+		if (!new_discussions?.length && !new_messages?.length)
+			return
+		if ( new_discussions?.length )
+		{
+			console.log('A new discussion was created')
+			for (let d of new_discussions) {
+				discussions = [...discussions, d]
+				all_messages[d.discussionId - 1] = []
+			}
+		}
+		if ( new_messages?.length )
+		{
+			console.log('Got a new message !')
+			for (let msg of new_messages)
+			{
+				let i = msg.discussionId - 1
+				all_messages[i].push(msg)
+				all_messages[i] = all_messages[i]
+			}
+		}
+	}
 </script>
 
 <h1>
 	CHAT
 </h1>
 {#if discussions.length }
-	<DiscussionList bind:discussions={ discussions } bind:curr_disc_idx={idx} />
-	<DiscussionDisplay discussion={ discussions[idx] } discussionId={ idx + 1 } />
+	<DiscussionList { discussions } bind:curr_disc_idx={idx} />
+	<br>
+	<CreateDiscussion />
+	<h2>
+		{ discussions[idx].title || discussions[idx].users }
+	</h2>
+	<DiscussionDisplay bind:displayed_messages={ all_messages[idx] } discussionId={ idx + 1 } />
 	<ChatBox discussionId={ idx + 1} />
 {:else}
-	<p>You haven't started any conversation yet</p>
+	<p>You haven't started any conversations yet</p>
 	<CreateDiscussion />
 {/if}

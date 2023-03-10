@@ -69,4 +69,8 @@
 		position: fixed;
 	}
 
+	::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+	  color: grey;
+	}
+
 </style>

@@ -5,10 +5,7 @@
 
 	export let curr_disc_idx = 0
 
-	export let discussions: Discussion[] = 
-	[
-		{ id: 0, title: "Example Discussion", users: ["user1", "user2"], messages: ['Hi user1!', 'Hi user2!'] },
-	]
+	export let discussions: Discussion[]
 
 </script>
 
@@ -28,10 +25,7 @@
 	{:else}
 		<button style:background-color="red"> { d.title || d.users } </button>
 	{/if}
-	<br>
 {/each}
-<br>
-<CreateDiscussion/>
 
 <style>
 </style>

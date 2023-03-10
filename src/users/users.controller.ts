@@ -99,6 +99,6 @@ export class UsersController
 	getUpdate(@Request() req: any): Observable<MessageEvent> 
 	{
 		this.usersService.updateTest[req.user.username] = { discussions: [], messages: [] }
-		return interval(100).pipe(map((_) => ({ data: this.usersService.getUpdate(req.user.username) })))
+		return interval(1000).pipe(map((_) => ({ data: this.usersService.getUpdate(req.user.username) })))
 	}
 }

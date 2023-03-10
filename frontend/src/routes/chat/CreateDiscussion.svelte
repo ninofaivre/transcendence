@@ -32,8 +32,9 @@
 			let body = await res.json()
 			alert(`Error: ${res.statusText}\nCould not create new discussion because ${body.message}`)
 		}
-		else
-			invalidate('discussions')
+		// Let SSE take care of new discussions
+		//else
+		//	invalidate('discussions')
 		i = 0
 	}
 

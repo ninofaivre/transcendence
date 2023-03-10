@@ -5,7 +5,8 @@ import { NotFoundException, UnauthorizedException } from '@nestjs/common'
 import { hash } from 'bcrypt'
 
 @Injectable()
-export class UsersService {
+export class UsersService
+{
 	constructor(private readonly prisma: PrismaService) { }
 
 	async getUserByNameOrThrow(name: string)
@@ -28,21 +29,6 @@ export class UsersService {
 		user.password = await hash(user.password, 10)
 		const { password, ...result } = await this.prisma.user.create({ data: user })
 		return result
-	}
-
-	async getAllDiscussions(username: string)
-	{
-		let res: any[] = []
-		for (let currDiscussion of (await this.prisma.user.findUnique({ where: { name: username } }).discussions({ include: { users: true }})))
-		{
-			let userNames: string[] = []
-			for (let currUser of currDiscussion.users)
-				userNames.push(currUser.name)
-			const { users, ...newDiscussion } = currDiscussion
-			newDiscussion["users"] = userNames
-			res.push(newDiscussion)
-		}
-		return res
 	}
 
 	updateTest: any[] = []

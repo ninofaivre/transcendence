@@ -26,13 +26,15 @@
 
 	export let displayed_messages = []; // Exported so that incoming messages can be added
 
+	export let my_name
+
 </script>
 
 {#if !displayed_messages?.length }
 	<p> This conversation has not started yet </p>
 {:else}
 	{#each displayed_messages as message}
-		{#if message.author == $current_user }
+		{#if message.from == my_name }
 			<div class="my-messages" > { `${message.content}` } </div>
 		{:else}
 			<div class="other-messages"  > { `${message.from}: ${message.content}` } </div>

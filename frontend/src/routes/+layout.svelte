@@ -5,6 +5,7 @@
 	function logOut()
 	{
 		deleteCookie('access_token')
+		window.location.href = window.location.origin
 	}
 
 </script>

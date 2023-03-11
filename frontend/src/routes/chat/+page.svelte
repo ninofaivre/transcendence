@@ -52,11 +52,9 @@
 
 </script>
 
-<h1>
-	CHAT
-</h1>
 {#if discussions.length }
 	<DiscussionList { discussions } bind:curr_disc_idx={idx} />
+	<br>
 	<br>
 	<CreateDiscussion />
 	<h2>

@@ -1,14 +1,15 @@
 <script lang="ts">
 
 	/* types */
-	import type { Discussion as DiscussionType } from '$types'
-	import type { PageData } from './$types';
+	import type { Discussion as DiscussionType } from '$types' // app.d.ts
+	import type { PageData } from './$types'; // Generated type file
 	
 	/* Components */
 	import DiscussionList from './DiscussionList.svelte'
 	import DiscussionDisplay from './DiscussionDisplay.svelte'
 	import ChatBox from './ChatBox.svelte'
 	import CreateDiscussion from './CreateDiscussion.svelte'
+	import { sse } from '$lib/sse'
 
 	/* utils */
 	import { onDestroy } from 'svelte'
@@ -16,16 +17,14 @@
 	export let data: PageData
 
 	let discussions: DiscussionType[]; // = Object.values(data);
-	$: discussions = Object.values(data);
+	$: discussions = Object.values(data.discussions);
 
 	let idx = 0 
 	let all_messages = []
 
 	//onDestroy(data.unsubscribe);
 
-	const update = new EventSource(window.location.origin + '/users/sse');
-
-	update.onmessage = ({ data }) =>
+	sse.onmessage = ({ data }) =>
 	{
 		const parsedData = JSON.parse(data)
 		const new_discussions = parsedData.test.discussions
@@ -42,15 +41,15 @@
 		}
 		if ( new_messages?.length )
 		{
-			console.log('Got a new message !')
+			console.log('Got a new message !', new_messages)
 			for (let msg of new_messages)
 			{
 				let i = msg.discussionId - 1
-				all_messages[i].push(msg)
-				all_messages[i] = all_messages[i]
+				all_messages[i] = [ ...all_messages[i], msg]
 			}
 		}
 	}
+
 </script>
 
 <h1>
@@ -63,7 +62,7 @@
 	<h2>
 		{ discussions[idx].title || discussions[idx].users }
 	</h2>
-	<DiscussionDisplay bind:displayed_messages={ all_messages[idx] } discussionId={ idx + 1 } />
+	<DiscussionDisplay bind:displayed_messages={ all_messages[idx] } discussionId={ idx + 1 } my_name={ data.my_name }/>
 	<ChatBox discussionId={ idx + 1} />
 {:else}
 	<p>You haven't started any conversations yet</p>

@@ -46,7 +46,7 @@
 						{
 							headers,
 							body,
-							"method": "POST"
+							method: "POST"
 						}
 		)
 	}
@@ -59,6 +59,7 @@
 			if ( !( ( await login() ).ok ) )
 			{
 				console.log("Log-in failed")
+				signup_failed = true
 				return
 			}
 			else
@@ -97,7 +98,7 @@
 
 
 {#if signup_failed}
-	<p> Signed up failed</p>
+	<p> Sign up failed</p>
 {/if}
 
 {#if login_failed}

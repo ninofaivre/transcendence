@@ -3,11 +3,13 @@
 	// DiscussionDisplay.svelte 
 
 	import { beforeUpdate, afterUpdate } from 'svelte'
+    import type { Message } from '$lib/types'
 
 	let history_loader_reactivity = 0
 	let loading_greediness = 2
 	let history_beginning_reached = false
-	async function handleScroll( e: ScrollEvent )
+
+	async function handleScroll( e: WheelEvent )
 	{
 		if ( e.target.scrollTop <= history_loader_reactivity )
 		{
@@ -39,7 +41,7 @@
 	}
 
 	const initial_load = 10
- 	const switchMessages = async ( _discussionId ) => 
+ 	const switchMessages = async ( _discussionId: typeof discussionId ) => 
 	{
 		history_beginning_reached = false
 		let fetched_messages;
@@ -59,18 +61,15 @@
 	export let discussionId: number // To detect change of current conversation
 	$: switchMessages(discussionId)
 
-	export let displayed_messages = []; // Exported so that incoming messages can be added
+	export let displayed_messages: Message[] = []; // Exported so that incoming messages can be added
 
-	export let my_name
-
-	let n_displayed = 10
+	export let my_name: string
 
 	let chatbox: HTMLDivElement
-	let autoscroll
+	let autoscroll: boolean
 	beforeUpdate(()	=> {
-		autoscroll	=
-			 chatbox && chatbox.offsetHeight + chatbox.scrollTop > chatbox.scrollHeight - 20 // Ideally the height of a bubble ?
-			 && console.log(`${chatbox.offsetHeight} + ${chatbox.scrollTop} > ${chatbox.scrollHeight} - 20`)
+		autoscroll	= chatbox && chatbox.offsetHeight + chatbox.scrollTop > chatbox.scrollHeight - 20 // Ideally the height of a bubble ?
+		console.log(`${chatbox?.offsetHeight} + ${chatbox?.scrollTop} > ${chatbox?.scrollHeight} - 20`)
 		console.log(autoscroll)
 	 });
 

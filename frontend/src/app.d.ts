@@ -3,18 +3,6 @@
 declare global {
 	namespace App {
 
-		interface Discussion {
-			id: number
-			users: string[]
-			messages: message[]
-			name?: string
-		}
-
-		interface message  {
-			content: string
-			from: string
-			discussionId: number
-		}
 
 		// interface Error {}
 		// interface Locals {}

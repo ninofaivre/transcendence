@@ -19,8 +19,8 @@ model User {
   password    String
   discussions Discussion[]
 
-  friendList   User[] @relation("friendList")
-  friendOfList User[] @relation("friendList")
+  friendList		User[]       @relation("friendList")
+  friendOfList		User[]       @relation("friendList")
 
   incomingFriendInvitation  User[] @relation("friendInvitation")
   outcomingFriendInvitation User[] @relation("friendInvitation")

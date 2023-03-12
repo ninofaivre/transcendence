@@ -1,6 +1,6 @@
 import { Username } from "../decorator/username.decorator";
 
-export class CreateFriendInvitationDTO
+export class OneUsernameDTO 
 {
 	@Username()
 	username: string

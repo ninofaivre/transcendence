@@ -17,8 +17,12 @@
 				console.log(displayed_messages[0])
 				let fetched_messages;
 				try   {
+//					const response = await fetch(window.location.origin + '/users/getnMessages/' + discussionId
+//						+ '?start=' + displayed_messages[0].id
+//						+ '&n=' + loading_greediness
+//					)
 					const response = await fetch(window.location.origin + '/users/getnMessages/' + discussionId
-						+ '?start=' + displayed_messages[0].id
+						+ '?start=' + displayed_messages.length
 						+ '&n=' + loading_greediness
 					)
 					fetched_messages = await response.json()
@@ -29,7 +33,7 @@
 				if (fetched_messages.length < loading_greediness)
 					history_beginning_reached = true
 				if (fetched_messages.length > 0)
-					displayed_messages = [ fetched_messages, ...displayed_messages]
+					displayed_messages = [ ...fetched_messages, ...displayed_messages]
 			}
 		}
 	}

@@ -1,18 +1,15 @@
 <script lang="ts">
 
 	/* types */
-	import type { Discussion as DiscussionType } from '$types' // app.d.ts
+    import type { Discussion as DiscussionType } from '$lib/types' // app.d.ts
 	import type { PageData } from './$types'; // Generated type file
+    import type { Message } from '$lib/types'
 	
 	/* Components */
 	import DiscussionList from './DiscussionList.svelte'
 	import DiscussionDisplay from './DiscussionDisplay.svelte'
-	import ChatBox from './ChatBox.svelte'
 	import CreateDiscussion from './CreateDiscussion.svelte'
 	import { sse } from '$lib/sse'
-
-	/* utils */
-	import { onDestroy } from 'svelte'
 
 	export let data: PageData
 
@@ -20,7 +17,7 @@
 	$: discussions = Object.values(data.discussions);
 
 	let idx = 0 
-	let all_messages = []
+	let all_messages: Message[][] = []
 
 	//onDestroy(data.unsubscribe);
 
@@ -61,7 +58,6 @@
 		{ discussions[idx].title || discussions[idx].users }
 	</h2>
 	<DiscussionDisplay bind:displayed_messages={ all_messages[idx] } discussionId={ idx + 1 } my_name={ data.my_name }/>
-	<ChatBox discussionId={ idx + 1} />
 {:else}
 	<p>You haven't started any conversations yet</p>
 	<CreateDiscussion />

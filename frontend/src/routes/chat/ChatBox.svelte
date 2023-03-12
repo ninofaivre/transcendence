@@ -1,7 +1,5 @@
 <script lang="ts">
 
-	import type { message } from '$types'
-	import { current_user } from '$lib/stores'
 	import { onMount } from 'svelte'
 
 	export let margin = 10
@@ -66,7 +64,8 @@
 <style>
 
 	div {
-		position: fixed;
+		position: sticky;
+        background: rgba(128,128,128,1);
 	}
 
 	::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */

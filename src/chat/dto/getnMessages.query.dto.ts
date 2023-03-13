@@ -11,7 +11,7 @@ export class GetnMessagesQueryDTO
 	@IsInt()
 	@Min(0)
 	@IsOptional()
-	start: number = 0
+	start?: number
 
 	@ApiPropertyOptional({
 		description: 'the number of messages you want to get',

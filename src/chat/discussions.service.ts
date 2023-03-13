@@ -3,11 +3,13 @@ import { PrismaService } from '../prisma.service'
 import { UsersService } from '../users/users.service'
 import { NotFoundException, UnauthorizedException } from '@nestjs/common'
 import { CreateDiscussionDTO } from './dto/createDiscussion.dto';
+import { ChatService } from './chat.service';
 
 @Injectable()
 export class DiscussionsService
 {
 	constructor(private usersService: UsersService,
+				private readonly chatService: ChatService,
 				private readonly prisma: PrismaService) {}
 	
 	async getAllUsers(id: number)
@@ -27,7 +29,7 @@ export class DiscussionsService
 		await Promise.all(users)
 		createDiscussionDTO.users.push(username)
 
-		for (let currDiscussion of await this.usersService.getAllDiscussions(username))
+		for (let currDiscussion of await this.chatService.getAllDiscussions(username))
 		{
 			if (currDiscussion.users.length === createDiscussionDTO.users.length &&
 				currDiscussion.users.every((val: any) => createDiscussionDTO.users.includes(val)))

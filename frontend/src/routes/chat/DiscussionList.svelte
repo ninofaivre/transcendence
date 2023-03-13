@@ -1,6 +1,6 @@
 <script lang="ts">
 
-	import type { Discussion } from '$types'
+    import type { Discussion } from '$lib/types'
 	import CreateDiscussion from './CreateDiscussion.svelte'
 
 	export let curr_disc_idx = 0
@@ -8,10 +8,6 @@
 	export let discussions: Discussion[]
 
 </script>
-
-<h2>
-	Discussions	
-</h2>
 
 {#each discussions as d (d.id)}
 	{#if d.id - 1 != curr_disc_idx }

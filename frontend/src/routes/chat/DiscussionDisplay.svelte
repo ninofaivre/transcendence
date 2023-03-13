@@ -53,7 +53,7 @@ function infiniteHandler( e: InfiniteEvent )
                     } else {
                         complete();
                     }
-                });
+            });
     }
 }
 

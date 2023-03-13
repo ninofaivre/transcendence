@@ -65,7 +65,7 @@
 
 	div {
 		position: sticky;
-        background: rgba(128,128,128,1);
+        background: rgba(128,90,220,1);
 	}
 
 	::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */

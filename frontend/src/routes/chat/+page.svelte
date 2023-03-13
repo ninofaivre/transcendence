@@ -50,7 +50,7 @@
 </script>
 
 {#if discussions.length }
-	<DiscussionList { discussions } bind:curr_disc_idx={idx} />
+    <DiscussionList { discussions } bind:curr_disc_idx={idx} />
 	<br>
 	<br>
 	<CreateDiscussion />

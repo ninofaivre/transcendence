@@ -14,13 +14,13 @@ export class MessagesService
 	async getnMessages(username: string, discussionId: number, getnMessagesQueryDTO: GetnMessagesQueryDTO)// need to add pagination
 	{
 		// actuellement pas d'erreur si l'id du message est invalide
-		const messagesArgs: Prisma.Discussion$messagesArgs  =
+		const messagesArgs: Prisma.Discussion$messagesArgs =
 		{
 			take: getnMessagesQueryDTO.n,
-			skip: Number(!!getnMessagesQueryDTO.start),
+			skip: Number(getnMessagesQueryDTO.start != undefined),
 			orderBy: { id: 'desc' },
 		}
-		if (getnMessagesQueryDTO.start)
+		if (getnMessagesQueryDTO.start != undefined)
 			messagesArgs.cursor = { id: getnMessagesQueryDTO.start }
 		const res = await this.prisma.discussion.findUnique({ where: { id: discussionId },
 			include:

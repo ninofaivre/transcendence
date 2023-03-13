@@ -4,7 +4,8 @@ import { PrismaService } from '../prisma.service'
 import { NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common'
 import { hash } from 'bcrypt'
 import { Prisma, User } from '@prisma/client';
-import { filterType as filterType } from './dto/getFriendInvitationList.dto';
+import { filterType as friendFilterType } from './dto/getFriendInvitationList.query.dto';
+import { filterType as blockedFilterType } from './dto/getBlockedList.query.dto';
 
 @Injectable()
 export class UsersService
@@ -19,27 +20,73 @@ export class UsersService
 		return res.friendList.map(el => el.name).concat(res.friendOfList.map(el => el.name))
 	}
 
-	async getFriendInvitationList(username: string, filter: filterType)
+	async getFriendInvitationList(username: string, filter: friendFilterType)
 	{
 		const tmp = await this.getUserByName(username,
 			{
-				incomingFriendInvitation: filter == filterType['ALL'] || filter == filterType['INCOMING'],
-				outcomingFriendInvitation: filter == filterType['ALL'] || filter == filterType['OUTCOMING'],
+				incomingFriendInvitation: filter == friendFilterType['ALL'] || filter == friendFilterType['INCOMING'],
+				outcomingFriendInvitation: filter == friendFilterType['ALL'] || filter == friendFilterType['OUTCOMING'],
 			})
 		switch(filter)
 		{
-			case (filterType['ALL']):
+			case (friendFilterType['ALL']):
 				return { incoming: tmp.incomingFriendInvitation.map(el => el.name),
 					outcoming: tmp.outcomingFriendInvitation.map(el => el.name) }
-			case (filterType['INCOMING']):
+			case (friendFilterType['INCOMING']):
 				return tmp.incomingFriendInvitation.map(el => el.name)
-			case (filterType['OUTCOMING']):
+			case (friendFilterType['OUTCOMING']):
 				return tmp.outcomingFriendInvitation.map(el => el.name)
+		}
+	}
+
+	async getBlockedUsers(username: string, filter: blockedFilterType)
+	{
+		const tmp = await this.getUserByName(username,
+			{
+				blockedUserList: filter == blockedFilterType['ALL'] || filter == blockedFilterType['BLOCKED'],
+				blockedByUserList: filter == blockedFilterType['ALL'] || filter == blockedFilterType['BLOCKEDBY'],
+			})
+		switch(filter)
+		{
+			case (blockedFilterType['ALL']):
+				return { blocked: tmp.blockedUserList.map(el => el.name),
+					blockedBy: tmp.blockedByUserList.map(el => el.name) }
+			case (blockedFilterType['BLOCKED']):
+				return tmp.blockedUserList.map(el => el.name)
+			case (blockedFilterType['BLOCKEDBY']):
+				return tmp.blockedByUserList.map(el => el.name)
+		}
+	}
+
+	async deleteBlocked(myUsername: string, blockedUsername: string)
+	{
+		let tmp = await this.getUserByName(myUsername, { blockedUserList: true })
+		if (!tmp.blockedUserList.some((el: User) => el.name === blockedUsername))
+			throw new NotFoundException(`${blockedUsername} is not blocked`)
+		await this.prisma.user.update({ where: { name: myUsername },
+			data:
+			{
+				blockedUserList: { disconnect: { name: blockedUsername } }
+			}})
+	}
+
+	async testUtils(username: string, exceptions: Object, checkFn: Function)
+	{
+		const includes: Prisma.UserInclude = {}
+		Object.keys(exceptions).forEach(k => includes[k] = true)
+
+		const res = await this.getUserByName(username, includes)
+		for (const [key, exception] of Object.entries(exceptions))
+		{
+			if (checkFn(res[key]))
+				throw exception
 		}
 	}
 
 	async createFriendInvitation(invitingUsername: string, invitedUsername: string)
 	{
+		if (invitingUsername === invitedUsername)
+			throw new UnauthorizedException("you can't invite yourself !")
 		const exceptions =
 		{
 			friendList: new ConflictException(`${invitedUsername} is already in your friend list`),
@@ -54,15 +101,16 @@ export class UsersService
 		Object.keys(exceptions).forEach(k => includes[k] = true)
 
 		const checkInvitedUserExistance = this.getUserByNameOrThrow(invitedUsername)
-		const invitationRequirementPromise = this.getUserByName(invitingUsername, includes)
+		// const invitationRequirementPromise = this.getUserByName(invitingUsername, includes)
+		const invitationRequirementPromise = this.testUtils(invitingUsername, exceptions, (userArray: User[]) => userArray.some((el: User) => el.name === invitedUsername))
 
-		const invitationRequirement = (await Promise.all([checkInvitedUserExistance, invitationRequirementPromise]))[1]
+		await Promise.all([checkInvitedUserExistance, invitationRequirementPromise])
 
-		for (const [key, exception] of Object.entries(exceptions))
-		{
-			if (invitationRequirement[key].some((el: User) => el.name === invitedUsername))
-				throw exception 
-		}
+		// for (const [key, exception] of Object.entries(exceptions))
+		// {
+		// 	if (invitationRequirement[key].some((el: User) => el.name === invitedUsername))
+		// 		throw exception 
+		// }
 
 		// sse to send invitation to the invitedUser
 
@@ -122,6 +170,27 @@ export class UsersService
 			{
 				friendList: { disconnect: { name: friendUsername } },
 				friendOfList: { disconnect: { name: friendUsername } },
+			}})
+	}
+
+	// TODO
+	// * unBlockUser
+	async blockUser(blockingUsername: string, blockedUsername: string)
+	{
+		const exceptions =
+		{
+			blockedUserList: new ConflictException(`you already blocked ${blockedUsername}`)
+		}
+		const checkInvitedUserExistance = this.getUserByNameOrThrow(blockedUsername)
+		// const resPromise = this.getUserByName(blockingUsername, { blockedUserList: true })
+		const resPromise = this.testUtils(blockingUsername, exceptions, (userArray: User[]) => userArray.some((el: User) => el.name === blockedUsername))
+		await Promise.all([checkInvitedUserExistance, resPromise])
+		// if (res.blockedUserList.some((el: User) => el.name == blockedUsername))
+		// 	throw new ConflictException(`you already blocked ${blockedUsername}`)
+		await this.prisma.user.update({ where: { name: blockingUsername },
+			data:
+			{
+				blockedUserList: { connect: { name: blockedUsername } },
 			}})
 	}
 

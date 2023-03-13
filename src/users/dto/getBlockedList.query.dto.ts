@@ -3,12 +3,12 @@ import { IsEnum } from "class-validator"
 
 export enum filterType
 {
-	INCOMING = 'INCOMING',
-	OUTCOMING = 'OUTCOMING',
+	BLOCKED = 'BLOCKED',
+	BLOCKEDBY = 'BLOCKEDBY',
 	ALL = 'ALL'
 }
 
-export class GetFriendInvitationListDTO
+export class GetBlockedListQueryDTO 
 {
 	@ApiPropertyOptional({
 		enum: filterType,

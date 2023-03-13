@@ -54,6 +54,20 @@ export class UsersController
 		return this.usersService.deleteFriendInvitation(req.user.username, username)
 	}
 
+	@UseGuards(JwtAuthGuard)
+	@Post('/createFriend')
+	async createFriend(@Request()req: any, @Body(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
+	{
+		return this.usersService.createFriend(req.user.username, oneUsernameDTO.username)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Delete('/deleteFriend/:username')
+	async deleteFriend(@Request()req: any, @Param('username')username: string)
+	{
+		return this.usersService.deleteFriend(req.user.username, username)
+	}
+
 	// @UseGuards(JwtAuthGuard)
 	// @Post('/testDto')
 	// async testDto(@Body(ValidationPipe)usernameListDTO: UsernameListDTO)

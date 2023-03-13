@@ -13,8 +13,10 @@ export class UsersService
 
 	async getFriendList(username: string)
 	{
-		const test = await this.getUserByNameOrThrow(username, { friendList: true })
-		return test.friendList
+		const res = await this.getUserByNameOrThrow(username,
+			{ friendList: true, friendOfList: true })
+		// possibilité de faire une distinction pour savoir qui a initié la relation d'ami
+		return res.friendList.map(el => el.name).concat(res.friendOfList.map(el => el.name))
 	}
 
 	async getFriendInvitationList(username: string, filter: filterType)
@@ -38,20 +40,7 @@ export class UsersService
 
 	async createFriendInvitation(invitingUsername: string, invitedUsername: string)
 	{
-		let checkInvitedUserExistance = this.getUserByNameOrThrow(invitedUsername)
-		let invitationRequirementPromise = this.getUserByName(invitingUsername,
-			{
-				outcomingFriendInvitation: true,
-				incomingFriendInvitation: true,
-				blockedUserList: true,
-				blockedByUserList: true,
-				friendList: true,
-				friendOfList: true,
-			})
-
-		let invitationRequirement = (await Promise.all([checkInvitedUserExistance, invitationRequirementPromise]))[1]
-
-		let exceptions =
+		const exceptions =
 		{
 			friendList: new ConflictException(`${invitedUsername} is already in your friend list`),
 			friendOfList: new ConflictException(`${invitedUsername} is already in your friend list`),
@@ -60,6 +49,14 @@ export class UsersService
 			outcomingFriendInvitation: new ConflictException(`you already invited ${invitedUsername}`),
 			incomingFriendInvitation: new ConflictException(`${invitedUsername} has already invited you`)
 		}
+
+		const includes: Prisma.UserInclude = {}
+		Object.keys(exceptions).forEach(k => includes[k] = true)
+
+		const checkInvitedUserExistance = this.getUserByNameOrThrow(invitedUsername)
+		const invitationRequirementPromise = this.getUserByName(invitingUsername, includes)
+
+		const invitationRequirement = (await Promise.all([checkInvitedUserExistance, invitationRequirementPromise]))[1]
 
 		for (const [key, exception] of Object.entries(exceptions))
 		{
@@ -97,6 +94,35 @@ export class UsersService
 					outcomingFriendInvitation: { disconnect: { name: toDeleteUsername } },
 					incomingFriendInvitation: { disconnect: { name: toDeleteUsername } },
 				}})
+	}
+
+	async createFriend(username: string, friendUsername: string)
+	{
+		let tmp = await this.getUserByName(username, { incomingFriendInvitation: true })
+		if (!tmp.incomingFriendInvitation.some((el: User) => el.name === friendUsername))
+			throw new UnauthorizedException(`${friendUsername} did not invited you`)
+		await this.prisma.user.update({ where: { name: username },
+			data:
+			{
+				friendList: { connect: { name: friendUsername } },
+				incomingFriendInvitation: { disconnect: { name: friendUsername } },
+			}})
+	}
+
+	async deleteFriend(username: string, friendUsername: string)
+	{
+		let tmp = await this.getUserByName(username, { friendList: true, friendOfList: true })
+		if (!tmp.friendList.some((el: User) => el.name === friendUsername) &&
+			!tmp.friendOfList.some((el: User) => el.name === friendUsername))
+		{
+			throw new NotFoundException(`${friendUsername} is not one of your friends`)
+		}
+		await this.prisma.user.update({ where: { name: username },
+			data:
+			{
+				friendList: { disconnect: { name: friendUsername } },
+				friendOfList: { disconnect: { name: friendUsername } },
+			}})
 	}
 
 	async getUserByNameOrThrow(name: string, include?: Prisma.UserInclude)

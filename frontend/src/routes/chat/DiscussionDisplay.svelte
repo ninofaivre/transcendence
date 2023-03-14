@@ -6,6 +6,7 @@ import type { InfiniteEvent } from 'svelte-infinite-loading/types/index';
 
 import InfiniteLoading from 'svelte-infinite-loading';
 import ChatBox from './ChatBox.svelte';
+import ChatBubble from './ChatBubble.svelte';
 
 export let my_name: string
 export let displayed_messages: Message[]; // Exported so that incoming messages can be added
@@ -56,7 +57,6 @@ function infiniteHandler( e: InfiniteEvent )
             });
     }
 }
-
 	 
 </script>
 
@@ -71,9 +71,13 @@ function infiniteHandler( e: InfiniteEvent )
         <InfiniteLoading on:infinite={infiniteHandler} direction="top" distance={reactivity} />
         {#each displayed_messages as message}
 			{#if message.from == my_name }
-				<div class="my-messages" > { `${message.id}: ${message.content}` } </div>
+                <ChatBubble from_me=true >
+                    { `${message.id}: ${message.content}` }
+                </ChatBubble>
 			{:else}
-				<div class="other-messages"  > { `${message.from}: ${message.id}: ${message.content}` } </div>
+                <ChatBubble from_me=false >
+                    { `${message.from}: ${message.id}: ${message.content}` }
+                </ChatBubble>
 			{/if}
 		{/each}
 
@@ -82,22 +86,4 @@ function infiniteHandler( e: InfiniteEvent )
 </div>
 
 <style>
-
-	.my-messages, .other-messages  {
-		border: solid 1px black;
-		border-radius: 5px;
-		margin: 1% 5%;
-		padding: 5px;
-	}
-	
-	.my-messages   {
-		background-color: lightgreen;
-		text-align: right;
-	}
-
-	.other-messages   {
-		background-color: lightblue;
-		text-align: left;
-	}
-	
 </style>

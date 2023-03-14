@@ -13,7 +13,7 @@
 
 	export let data: PageData
 
-	let discussions: DiscussionType[]; // = Object.values(data);
+	let discussions: DiscussionType[]; 
 	$: discussions = Object.values(data.discussions);
 
 	let idx = 0 

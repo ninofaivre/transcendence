@@ -1,8 +1,9 @@
 <script>
-    export const from_me = false
-    export const from_me_bg = "lightblue"
-    export const from_them_bg = "lightgrey"
-    export const margin = "15px"
+    export let from =""
+    export let from_me = false
+    export let from_me_bg = "lightblue"
+    export let from_them_bg = "lightgrey"
+    export let margin = "15px"
 </script>
 
 <div class="message-row from-me-row"
@@ -11,12 +12,13 @@
 
     <div class="message-spacer"></div>
 
-    <div class="message-bubble from-me-bubble"
-        style={from_me ?
-            `margin-left: ${margin};` : `margin-right: ${margin}`
-            + `background-color: ${ from_me ? from_me_bg : from_them_bg }`
+    <div class="message-bubble"
+        style={
+            `background-color: ${ from_me ? from_me_bg : from_them_bg } ; ` +
+            (from_me ? `margin-left: ${margin};` : `margin-right: ${margin} ;`) 
         }
     >
+        <div> {from} </div>
         <slot/>
     </div>
 

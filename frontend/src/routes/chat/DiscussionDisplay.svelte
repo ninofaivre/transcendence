@@ -26,7 +26,7 @@ const switchMessages = async ( _discussionId: typeof discussionId ) =>
     } catch (err: any) { // Can't type what's caught because it could catch anything
         alert("Could not fetch conversation:" + err.message + "\n Try to reload the page")
         return;
-    }
+   }
     if (_discussionId === discussionId)
         displayed_messages = fetched_messages
 }
@@ -60,6 +60,8 @@ function infiniteHandler( e: InfiniteEvent )
 	 
 </script>
 
+<p>{ "Current user: " + my_name }</p>
+
 <div id=message-box
 >
 	{#if !displayed_messages?.length }
@@ -70,15 +72,9 @@ function infiniteHandler( e: InfiniteEvent )
 
         <InfiniteLoading on:infinite={infiniteHandler} direction="top" distance={reactivity} />
         {#each displayed_messages as message}
-			{#if message.from == my_name }
-                <ChatBubble from_me=true >
-                    { `${message.id}: ${message.content}` }
-                </ChatBubble>
-			{:else}
-                <ChatBubble from_me=false >
+                <ChatBubble from_me={ message.from === my_name } from={ message.from }>
                     { `${message.from}: ${message.id}: ${message.content}` }
                 </ChatBubble>
-			{/if}
 		{/each}
 
 	{/if}

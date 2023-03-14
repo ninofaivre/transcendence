@@ -18,15 +18,23 @@
             (from_me ? `margin-left: ${margin};` : `margin-right: ${margin} ;`) 
         }
     >
-        <div> {from} </div>
+        {#if !from_me }
+            <div class="from-field"> {from} </div>
+        {/if}
         <slot/>
     </div>
 
 </div>
 
 <style>
-    div { /*For debugging */
-        border: 1px solid black;
+
+    /*For debugging */
+    /* div {  */
+    /*     border: 1px solid black; */
+    /* } */
+
+    .from-field {
+        font-size: 0.8em;
     }
 
     .message-row {

@@ -73,7 +73,7 @@ function infiniteHandler( e: InfiniteEvent )
         <InfiniteLoading on:infinite={infiniteHandler} direction="top" distance={reactivity} />
         {#each displayed_messages as message}
                 <ChatBubble from_me={ message.from === my_name } from={ message.from }>
-                    { `${message.from}: ${message.id}: ${message.content}` }
+                    { `${message.id}: ${message.content}` }
                 </ChatBubble>
 		{/each}
 

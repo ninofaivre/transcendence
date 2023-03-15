@@ -50,15 +50,28 @@
 </script>
 
 {#if discussions.length }
-    <DiscussionList { discussions } bind:curr_disc_idx={idx} />
+    <!-- <DiscussionList { discussions } bind:curr_disc_idx={idx} /> -->
 	<br>
 	<br>
 	<CreateDiscussion />
-	<h2>
+
+	<div id=discussion-title>
 		{ discussions[idx].title || discussions[idx].users }
-	</h2>
+	</div>
+
 	<DiscussionDisplay bind:displayed_messages={ all_messages[idx] } discussionId={ idx + 1 } my_name={ data.my_name }/>
 {:else}
-	<p>You haven't started any conversations yet</p>
+    <div id=placeholder>
+        You haven't started any conversations yet
+    </div>
 	<CreateDiscussion />
 {/if}
+
+<style>
+    /* the discussion title is contained in main */
+    #discussion-title {
+        position: sticky;
+        top: 0px;
+    }
+</style>
+

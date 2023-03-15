@@ -60,10 +60,8 @@ function infiniteHandler( e: InfiniteEvent )
 	 
 </script>
 
-<p>{ "Current user: " + my_name }</p>
-
-<div id=message-box
->
+<!-- <div id=message-box -->
+<!-- > -->
 	{#if !displayed_messages?.length }
 
 		<p> This conversation has not started yet </p>
@@ -79,7 +77,7 @@ function infiniteHandler( e: InfiniteEvent )
 
 	{/if}
     <ChatBox {discussionId} />
-</div>
+<!-- </div> -->
 
 <style>
 </style>

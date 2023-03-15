@@ -1,5 +1,5 @@
-<script lang=ts>
 
+<script lang=ts>
 	import { deleteCookie } from '$lib/global'
 
 	function logOut()
@@ -17,4 +17,13 @@
   <button on:click={ logOut }> Log Out </button>
 </nav>
 
-<slot></slot>
+<main>
+    <slot></slot>
+</main>
+
+<style>
+    nav {
+        position: sticky;
+        top: 0px;
+    }
+</style>

@@ -1,13 +1,14 @@
-import { Body, Get, Post, UseGuards, ValidationPipe, Sse, MessageEvent, Delete, Param, Query } from '@nestjs/common';
+import { Body, Get, Post, UseGuards, ValidationPipe, Sse, MessageEvent, Delete, Param, Query, Res, Next } from '@nestjs/common';
 import { Controller, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { UsersService } from './users.service'
 import { CreateUserDTO } from './dto/createUser.dto'
-import { Observable, interval, map } from 'rxjs'
+import { Observable, interval, map, finalize } from 'rxjs'
 import { OneUsernameDTO } from './dto/oneUsername.dto';
 import { ApiParam, ApiResponseProperty } from '@nestjs/swagger';
 import { GetFriendInvitationListQueryDTO } from './dto/getFriendInvitationList.query.dto';
 import { GetBlockedListQueryDTO } from './dto/getBlockedList.query.dto';
+import { NextFunction } from 'express';
 
 @Controller('users')
 export class UsersController
@@ -103,12 +104,29 @@ export class UsersController
 	// {
 	// 	console.log(testParamsQueryDTO)
 	// }
+	//
+
+	sseTestEnd(username: string)
+	{
+		console.log("end of the sse relation for", username)
+		this.usersService.deleteSubject(username)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Sse('/sseTest')
+	sseTest(@Request()req: any): Observable<MessageEvent>
+	{
+		console.log("init sseTest :", req.user.username)
+		this.usersService.addSubject(req.user.username)
+		const monObs = this.usersService.sendEvents(req.user.username)
+		return monObs.pipe(finalize(() => this.sseTestEnd(req.user.username)))
+	}
 
 	@UseGuards(JwtAuthGuard)
 	@Sse('/sse')
-	getUpdate(@Request() req: any): Observable<MessageEvent> 
+	getUpdate(@Request()req: any): Observable<MessageEvent> 
 	{
 		this.usersService.updateTest[req.user.username] = { discussions: [], messages: [] }
-		return interval(1000).pipe(map((_) => ({ data: this.usersService.getUpdate(req.user.username) })))
+		return interval(1000).pipe(map(() => ({ data: this.usersService.getUpdate(req.user.username) })))
 	}
 }

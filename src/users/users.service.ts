@@ -6,11 +6,35 @@ import { hash } from 'bcrypt'
 import { Prisma, User } from '@prisma/client';
 import { filterType as friendFilterType } from './dto/getFriendInvitationList.query.dto';
 import { filterType as blockedFilterType } from './dto/getBlockedList.query.dto';
+import { Subject } from 'rxjs';
 
 @Injectable()
 export class UsersService
 {
 	constructor(private readonly prisma: PrismaService) { }
+
+	private event = {}
+
+	addSubject(username: string)
+	{
+		this.event[username] = new Subject()
+	}
+
+	async addEvent(username: string, ev: any)
+	{
+		if (this.event[username])
+			this.event[username].next(ev)
+	}
+
+	sendEvents(username: string)
+	{
+		return this.event[username].asObservable()
+	}
+
+	deleteSubject(username: string)
+	{
+		delete this.event[username]
+	}
 
 	async getFriendList(username: string)
 	{
@@ -58,18 +82,6 @@ export class UsersService
 		}
 	}
 
-	async deleteBlocked(myUsername: string, blockedUsername: string)
-	{
-		let tmp = await this.getUserByName(myUsername, { blockedUserList: true })
-		if (!tmp.blockedUserList.some((el: User) => el.name === blockedUsername))
-			throw new NotFoundException(`${blockedUsername} is not blocked`)
-		await this.prisma.user.update({ where: { name: myUsername },
-			data:
-			{
-				blockedUserList: { disconnect: { name: blockedUsername } }
-			}})
-	}
-
 	async testUtils(username: string, exceptions: Object, checkFn: Function)
 	{
 		const includes: Prisma.UserInclude = {}
@@ -83,42 +95,46 @@ export class UsersService
 		}
 	}
 
+	async deleteBlocked(myUsername: string, blockedUsername: string)
+	{
+		await this.testUtils(myUsername,
+			{ blockedUserList: new NotFoundException(`${blockedUsername} is not blocked`) },
+			(usersArray: User[]) => !usersArray.some((el: User) => el.name === blockedUsername))
+		const updatePromise = this.prisma.user.update({ where: { name: myUsername },
+			data:
+			{
+				blockedUserList: { disconnect: { name: blockedUsername } }
+			}})
+		const addEventPromise = this.addEvent(blockedUsername, { data: myUsername, type: "deletedBlocked" })
+		await Promise.all([updatePromise, addEventPromise])
+	}
+
 	async createFriendInvitation(invitingUsername: string, invitedUsername: string)
 	{
 		if (invitingUsername === invitedUsername)
 			throw new UnauthorizedException("you can't invite yourself !")
-		const exceptions =
-		{
-			friendList: new ConflictException(`${invitedUsername} is already in your friend list`),
-			friendOfList: new ConflictException(`${invitedUsername} is already in your friend list`),
-			blockedUserList: new UnauthorizedException(`you blocked ${invitedUsername}`),
-			blockedByUserList: new UnauthorizedException(`${invitedUsername} blocked you`),
-			outcomingFriendInvitation: new ConflictException(`you already invited ${invitedUsername}`),
-			incomingFriendInvitation: new ConflictException(`${invitedUsername} has already invited you`)
-		}
-
-		const includes: Prisma.UserInclude = {}
-		Object.keys(exceptions).forEach(k => includes[k] = true)
 
 		const checkInvitedUserExistance = this.getUserByNameOrThrow(invitedUsername)
-		// const invitationRequirementPromise = this.getUserByName(invitingUsername, includes)
-		const invitationRequirementPromise = this.testUtils(invitingUsername, exceptions, (userArray: User[]) => userArray.some((el: User) => el.name === invitedUsername))
+		const checkInvitingUserRequirements = this.testUtils(invitingUsername,
+			{
+				friendList: new ConflictException(`${invitedUsername} is already in your friend list`),
+				friendOfList: new ConflictException(`${invitedUsername} is already in your friend list`),
+				blockedUserList: new UnauthorizedException(`you blocked ${invitedUsername}`),
+				blockedByUserList: new UnauthorizedException(`${invitedUsername} blocked you`),
+				outcomingFriendInvitation: new ConflictException(`you already invited ${invitedUsername}`),
+				incomingFriendInvitation: new ConflictException(`${invitedUsername} has already invited you`)
+			},
+			(userArray: User[]) => userArray.some((el: User) => el.name === invitedUsername))
 
-		await Promise.all([checkInvitedUserExistance, invitationRequirementPromise])
+		await Promise.all([checkInvitedUserExistance, checkInvitingUserRequirements])
 
-		// for (const [key, exception] of Object.entries(exceptions))
-		// {
-		// 	if (invitationRequirement[key].some((el: User) => el.name === invitedUsername))
-		// 		throw exception 
-		// }
-
-		// sse to send invitation to the invitedUser
-
-		await this.prisma.user.update({ where: { name: invitingUsername },
+		const updatePromise = this.prisma.user.update({ where: { name: invitingUsername },
 			data:
 			{
 				outcomingFriendInvitation: { connect: { name: invitedUsername }}
 			}})
+		const addEventPromise = this.addEvent(invitedUsername, { data: invitingUsername, type: "createdFriendInvitation" })
+		await Promise.all([updatePromise, addEventPromise])
 	}
 
 	async deleteFriendInvitation(myUsername: string, toDeleteUsername: string)
@@ -128,33 +144,35 @@ export class UsersService
 				outcomingFriendInvitation: true,
 				incomingFriendInvitation: true
 			})
-			if (!tmp.outcomingFriendInvitation.some((el: User) => el.name === toDeleteUsername) &&
-				!tmp.incomingFriendInvitation.some((el: User) => el.name === toDeleteUsername))
+		if (!tmp.outcomingFriendInvitation.some((el: User) => el.name === toDeleteUsername) &&
+			!tmp.incomingFriendInvitation.some((el: User) => el.name === toDeleteUsername))
+		{
+			throw new NotFoundException(`user ${toDeleteUsername} not found in outcoming or incoming invitation`)
+		}
+
+		const updatePromise = this.prisma.user.update({ where: { name: myUsername },
+			data:
 			{
-				throw new NotFoundException(`user ${toDeleteUsername} not found in outcoming or incoming invitation`)
-			}
-
-			// sse to send deletion invitation to the toDeleteUser
-
-			await this.prisma.user.update({ where: { name: myUsername },
-				data:
-				{
-					outcomingFriendInvitation: { disconnect: { name: toDeleteUsername } },
-					incomingFriendInvitation: { disconnect: { name: toDeleteUsername } },
-				}})
+				outcomingFriendInvitation: { disconnect: { name: toDeleteUsername } },
+				incomingFriendInvitation: { disconnect: { name: toDeleteUsername } },
+			}})
+		const addEventPromise = this.addEvent(toDeleteUsername, { data: myUsername, type: "deletedFriendInvitation" })
+		await Promise.all([updatePromise, addEventPromise])
 	}
 
 	async createFriend(username: string, friendUsername: string)
 	{
-		let tmp = await this.getUserByName(username, { incomingFriendInvitation: true })
-		if (!tmp.incomingFriendInvitation.some((el: User) => el.name === friendUsername))
-			throw new UnauthorizedException(`${friendUsername} did not invited you`)
-		await this.prisma.user.update({ where: { name: username },
+		await this.testUtils(username,
+			{ incomingFriendInvitation: new UnauthorizedException(`${friendUsername} did not invited you`) },
+			(usersArray: User[]) => !usersArray.some((el: User) => el.name === friendUsername))
+		const updatePromise = this.prisma.user.update({ where: { name: username },
 			data:
 			{
 				friendList: { connect: { name: friendUsername } },
 				incomingFriendInvitation: { disconnect: { name: friendUsername } },
 			}})
+		const addEventPromise = this.addEvent(friendUsername, { data: username, type: "createdFriend" })
+		await Promise.all([updatePromise, addEventPromise])
 	}
 
 	async deleteFriend(username: string, friendUsername: string)
@@ -165,33 +183,33 @@ export class UsersService
 		{
 			throw new NotFoundException(`${friendUsername} is not one of your friends`)
 		}
-		await this.prisma.user.update({ where: { name: username },
+		const updatePromise = this.prisma.user.update({ where: { name: username },
 			data:
 			{
 				friendList: { disconnect: { name: friendUsername } },
 				friendOfList: { disconnect: { name: friendUsername } },
 			}})
+		const addEventPromise = this.addEvent(friendUsername, { data: username, type: "deletedFriend" })
+		await Promise.all([updatePromise, addEventPromise]) 
 	}
 
 	// TODO
 	// * unBlockUser
 	async blockUser(blockingUsername: string, blockedUsername: string)
 	{
-		const exceptions =
-		{
-			blockedUserList: new ConflictException(`you already blocked ${blockedUsername}`)
-		}
-		const checkInvitedUserExistance = this.getUserByNameOrThrow(blockedUsername)
-		// const resPromise = this.getUserByName(blockingUsername, { blockedUserList: true })
-		const resPromise = this.testUtils(blockingUsername, exceptions, (userArray: User[]) => userArray.some((el: User) => el.name === blockedUsername))
-		await Promise.all([checkInvitedUserExistance, resPromise])
-		// if (res.blockedUserList.some((el: User) => el.name == blockedUsername))
-		// 	throw new ConflictException(`you already blocked ${blockedUsername}`)
-		await this.prisma.user.update({ where: { name: blockingUsername },
+		const checkBlockedUserExistance = this.getUserByNameOrThrow(blockedUsername)
+		const checkBlockingUserRequirements = this.testUtils(blockingUsername,
+			{ blockedUserList: new ConflictException(`you already blocked ${blockedUsername}`) },
+			(userArray: User[]) => userArray.some((el: User) => el.name === blockedUsername))
+
+		await Promise.all([checkBlockedUserExistance, checkBlockingUserRequirements])
+		const updatePromise = this.prisma.user.update({ where: { name: blockingUsername },
 			data:
 			{
 				blockedUserList: { connect: { name: blockedUsername } },
 			}})
+		const addEventPromise = this.addEvent(blockedUsername, { data: blockingUsername, type: "createdBlocked" })
+		await Promise.all([updatePromise, addEventPromise])
 	}
 
 	async getUserByNameOrThrow(name: string, include?: Prisma.UserInclude)

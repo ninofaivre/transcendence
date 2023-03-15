@@ -1,7 +1,7 @@
 import { CreateUserDTO } from './dto/createUser.dto'
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service'
-import { NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common'
+import { MessageEvent, NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common'
 import { hash } from 'bcrypt'
 import { Prisma, User } from '@prisma/client';
 import { filterType as friendFilterType } from './dto/getFriendInvitationList.query.dto';
@@ -13,27 +13,27 @@ export class UsersService
 {
 	constructor(private readonly prisma: PrismaService) { }
 
-	private event = {}
+	private eventSource = new Map<String, Subject<MessageEvent>>()
 
 	addSubject(username: string)
 	{
-		this.event[username] = new Subject()
+		this.eventSource.set(username, new Subject<MessageEvent>)
 	}
 
-	async addEvent(username: string, ev: any)
+	async pushEvent(username: string, event: MessageEvent)
 	{
-		if (this.event[username])
-			this.event[username].next(ev)
+		this.eventSource.get(username)?.next(event)
 	}
 
-	sendEvents(username: string)
+	sendObservable(username: string)
 	{
-		return this.event[username].asObservable()
+		return this.eventSource.get(username).asObservable()
 	}
 
 	deleteSubject(username: string)
 	{
-		delete this.event[username]
+		console.log("close /users/sse for", username)
+		this.eventSource.delete(username)
 	}
 
 	async getFriendList(username: string)
@@ -59,7 +59,7 @@ export class UsersService
 			case (friendFilterType['INCOMING']):
 				return tmp.incomingFriendInvitation.map(el => el.name)
 			case (friendFilterType['OUTCOMING']):
-				return tmp.outcomingFriendInvitation.map(el => el.name)
+				return tmp.outcomingFriendInvitation.map(el => el .name)
 		}
 	}
 
@@ -105,7 +105,7 @@ export class UsersService
 			{
 				blockedUserList: { disconnect: { name: blockedUsername } }
 			}})
-		const addEventPromise = this.addEvent(blockedUsername, { data: myUsername, type: "deletedBlocked" })
+		const addEventPromise = this.pushEvent(blockedUsername, { data: { user: myUsername }, type: "deletedBlocked" })
 		await Promise.all([updatePromise, addEventPromise])
 	}
 
@@ -133,7 +133,7 @@ export class UsersService
 			{
 				outcomingFriendInvitation: { connect: { name: invitedUsername }}
 			}})
-		const addEventPromise = this.addEvent(invitedUsername, { data: invitingUsername, type: "createdFriendInvitation" })
+		const addEventPromise = this.pushEvent(invitedUsername, { data: { user: invitingUsername }, type: "createdFriendInvitation" })
 		await Promise.all([updatePromise, addEventPromise])
 	}
 
@@ -156,7 +156,7 @@ export class UsersService
 				outcomingFriendInvitation: { disconnect: { name: toDeleteUsername } },
 				incomingFriendInvitation: { disconnect: { name: toDeleteUsername } },
 			}})
-		const addEventPromise = this.addEvent(toDeleteUsername, { data: myUsername, type: "deletedFriendInvitation" })
+		const addEventPromise = this.pushEvent(toDeleteUsername, { data: { user: myUsername }, type: "deletedFriendInvitation" })
 		await Promise.all([updatePromise, addEventPromise])
 	}
 
@@ -171,7 +171,7 @@ export class UsersService
 				friendList: { connect: { name: friendUsername } },
 				incomingFriendInvitation: { disconnect: { name: friendUsername } },
 			}})
-		const addEventPromise = this.addEvent(friendUsername, { data: username, type: "createdFriend" })
+		const addEventPromise = this.pushEvent(friendUsername, { data: { user: username }, type: "createdFriend" })
 		await Promise.all([updatePromise, addEventPromise])
 	}
 
@@ -189,7 +189,7 @@ export class UsersService
 				friendList: { disconnect: { name: friendUsername } },
 				friendOfList: { disconnect: { name: friendUsername } },
 			}})
-		const addEventPromise = this.addEvent(friendUsername, { data: username, type: "deletedFriend" })
+		const addEventPromise = this.pushEvent(friendUsername, { data: { user: username }, type: "deletedFriend" })
 		await Promise.all([updatePromise, addEventPromise]) 
 	}
 
@@ -208,7 +208,7 @@ export class UsersService
 			{
 				blockedUserList: { connect: { name: blockedUsername } },
 			}})
-		const addEventPromise = this.addEvent(blockedUsername, { data: blockingUsername, type: "createdBlocked" })
+		const addEventPromise = this.pushEvent(blockedUsername, { data: { user: blockingUsername }, type: "createdBlocked" })
 		await Promise.all([updatePromise, addEventPromise])
 	}
 
@@ -233,14 +233,4 @@ export class UsersService
 		const { password, ...result } = await this.prisma.user.create({ data: user })
 		return result
 	}
-
-	updateTest: any[] = []
-
-	getUpdate(username: string)
-	{
-		let tmp = this.updateTest[username]
-		this.updateTest[username] = { discussions: [], messages: [] }
-		return { test: tmp }
-	}
-	
 }

@@ -8,7 +8,6 @@ import { OneUsernameDTO } from './dto/oneUsername.dto';
 import { ApiParam, ApiResponseProperty } from '@nestjs/swagger';
 import { GetFriendInvitationListQueryDTO } from './dto/getFriendInvitationList.query.dto';
 import { GetBlockedListQueryDTO } from './dto/getBlockedList.query.dto';
-import { NextFunction } from 'express';
 
 @Controller('users')
 export class UsersController
@@ -106,27 +105,13 @@ export class UsersController
 	// }
 	//
 
-	sseTestEnd(username: string)
-	{
-		console.log("end of the sse relation for", username)
-		this.usersService.deleteSubject(username)
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@Sse('/sseTest')
-	sseTest(@Request()req: any): Observable<MessageEvent>
-	{
-		console.log("init sseTest :", req.user.username)
-		this.usersService.addSubject(req.user.username)
-		const monObs = this.usersService.sendEvents(req.user.username)
-		return monObs.pipe(finalize(() => this.sseTestEnd(req.user.username)))
-	}
-
 	@UseGuards(JwtAuthGuard)
 	@Sse('/sse')
-	getUpdate(@Request()req: any): Observable<MessageEvent> 
+	sse(@Request()req: any): Observable<MessageEvent>
 	{
-		this.usersService.updateTest[req.user.username] = { discussions: [], messages: [] }
-		return interval(1000).pipe(map(() => ({ data: this.usersService.getUpdate(req.user.username) })))
+		console.log("open /users/sse for", req.user.username)
+		this.usersService.addSubject(req.user.username)
+		return this.usersService.sendObservable(req.user.username)
+			.pipe(finalize(() => this.usersService.deleteSubject(req.user.username)))
 	}
 }

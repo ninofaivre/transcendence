@@ -39,13 +39,10 @@ export class DiscussionsService
 		for (let currUser of createDiscussionDTO.users)
 			connect.push({ name: currUser })
 		// need polish tmp dirty test
-		let tmp = await this.prisma.discussion.create({ data: { title: createDiscussionDTO.title,users: { connect: connect } } })
+		let tmp = await this.prisma.discussion.create({ data: { title: createDiscussionDTO.title, users: { connect: connect } } })
 		tmp["users"] = createDiscussionDTO.users
 		for (let i of createDiscussionDTO.users)
-		{
-			if (this.usersService.updateTest[i])
-				this.usersService.updateTest[i]["discussions"].push(tmp)
-		}
+			this.chatService.pushEvent(i, { data: tmp, type: "createdDiscussion" })
 		return tmp
 	}
 

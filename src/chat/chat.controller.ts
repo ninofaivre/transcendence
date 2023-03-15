@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, Sse, UseGuards, ValidationPipe, MessageEvent } from '@nestjs/common';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { finalize, Observable } from 'rxjs';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { LeaveDiscussionDTO } from 'src/users/dto/leaveDiscussion.dto';
 import { ChatService } from './chat.service';
@@ -55,5 +56,15 @@ export class ChatController
 					   @Query(ValidationPipe)getnMessagesQueryDTO: GetnMessagesQueryDTO)
 	{
 		return this.messagesService.getnMessages(req.user.username, discussionId, getnMessagesQueryDTO)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Sse('/sse')
+	sse(@Request()req: any): Observable<MessageEvent>
+	{
+		console.log("open /chat/sse for", req.user.username)
+		this.chatService.addSubject(req.user.username)
+		return this.chatService.sendObservable(req.user.username)
+			.pipe(finalize(() => this.chatService.deleteSubject(req.user.username)))
 	}
 }

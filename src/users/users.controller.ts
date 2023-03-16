@@ -8,6 +8,7 @@ import { OneUsernameDTO } from './dto/oneUsername.dto';
 import { ApiParam, ApiResponseProperty } from '@nestjs/swagger';
 import { GetFriendInvitationListQueryDTO } from './dto/getFriendInvitationList.query.dto';
 import { GetBlockedListQueryDTO } from './dto/getBlockedList.query.dto';
+import { Username } from './decorator/username.decorator';
 
 @Controller('users')
 export class UsersController
@@ -50,9 +51,9 @@ export class UsersController
 
 	@UseGuards(JwtAuthGuard)
 	@Delete('/deleteFriendInvitation/:username')
-	async deleteFriendInvitation(@Request()req: any, @Param('username')username: string)
+	async deleteFriendInvitation(@Request()req: any, @Param(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
 	{
-		return this.usersService.deleteFriendInvitation(req.user.username, username)
+		return this.usersService.deleteFriendInvitation(req.user.username, oneUsernameDTO.username)
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -64,9 +65,9 @@ export class UsersController
 
 	@UseGuards(JwtAuthGuard)
 	@Delete('/deleteFriend/:username')
-	async deleteFriend(@Request()req: any, @Param('username')username: string)
+	async deleteFriend(@Request()req: any, @Param(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
 	{
-		return this.usersService.deleteFriend(req.user.username, username)
+		return this.usersService.deleteFriend(req.user.username, oneUsernameDTO.username)
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -85,25 +86,10 @@ export class UsersController
 
 	@UseGuards(JwtAuthGuard)
 	@Delete('/blockedUser/:username')
-	async deleteBlocked(@Request()req: any, @Param('username')username: string)
+	async deleteBlocked(@Request()req: any, @Param(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
 	{
-		return this.usersService.deleteBlocked(req.user.username, username)
+		return this.usersService.deleteBlocked(req.user.username, oneUsernameDTO.username)
 	}
-
-	// @UseGuards(JwtAuthGuard)
-	// @Post('/testDto')
-	// async testDto(@Body(ValidationPipe)usernameListDTO: UsernameListDTO)
-	// {
-	// 	console.log(usernameListDTO)
-	// }
-
-	// @UseGuards(JwtAuthGuard)
-	// @Get('/testParams/:id/:name')
-	// async testParams(@Query()testParamsQueryDTO: TestParamsQueryDTO)
-	// {
-	// 	console.log(testParamsQueryDTO)
-	// }
-	//
 
 	@UseGuards(JwtAuthGuard)
 	@Sse('/sse')

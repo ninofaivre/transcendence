@@ -1,5 +1,5 @@
 import { CreateUserDTO } from './dto/createUser.dto'
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service'
 import { MessageEvent, NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common'
 import { hash } from 'bcrypt'
@@ -38,7 +38,7 @@ export class UsersService
 
 	async getFriendList(username: string)
 	{
-		const res = await this.getUserByNameOrThrow(username,
+		const res = await this.getUserByName(username,
 			{ friendList: true, friendOfList: true })
 		// possibilité de faire une distinction pour savoir qui a initié la relation d'ami
 		return res.friendList.map(el => el.name).concat(res.friendOfList.map(el => el.name))
@@ -98,7 +98,7 @@ export class UsersService
 	async deleteBlocked(myUsername: string, blockedUsername: string)
 	{
 		await this.testUtils(myUsername,
-			{ blockedUserList: new NotFoundException(`${blockedUsername} is not blocked`) },
+			{ blockedUserList: new NotFoundException(`${blockedUsername} is not in blockedUserList`) },
 			(usersArray: User[]) => !usersArray.some((el: User) => el.name === blockedUsername))
 		const updatePromise = this.prisma.user.update({ where: { name: myUsername },
 			data:
@@ -112,15 +112,15 @@ export class UsersService
 	async createFriendInvitation(invitingUsername: string, invitedUsername: string)
 	{
 		if (invitingUsername === invitedUsername)
-			throw new UnauthorizedException("you can't invite yourself !")
+			throw new ForbiddenException("you can't invite yourself !")
 
 		const checkInvitedUserExistance = this.getUserByNameOrThrow(invitedUsername)
 		const checkInvitingUserRequirements = this.testUtils(invitingUsername,
 			{
 				friendList: new ConflictException(`${invitedUsername} is already in your friend list`),
 				friendOfList: new ConflictException(`${invitedUsername} is already in your friend list`),
-				blockedUserList: new UnauthorizedException(`you blocked ${invitedUsername}`),
-				blockedByUserList: new UnauthorizedException(`${invitedUsername} blocked you`),
+				blockedUserList: new ForbiddenException(`you blocked ${invitedUsername}`),
+				blockedByUserList: new ForbiddenException(`${invitedUsername} blocked you`),
 				outcomingFriendInvitation: new ConflictException(`you already invited ${invitedUsername}`),
 				incomingFriendInvitation: new ConflictException(`${invitedUsername} has already invited you`)
 			},
@@ -163,7 +163,7 @@ export class UsersService
 	async createFriend(username: string, friendUsername: string)
 	{
 		await this.testUtils(username,
-			{ incomingFriendInvitation: new UnauthorizedException(`${friendUsername} did not invited you`) },
+			{ incomingFriendInvitation: new ForbiddenException(`${friendUsername} did not invited you`) },
 			(usersArray: User[]) => !usersArray.some((el: User) => el.name === friendUsername))
 		const updatePromise = this.prisma.user.update({ where: { name: username },
 			data:
@@ -193,8 +193,6 @@ export class UsersService
 		await Promise.all([updatePromise, addEventPromise]) 
 	}
 
-	// TODO
-	// * unBlockUser
 	async blockUser(blockingUsername: string, blockedUsername: string)
 	{
 		const checkBlockedUserExistance = this.getUserByNameOrThrow(blockedUsername)
@@ -212,11 +210,20 @@ export class UsersService
 		await Promise.all([updatePromise, addEventPromise])
 	}
 
-	async getUserByNameOrThrow(name: string, include?: Prisma.UserInclude)
+	async getUserByNameOrThrow(name: string, exception: "notFound" | "badRequest" = "notFound", include?: Prisma.UserInclude)
 	{
 		const user = await this.getUserByName(name, include)
+		const exceptionMessage = `user ${user} not found !`
 		if (!user)
-			throw new NotFoundException(`user ${name} not found !`)
+		{
+			switch(exception)
+			{
+				case ("notFound"):
+					throw new NotFoundException(exceptionMessage)
+				case ("badRequest"):
+					throw new BadRequestException(exceptionMessage)
+			}
+		}
 		return user
 	}
 
@@ -228,7 +235,7 @@ export class UsersService
 	async createUser(user: CreateUserDTO)
 	{
 		if (await this.getUserByName(user.name))
-			throw new UnauthorizedException("user already exist")
+			throw new ConflictException("user already exist")
 		user.password = await hash(user.password, 10)
 		const { password, ...result } = await this.prisma.user.create({ data: user })
 		return result

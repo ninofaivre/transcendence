@@ -13,6 +13,7 @@ export class MessagesService
 				private readonly prisma: PrismaService,
 				private usersService: UsersService) {}
 
+	/*
 	async getnMessages(username: string, discussionId: number, getnMessagesQueryDTO: GetnMessagesQueryDTO)// need to add pagination
 	{
 		// actuellement pas d'erreur si l'id du message est invalide
@@ -48,4 +49,5 @@ export class MessagesService
 		}
 		return res
 	}
+	*/
 }

@@ -3,10 +3,12 @@ import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { finalize, Observable } from 'rxjs';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { LeaveDiscussionDTO } from 'src/users/dto/leaveDiscussion.dto';
+import { OneUsernameDTO } from 'src/users/dto/oneUsername.dto';
 import { ChatService } from './chat.service';
 import { DiscussionsService } from './discussions.service';
 import { CreateDiscussionDTO } from './dto/createDiscussion.dto';
 import { CreateMessageDTO } from './dto/createMessage.dto';
+import { GetDiscussionsQueryDTO } from './dto/getDiscussions.query.dto';
 import { GetnMessagesQueryDTO } from './dto/getnMessages.query.dto';
 import { MessagesService } from './messages.service';
 
@@ -18,12 +20,20 @@ export class ChatController
 			    private readonly messagesService: MessagesService) {}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/getAllDiscussions')
-	async getAllDiscussions(@Request() req: any)
+	@Get('/getDiscussions')
+	async getDiscussions(@Request() req: any, @Query(ValidationPipe)getDiscussionsQueryDTO: GetDiscussionsQueryDTO)
 	{
-		return this.chatService.getAllDiscussions(req.user.username)
+		return this.chatService.getDiscussions(req.user.username, getDiscussionsQueryDTO.filter)
 	}
 
+	@UseGuards(JwtAuthGuard)
+	@Post('/createDm')
+	async createDm(@Request() req: any, @Body(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
+   	{
+		return this.chatService.createDm(req.user.username, oneUsernameDTO.username)
+	}
+
+	/*
 	@UseGuards(JwtAuthGuard)
 	@Post('/createDiscussion')
 	async createDiscussion(@Request() req: any, @Body(ValidationPipe)createDiscussionDTO: CreateDiscussionDTO)
@@ -57,6 +67,7 @@ export class ChatController
 	{
 		return this.messagesService.getnMessages(req.user.username, discussionId, getnMessagesQueryDTO)
 	}
+	*/
 
 	@UseGuards(JwtAuthGuard)
 	@Sse('/sse')

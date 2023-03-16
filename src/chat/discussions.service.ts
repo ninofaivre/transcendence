@@ -12,6 +12,7 @@ export class DiscussionsService
 				private readonly chatService: ChatService,
 				private readonly prisma: PrismaService) {}
 	
+	/*
 	async getAllUsers(id: number)
 	{
 		return this.prisma.discussion.findUnique({ where: { id: id } }).users()
@@ -58,4 +59,5 @@ export class DiscussionsService
 			disconnect.push({ name: currUser })
 		return this.prisma.discussion.update({ where: { id: dto.discussionID }, data: { users: { disconnect: disconnect } } })
 	}
+	*/
 }

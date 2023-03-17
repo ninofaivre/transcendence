@@ -1,7 +1,7 @@
 <script lang="ts">
 
-    import { PUBLIC_BACKEND_URL } from '$env/static/public'
 	import { onMount } from 'svelte'
+    import { fetchPostJSON } from '$lib/global'
 
 	export let margin = 10
 	export let rows = 1;
@@ -13,24 +13,20 @@
 	let disabled = false;
 
 	async function sendMessage() {
-		const headers =  {
-			"Content-Type": "application/json",
-		}
+
 		disabled = true
-		console.log("Fetching ", window.location.host + '/users/createMessage')
-		fetch( PUBLIC_BACKEND_URL + '/users/createMessage', {
-			method: 'POST',
-			headers,
-			body: JSON.stringify( {
-				discussionId,
-				content: new_message,
-			}),
-		})
-		.then(() => { new_message = "" })
-		.catch((err) =>  { 
-			console.log(err)
-			alert(`Could not send message because ${err.message}`)
-		})
+
+        fetchPostJSON('/users/createMessage', JSON.stringify( {
+            discussionId,
+            content: new_message
+            })
+        )
+            .then(() => { new_message = "" })
+            .catch((err: any) =>  { 
+                console.log(err)
+                alert(`Could not send message because ${err.message}`)
+            })
+        
 		disabled = false
 	}
 
@@ -47,7 +43,9 @@
 
 </script>
 
-<div style:bottom=10px style:left={`${margin}px`} >
+<div style:bottom=10px style:left={`${margin}px`}
+    class=""
+>
     <label for="textarea-input" hidden
         class="label"
     >

@@ -1,6 +1,5 @@
-import { PUBLIC_BACKEND_URL } from '$env/static/public'
-
-export function getCookie(cname: string) {
+import { PUBLIC_BACKEND_URL } from '$env/static/public';
+export function getCookie(cname) {
     const name = cname + "=";
     const ca = document.cookie.split(';');
     for (let i = 0; i < ca.length; i++) {
@@ -14,23 +13,19 @@ export function getCookie(cname: string) {
     }
     return "";
 }
-
-export function deleteCookie(cname: string) {
+export function deleteCookie(cname) {
     if (getCookie(cname))
         document.cookie = cname + "=" + ";path=/" + ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
 }
-
-export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
-    let body = JSON.stringify(jsBody)
+export async function fetchPostJSON(apiEndPoint, jsBody) {
+    let body = JSON.stringify(jsBody);
     let headers = {
         "Content-Type": "application/json",
-    }
-    return await fetch(PUBLIC_BACKEND_URL + apiEndPoint,
-        {
-            method: "POST",
-            headers,
-            body,
-        }
-    )
+    };
+    return fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
+        headers,
+        body,
+        method: "POST"
+    });
 }
-
+//# sourceMappingURL=global.js.map

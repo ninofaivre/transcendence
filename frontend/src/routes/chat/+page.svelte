@@ -9,6 +9,9 @@
 	import DiscussionList from './DiscussionList.svelte'
 	import DiscussionDisplay from './DiscussionDisplay.svelte'
 	import CreateDiscussion from './CreateDiscussion.svelte'
+    import { InputChip } from '@skeletonlabs/skeleton'
+
+    / *utils /
 	import { sse } from '$lib/sse'
 
 	export let data: PageData
@@ -68,10 +71,5 @@
 {/if}
 
 <style>
-    /* the discussion title is contained in main */
-    #discussion-title {
-        position: sticky;
-        top: 0px;
-    }
 </style>
 

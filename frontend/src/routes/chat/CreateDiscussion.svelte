@@ -57,8 +57,9 @@
 
 {#if !show_discussion_creation_form }
     <button on:click={ () => show_discussion_creation_form = true }
+        class="btn variant-filled shadow-white"
     >
-        Create Discussion
+        +
     </button>
 {:else}
     <form bind:this={form} on:submit|preventDefault|stopPropagation={ handleDiscussionCreation }>

@@ -32,9 +32,6 @@
                     Play Pong
 				</a>
 
-                <button>
-                    Button
-                </button>
                 <LightSwitch/>
 			</svelte:fragment>
 		</AppBar>

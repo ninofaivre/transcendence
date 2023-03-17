@@ -4,6 +4,7 @@
 import type { Message } from '$lib/types'
 import type { InfiniteEvent } from 'svelte-infinite-loading/types/index';
 
+import { PUBLIC_BACKEND_URL } from '$env/static/public'
 import InfiniteLoading from 'svelte-infinite-loading';
 import ChatBox from './ChatBox.svelte';
 import ChatBubble from './ChatBubble.svelte';
@@ -19,7 +20,7 @@ const switchMessages = async ( _discussionId: typeof discussionId ) =>
 {
     let fetched_messages;
     try   {
-        const response = await fetch(window.location.origin + '/users/getnMessages/' + discussionId
+        const response = await fetch(PUBLIC_BACKEND_URL + '/users/getnMessages/' + discussionId
             + '?n=' + initial_load
         )
         fetched_messages = await response.json()
@@ -32,7 +33,7 @@ const switchMessages = async ( _discussionId: typeof discussionId ) =>
 }
 
 let loading_greediness = 2
-const api: string = window.location.origin + '/users/getnMessages/'
+const api: string = PUBLIC_BACKEND_URL + '/users/getnMessages/'
 
 function infiniteHandler( e: InfiniteEvent )
 {

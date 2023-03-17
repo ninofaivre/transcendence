@@ -20,3 +20,19 @@ export function deleteCookie( cname: string )
 	  document.cookie = cname + "=" + ";path=/" + ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
 }
 
+export async function loggedInFetchPostJSON(apiEndPoint: string, jsBody: Object)
+{
+    let body = JSON.stringify(jsBody)
+    let headers = {
+        "Content-Type": "application/json",
+    }
+    return fetch(
+                    apiEndPoint,
+                    {
+                        headers,
+                        body,
+                        method: "POST"
+                    }
+    )
+}
+

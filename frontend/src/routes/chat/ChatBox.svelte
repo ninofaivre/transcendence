@@ -1,5 +1,6 @@
 <script lang="ts">
 
+    import { PUBLIC_BACKEND_URL } from '$env/static/public'
 	import { onMount } from 'svelte'
 
 	export let margin = 10
@@ -17,7 +18,7 @@
 		}
 		disabled = true
 		console.log("Fetching ", window.location.host + '/users/createMessage')
-		fetch(window.location.origin + '/users/createMessage', {
+		fetch( PUBLIC_BACKEND_URL + '/users/createMessage', {
 			method: 'POST',
 			headers,
 			body: JSON.stringify( {
@@ -47,7 +48,9 @@
 </script>
 
 <div style:bottom=10px style:left={`${margin}px`} >
-	<label for="textarea-input" hidden>
+    <label for="textarea-input" hidden
+        class="label"
+    >
 		Type your message here
 	</label>
 		<textarea id="textarea-input"
@@ -57,8 +60,11 @@
 			{ cols }
 			{ disabled }
 			{ placeholder }
+            class="textarea"
 		/>
-	<button on:click={ sendMessage }> Send </button>
+    <button on:click={ sendMessage }
+        class="btn"
+    > Send </button>
 </div>
 
 <style>

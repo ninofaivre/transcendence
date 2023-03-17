@@ -12,8 +12,8 @@ import { TestWebsocketModule } from './test-websocket/test-websocket.module';
 	[
 		ServeStaticModule.forRoot(
 		{
-			// rootPath: join(__dirname, '..', 'frontend/build'),
-			rootPath: join(__dirname, '..', 'client/build'),
+			 rootPath: join(__dirname, '..', 'frontend/build'),
+			//rootPath: join(__dirname, '..', 'client/build'),
 			exclude: ['/api*'],
 		}),
 		AuthModule,

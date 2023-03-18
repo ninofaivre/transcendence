@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, MessageEvent } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
-import { DiscussionType, Discussion } from '@prisma/client'
+//import { DiscussionType, Discussion } from '@prisma/client'
 import { Subject } from 'rxjs';
 import { PrismaService } from 'src/prisma.service';
 import { filterType as discussionsFilterType } from './dto/getDiscussions.query.dto';
@@ -29,6 +29,13 @@ export class ChatService
 		this.eventSource.delete(username)
 	}
 
+
+	async getDiscussions(username: string, filter: discussionsFilterType)
+	{
+		return this.prisma.user.findUnique({ where: { name: username },
+								select: { directMessageMe: { include: { users: { select: {name :true } } } }}})
+	}
+	/*
 	async getDiscussions(username: string, filter: discussionsFilterType)
 	{
 		const or = []
@@ -55,7 +62,12 @@ export class ChatService
 			}, {})
 		}
 	}
+	*/
 
+	async createDm(myUsername: string, friendUsername: string)
+	{
+	}
+	/*
 	async createDm(myUsername: string, friendUsername: string)
 	{
 		const dm = !!(await this.prisma.user.findUnique({ where: { name: myUsername },
@@ -88,4 +100,5 @@ export class ChatService
 				users: { connect: [{name: myUsername}, {name: friendUsername}] }
 			}})
 	}
+	*/
 }

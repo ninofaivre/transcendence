@@ -4,8 +4,8 @@ import { AppService } from './app.service'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { AuthModule } from './auth/auth.module'
 import { join } from 'path'
-import { MessagesModule } from './messages/messages.module';
 import { TestWebsocketModule } from './test-websocket/test-websocket.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
 	imports:
@@ -17,8 +17,8 @@ import { TestWebsocketModule } from './test-websocket/test-websocket.module';
 			exclude: ['/api*'],
 		}),
 		AuthModule,
-		MessagesModule,
-		TestWebsocketModule
+		TestWebsocketModule,
+		ChatModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

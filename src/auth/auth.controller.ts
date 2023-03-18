@@ -13,7 +13,7 @@ export class AuthController
 	@Post('/login')
 	async login(@Res({ passthrough: true }) res: any, @Request() req: any)
 	{
-		res.cookie('access_token', await this.authService.login(req.user))
+		res.cookie('access_token', await this.authService.login(req.user), { secure: true })
 	}
 
 	@Get('/logout')

@@ -9,13 +9,15 @@ import { fetchGet } from '$lib/global'
 //	user = value;
 //});
 
-export const load = (async () => {
+export const load = (async ({ fetch }) => {
 
+    // const res1 = await fetch('/users/getAllDiscussions');
     const res1 = await fetchGet(PUBLIC_BACKEND_URL + '/users/getAllDiscussions');
     const discussions = await res1.json();
 
     console.log("Loaded", PUBLIC_BACKEND_URL + '/users/getAllDiscussions', discussions)
 
+    // const res2 = await fetch('/users/myName')
     const res2 = await fetchGet(PUBLIC_BACKEND_URL + '/users/myName')
     const { data: my_name } = await res2.json()
 

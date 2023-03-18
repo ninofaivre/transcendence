@@ -20,17 +20,26 @@ export function deleteCookie(cname: string) {
         document.cookie = cname + "=" + ";path=/" + ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
 }
 
+export async function fetchGet(apiEndPoint: string) {
+    return fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
+        mode: "cors",
+        credentials: "include",
+    })
+}
+
 export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
     let body = JSON.stringify(jsBody)
     let headers = {
         "Content-Type": "application/json",
     }
-    return await fetch(PUBLIC_BACKEND_URL + apiEndPoint,
-        {
-            method: "POST",
-            headers,
-            body,
-        }
+    //                 http://localhost:3000
+    return fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
+        mode: "cors",
+        credentials: "include",
+        method: "POST",
+        headers,
+        body,
+    }
     )
 }
 

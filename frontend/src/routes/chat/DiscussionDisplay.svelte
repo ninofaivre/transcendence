@@ -8,6 +8,7 @@ import { PUBLIC_BACKEND_URL } from '$env/static/public'
 import InfiniteLoading from 'svelte-infinite-loading';
 import ChatBox from './ChatBox.svelte';
 import ChatBubble from './ChatBubble.svelte';
+import { fetchGet } from '$lib/global'
 
 export let my_name: string
 export let displayed_messages: Message[]; // Exported so that incoming messages can be added
@@ -20,7 +21,7 @@ const switchMessages = async ( _discussionId: typeof discussionId ) =>
 {
     let fetched_messages;
     try   {
-        const response = await fetch(PUBLIC_BACKEND_URL + '/users/getnMessages/' + discussionId
+        const response = await fetchGet(PUBLIC_BACKEND_URL + '/users/getnMessages/' + discussionId
             + '?n=' + initial_load
         )
         fetched_messages = await response.json()
@@ -40,7 +41,7 @@ function infiniteHandler( e: InfiniteEvent )
     const { detail: {loaded, complete}} = e
     if (displayed_messages)
     {
-        fetch(`${api}` + discussionId + '?'
+        fetchGet(`${api}` + discussionId + '?'
             + 'start=' +  displayed_messages.length  
             + '&' +
             'n=' + loading_greediness

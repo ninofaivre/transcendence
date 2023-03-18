@@ -1,26 +1,26 @@
 <script lang="ts">
 
 	/* types */
-	import type { Discussion as DiscussionType } from '$types' // app.d.ts
+    import type { Discussion as DiscussionType } from '$lib/types' // app.d.ts
 	import type { PageData } from './$types'; // Generated type file
+    import type { Message } from '$lib/types'
 	
 	/* Components */
 	import DiscussionList from './DiscussionList.svelte'
 	import DiscussionDisplay from './DiscussionDisplay.svelte'
-	import ChatBox from './ChatBox.svelte'
 	import CreateDiscussion from './CreateDiscussion.svelte'
-	import { sse } from '$lib/sse'
+    import { InputChip } from '@skeletonlabs/skeleton'
 
-	/* utils */
-	import { onDestroy } from 'svelte'
+    / *utils /
+	import { sse } from '$lib/sse'
 
 	export let data: PageData
 
-	let discussions: DiscussionType[]; // = Object.values(data);
+	let discussions: DiscussionType[]; 
 	$: discussions = Object.values(data.discussions);
 
 	let idx = 0 
-	let all_messages = []
+	let all_messages: Message[][] = []
 
 	//onDestroy(data.unsubscribe);
 
@@ -53,16 +53,23 @@
 </script>
 
 {#if discussions.length }
-	<DiscussionList { discussions } bind:curr_disc_idx={idx} />
+    <!-- <DiscussionList { discussions } bind:curr_disc_idx={idx} /> -->
 	<br>
 	<br>
 	<CreateDiscussion />
-	<h2>
+
+	<div id=discussion-title>
 		{ discussions[idx].title || discussions[idx].users }
-	</h2>
+	</div>
+
 	<DiscussionDisplay bind:displayed_messages={ all_messages[idx] } discussionId={ idx + 1 } my_name={ data.my_name }/>
-	<ChatBox discussionId={ idx + 1} />
 {:else}
-	<p>You haven't started any conversations yet</p>
+    <div id=placeholder>
+        You haven't started any conversations yet
+    </div>
 	<CreateDiscussion />
 {/if}
+
+<style>
+</style>
+

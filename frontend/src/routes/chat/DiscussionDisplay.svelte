@@ -1,127 +1,82 @@
 <script lang="ts">
+	// DiscussionDisplay.svelte
 
-	// DiscussionDisplay.svelte 
+	import type { Message } from "$lib/types"
+	import type { InfiniteEvent } from "svelte-infinite-loading/types/index"
 
-	import { beforeUpdate, afterUpdate } from 'svelte'
+	import { PUBLIC_BACKEND_URL } from "$env/static/public"
+	import InfiniteLoading from "svelte-infinite-loading"
+	import ChatBox from "./ChatBox.svelte"
+	import ChatBubble from "./ChatBubble.svelte"
+	import { fetchGet } from "$lib/global"
 
-	let history_loader_reactivity = 0
-	let loading_greediness = 2
-	let history_beginning_reached = false
-	async function handleScroll( e: ScrollEvent )
-	{
-		if ( e.target.scrollTop <= history_loader_reactivity )
-		{
-			if (!history_beginning_reached)
-			{
-				console.log("Handling scroll")
-				console.log(displayed_messages[0])
-				let fetched_messages;
-				try   {
-//					const response = await fetch(window.location.origin + '/users/getnMessages/' + discussionId
-//						+ '?start=' + displayed_messages[0].id
-//						+ '&n=' + loading_greediness
-//					)
-					const response = await fetch(window.location.origin + '/users/getnMessages/' + discussionId
-						+ '?start=' + displayed_messages.length
-						+ '&n=' + loading_greediness
-					)
-					fetched_messages = await response.json()
-				} catch (err) {
-					alert("Sorry. Could not get history of previous conversation:" + err.message)
-					return;
-				}
-				if (fetched_messages.length < loading_greediness)
-					history_beginning_reached = true
-				if (fetched_messages.length > 0)
-					displayed_messages = [ ...fetched_messages, ...displayed_messages]
-			}
-		}
-	}
-
-	const initial_load = 10
- 	const switchMessages = async ( _discussionId ) => 
-	{
-		history_beginning_reached = false
-		let fetched_messages;
-		try   {
-			const response = await fetch(window.location.origin + '/users/getnMessages/' + discussionId
-				+ '?n=' + initial_load
-			)
-			fetched_messages = await response.json()
-		} catch (err) {
-			alert("Could not fetch conversation:" + err.message + "\n Try to reload the page")
-			return;
-		}
-		if (_discussionId === discussionId)
-			displayed_messages = fetched_messages
-	}
-
+	export let my_name: string
+	export let displayed_messages: Message[] // Exported so that incoming messages can be added
 	export let discussionId: number // To detect change of current conversation
 	$: switchMessages(discussionId)
 
-	export let displayed_messages = []; // Exported so that incoming messages can be added
+	const initial_load = 10
+	const reactivity = 10
+	const switchMessages = async (_discussionId: typeof discussionId) => {
+		let fetched_messages
+		try {
+			const response = await fetchGet(
+				PUBLIC_BACKEND_URL + "/users/getnMessages/" + discussionId + "?n=" + initial_load
+			)
+			fetched_messages = await response.json()
+		} catch (err: any) {
+			// Can't type what's caught because it could catch anything
+			alert("Could not fetch conversation:" + err.message + "\n Try to reload the page")
+			return
+		}
+		if (_discussionId === discussionId) displayed_messages = fetched_messages
+	}
 
-	export let my_name
+	let loading_greediness = 2
+	const api: string = "/users/getnMessages/"
 
-	let n_displayed = 10
-
-	let chatbox: HTMLDivElement
-	let autoscroll
-	beforeUpdate(()	=> {
-		autoscroll	=
-			 chatbox && chatbox.offsetHeight + chatbox.scrollTop > chatbox.scrollHeight - 20 // Ideally the height of a bubble ?
-			 && console.log(`${chatbox.offsetHeight} + ${chatbox.scrollTop} > ${chatbox.scrollHeight} - 20`)
-		console.log(autoscroll)
-	 });
-
-	afterUpdate(() => {
-		if (autoscroll && chatbox) 
-			chatbox.scrollTo(0, chatbox.scrollHeight) // elt.scrollHeight is the bottom, 0 is the top
-	 });
-	 
+	function infiniteHandler(e: InfiniteEvent) {
+		const {
+			detail: { loaded, complete }
+		} = e
+		if (displayed_messages) {
+			fetchGet(
+				`${api}` +
+					discussionId +
+					"?" +
+					"start=" +
+					displayed_messages.length +
+					"&" +
+					"n=" +
+					loading_greediness
+			)
+				.then((response) => response.json())
+				.then((fetched_messages) => {
+					if (fetched_messages.length > 0) {
+						displayed_messages = [...fetched_messages, ...displayed_messages]
+						loaded()
+					} else {
+						complete()
+					}
+				})
+		}
+	}
 </script>
 
-<div id=message-box
-	 on:scroll|stopImmediatePropagation={ handleScroll }
-	 bind:this={ chatbox }
-	 style:height={ `${window.innerHeight / 2}px` }
->
-	{#if !displayed_messages?.length }
-		<p> This conversation has not started yet </p>
-	{:else}
-		{#if history_beginning_reached }
-			<p>This is the beginning of your conversation<p/>
-		{/if}
-		{#each displayed_messages as message}
-			{#if message.from == my_name }
-				<div class="my-messages" > { `${message.id}: ${message.content}` } </div>
-			{:else}
-				<div class="other-messages"  > { `${message.from}: ${message.id}: ${message.content}` } </div>
-			{/if}
-		{/each}
-	{/if}
-</div>
+<!-- <div id=message-box -->
+<!-- > -->
+{#if !displayed_messages?.length}
+	<p>This conversation has not started yet</p>
+{:else}
+	<InfiniteLoading on:infinite={infiniteHandler} direction="top" distance={reactivity} />
+	{#each displayed_messages as message}
+		<ChatBubble from_me={message.from === my_name} from={message.from}>
+			{`${message.id}: ${message.content}`}
+		</ChatBubble>
+	{/each}
+{/if}
+<ChatBox {discussionId} />
 
+<!-- </div> -->
 <style>
-	#message-box {
-		overflow-y: scroll;
-	}
-
-	.my-messages, .other-messages  {
-		border: solid 1px black;
-		border-radius: 5px;
-		margin: 1% 5%;
-		padding: 5px;
-	}
-	
-	.my-messages   {
-		background-color: lightgreen;
-		text-align: right;
-	}
-
-	.other-messages   {
-		background-color: lightblue;
-		text-align: left;
-	}
-	
 </style>

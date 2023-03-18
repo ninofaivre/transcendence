@@ -1,8 +1,7 @@
 <script lang="ts">
 
-	import type { message } from '$types'
-	import { current_user } from '$lib/stores'
 	import { onMount } from 'svelte'
+    import { fetchPostJSON } from '$lib/global'
 
 	export let margin = 10
 	export let rows = 1;
@@ -14,24 +13,20 @@
 	let disabled = false;
 
 	async function sendMessage() {
-		const headers =  {
-			"Content-Type": "application/json",
-		}
+
 		disabled = true
-		console.log("Fetching ", window.location.host + '/users/createMessage')
-		fetch(window.location.origin + '/users/createMessage', {
-			method: 'POST',
-			headers,
-			body: JSON.stringify( {
-				discussionId,
-				content: new_message,
-			}),
-		})
-		.then(() => { new_message = "" })
-		.catch((err) =>  { 
-			console.log(err)
-			alert(`Could not send message because ${err.message}`)
-		})
+
+        fetchPostJSON('/users/createMessage', JSON.stringify( {
+            discussionId,
+            content: new_message
+            })
+        )
+            .then(() => { new_message = "" })
+            .catch((err: any) =>  { 
+                console.log(err)
+                alert(`Could not send message because ${err.message}`)
+            })
+        
 		disabled = false
 	}
 
@@ -48,8 +43,12 @@
 
 </script>
 
-<div style:bottom=10px style:left={`${margin}px`} >
-	<label for="textarea-input" hidden>
+<div style:bottom=10px style:left={`${margin}px`}
+    class=""
+>
+    <label for="textarea-input" hidden
+        class="label"
+    >
 		Type your message here
 	</label>
 		<textarea id="textarea-input"
@@ -59,14 +58,18 @@
 			{ cols }
 			{ disabled }
 			{ placeholder }
+            class="textarea"
 		/>
-	<button on:click={ sendMessage }> Send </button>
+    <button on:click={ sendMessage }
+        class="btn"
+    > Send </button>
 </div>
 
 <style>
 
 	div {
-		position: fixed;
+		position: sticky;
+        background: rgba(128,90,220,1);
 	}
 
 	::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */

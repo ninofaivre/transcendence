@@ -6,19 +6,18 @@ import { ValidationPipe } from '@nestjs/common';
 import * as fs from 'fs'
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule, {
-        httpsOptions:
-        {
-            key: fs.readFileSync('./secrets/key.pem'),
-            cert: fs.readFileSync('./secrets/cert.pem'),
-        },
-        cors:
-        {
-            // origin: true,
-            origin: ['https://localhost:3000', 'https://localhost:5173', 'https://localhost'],
-            credentials: true,
-        },
-    });
+	const app = await NestFactory.create(AppModule, {
+		httpsOptions:
+		{
+			key: fs.readFileSync('./secrets/key.pem'),
+			cert: fs.readFileSync('./secrets/cert.pem'),
+		},
+		cors:
+		{
+			origin: ['https://localhost:3000', 'https://localhost:5173', 'https://localhost'],
+			credentials: true,
+		}
+	});
 
     app.use(cookieParser())
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, transformOptions: { enableImplicitConversion: true } }));

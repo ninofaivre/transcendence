@@ -8,15 +8,16 @@ import { AuthService } from './auth.service'
 export class AuthController {
     constructor(private authService: AuthService) { }
 
-    @UseGuards(LocalAuthGuard)
-    @Post('/login')
-    async login(@Res({ passthrough: true }) res: any, @Request() req: any) {
-        res.cookie('access_token', await this.authService.login(req.user), {
-            // sameSite: "None",
-            sameSite: true,
-            secure: true,
-        })
-    }
+	@UseGuards(LocalAuthGuard)
+	@Post('/login')
+	async login(@Res({ passthrough: true }) res: any, @Request() req: any)
+	{
+		res.cookie('access_token', await this.authService.login(req.user),
+			{
+				secure: true,
+				sameSite: true
+			})
+	}
 
     @Get('/logout')
     async logout(@Res({ passthrough: true }) res: any) {

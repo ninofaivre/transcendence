@@ -1,5 +1,7 @@
 #!/bin/bash
 
-npx prisma studio &
+nest build
+
+pnpm exec prisma studio &
 
 nest start $@

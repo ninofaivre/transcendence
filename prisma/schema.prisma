@@ -15,8 +15,8 @@ model User {
 
   password String
 
-  directMessageMe DirectMessage[] @relation(name: "directMessage")
-  //directMessageOtherGuy DirectMessage[] @relation(name: "directMessage")
+  directMessage DirectMessage[] @relation(name: "directMessage")
+  chan          Chan[]          @relation(name: "chan")
 
   friendList   User[] @relation("friendList")
   friendOfList User[] @relation("friendList")
@@ -31,10 +31,21 @@ model User {
   discussionEvent   DiscussionEvent[]
 }
 
-enum DiscussionType {
-  PRIVATE_CHAN
-  PUBLIC_CHAN
-  DIRECT_MESSAGE
+enum ChanType {
+  PRIVATE
+  PUBLIC
+}
+
+model Chan {
+  id Int @id @default(autoincrement())
+
+  type     ChanType
+  title    String?
+  password String?
+
+  users        User[]     @relation(name: "chan")
+  discussion   Discussion @relation(fields: [discussionId], references: [id])
+  discussionId Int        @unique
 }
 
 model DirectMessage {
@@ -49,8 +60,9 @@ model Discussion {
   id Int @id @default(autoincrement())
 
   directMessage DirectMessage?
+  chan          Chan?
 
-  messages DiscussionElement[]
+  elements DiscussionElement[]
 }
 
 model DiscussionElement {

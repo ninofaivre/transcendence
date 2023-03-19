@@ -33,7 +33,7 @@ export class ChatService
 	async getDiscussions(username: string, filter: discussionsFilterType)
 	{
 		return this.prisma.user.findUnique({ where: { name: username },
-								select: { directMessageMe: { include: { users: { select: {name :true } } } }}})
+								select: { directMessage: { include: { users: { select: {name :true } } } }}})
 	}
 	/*
 	async getDiscussions(username: string, filter: discussionsFilterType)

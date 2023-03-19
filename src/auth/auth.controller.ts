@@ -16,7 +16,6 @@ export class AuthController {
 			{
 				secure: true,
 				sameSite: true,
-				hostOnly: false
 			})
 	}
 

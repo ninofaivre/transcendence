@@ -14,8 +14,8 @@ async function bootstrap() {
 		},
 		cors:
 		{
-			origin: ['https://localhost:3000', 'https://localhost:5173', 'https://localhost'],
 			credentials: true,
+			origin: ['https://localhost:3000', 'https://localhost:5173', 'https://localhost'],
 		}
 	});
 

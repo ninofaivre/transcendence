@@ -4,7 +4,6 @@
 	import type { Message } from "$lib/types"
 	import type { InfiniteEvent } from "svelte-infinite-loading/types/index"
 
-	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import InfiniteLoading from "svelte-infinite-loading"
 	import ChatBox from "./ChatBox.svelte"
 	import ChatBubble from "./ChatBubble.svelte"
@@ -21,7 +20,7 @@
 		let fetched_messages
 		try {
 			const response = await fetchGet(
-				PUBLIC_BACKEND_URL + "/users/getnMessages/" + discussionId + "?n=" + initial_load
+				"/users/getnMessages/" + discussionId + "?n=" + initial_load
 			)
 			fetched_messages = await response.json()
 		} catch (err: any) {

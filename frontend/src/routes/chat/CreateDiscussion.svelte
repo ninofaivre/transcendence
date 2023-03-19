@@ -11,7 +11,7 @@
 		show_discussion_creation_form = false
 		let formdata = new FormData(form) // `form` is bound to the form node
 		console.log(formdata)
-		let res = await fetchPostJSON("/users/createDiscussion", {
+		let res = await fetchPostJSON("/chat/createDiscussion", {
 			title: formdata.get("title"),
 			users: formdata.get("users")
 		})

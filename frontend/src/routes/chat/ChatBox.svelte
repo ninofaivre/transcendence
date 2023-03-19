@@ -16,7 +16,7 @@
 
 		disabled = true
 
-        fetchPostJSON('/users/createMessage', JSON.stringify( {
+        fetchPostJSON('/chat/createMessage', JSON.stringify( {
             discussionId,
             content: new_message
             })

@@ -20,7 +20,7 @@
 		let fetched_messages
 		try {
 			const response = await fetchGet(
-				"/users/getnMessages/" + discussionId + "?n=" + initial_load
+				"/chat/getnMessages/" + discussionId + "?n=" + initial_load
 			)
 			fetched_messages = await response.json()
 		} catch (err: any) {
@@ -32,7 +32,7 @@
 	}
 
 	let loading_greediness = 2
-	const api: string = "/users/getnMessages/"
+	const api: string = "/chat/getnMessages/"
 
 	function infiniteHandler(e: InfiniteEvent) {
 		const {

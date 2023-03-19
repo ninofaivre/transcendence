@@ -3,21 +3,23 @@ import { LocalAuthGuard } from './local-auth.guard'
 import { AuthService } from './auth.service'
 
 @Controller('auth')
-export class AuthController
-{
-	constructor(private authService: AuthService) {}
+export class AuthController {
+    constructor(private authService: AuthService) { }
 
 	@UseGuards(LocalAuthGuard)
 	@Post('/login')
 	async login(@Res({ passthrough: true }) res: any, @Request() req: any)
 	{
-		res.cookie('access_token', await this.authService.login(req.user))
+		res.cookie('access_token', await this.authService.login(req.user),
+			{
+				secure: true,
+				sameSite: true,
+			})
 	}
 
-	@Get('/logout')
-	async logout(@Res({ passthrough: true }) res: any)
-	{
-		res.cookie('access_token', '', { expires: new Date(0) })
-	}
+    @Get('/logout')
+    async logout(@Res({ passthrough: true }) res: any) {
+        res.cookie('access_token', '', { expires: new Date(0) })
+    }
 
 }

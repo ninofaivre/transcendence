@@ -1,4 +1,6 @@
+import { PUBLIC_BACKEND_URL } from '$env/static/public'
 import type { PageLoad } from './$types.d';
+import { fetchGet } from '$lib/global'
 //import { current_user } from '$lib/stores'
 
 //let user = "username not set";
@@ -6,22 +8,22 @@ import type { PageLoad } from './$types.d';
 //const unsubscribe = current_user.subscribe( (value: string) => {
 //	user = value;
 //});
- 
-export const load = ( async ({ fetch, url }) => {
 
-  const res1 = await fetch( url.origin + '/users/getAllDiscussions');
-  const discussions = await res1.json();
+export const load = (async ({ fetch }) => {
 
-  console.log( "Loaded", url.origin + '/users/getAllDiscussions', discussions )
+    const res1 = await fetchGet('/users/getAllDiscussions');
+    const discussions = await res1.json();
 
-  const res2  = await fetch( url.origin + '/users/myName')
-  const { data: my_name } = await res2.json()
+    console.log("Loaded", PUBLIC_BACKEND_URL + '/users/getAllDiscussions', discussions)
 
-  console.log(my_name)
+    const res2 = await fetchGet('/users/myName')
+    const { data: my_name } = await res2.json()
 
-  return {
-	  discussions,
-	  my_name,
-  } 
+    console.log(my_name)
+
+    return {
+        discussions,
+        my_name,
+    }
 }) satisfies PageLoad;
 

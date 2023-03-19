@@ -15,7 +15,8 @@ export class AuthController {
 		res.cookie('access_token', await this.authService.login(req.user),
 			{
 				secure: true,
-				sameSite: true
+				sameSite: true,
+				hostOnly: false
 			})
 	}
 

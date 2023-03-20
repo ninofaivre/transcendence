@@ -16,7 +16,8 @@ model User {
   password String
 
   directMessage DirectMessage[] @relation(name: "directMessage")
-  chan          Chan[]          @relation(name: "chan")
+  publicChan    PublicChan[]    @relation(name: "publicChan")
+  privateChan   PrivateChan[]   @relation(name: "privateChan")
 
   friendList   User[] @relation("friendList")
   friendOfList User[] @relation("friendList")
@@ -31,19 +32,22 @@ model User {
   discussionEvent   DiscussionEvent[]
 }
 
-enum ChanType {
-  PRIVATE
-  PUBLIC
-}
-
-model Chan {
+model PublicChan {
   id Int @id @default(autoincrement())
 
-  type     ChanType
-  title    String?
+  title    String  @unique
   password String?
 
-  users        User[]     @relation(name: "chan")
+  users        User[]     @relation(name: "publicChan")
+  discussion   Discussion @relation(fields: [discussionId], references: [id])
+  discussionId Int        @unique
+}
+
+model PrivateChan {
+  id Int @id @default(autoincrement())
+
+  title        String?
+  users        User[]     @relation(name: "privateChan")
   discussion   Discussion @relation(fields: [discussionId], references: [id])
   discussionId Int        @unique
 }
@@ -60,7 +64,8 @@ model Discussion {
   id Int @id @default(autoincrement())
 
   directMessage DirectMessage?
-  chan          Chan?
+  privateChan   PrivateChan?
+  publicChan    PublicChan?
 
   elements DiscussionElement[]
 }
@@ -86,8 +91,8 @@ model DiscussionEvent {
 
   eventType String
 
-  concernedUserRelation User   @relation(fields: [concernedUser], references: [name])
-  concernedUser         String @unique
+  concernedUserRelation User?   @relation(fields: [concernedUser], references: [name])
+  concernedUser         String? @unique
 
   discussionElement   DiscussionElement @relation(fields: [discussionElementId], references: [id])
   discussionElementId Int               @unique

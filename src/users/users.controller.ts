@@ -5,11 +5,12 @@ import { UsersService } from './users.service'
 import { CreateUserDTO } from './dto/createUser.dto'
 import { Observable, interval, map, finalize } from 'rxjs'
 import { OneUsernameDTO } from './dto/oneUsername.dto';
-import { ApiParam, ApiResponseProperty } from '@nestjs/swagger';
+import { ApiParam, ApiResponseProperty, ApiTags } from '@nestjs/swagger';
 import { GetFriendInvitationListQueryDTO } from './dto/getFriendInvitationList.query.dto';
 import { GetBlockedListQueryDTO } from './dto/getBlockedList.query.dto';
 import { Username } from './decorator/username.decorator';
 
+@ApiTags('users')
 @Controller('users')
 export class UsersController
 {
@@ -29,63 +30,63 @@ export class UsersController
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/friendList')
+	@Get('/friends')
 	async getFriendList(@Request()req: any)
 	{
 		return this.usersService.getFriendList(req.user.username)
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/friendInvitationList')
+	@Get('/friendInvitations')
 	async getFriendInvitationList(@Request()req: any, @Query(ValidationPipe)dto: GetFriendInvitationListQueryDTO)
 	{
 		return this.usersService.getFriendInvitationList(req.user.username, dto.filter)
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('/createFriendInvitation')
+	@Post('/friendInvitations')
 	async createFriendInvitation(@Request()req: any, @Body(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
 	{
 		return this.usersService.createFriendInvitation(req.user.username, oneUsernameDTO.username)
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete('/deleteFriendInvitation/:username')
+	@Delete('/friendInvitations/:username')
 	async deleteFriendInvitation(@Request()req: any, @Param(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
 	{
 		return this.usersService.deleteFriendInvitation(req.user.username, oneUsernameDTO.username)
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('/createFriend')
+	@Post('/friends')
 	async createFriend(@Request()req: any, @Body(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
 	{
 		return this.usersService.createFriend(req.user.username, oneUsernameDTO.username)
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete('/deleteFriend/:username')
+	@Delete('/friends/:username')
 	async deleteFriend(@Request()req: any, @Param(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
 	{
 		return this.usersService.deleteFriend(req.user.username, oneUsernameDTO.username)
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/blockedList')
+	@Get('/blockedUsers')
 	async getBlockedUsers(@Request()req: any, @Query(ValidationPipe)dto: GetBlockedListQueryDTO)
 	{
 		return this.usersService.getBlockedUsers(req.user.username, dto.filter)
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('/blockUser')
+	@Post('/blockedUsers')
 	async blockUser(@Request()req: any, @Body(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
 	{
 		return this.usersService.blockUser(req.user.username, oneUsernameDTO.username)
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete('/blockedUser/:username')
+	@Delete('/blockedUsers/:username')
 	async deleteBlocked(@Request()req: any, @Param(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
 	{
 		return this.usersService.deleteBlocked(req.user.username, oneUsernameDTO.username)

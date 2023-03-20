@@ -1,17 +1,21 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, Sse, UseGuards, ValidationPipe, MessageEvent } from '@nestjs/common';
-import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, Sse, UseGuards, ValidationPipe, MessageEvent, Next } from '@nestjs/common';
+import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { finalize, Observable } from 'rxjs';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { LeaveDiscussionDTO } from 'src/users/dto/leaveDiscussion.dto';
 import { OneUsernameDTO } from 'src/users/dto/oneUsername.dto';
 import { ChatService } from './chat.service';
 import { DiscussionsService } from './discussions.service';
-import { CreateDiscussionDTO } from './dto/createDiscussion.dto';
+import { CreateChanDTO } from './dto/createChan.dto';
+import { CreateDirectMessageDTO } from './dto/createDirectMessage.dto';
+import { CreateDiscussionTypePathDTO } from './dto/createDiscussionType.path.dto';
 import { CreateMessageDTO } from './dto/createMessage.dto';
-import { GetDiscussionsQueryDTO } from './dto/getDiscussions.query.dto';
+import { GetChansPathDTO } from './dto/getChans.path.dto';
+import { GetDiscussionsPathDTO } from './dto/getDiscussions.path.dto';
 import { GetnMessagesQueryDTO } from './dto/getnMessages.query.dto';
 import { MessagesService } from './messages.service';
 
+@ApiTags('chat')
 @Controller('chat')
 export class ChatController
 {
@@ -20,18 +24,39 @@ export class ChatController
 			    private readonly messagesService: MessagesService) {}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/getDiscussions')
-	async getDiscussions(@Request() req: any, @Query(ValidationPipe)getDiscussionsQueryDTO: GetDiscussionsQueryDTO)
+	@Get('/discussions/:discussionType/')
+	async getDiscussions(@Request() req: any, @Param(ValidationPipe)getDiscussionsPathDTO: GetDiscussionsPathDTO)
 	{
-		return this.chatService.getDiscussions(req.user.username, getDiscussionsQueryDTO.filter)
+		return this.chatService.getDiscussions(req.user.username, getDiscussionsPathDTO.discussionType)
+	}
+	
+	@UseGuards(JwtAuthGuard)
+	@Get('/discussions/CHAN/:chanType/')
+	async getChans(@Request() req: any, @Param(ValidationPipe)getChansPathDTO: GetChansPathDTO)
+	{
+		return this.chatService.getChans(req.user.username, getChansPathDTO.chanType)
 	}
 
-	@UseGuards(JwtAuthGuard)
-	@Post('/createDm')
-	async createDm(@Request() req: any, @Body(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
-   	{
-		return this.chatService.createDm(req.user.username, oneUsernameDTO.username)
-	}
+	// @UseGuards(JwtAuthGuard)
+	// @Get('/discussions/:type/:id')
+	// async getDiscussionById(@Request() req: any, @Param(ValidationPipe)dto: GetDiscussionByIdPathDTO)
+	// {
+	// 	return this.chatService.getDiscussionById(req.user.username, dto.type, dto.id)
+	// }
+	//
+	// @UseGuards(JwtAuthGuard)
+	// @Post('/discussions/DM')
+	// async createDirectMessage(@Request() req: any, @Body(ValidationPipe)dto: CreateDirectMessageDTO)
+ //   	{
+	// 	return this.chatService.createDm(req.user.username, dto.username)
+	// }
+	//
+	// @UseGuards(JwtAuthGuard)
+	// @Post('/discussions/CHAN')
+	// async createChan(@Request() req: any, @Body(ValidationPipe)dto: CreateChanDTO)
+ //   	{
+	// 	return this.chatService.createChan(req.user.username, dto)
+	// }
 
 	/*
 	@UseGuards(JwtAuthGuard)

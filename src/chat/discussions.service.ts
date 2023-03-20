@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service'
 import { UsersService } from '../users/users.service'
 import { NotFoundException, UnauthorizedException } from '@nestjs/common'
-import { CreateDiscussionDTO } from './dto/createDiscussion.dto';
 import { ChatService } from './chat.service';
 
 @Injectable()

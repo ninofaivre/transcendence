@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, Sse, UseGuards, ValidationPipe, MessageEvent, Next } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, Sse, UseGuards, ValidationPipe, MessageEvent, Next, Delete, BadRequestException } from '@nestjs/common';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { finalize, Observable } from 'rxjs';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -8,11 +8,12 @@ import { ChatService } from './chat.service';
 import { DiscussionsService } from './discussions.service';
 import { CreateChanDTO } from './dto/createChan.dto';
 import { CreateDirectMessageDTO } from './dto/createDirectMessage.dto';
-import { CreateDiscussionTypePathDTO } from './dto/createDiscussionType.path.dto';
+import { CreateDiscussionDTO } from './dto/createDiscussion.dto';
 import { CreateMessageDTO } from './dto/createMessage.dto';
-import { GetChansPathDTO } from './dto/getChans.path.dto';
-import { GetDiscussionsPathDTO } from './dto/getDiscussions.path.dto';
+import { DiscussionIdPathDTO } from './dto/discussionId.path.dto';
+import { GetDiscussionsQueryDTO } from './dto/getDiscussions.query.dto';
 import { GetnMessagesQueryDTO } from './dto/getnMessages.query.dto';
+import { KickUserFromDiscussionPathDTO } from './dto/kickUserFromDiscussion.path.dto';
 import { MessagesService } from './messages.service';
 
 @ApiTags('chat')
@@ -23,27 +24,56 @@ export class ChatController
 			    private readonly discussionsService: DiscussionsService,
 			    private readonly messagesService: MessagesService) {}
 
+
 	@UseGuards(JwtAuthGuard)
-	@Get('/discussions/:discussionType/')
-	async getDiscussions(@Request() req: any, @Param(ValidationPipe)getDiscussionsPathDTO: GetDiscussionsPathDTO)
+	@Get('/discussions')
+	async getDiscussions(@Request()req: any, @Query(ValidationPipe)dto: GetDiscussionsQueryDTO)
 	{
-		return this.chatService.getDiscussions(req.user.username, getDiscussionsPathDTO.discussionType)
-	}
-	
-	@UseGuards(JwtAuthGuard)
-	@Get('/discussions/CHAN/:chanType/')
-	async getChans(@Request() req: any, @Param(ValidationPipe)getChansPathDTO: GetChansPathDTO)
-	{
-		return this.chatService.getChans(req.user.username, getChansPathDTO.chanType)
+		return this.chatService.getDiscussions(req.user.username, dto.discussionFilter, dto.chanFilter)
 	}
 
-	// @UseGuards(JwtAuthGuard)
-	// @Get('/discussions/:type/:id')
-	// async getDiscussionById(@Request() req: any, @Param(ValidationPipe)dto: GetDiscussionByIdPathDTO)
-	// {
-	// 	return this.chatService.getDiscussionById(req.user.username, dto.type, dto.id)
-	// }
-	//
+	@UseGuards(JwtAuthGuard)
+	@Get('/discussions/:discussionId')
+	async getDiscussionById(@Request()req: any, @Param(ValidationPipe)dto: DiscussionIdPathDTO)
+	{
+		return this.chatService.getDiscussionById(req.user.username, dto.discussionId)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('/discussions/:discussionId/users')
+	async addUserToDiscussion(@Request()req: any, @Param(ValidationPipe)pathDto: DiscussionIdPathDTO, @Body(ValidationPipe)dto: OneUsernameDTO)
+	{
+		return this.chatService.addUserToDiscussion(req.user.username, pathDto.discussionId, dto.username)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Delete('/discussions/:discussionId/users/:username')
+	async kickUserFromDiscussion(@Request()req: any, @Param()dto: KickUserFromDiscussionPathDTO)
+	{
+		return this.chatService.removeUserFromDiscussionById(req.user.username, dto.username, dto.discussionId)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('/discussions')
+	async createDiscussion(@Request()req: any, @Body(ValidationPipe)dto: CreateDiscussionDTO)
+	{
+		if (Number(!!dto.publicChan) + Number(!!dto.privateChan) + Number(!!dto.dm) != 1)
+			throw new BadRequestException("You can post only and not less than one type of discussion")
+		if (dto.dm)
+			return this.chatService.createDm(req.user.username, dto.dm.username)
+		if (dto.publicChan)
+			return this.chatService.createPublicChan(req.user.username, dto.publicChan)
+		if (dto.privateChan)
+			return this.chatService.createPrivateChan(req.user.username, dto.privateChan.title)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Delete('/discussions/:discussionId')
+	async leaveDiscussion(@Request()req: any, @Param(ValidationPipe)dto: DiscussionIdPathDTO)
+	{
+		return this.chatService.removeUserFromDiscussionById(req.user.username, req.user.username, dto.discussionId)
+	}
+
 	// @UseGuards(JwtAuthGuard)
 	// @Post('/discussions/DM')
 	// async createDirectMessage(@Request() req: any, @Body(ValidationPipe)dto: CreateDirectMessageDTO)

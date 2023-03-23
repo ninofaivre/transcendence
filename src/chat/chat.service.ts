@@ -1,13 +1,12 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, MessageEvent, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { hash } from 'bcrypt';
-//import { DiscussionType, Discussion } from '@prisma/client'
+import { ChanType, PermissionList, RoleApplyingType } from '@prisma/client'
 import { Subject } from 'rxjs';
 import { PrismaService } from 'src/prisma.service';
 import { Username } from 'src/users/decorator/username.decorator';
-import { CreateChanDTO } from './dto/createChan.dto';
-import { CreatePublicChanDTO } from './dto/createDiscussion.dto';
-import { chanEnumType, discussionEnumType } from './dto/getDiscussions.query.dto';
+import { CreateDiscussionDTO, CreatePrivateChanDTO, CreatePublicChanDTO } from './dto/createDiscussion.dto';
+import { discussionEnumType } from './dto/getDiscussions.query.dto';
 
 @Injectable()
 export class ChatService
@@ -16,16 +15,39 @@ export class ChatService
 
 	private eventSource = new Map<String, Subject<MessageEvent>>()
 
+	private defaultPermissions: PermissionList[] =
+	[
+		'INVITE',
+		'SEND_MESSAGE',
+	]
+
+	private adminPermissions: PermissionList[] =
+	[
+		'KICK',
+		'BAN',
+		'MUTE'
+	]
+
 	private usersSelect: Prisma.UserSelect = { name: true, }
 
-	private publicChanSelect: Prisma.PublicChanSelect =
+	private rolesSelect: Prisma.RoleSelect =
 	{
-		discussionId: true,
-		title: true,
+		permissions: true,
+		roleApplyingType: true,
+		roles: { select: { name: true } },
+		name: true,
 		users: { select: this.usersSelect },
 	}
 
-	private privateChanSelect: Prisma.PrivateChanSelect = { ...this.publicChanSelect }
+	private chanSelect: Prisma.ChanSelect =
+	{
+		discussionId: true,
+		title: true,
+		type: true,
+		owner: { select: this.usersSelect },
+		users: { select: this.usersSelect },
+		roles: { select: this.rolesSelect },
+	}
 
 	private directMessageSelect: Prisma.DirectMessageSelect =
 	{
@@ -50,24 +72,19 @@ export class ChatService
 		this.eventSource.delete(username)
 	}
 
-	async getDiscussions(username: string, discussionFilter: discussionEnumType, chanFilter: chanEnumType)
+	async getDiscussions(username: string, discussionFilter: discussionEnumType)
 	{
 		const select: Prisma.UserSelect =
 		{
-			publicChan: ((discussionFilter === 'ALL' || discussionFilter === 'CHAN') && (chanFilter === 'ALL' || chanFilter === 'PUBLIC')) && { select: this.publicChanSelect },
-			privateChan: ((discussionFilter === 'ALL' || discussionFilter === 'CHAN') && (chanFilter === 'ALL' || chanFilter === 'PRIVATE')) && { select: this.privateChanSelect },
+			chans: (discussionFilter === 'ALL' || discussionFilter === 'CHAN') && { select: this.chanSelect },
 			directMessage: (discussionFilter === 'ALL' || discussionFilter === 'DM') && { select: this.directMessageSelect }
 		}
 		const res = await this.prisma.user.findUnique({ where: { name: username }, select: select })
 		if (discussionFilter === 'DM')
 			return res.directMessage
 		if (discussionFilter === 'CHAN')
-		{
-			if (chanFilter !== 'ALL')
-				return res.publicChan || res.privateChan
-			return { public: res.publicChan, private: res.privateChan }
-		}
-		return { dm: res.directMessage, chan: { private: res.privateChan, public: res.publicChan } }
+			return res.chans
+		return { dm: res.directMessage, chan: res.chans }
 	}
 
 	async getDiscussionById(username: string, id: number)
@@ -80,20 +97,13 @@ export class ChatService
 					where: { discussionId: id },
 					select: this.directMessageSelect
 				},
-				privateChan:
+				chans:
 				{
 					where: { discussionId: id },
-					select: this.privateChanSelect
-				},
-				publicChan:
-				{
-					where: { discussionId: id },
-					select: this.publicChanSelect
-				}
-			}})
+					select: this.chanSelect
+				}}})
 		return res.directMessage.length && { type: 'DM', discussion: res.directMessage[0] }
-			|| res.privateChan.length && { type: 'PRIVATE_CHAN', discussion: res.privateChan[0] }
-			|| res.publicChan.length && { type: 'PUBLIC_CHAN', discussion: res.publicChan[0] }
+			|| res.chans.length && { type: 'CHAN', discussion: res.chans[0] }
 	}
 
 	async addUserToDiscussion(username: string, id: number, friendUsername: string)
@@ -103,120 +113,103 @@ export class ChatService
 			{
 				friendList: { where: { name: friendUsername } },
 				friendOfList: { where: { name: friendUsername } },
-				privateChan: { where: { discussionId: id }, select: { discussionId: true } },
-				publicChan: { where: { discussionId: id }, select: { discussionId: true } },
+				chans: { where: { discussionId: id }, select: { users: { select: this.usersSelect } } },
 			}})
-		if (!res.privateChan.length && !res.publicChan.length)
+		if (!res.chans.length)
 			throw new BadRequestException(`the discussion with id ${id} does not exist or you are not in`)
 		if (!res.friendList.length && !res.friendOfList.length)
 			throw new BadRequestException(`your are not friend with ${friendUsername}`)
-		if (res.publicChan.length)
-		{
-			return this.prisma.publicChan.update({ where: { discussionId: id },
-				data:
-				{
-					users: { connect: { name: friendUsername } }
-				}})
-		}
-		if (res.privateChan.length)
-		{
-			return this.prisma.privateChan.update({ where: { discussionId: id },
-				data:
-				{
-					users: { connect: { name: friendUsername } }
-				}})
-		}
+		if (res.chans[0].users.some(el => el.name === friendUsername))
+			throw new ConflictException(`${friendUsername} is already in chan`)
+		await this.prisma.chan.update({ where: { discussionId: id },
+			data:
+			{
+				users: { connect: { name: friendUsername } }
+			}})
 	}
 
 	async removeUserFromDiscussionById(removingUsername: string, removedUsername: string, id: number)
 	{
-		const tryUpdatingPrivateChanPromise = this.prisma.privateChan.update({
-			where:
-			{
-				discussionId: id,
-				AND:
-				[
-					{ users: { some: { name: removingUsername } } },
-					{ users: { some: { name: removedUsername } } },
-				]
-			},
-			data:
-			{
-				users: { disconnect: { name: removedUsername } }
-			}})
-		const tryUpdatingPublicChanPromise = this.prisma.publicChan.update({
-			where:
-			{
-				discussionId: id,
-				AND:
-				[
-					{ users: { some: { name: removingUsername } } },
-					{ users: { some: { name: removedUsername } } },
-				]
-			},
-			data:
-			{
-				users: { disconnect: { name: removedUsername } }
-			}})
 		try
 		{
-			await Promise.any([tryUpdatingPrivateChanPromise, tryUpdatingPublicChanPromise]) 
-			return "success"
+			await this.prisma.chan.update({
+				where:
+				{
+					discussionId: id,
+					AND:
+					[
+						{ users: { some: { name: removingUsername } } },
+						{ users: { some: { name: removedUsername } } },
+					]
+				},
+				data:
+				{
+					users: { disconnect: { name: removedUsername } }
+				}})
 		}
 		catch
 		{
 			return "failure"
 		}
+		return "success"
 	}
 
-	async createPublicChan(username: string, dto: CreatePublicChanDTO)
+	async doesUserHasRightToInChan(chanId: number, perm: PermissionList, username: string, otherUsername?: string)
 	{
-		if (dto.password)
-			dto.password = await hash(dto.password, 10)
+		if (username === otherUsername)
+			return false
+		// const res = await this.prisma.discussion
+	}
+
+	async createChan(username: string, dto: CreateDiscussionDTO)
+	{
+		console.log(dto)
+		if (dto.publicChan?.password)
+			dto.publicChan.password = await hash(dto.publicChan.password, 10)
 		try
 		{
-		return (await this.prisma.discussion.create({
-			data:
-			{
-				publicChan:
+			const res = await this.prisma.discussion.create({
+				data:
 				{
-					create:
+					chan:
 					{
-						title: dto.title,
-						password: dto.password,
-						users: { connect: { name: username } }
+						create:
+						{
+							type: dto.privateChan && ChanType.PRIVATE || ChanType.PUBLIC,
+							title: dto.privateChan?.title || dto.publicChan?.title,
+							password: dto.publicChan?.password,
+							owner: { connect: { name: username } },
+							users: { connect: { name: username } },
+							roles:
+							{
+								create:
+								[
+									{
+										name:'ADMIN',
+										permissions: this.adminPermissions,
+										roleApplyingType: RoleApplyingType.ALL_EXCEPT_ROLES
+									},
+									{
+										name:'DEFAULT',
+										permissions: this.defaultPermissions,
+										roleApplyingType: RoleApplyingType.SELF
+									}
+								]
+							},
+						}
 					}
-				}
-			},
-			select:
-			{
-				publicChan: { select: this.publicChanSelect },
-			}})).publicChan
+				},
+				select:
+				{
+					chan: { select: this.chanSelect }
+				}})
+				return res.chan
 		}
 		catch
 		{
-			throw new ConflictException(`a public chan with the title "${dto.title}" already exists`)
+			// support multiple private chan with same title later
+			throw new ConflictException(`title ${dto.privateChan?.title || dto.publicChan?.title} already taken`)
 		}
-	}
-
-	async createPrivateChan(username: string, title?: string)
-	{
-		return (await this.prisma.discussion.create({
-			data:
-			{
-				privateChan:
-				{
-					create:
-					{
-						title: title,
-						users: { connect: { name: username } }
-					}
-				}
-			},
-			select:
-			{
-				privateChan: { select: this.privateChanSelect },
-			}})).privateChan
 	}
 
 	async createDm(myUsername: string, friendUsername: string)

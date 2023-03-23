@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["extendedWhereUnique"]
 }
 
@@ -11,14 +11,53 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PermissionList {
+  SEND_MESSAGE
+  DELETE_MESSAGE
+  EDIT_TITLE
+  EDIT_PASSWORD
+  EDIT_VISIBILITY
+  INVITE
+  KICK
+  BAN
+  MUTE
+  DESTROY
+}
+
+enum RoleApplyingType {
+  SELF
+  ROLES
+  ALL_EXCEPT_ROLES
+}
+
+model Role {
+  id Int @id @default(autoincrement())
+
+  name        String
+  permissions PermissionList[]
+
+  roleApplyingType RoleApplyingType
+  roles            Role[]           @relation("roles")
+  rolesSym         Role[]           @relation("roles")
+
+  users User[]
+
+  chan   Chan @relation(fields: [chanId], references: [id])
+  chanId Int
+
+  @@unique([chanId, name])
+}
+
 model User {
   name String @id
 
   password String
 
+  roles Role[] // maybe @Default here instead of default in chan creation function (not sure it's possible)
+
   directMessage DirectMessage[] @relation(name: "directMessage")
-  publicChan    PublicChan[]    @relation(name: "publicChan")
-  privateChan   PrivateChan[]   @relation(name: "privateChan")
+  chans         Chan[]
+  ownedChans    Chan[]          @relation("owner")
 
   friendList   User[] @relation("friendList")
   friendOfList User[] @relation("friendList")
@@ -33,24 +72,24 @@ model User {
   discussionEvent   DiscussionEvent[]
 }
 
-model PublicChan {
-  id Int @id @default(autoincrement())
-
-  title    String  @unique
-  password String?
-
-  users        User[]     @relation(name: "publicChan")
-  discussion   Discussion @relation(fields: [discussionId], references: [id])
-  discussionId Int        @unique
+enum ChanType {
+  PUBLIC
+  PRIVATE
 }
 
-model PrivateChan {
+model Chan {
   id Int @id @default(autoincrement())
 
-  title        String?
-  users        User[]     @relation(name: "privateChan")
+  type     ChanType
+  title    String?  @unique
+  password String?
+
+  users        User[]
+  owner        User       @relation("owner", fields: [userName], references: [name])
+  roles        Role[]
   discussion   Discussion @relation(fields: [discussionId], references: [id])
   discussionId Int        @unique
+  userName     String
 }
 
 model DirectMessage {
@@ -65,8 +104,7 @@ model Discussion {
   id Int @id @default(autoincrement())
 
   directMessage DirectMessage?
-  privateChan   PrivateChan?
-  publicChan    PublicChan?
+  chan          Chan?
 
   elements DiscussionElement[]
 }

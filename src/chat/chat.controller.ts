@@ -6,8 +6,6 @@ import { LeaveDiscussionDTO } from 'src/users/dto/leaveDiscussion.dto';
 import { OneUsernameDTO } from 'src/users/dto/oneUsername.dto';
 import { ChatService } from './chat.service';
 import { DiscussionsService } from './discussions.service';
-import { CreateChanDTO } from './dto/createChan.dto';
-import { CreateDirectMessageDTO } from './dto/createDirectMessage.dto';
 import { CreateDiscussionDTO } from './dto/createDiscussion.dto';
 import { CreateMessageDTO } from './dto/createMessage.dto';
 import { DiscussionIdPathDTO } from './dto/discussionId.path.dto';
@@ -29,7 +27,7 @@ export class ChatController
 	@Get('/discussions')
 	async getDiscussions(@Request()req: any, @Query(ValidationPipe)dto: GetDiscussionsQueryDTO)
 	{
-		return this.chatService.getDiscussions(req.user.username, dto.discussionFilter, dto.chanFilter)
+		return this.chatService.getDiscussions(req.user.username, dto.discussionFilter)
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -61,10 +59,8 @@ export class ChatController
 			throw new BadRequestException("You can post only and not less than one type of discussion")
 		if (dto.dm)
 			return this.chatService.createDm(req.user.username, dto.dm.username)
-		if (dto.publicChan)
-			return this.chatService.createPublicChan(req.user.username, dto.publicChan)
-		if (dto.privateChan)
-			return this.chatService.createPrivateChan(req.user.username, dto.privateChan.title)
+		else
+			return this.chatService.createChan(req.user.username, dto)
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -74,35 +70,7 @@ export class ChatController
 		return this.chatService.removeUserFromDiscussionById(req.user.username, req.user.username, dto.discussionId)
 	}
 
-	// @UseGuards(JwtAuthGuard)
-	// @Post('/discussions/DM')
-	// async createDirectMessage(@Request() req: any, @Body(ValidationPipe)dto: CreateDirectMessageDTO)
- //   	{
-	// 	return this.chatService.createDm(req.user.username, dto.username)
-	// }
-	//
-	// @UseGuards(JwtAuthGuard)
-	// @Post('/discussions/CHAN')
-	// async createChan(@Request() req: any, @Body(ValidationPipe)dto: CreateChanDTO)
- //   	{
-	// 	return this.chatService.createChan(req.user.username, dto)
-	// }
-
 	/*
-	@UseGuards(JwtAuthGuard)
-	@Post('/createDiscussion')
-	async createDiscussion(@Request() req: any, @Body(ValidationPipe)createDiscussionDTO: CreateDiscussionDTO)
-	{
-		return this.discussionsService.createDiscussion(req.user.username, createDiscussionDTO)
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@Post('/leaveDiscussion')
-	async leaveDiscussion(@Request() req: any, @Body(ValidationPipe)leaveDiscussionDTO: LeaveDiscussionDTO)
-	{
-		this.discussionsService.removeOneUserFromDiscussion(req.user.username, leaveDiscussionDTO.discussionID)
-	}
-
 	@UseGuards(JwtAuthGuard)
 	@Post('/createMessage')
 	async createMessage(@Request() req: any, @Body(ValidationPipe)createMessageDTO: CreateMessageDTO)

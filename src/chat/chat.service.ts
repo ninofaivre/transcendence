@@ -154,11 +154,43 @@ export class ChatService
 		return "success"
 	}
 
-	async doesUserHasRightToInChan(chanId: number, perm: PermissionList, username: string, otherUsername?: string)
+	async doesUserHasRightToInChan(discussionId: number, perm: PermissionList, username: string, otherUsername?: string)
 	{
 		if (username === otherUsername)
 			return false
-		// const res = await this.prisma.discussion
+		const res = (await this.prisma.chan.findUnique({ where: { discussionId: discussionId },
+			select:
+			{
+				roles:
+				{
+					where:
+					{
+						OR:
+						[
+							{ users: { some: { name: username } } },
+							{ users: { some: { name: otherUsername } } }
+						]
+					},
+					select: this.rolesSelect
+				}
+			}
+		})).roles
+		let a = res.filter(el => el.users.some(el => el.name === username) && el.permissions.some(el => el === perm))
+		let b = res.filter(el => el.users.some(el => el.name === otherUsername))
+		for (let ael of a)
+		{
+			if (ael.roleApplyingType === 'ROLES')
+			{
+				if (b.some(bel => ael.roles.some(el => el.name === bel.name)))
+					return true
+			}
+			if (ael.roleApplyingType === 'ALL_EXCEPT_ROLES')
+			{
+				if (!(b.some(bel => ael.roles.some(el => el.name === bel.name))))
+					return true
+			}
+		}
+		return false
 	}
 
 	async createChan(username: string, dto: CreateDiscussionDTO)

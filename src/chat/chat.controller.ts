@@ -31,6 +31,13 @@ export class ChatController
 	}
 
 	@UseGuards(JwtAuthGuard)
+	@Get('/test/:discussionId/:username')
+	async test(@Request()req: any, @Param('discussionId', ParseIntPipe)discussionId: number, @Param('username')username: string)
+	{
+		console.log("has right to:", await this.chatService.doesUserHasRightToInChan(discussionId, 'KICK', req.user.username, username))
+	}
+
+	@UseGuards(JwtAuthGuard)
 	@Get('/discussions/:discussionId')
 	async getDiscussionById(@Request()req: any, @Param(ValidationPipe)dto: DiscussionIdPathDTO)
 	{

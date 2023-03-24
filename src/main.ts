@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser'
 import { ValidationPipe } from '@nestjs/common';
 import * as fs from 'fs'
+import { SwaggerTheme } from 'swagger-themes';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
@@ -33,8 +34,14 @@ async function bootstrap() {
         .setTitle('APIchat')
         .setVersion('0.42')
         .build();
+	const theme = new SwaggerTheme('v3')
+	const options =
+	{
+		explorer: true,
+		customCss: theme.getBuffer('dark')
+	}
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
+    SwaggerModule.setup('api', app, document, options);
 
     await app.listen(3000);
 }

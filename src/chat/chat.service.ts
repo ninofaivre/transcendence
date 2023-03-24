@@ -7,6 +7,7 @@ import { PrismaService } from 'src/prisma.service';
 import { Username } from 'src/users/decorator/username.decorator';
 import { CreateDiscussionDTO, CreatePrivateChanDTO, CreatePublicChanDTO } from './dto/createDiscussion.dto';
 import { discussionEnumType } from './dto/getDiscussions.query.dto';
+import { connect } from 'http2';
 
 @Injectable()
 export class ChatService
@@ -33,7 +34,7 @@ export class ChatService
 	private rolesSelect: Prisma.RoleSelect =
 	{
 		permissions: true,
-		roleApplyingType: true,
+		roleApplyOn: true,
 		roles: { select: { name: true } },
 		name: true,
 		users: { select: this.usersSelect },
@@ -70,6 +71,47 @@ export class ChatService
 	deleteSubject(username: string) {
 		console.log("close /users/sse for", username)
 		this.eventSource.delete(username)
+	}
+
+	async getChanWhereInputWithUsersByDiscussionId(discussionId: number, usernames: string[]): Promise<Prisma.ChanWhereUniqueInput>
+	{
+		const res: Prisma.ChanWhereUniqueInput =
+		{
+			discussionId: discussionId,
+			AND: usernames.map(el => { return { users: { some: { name: el } } } }) 
+		}
+		return res
+	}
+
+	async getChanWithUsersByDiscussionIdAndSelect(discussionId: number, usernames: string[], select: Prisma.ChanSelect)
+	{
+		return this.prisma.chan.findUnique({
+			where: await this.getChanWhereInputWithUsersByDiscussionId(discussionId, usernames),
+			select: select })
+	}
+
+	async getChanWhereInputIfRight(discussionId: number, username: string, otherUsername: string, perm: PermissionList)
+	{
+		const res: Prisma.ChanWhereUniqueInput =
+		{
+			... await this.getChanWhereInputWithUsersByDiscussionId(discussionId, [username, otherUsername]),
+			roles:
+			{
+				some:
+				{
+					permissions: { has: perm },
+					roleApplyOn: { not: RoleApplyingType.NONE },
+					users: { some: { name: username } },
+					OR:
+					[
+						{ users: { none: { name: otherUsername } } },
+						{ roleApplyOn: RoleApplyingType.ROLES_AND_SELF },
+					],
+					roles: { some: { users: { some: { name: otherUsername } } } },
+				}
+			},
+		}
+		return res
 	}
 
 	async getDiscussions(username: string, discussionFilter: discussionEnumType)
@@ -133,15 +175,7 @@ export class ChatService
 		try
 		{
 			await this.prisma.chan.update({
-				where:
-				{
-					discussionId: id,
-					AND:
-					[
-						{ users: { some: { name: removingUsername } } },
-						{ users: { some: { name: removedUsername } } },
-					]
-				},
+				where: await this.getChanWhereInputIfRight(id, removingUsername, removedUsername, PermissionList.KICK),
 				data:
 				{
 					users: { disconnect: { name: removedUsername } }
@@ -154,53 +188,43 @@ export class ChatService
 		return "success"
 	}
 
-	async doesUserHasRightToInChan(discussionId: number, perm: PermissionList, username: string, otherUsername?: string)
-	{
-		if (username === otherUsername)
-			return false
-		const res = (await this.prisma.chan.findUnique({ where: { discussionId: discussionId },
-			select:
-			{
-				roles:
-				{
-					where:
-					{
-						OR:
-						[
-							{ users: { some: { name: username } } },
-							{ users: { some: { name: otherUsername } } }
-						]
-					},
-					select: this.rolesSelect
-				}
-			}
-		})).roles
-		let a = res.filter(el => el.users.some(el => el.name === username) && el.permissions.some(el => el === perm))
-		let b = res.filter(el => el.users.some(el => el.name === otherUsername))
-		for (let ael of a)
-		{
-			if (ael.roleApplyingType === 'ROLES')
-			{
-				if (b.some(bel => ael.roles.some(el => el.name === bel.name)))
-					return true
-			}
-			if (ael.roleApplyingType === 'ALL_EXCEPT_ROLES')
-			{
-				if (!(b.some(bel => ael.roles.some(el => el.name === bel.name))))
-					return true
-			}
-		}
-		return false
-	}
+	// throw if there is not both users in chan or chan not found
+	// async doesUserHasRightToInChan(discussionId: number, perm: PermissionList, username: string, otherUsername: string)
+	// {
+	// 	if (username === otherUsername)
+	// 		return false
+	// 	return !!(await this.getChanWithUsersByDiscussionIdAndSelect(discussionId, [username, otherUsername],
+	// 		{
+	// 			roles:
+	// 			{
+	// 				where:
+	// 				{
+	// 					OR:
+	// 					[
+	// 						{
+	// 							users: { some: { name: username } },
+	// 							roleApplyingType: RoleApplyingType.ROLES,
+	// 							roles: { some: { users: { some: { name: otherUsername } } } },
+	// 						},
+	// 						{
+	// 							users: { some: { name: username } },
+	// 							roleApplyingType: RoleApplyingType.ALL_EXCEPT_ROLES,
+	// 							roles: { every: { users: { every: { NOT: { name: otherUsername } } } } }
+	// 						}
+	// 					]
+	// 				},
+	// 				select: { id: true }
+	// 			}
+	// 		})).roles.length
+	// 	}
 
 	async createChan(username: string, dto: CreateDiscussionDTO)
 	{
-		console.log(dto)
 		if (dto.publicChan?.password)
 			dto.publicChan.password = await hash(dto.publicChan.password, 10)
 		try
 		{
-			const res = await this.prisma.discussion.create({
+			const res = (await this.prisma.discussion.create({
 				data:
 				{
 					chan:
@@ -216,16 +240,17 @@ export class ChatService
 							{
 								create:
 								[
+									
 									{
-										name:'ADMIN',
-										permissions: this.adminPermissions,
-										roleApplyingType: RoleApplyingType.ALL_EXCEPT_ROLES
+										name: 'DEFAULT',
+										permissions: this.defaultPermissions,
+										roleApplyOn: RoleApplyingType.NONE
 									},
 									{
-										name:'DEFAULT',
-										permissions: this.defaultPermissions,
-										roleApplyingType: RoleApplyingType.SELF
-									}
+										name: 'ADMIN',
+										permissions: this.adminPermissions,
+										roleApplyOn: RoleApplyingType.ROLES,
+									},
 								]
 							},
 						}
@@ -233,9 +258,15 @@ export class ChatService
 				},
 				select:
 				{
-					chan: { select: this.chanSelect }
+					chan: { select: { ...this.chanSelect, id: true} }
+				}})).chan
+			await this.prisma.role.update({ where: { chanId_name: { chanId: res.id, name: 'ADMIN'} },
+				data:
+				{
+					roles: { connect: { chanId_name: { chanId: res.id, name: 'DEFAULT' } } }
 				}})
-				return res.chan
+			delete res.id
+			return res
 		}
 		catch
 		{

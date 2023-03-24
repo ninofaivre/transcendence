@@ -25,9 +25,9 @@ enum PermissionList {
 }
 
 enum RoleApplyingType {
-  SELF
+  NONE
   ROLES
-  ALL_EXCEPT_ROLES
+  ROLES_AND_SELF
 }
 
 model Role {
@@ -36,16 +36,16 @@ model Role {
   name        String
   permissions PermissionList[]
 
-  roleApplyingType RoleApplyingType
-  roles            Role[]           @relation("roles")
-  rolesSym         Role[]           @relation("roles")
+  roleApplyOn RoleApplyingType
+  roles       Role[]           @relation("roles")
+  rolesSym    Role[]           @relation("roles")
 
   users User[]
 
   chan   Chan @relation(fields: [chanId], references: [id])
   chanId Int
 
-  @@unique([chanId, name])
+  @@unique(fields: [chanId, name], name: "chanId_name")
 }
 
 model User {
@@ -85,11 +85,11 @@ model Chan {
   password String?
 
   users        User[]
-  owner        User       @relation("owner", fields: [userName], references: [name])
   roles        Role[]
+  owner        User       @relation("owner", fields: [ownerName], references: [name])
+  ownerName    String
   discussion   Discussion @relation(fields: [discussionId], references: [id])
   discussionId Int        @unique
-  userName     String
 }
 
 model DirectMessage {

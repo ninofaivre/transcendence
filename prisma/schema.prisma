@@ -42,10 +42,24 @@ model Role {
 
   users User[]
 
-  chan   Chan @relation(fields: [chanId], references: [id])
+  chan   Chan @relation(fields: [chanId], references: [id], onDelete: Cascade)
   chanId Int
 
   @@unique(fields: [chanId, name], name: "chanId_name")
+}
+
+model FriendInvitation {
+  id Int @id @default(autoincrement())
+
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
+  invitingUser     User   @relation(name: "outcomingFriendInvitation", fields: [invitingUserName], references: [name])
+  invitingUserName String
+  invitedUser      User?  @relation("incomingFriendInvitation", fields: [invitedUserName], references: [name])
+  invitedUserName  String
+
+  @@unique([invitingUserName, invitedUserName])
 }
 
 model User {
@@ -62,8 +76,8 @@ model User {
   friendList   User[] @relation("friendList")
   friendOfList User[] @relation("friendList")
 
-  incomingFriendInvitation  User[] @relation("friendInvitation")
-  outcomingFriendInvitation User[] @relation("friendInvitation")
+  outcomingFriendInvitation FriendInvitation[] @relation("outcomingFriendInvitation")
+  incomingFriendInvitation  FriendInvitation[] @relation("incomingFriendInvitation")
 
   blockedUserList   User[] @relation("blockedUser")
   blockedByUserList User[] @relation("blockedUser")
@@ -88,7 +102,7 @@ model Chan {
   roles        Role[]
   owner        User       @relation("owner", fields: [ownerName], references: [name])
   ownerName    String
-  discussion   Discussion @relation(fields: [discussionId], references: [id])
+  discussion   Discussion @relation(name: "discussion", fields: [discussionId], references: [id], onDelete: Cascade)
   discussionId Int        @unique
 }
 
@@ -104,7 +118,7 @@ model Discussion {
   id Int @id @default(autoincrement())
 
   directMessage DirectMessage?
-  chan          Chan?
+  chan          Chan?          @relation(name: "discussion")
 
   elements DiscussionElement[]
 }
@@ -121,7 +135,7 @@ model DiscussionElement {
   creationDate     DateTime  @default(now())
   modificationDate DateTime? @updatedAt
 
-  discussion   Discussion @relation(fields: [discussionId], references: [id])
+  discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
   discussionId Int
 }
 
@@ -133,7 +147,7 @@ model DiscussionEvent {
   concernedUserRelation User?   @relation(fields: [concernedUser], references: [name])
   concernedUser         String? @unique
 
-  discussionElement   DiscussionElement @relation(fields: [discussionElementId], references: [id])
+  discussionElement   DiscussionElement @relation(fields: [discussionElementId], references: [id], onDelete: Cascade)
   discussionElementId Int               @unique
 }
 
@@ -142,6 +156,6 @@ model DiscussionMessage {
 
   content String
 
-  discussionElement   DiscussionElement @relation(fields: [discussionElementId], references: [id])
+  discussionElement   DiscussionElement @relation(fields: [discussionElementId], references: [id], onDelete: Cascade)
   discussionElementId Int               @unique
 }

@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger"
 import { IsInt, Min } from "class-validator"
-import { Username } from "src/users/decorator/username.decorator"
+import { Username } from "src/user/decorator/username.decorator"
 
 export class KickUserFromDiscussionPathDTO
 {

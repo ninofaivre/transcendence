@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service'
-import { UsersService } from '../users/users.service'
+import { UserService } from '../user/user.service'
 import { ChatService } from './chat.service';
 import { CreateMessageDTO } from './dto/createMessage.dto';
 import { GetnMessagesQueryDTO } from './dto/getnMessages.query.dto';
@@ -11,7 +11,7 @@ export class MessagesService
 {
 	constructor(private chatService: ChatService,
 				private readonly prisma: PrismaService,
-				private usersService: UsersService) {}
+				private userService: UserService) {}
 
 	/*
 	async getnMessages(username: string, discussionId: number, getnMessagesQueryDTO: GetnMessagesQueryDTO)// need to add pagination

@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service'
-import { UsersService } from '../users/users.service'
+import { UserService } from '../user/user.service'
 import { NotFoundException, UnauthorizedException } from '@nestjs/common'
 import { ChatService } from './chat.service';
 
 @Injectable()
 export class DiscussionsService
 {
-	constructor(private usersService: UsersService,
+	constructor(private userService: UserService,
 				private readonly chatService: ChatService,
 				private readonly prisma: PrismaService) {}
 	

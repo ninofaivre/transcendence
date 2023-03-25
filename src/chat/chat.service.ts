@@ -1,13 +1,12 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, MessageEvent, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, MessageEvent, NotFoundException, NotImplementedException, UnauthorizedException } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { hash } from 'bcrypt';
 import { ChanType, PermissionList, RoleApplyingType } from '@prisma/client'
 import { Subject } from 'rxjs';
 import { PrismaService } from 'src/prisma.service';
-import { Username } from 'src/users/decorator/username.decorator';
+import { Username } from 'src/user/decorator/username.decorator';
 import { CreateDiscussionDTO, CreatePrivateChanDTO, CreatePublicChanDTO } from './dto/createDiscussion.dto';
 import { discussionEnumType } from './dto/getDiscussions.query.dto';
-import { connect } from 'http2';
 
 @Injectable()
 export class ChatService
@@ -83,33 +82,55 @@ export class ChatService
 		return res
 	}
 
-	async getChanWithUsersByDiscussionIdAndSelect(discussionId: number, usernames: string[], select: Prisma.ChanSelect)
+	async getChanWhereInputIfRightOverSelf(discussionId: number, username: string, perm: PermissionList)
 	{
-		return this.prisma.chan.findUnique({
-			where: await this.getChanWhereInputWithUsersByDiscussionId(discussionId, usernames),
-			select: select })
+		const res: Prisma.ChanWhereUniqueInput =
+		{
+			... await this.getChanWhereInputWithUsersByDiscussionId(discussionId, [username]),
+			OR:
+			[
+				{ ownerName: username },
+				{
+					roles:
+					{
+						some:
+						{
+							permissions: { has: perm },
+							users: { some: { name: username } },
+						}
+					}
+				},
+			]
+		}
+		return res
 	}
 
-	async getChanWhereInputIfRight(discussionId: number, username: string, otherUsername: string, perm: PermissionList)
+	async getChanWhereInputIfRightOverOther(discussionId: number, username: string, otherUsername: string, perm: PermissionList)
 	{
 		const res: Prisma.ChanWhereUniqueInput =
 		{
 			... await this.getChanWhereInputWithUsersByDiscussionId(discussionId, [username, otherUsername]),
-			roles:
-			{
-				some:
+			OR:
+			[
+				{ ownerName: username },
 				{
-					permissions: { has: perm },
-					roleApplyOn: { not: RoleApplyingType.NONE },
-					users: { some: { name: username } },
-					OR:
-					[
-						{ users: { none: { name: otherUsername } } },
-						{ roleApplyOn: RoleApplyingType.ROLES_AND_SELF },
-					],
-					roles: { some: { users: { some: { name: otherUsername } } } },
-				}
-			},
+					roles:
+					{
+						some:
+						{
+							permissions: { has: perm },
+							roleApplyOn: { not: RoleApplyingType.NONE },
+							users: { some: { name: username } },
+							OR:
+							[
+								{ users: { none: { name: otherUsername } } },
+								{ roleApplyOn: RoleApplyingType.ROLES_AND_SELF },
+							],
+							roles: { some: { users: { some: { name: otherUsername } } } },
+						}
+					},
+				},
+			]
 		}
 		return res
 	}
@@ -153,9 +174,9 @@ export class ChatService
 		const res = await this.prisma.user.findUnique({ where: { name: username },
 			select:
 			{
-				friendList: { where: { name: friendUsername } },
-				friendOfList: { where: { name: friendUsername } },
-				chans: { where: { discussionId: id }, select: { users: { select: this.usersSelect } } },
+				friendList: { where: { name: friendUsername }, select: { name: true } },
+				friendOfList: { where: { name: friendUsername }, select: { name: true } },
+				chans: { where: { discussionId: id }, select: { users: { select: { name: true } } } },
 			}})
 		if (!res.chans.length)
 			throw new BadRequestException(`the discussion with id ${id} does not exist or you are not in`)
@@ -163,7 +184,8 @@ export class ChatService
 			throw new BadRequestException(`your are not friend with ${friendUsername}`)
 		if (res.chans[0].users.some(el => el.name === friendUsername))
 			throw new ConflictException(`${friendUsername} is already in chan`)
-		await this.prisma.chan.update({ where: { discussionId: id },
+		await this.prisma.chan.update({
+			where: await this.getChanWhereInputIfRightOverSelf(id, username, PermissionList.INVITE),
 			data:
 			{
 				users: { connect: { name: friendUsername } }
@@ -175,7 +197,7 @@ export class ChatService
 		try
 		{
 			await this.prisma.chan.update({
-				where: await this.getChanWhereInputIfRight(id, removingUsername, removedUsername, PermissionList.KICK),
+				where: await this.getChanWhereInputIfRightOverOther(id, removingUsername, removedUsername, PermissionList.KICK),
 				data:
 				{
 					users: { disconnect: { name: removedUsername } }
@@ -183,40 +205,9 @@ export class ChatService
 		}
 		catch
 		{
-			return "failure"
+			throw new ForbiddenException('right exception')
 		}
-		return "success"
 	}
-
-	// throw if there is not both users in chan or chan not found
-	// async doesUserHasRightToInChan(discussionId: number, perm: PermissionList, username: string, otherUsername: string)
-	// {
-	// 	if (username === otherUsername)
-	// 		return false
-	// 	return !!(await this.getChanWithUsersByDiscussionIdAndSelect(discussionId, [username, otherUsername],
-	// 		{
-	// 			roles:
-	// 			{
-	// 				where:
-	// 				{
-	// 					OR:
-	// 					[
-	// 						{
-	// 							users: { some: { name: username } },
-	// 							roleApplyingType: RoleApplyingType.ROLES,
-	// 							roles: { some: { users: { some: { name: otherUsername } } } },
-	// 						},
-	// 						{
-	// 							users: { some: { name: username } },
-	// 							roleApplyingType: RoleApplyingType.ALL_EXCEPT_ROLES,
-	// 							roles: { every: { users: { every: { NOT: { name: otherUsername } } } } }
-	// 						}
-	// 					]
-	// 				},
-	// 				select: { id: true }
-	// 			}
-	// 		})).roles.length
-	// 	}
 
 	async createChan(username: string, dto: CreateDiscussionDTO)
 	{
@@ -272,6 +263,19 @@ export class ChatService
 		{
 			// support multiple private chan with same title later
 			throw new ConflictException(`title ${dto.privateChan?.title || dto.publicChan?.title} already taken`)
+		}
+	}
+
+	async deleteDiscussion(username: string, discussionId: number)
+	{
+		try
+		{
+			await this.prisma.chan.delete({ where: await this.getChanWhereInputIfRightOverSelf(discussionId, username, PermissionList.DESTROY) })
+		}
+		catch (e)
+		{
+			console.error(e)
+			throw new ForbiddenException('no right to do this')
 		}
 	}
 

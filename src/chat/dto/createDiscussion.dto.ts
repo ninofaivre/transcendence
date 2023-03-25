@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsEnum, IsOptional, IsString, ValidateNested } from "class-validator";
-import { Username } from "src/users/decorator/username.decorator";
-import { OneUsernameDTO } from "src/users/dto/oneUsername.dto";
+import { Username } from "src/user/decorator/username.decorator";
+import { OneUsernameDTO } from "src/user/dto/oneUsername.dto";
 
 export enum discussionEnumType
 {

@@ -1,9 +1,8 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, Sse, UseGuards, ValidationPipe, MessageEvent, Next, Delete, BadRequestException } from '@nestjs/common';
-import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiParam, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { finalize, Observable } from 'rxjs';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { LeaveDiscussionDTO } from 'src/users/dto/leaveDiscussion.dto';
-import { OneUsernameDTO } from 'src/users/dto/oneUsername.dto';
+import { OneUsernameDTO } from 'src/user/dto/oneUsername.dto';
 import { ChatService } from './chat.service';
 import { DiscussionsService } from './discussions.service';
 import { CreateDiscussionDTO } from './dto/createDiscussion.dto';
@@ -65,9 +64,9 @@ export class ChatController
 
 	@UseGuards(JwtAuthGuard)
 	@Delete('/discussions/:discussionId')
-	async leaveDiscussion(@Request()req: any, @Param(ValidationPipe)dto: DiscussionIdPathDTO)
+	async deleteDiscussion(@Request()req: any, @Param(ValidationPipe)dto: DiscussionIdPathDTO)
 	{
-		return this.chatService.removeUserFromDiscussionById(req.user.username, req.user.username, dto.discussionId)
+		return this.chatService.deleteDiscussion(req.user.username, dto.discussionId)
 	}
 
 	/*

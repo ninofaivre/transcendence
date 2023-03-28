@@ -48,6 +48,8 @@ model Role {
   @@unique(fields: [chanId, name], name: "chanId_name")
 }
 
+// TODO: let invited User disconnect without deleting FriendInvitation to display refused invitation notification
+// to invitingUser at connexion and not only by sse
 model FriendInvitation {
   id Int @id @default(autoincrement())
 
@@ -56,10 +58,42 @@ model FriendInvitation {
 
   invitingUser     User   @relation(name: "outcomingFriendInvitation", fields: [invitingUserName], references: [name])
   invitingUserName String
-  invitedUser      User?  @relation("incomingFriendInvitation", fields: [invitedUserName], references: [name])
+  invitedUser      User   @relation("incomingFriendInvitation", fields: [invitedUserName], references: [name])
   invitedUserName  String
 
   @@unique([invitingUserName, invitedUserName])
+}
+
+// TODO: let one of the users disconnect without deleting FriendShip to display removed friend notification to the other
+// user at connexion and not only by sse
+model FriendShip {
+  id Int @id @default(autoincrement())
+
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
+  requestingUser     User   @relation(name: "friend", fields: [requestingUserName], references: [name])
+  requestingUserName String
+  requestedUser      User   @relation("friendOf", fields: [requestedUserName], references: [name])
+  requestedUserName  String
+
+  directMessage DirectMessage?
+
+  @@unique([requestingUserName, requestedUserName])
+}
+
+model BlockedShip {
+  id Int @id @default(autoincrement())
+
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
+  blockingUser     User   @relation(name: "blocked", fields: [blockingUserName], references: [name])
+  blockingUserName String
+  blockedUser      User   @relation("blockedBy", fields: [blockedUserName], references: [name])
+  blockedUserName  String
+
+  @@unique([blockingUserName, blockedUserName])
 }
 
 model User {
@@ -67,20 +101,21 @@ model User {
 
   password String
 
-  roles Role[] // maybe @Default here instead of default in chan creation function (not sure it's possible)
+  roles Role[]
 
-  directMessage DirectMessage[] @relation(name: "directMessage")
-  chans         Chan[]
-  ownedChans    Chan[]          @relation("owner")
+  directMessage   DirectMessage[] @relation(name: "directMessage")
+  directMessageOf DirectMessage[] @relation(name: "directMessageOf")
+  chans           Chan[]
+  ownedChans      Chan[]          @relation("owner")
 
-  friendList   User[] @relation("friendList")
-  friendOfList User[] @relation("friendList")
+  friend   FriendShip[] @relation("friend")
+  friendOf FriendShip[] @relation("friendOf")
 
   outcomingFriendInvitation FriendInvitation[] @relation("outcomingFriendInvitation")
   incomingFriendInvitation  FriendInvitation[] @relation("incomingFriendInvitation")
 
-  blockedUserList   User[] @relation("blockedUser")
-  blockedByUserList User[] @relation("blockedUser")
+  blockedUser   BlockedShip[] @relation("blocked")
+  blockedByUser BlockedShip[] @relation("blockedBy")
 
   discussionElement DiscussionElement[]
   discussionEvent   DiscussionEvent[]
@@ -98,29 +133,34 @@ model Chan {
   title    String?  @unique
   password String?
 
-  users        User[]
-  roles        Role[]
-  owner        User       @relation("owner", fields: [ownerName], references: [name])
-  ownerName    String
-  discussion   Discussion @relation(name: "discussion", fields: [discussionId], references: [id], onDelete: Cascade)
-  discussionId Int        @unique
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
+  users     User[]
+  roles     Role[]
+  owner     User   @relation("owner", fields: [ownerName], references: [name])
+  ownerName String
+
+  elements DiscussionElement[]
 }
 
 model DirectMessage {
   id Int @id @default(autoincrement())
 
-  users        User[]     @relation(name: "directMessage")
-  discussion   Discussion @relation(fields: [discussionId], references: [id])
-  discussionId Int        @unique
-}
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
 
-model Discussion {
-  id Int @id @default(autoincrement())
+  requestingUser     User   @relation(name: "directMessage", fields: [requestingUserName], references: [name])
+  requestingUserName String
+  requestedUser      User   @relation("directMessageOf", fields: [requestedUserName], references: [name])
+  requestedUserName  String
 
-  directMessage DirectMessage?
-  chan          Chan?          @relation(name: "discussion")
+  friendShip   FriendShip @relation(fields: [friendShipId], references: [id], onDelete: Cascade)
+  friendShipId Int        @unique
 
   elements DiscussionElement[]
+
+  @@unique([requestingUserName, requestedUserName])
 }
 
 model DiscussionElement {
@@ -129,14 +169,22 @@ model DiscussionElement {
   message DiscussionMessage?
   event   DiscussionEvent?
 
-  authorRelation User   @relation(fields: [author], references: [name])
+  authorRelation User   @relation(fields: [author], references: [name], onDelete: Cascade)
   author         String @unique
 
   creationDate     DateTime  @default(now())
   modificationDate DateTime? @updatedAt
 
-  discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
-  discussionId Int
+  directMessage   DirectMessage? @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
+  directMessageId Int?           @unique
+  chan            Chan?          @relation(fields: [chanId], references: [id], onDelete: Cascade)
+  chanId          Int?           @unique
+}
+
+enum EventType {
+  AUTHOR_LEAVED
+  AUTHOR_KICKED_CONCERNED
+  AUTHOR_JOINED
 }
 
 model DiscussionEvent {

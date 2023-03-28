@@ -12,6 +12,8 @@ import { ChatService } from 'src/chat/chat.service';
 import { DiscussionIdPathDTO } from 'src/chat/dto/discussionId.path.dto';
 import { GetFriendInvitationsPathDTO } from './dto/getFriendInvitations.path.dto';
 import { DeleteFriendInvitationPathDTO } from './dto/deleteFriendInvitation.path.dto';
+import { CreateFriendDTO } from './dto/createFriend.dto';
+import { DeleteFriendDTO } from './dto/deleteFriend.dto';
 
 @ApiTags('user')
 @Controller('user')
@@ -33,18 +35,18 @@ export class UserController
 		return this.userService.createUser(user)
 	}
 
-	// @UseGuards(JwtAuthGuard)
-	// @Get('/friends')
-	// async getFriendList(@Request()req: any)
-	// {
-	// 	return this.userService.getFriendList(req.user.username)
-	// }
-
 	@UseGuards(JwtAuthGuard)
 	@Get('/friendInvitations')
 	async getFriendInvitations(@Request()req: any)
 	{
 		return this.userService.getFriendInvitations(req.user.username)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('/friendInvitations/OUTCOMING')
+	async createFriendInvitation(@Request()req: any, @Body()dto: OneUsernameDTO)
+	{
+		return this.userService.createFriendInvitation(req.user.username, dto.username)
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -56,25 +58,32 @@ export class UserController
 
 	@UseGuards(JwtAuthGuard)
 	@Delete('/friendInvitations/:type/:id')
-	async deleteFriendInvitation(@Param()pathDTO: DeleteFriendInvitationPathDTO)
+	async deleteFriendInvitation(@Request()req: any, @Param()pathDTO: DeleteFriendInvitationPathDTO)
 	{
-		return this.userService.deleteFriendInvitation(pathDTO.type, pathDTO.id)
+		return this.userService.deleteFriendInvitation(req.user.username, pathDTO.type, pathDTO.id)
 	}
 
-	// @UseGuards(JwtAuthGuard)
-	// @Post('/friends')
-	// async createFriend(@Request()req: any, @Body(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
-	// {
-	// 	return this.userService.createFriend(req.user.username, oneUsernameDTO.username)
-	// }
-	//
-	// @UseGuards(JwtAuthGuard)
-	// @Delete('/friends/:username')
-	// async deleteFriend(@Request()req: any, @Param(ValidationPipe)oneUsernameDTO: OneUsernameDTO)
-	// {
-	// 	return this.userService.deleteFriend(req.user.username, oneUsernameDTO.username)
-	// }
-	//
+	@UseGuards(JwtAuthGuard)
+	@Get('/friends')
+	async getFriends(@Request()req: any)
+	{
+		return this.userService.getFriends(req.user.username)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('/friends')
+	async createFriend(@Request()req: any, @Body(ValidationPipe)dto: CreateFriendDTO)
+	{
+		return this.userService.acceptInvitation(req.user.username, dto.invitationId)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Delete('/friends/:friendShipId')
+	async deleteFriend(@Request()req: any, @Param(ValidationPipe)dto: DeleteFriendDTO)
+	{
+		return this.userService.deleteFriend(req.user.username, dto.friendShipId)
+	}
+
 	// @UseGuards(JwtAuthGuard)
 	// @Get('/blockedUsers')
 	// async getBlockedUsers(@Request()req: any, @Query(ValidationPipe)dto: GetBlockedListQueryDTO)

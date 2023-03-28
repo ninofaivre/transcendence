@@ -1,11 +1,11 @@
 import { CreateUserDTO } from './dto/createUser.dto'
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma.service'
+import { PrismaService } from 'nestjs-prisma';
 import { MessageEvent, NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common'
 import { hash } from 'bcrypt'
 import { Prisma, User } from '@prisma/client';
 import { filterType as blockedFilterType } from './dto/getBlockedList.query.dto';
-import { Subject } from 'rxjs';
+import { concat, Subject } from 'rxjs';
 import { InvitationPathType } from './types/invitationPath.type';
 
 enum EventTypeList
@@ -13,6 +13,9 @@ enum EventTypeList
 	CREATED_INVITATION = "CREATED_INVITATION",
 	REFUSED_INVITATION = "REFUSED_INVITATION",
 	CANCELED_INVITATION = "CANCELED_INVITATION",
+	ACCEPTED_INVITATION = "ACCEPTED_INVITATION",
+	DELETED_DM = "DELETED_DM", // n'existera plus à terme (un dm se détruira lorsque les deux users le quitteront)
+	DELETED_FRIEND = "DELETED_FRIEND",
 }
 
 @Injectable()
@@ -48,15 +51,31 @@ export class UserService
 		id: true,
 		creationDate: true,
 		invitingUserName: true,
-		invitedUserName: true
+		invitedUserName: true,
 	}
-	// async getFriendList(username: string)
-	// {
-	// 	const res = await this.getUserByName(username,
-	// 		{ friendList: true, friendOfList: true })
-	// 	// possibilité de faire une distinction pour savoir qui a initié la relation d'ami
-	// 	return res.friendList.map(el => el.name).concat(res.friendOfList.map(el => el.name))
-	// }
+
+	private friendShipSelect: Prisma.FriendShipSelect =
+	{
+		id: true,
+		creationDate: true,
+		requestingUserName: true,
+		requestedUserName: true,
+		directMessage: { select: { id: true } },
+	}
+
+	async getFriends(username: string)
+	{
+		return this.prisma.friendShip.findMany({
+			where:
+			{
+				OR:
+				[
+					{ requestedUserName: username },
+					{ requestingUserName: username },
+				]
+			},
+			select: this.friendShipSelect })
+	}
 
 	async getFriendInvitations(username: string, filter?: InvitationPathType)
 	{
@@ -90,19 +109,6 @@ export class UserService
 	// 	}
 	// }
 	//
-	// async testUtils(username: string, exceptions: Object, checkFn: Function)
-	// {
-	// 	const includes: Prisma.UserInclude = {}
-	// 	Object.keys(exceptions).forEach(k => includes[k] = true)
-	//
-	// 	const res = await this.getUserByName(username, includes)
-	// 	for (const [key, exception] of Object.entries(exceptions))
-	// 	{
-	// 		if (checkFn(res[key]))
-	// 			throw exception
-	// 	}
-	// }
-	//
 	// async deleteBlocked(myUsername: string, blockedUsername: string)
 	// {
 	// 	await this.testUtils(myUsername,
@@ -120,48 +126,57 @@ export class UserService
 	async createFriendInvitation(invitingUsername: string, invitedUsername: string)
 	{
 		if (invitingUsername === invitedUsername)
-			throw new BadRequestException("you can't invite yourself !")
+			throw new BadRequestException("self invitation")
+		const toCheck = await this.prisma.user.findUnique({
+			where:
+			{
+				name: invitingUsername,
+			},
+			select:
+			{
+				friend: { where: { requestedUserName: invitedUsername }, select: { id: true } },
+				friendOf: { where: { requestingUserName: invitedUsername }, select: { id: true } },
+				blockedUser: { where: { blockedUserName: invitedUsername }, select: { id: true } },
+				blockedByUser: { where: { blockingUserName: invitedUsername }, select: { id: true } },
+				incomingFriendInvitation: { where: { invitingUserName: invitedUsername }, select: { id: true } },
+			}})
+		if (toCheck.friend.length || toCheck.friendOf.length)
+			throw new ForbiddenException(`you are already friend with ${invitedUsername}`)
+		if (toCheck.blockedUser.length)
+			throw new ForbiddenException(`you blocked ${invitedUsername}`)
+		if (toCheck.blockedByUser.length)
+			throw new ForbiddenException(`you have been blocked by ${invitedUsername}`)
+		if (toCheck.incomingFriendInvitation.length)
+			throw new ForbiddenException(`${invitedUsername} already invited you`)
 		try
 		{
-			const res = (await this.prisma.user.update({
-				where:
-				{
-					name: invitingUsername,
-					friendList: { none: { name: invitedUsername } },
-					friendOfList: { none: { name: invitedUsername } },
-					blockedUserList: { none: { name: invitedUsername } },
-					blockedByUserList: { none: { name: invitedUsername } },
-					outcomingFriendInvitation: { none: { invitedUserName: invitedUsername } },
-					incomingFriendInvitation: { none: { invitingUserName: invitedUsername } }
-				},
+			const res = await this.prisma.friendInvitation.create({
 				data:
 				{
-					outcomingFriendInvitation: { create: { invitedUserName: invitedUsername } }
+					invitingUserName: invitingUsername,
+					invitedUserName: invitedUsername
 				},
-				select:
-				{
-					outcomingFriendInvitation:
-					{
-						where: { invitedUserName: invitedUsername },
-						select: this.friendInvitationSelect
-					}
-				}
-			})).outcomingFriendInvitation[0]
+				select: this.friendInvitationSelect })
 			await this.pushEvent(invitedUsername, { type: EventTypeList.CREATED_INVITATION, data: res })
 			return res
 		}
-		catch
+		catch (e)
 		{
-			throw new ForbiddenException("can't create this friend invitation")
+			throw new ConflictException(`invitation for user ${invitedUsername} already exist`)
 		}
 	}
 
-	async deleteFriendInvitation(type: InvitationPathType, id: number)
+	async deleteFriendInvitation(username: string, type: InvitationPathType, id: number)
 	{
 		try
 		{
 			const res = await this.prisma.friendInvitation.delete({
-				where: { id: id },
+				where:
+				{
+					id: id,
+					invitedUserName: type === 'INCOMING' && username || undefined,
+					invitingUserName: type === 'OUTCOMING' && username || undefined,
+				},
 				select:
 				{
 					invitedUserName: type === 'OUTCOMING',
@@ -175,43 +190,75 @@ export class UserService
 		}
 		catch
 		{
-			throw new NotFoundException('invitation not found')
+			throw new NotFoundException(`invitation with id ${id} not found`)
 		}
 	}
 
-	// async createFriend(username: string, friendUsername: string)
-	// {
-	// 	await this.testUtils(username,
-	// 		{ incomingFriendInvitation: new ForbiddenException(`${friendUsername} did not invited you`) },
-	// 		(usersArray: User[]) => !usersArray.some((el: User) => el.name === friendUsername))
-	// 	const updatePromise = this.prisma.user.update({ where: { name: username },
-	// 		data:
-	// 		{
-	// 			friendList: { connect: { name: friendUsername } },
-	// 			incomingFriendInvitation: { disconnect: { name: friendUsername } },
-	// 		}})
-	// 	const addEventPromise = this.pushEvent(friendUsername, { data: { user: username }, type: "createdFriend" })
-	// 	await Promise.all([updatePromise, addEventPromise])
-	// }
-	//
-	// async deleteFriend(username: string, friendUsername: string)
-	// {
-	// 	let tmp = await this.getUserByName(username, { friendList: true, friendOfList: true })
-	// 	if (!tmp.friendList.some((el: User) => el.name === friendUsername) &&
-	// 		!tmp.friendOfList.some((el: User) => el.name === friendUsername))
-	// 	{
-	// 		throw new NotFoundException(`${friendUsername} is not one of your friends`)
-	// 	}
-	// 	const updatePromise = this.prisma.user.update({ where: { name: username },
-	// 		data:
-	// 		{
-	// 			friendList: { disconnect: { name: friendUsername } },
-	// 			friendOfList: { disconnect: { name: friendUsername } },
-	// 		}})
-	// 	const addEventPromise = this.pushEvent(friendUsername, { data: { user: username }, type: "deletedFriend" })
-	// 	await Promise.all([updatePromise, addEventPromise]) 
-	// }
-	//
+	async acceptInvitation(username: string, id: number)
+	{
+		try
+		{
+			const { invitingUserName } = await this.prisma.friendInvitation.delete({
+				where:
+				{
+					invitedUserName: username,
+					id: id
+				},
+				select: { invitingUserName: true }})
+			const newFriendShip = await this.prisma.friendShip.create({
+				data:
+				{
+					requestingUser: { connect: { name: invitingUserName } },
+					requestedUser: { connect: { name: username } }
+				},
+				select: this.friendShipSelect })
+			await this.pushEvent(invitingUserName,
+				{
+					type: EventTypeList.ACCEPTED_INVITATION,
+					data: { deletedFriendInvitationId: id, friend: newFriendShip }
+				})
+		}
+		catch (e)
+		{
+			console.log(e)
+			if (e.code === 'P2025')
+				throw new ForbiddenException(`invitation with id ${id} not found`)
+			if (e.code === 'P2002')
+				throw new ConflictException(`friendship already exist`) // should never happen
+		}
+	}
+
+	async deleteFriend(username: string, id: number)
+	{
+		try
+		{
+			const { requestedUserName, requestingUserName, directMessage } = await this.prisma.friendShip.delete({
+				where: { id: id },
+				select:
+				{
+					requestedUserName: true,
+					requestingUserName: true,
+					directMessage: { select: { id: true } }
+				}})
+			const eventUserName = (username === requestedUserName) && requestingUserName || requestedUserName
+			const eva = this.pushEvent(eventUserName,
+				{
+					type: EventTypeList.DELETED_FRIEND,
+					data: { deletedFriendId: id }
+				})
+			const evb = this.pushEvent(eventUserName,
+				{
+					type: EventTypeList.DELETED_DM,
+					data: { deletedDmId: directMessage.id }
+				})
+			await Promise.all([eva, evb])
+		}
+		catch
+		{
+			throw new NotFoundException(`friendship with id ${id} not found`)
+		}
+	}
+
 	// async blockUser(blockingUsername: string, blockedUsername: string)
 	// {
 	// 	const checkBlockedUserExistance = this.getUserByNameOrThrow(blockedUsername)
@@ -228,23 +275,6 @@ export class UserService
 	// 	const addEventPromise = this.pushEvent(blockedUsername, { data: { user: blockingUsername }, type: "createdBlocked" })
 	// 	await Promise.all([updatePromise, addEventPromise])
 	// }
-
-	async getUserByNameOrThrow(name: string, exception: "notFound" | "badRequest" = "notFound", include?: Prisma.UserInclude)
-	{
-		const user = await this.getUserByName(name, include)
-		const exceptionMessage = `user ${user} not found !`
-		if (!user)
-		{
-			switch(exception)
-			{
-				case ("notFound"):
-					throw new NotFoundException(exceptionMessage)
-				case ("badRequest"):
-					throw new BadRequestException(exceptionMessage)
-			}
-		}
-		return user
-	}
 
 	async getUserByName(name: string, include?: Prisma.UserInclude)
 	{

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma.service'
+import { PrismaService } from 'nestjs-prisma';
 import { UserService } from '../user/user.service'
 import { NotFoundException, UnauthorizedException } from '@nestjs/common'
 import { ChatService } from './chat.service';

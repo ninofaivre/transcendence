@@ -40,6 +40,7 @@
     "cookie-signature": "^1.2.1",
     "eventsource": "^2.0.2",
     "jsonwebtoken": "^9.0.0",
+    "nestjs-prisma": "^0.20.0",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",

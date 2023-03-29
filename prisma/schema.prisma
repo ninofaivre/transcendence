@@ -150,35 +150,34 @@ model DirectMessage {
   creationDate     DateTime  @default(now())
   modificationDate DateTime? @updatedAt
 
-  requestingUser     User   @relation(name: "directMessage", fields: [requestingUserName], references: [name])
-  requestingUserName String
-  requestedUser      User   @relation("directMessageOf", fields: [requestedUserName], references: [name])
-  requestedUserName  String
+  requestingUser     User?   @relation(name: "directMessage", fields: [requestingUserName], references: [name])
+  requestingUserName String?
+  requestedUser      User?   @relation("directMessageOf", fields: [requestedUserName], references: [name])
+  requestedUserName  String?
 
   friendShip   FriendShip @relation(fields: [friendShipId], references: [id], onDelete: Cascade)
   friendShipId Int        @unique
 
   elements DiscussionElement[]
-
-  @@unique([requestingUserName, requestedUserName])
 }
 
 model DiscussionElement {
   id Int @id @default(autoincrement())
 
-  message DiscussionMessage?
-  event   DiscussionEvent?
+  message   DiscussionMessage?  @relation(name: "ownship")
+  relatedOf DiscussionMessage[] @relation(name: "related")
+  event     DiscussionEvent?
 
   authorRelation User   @relation(fields: [author], references: [name], onDelete: Cascade)
-  author         String @unique
+  author         String
 
   creationDate     DateTime  @default(now())
   modificationDate DateTime? @updatedAt
 
   directMessage   DirectMessage? @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
-  directMessageId Int?           @unique
+  directMessageId Int?
   chan            Chan?          @relation(fields: [chanId], references: [id], onDelete: Cascade)
-  chanId          Int?           @unique
+  chanId          Int?
 }
 
 enum EventType {
@@ -204,6 +203,8 @@ model DiscussionMessage {
 
   content String
 
-  discussionElement   DiscussionElement @relation(fields: [discussionElementId], references: [id], onDelete: Cascade)
-  discussionElementId Int               @unique
+  related             DiscussionElement? @relation(name: "related", fields: [relatedId], references: [id])
+  relatedId           Int?
+  discussionElement   DiscussionElement  @relation(name: "ownship", fields: [discussionElementId], references: [id], onDelete: Cascade)
+  discussionElementId Int                @unique
 }

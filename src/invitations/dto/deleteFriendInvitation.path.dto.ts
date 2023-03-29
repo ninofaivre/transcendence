@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsInt, Min } from "class-validator";
+import { IsId } from "src/decorator/isId.decorator";
 import { InvitationPathType } from "../types/invitationPath.type";
 
 export class DeleteFriendInvitationPathDTO
@@ -10,11 +11,6 @@ export class DeleteFriendInvitationPathDTO
 	@IsEnum(InvitationPathType)
 	type: InvitationPathType
 
-	@ApiProperty({
-		type: 'integer',
-		minimum: 1
-	})
-	@Min(1)
-	@IsInt()
+	@IsId()
 	id: number
 }

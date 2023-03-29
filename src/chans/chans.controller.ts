@@ -12,6 +12,7 @@ export class ChansController
 
 	constructor(private readonly chansService: ChansService) {}
 
+
 	@ApiTags('me')
 	@UseGuards(JwtAuthGuard)
 	@Get('/me')

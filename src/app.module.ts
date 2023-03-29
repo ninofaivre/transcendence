@@ -11,6 +11,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { ChansModule } from './chans/chans.module';
 import { InvitationsModule } from './invitations/invitations.module';
 import { DmsModule } from './dms/dms.module';
+import { FriendsModule } from './friends/friends.module';
 
 @Module({
 	imports:
@@ -50,7 +51,8 @@ import { DmsModule } from './dms/dms.module';
 		ChatModule,
 		ChansModule,
 		InvitationsModule,
-		DmsModule
+		DmsModule,
+		FriendsModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

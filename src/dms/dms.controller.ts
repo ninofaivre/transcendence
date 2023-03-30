@@ -6,6 +6,7 @@ import { DmsService } from './dms.service';
 import { CreateDmMessageDTO } from './dto/createDmMessage.dto';
 import { CreateDmMessagePathDTO } from './dto/createDmMessage.path.dto';
 import { DeleteDmPathDTO } from './dto/deleteDm.path.dto';
+import { DeleteDmMessagePathDTO } from './dto/deleteDmMessage.path.dto';
 import { GetDmMessagesPathDTO } from './dto/getDmMessages.path.dto';
 import { GetDmMessagesQueryDTO } from './dto/getDmMessages.query.dto';
 import { JoinDmDTO } from './dto/joinDm.dto';
@@ -68,5 +69,12 @@ export class DmsController
 	async createDmMessage(@Request()req: any, @Param()pathDTO: CreateDmMessagePathDTO, @Body()messageDTO: CreateDmMessageDTO)
 	{
 		return this.dmsService.createDmMessage(req.user.username, pathDTO.dmId, messageDTO.content, messageDTO.relatedId)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Delete('/:dmId/messages/:msgId')
+	async deleteDmMessage(@Request()req: any, @Param()pathDTO: DeleteDmMessagePathDTO)
+	{
+		this.dmsService.deleteDmMessage(req.user.username, pathDTO.dmId, pathDTO.msgId)
 	}
 }

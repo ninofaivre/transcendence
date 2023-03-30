@@ -31,6 +31,7 @@ async function bootstrap() {
 		stopAtFirstError: true,
 	}));
 
+	app.setGlobalPrefix('api')
     const config = new DocumentBuilder()
         .setTitle('APIchat')
         .setVersion('0.42')
@@ -39,7 +40,7 @@ async function bootstrap() {
 	const options =
 	{
 		explorer: true,
-		customCss: theme.getBuffer('dark')
+		customCss: theme.getBuffer('dark'),
 	}
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document, options);
@@ -49,6 +50,7 @@ async function bootstrap() {
 
 	const { httpAdapter } = app.get(HttpAdapterHost);
 	app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
+
 
     await app.listen(3000);
 }

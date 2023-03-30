@@ -45,6 +45,8 @@ model Role {
   chan   Chan @relation(fields: [chanId], references: [id], onDelete: Cascade)
   chanId Int
 
+  relatedDiscussionMessage DiscussionMessage[]
+
   @@unique(fields: [chanId, name], name: "chanId_name")
 }
 
@@ -64,6 +66,19 @@ model FriendInvitation {
   @@unique([invitingUserName, invitedUserName])
 }
 
+model ChanInvitation {
+  id Int @id @default(autoincrement())
+
+  chan              Chan            @relation(fields: [chanId], references: [id])
+  chanId            Int
+  friendShip        FriendShip      @relation(fields: [friendShipId], references: [id])
+  friendShipId      Int
+  discussionEvent   DiscussionEvent @relation(fields: [discussionEventId], references: [id])
+  discussionEventId Int
+
+  @@unique([chanId, friendShipId])
+}
+
 // TODO: let one of the users disconnect without deleting FriendShip to display removed friend notification to the other
 // user at connexion and not only by sse
 model FriendShip {
@@ -78,6 +93,8 @@ model FriendShip {
   requestedUserName  String
 
   directMessage DirectMessage?
+
+  chanInvitations ChanInvitation[]
 
   @@unique([requestingUserName, requestedUserName])
 }
@@ -119,11 +136,29 @@ model User {
 
   discussionElement DiscussionElement[]
   discussionEvent   DiscussionEvent[]
+  discussionMessage DiscussionMessage[]
+
+  mutedUserChan MutedUserChan[]
 }
 
 enum ChanType {
   PUBLIC
   PRIVATE
+}
+
+model MutedUserChan {
+  id Int @id @default(autoincrement())
+
+  creationDate DateTime  @default(now())
+  untilDate    DateTime?
+
+  mutedUser     User   @relation(fields: [mutedUserName], references: [name])
+  mutedUserName String
+
+  chan   Chan @relation(fields: [chanId], references: [id])
+  chanId Int
+
+  @@unique([chanId, mutedUserName])
 }
 
 model Chan {
@@ -140,6 +175,10 @@ model Chan {
   roles     Role[]
   owner     User   @relation("owner", fields: [ownerName], references: [name])
   ownerName String
+
+  mutedUsers MutedUserChan[]
+
+  invitations ChanInvitation[]
 
   elements DiscussionElement[]
 }
@@ -184,18 +223,22 @@ enum EventType {
   AUTHOR_LEAVED
   AUTHOR_KICKED_CONCERNED
   AUTHOR_JOINED
+  MESSAGE_DELETED
+  CHAN_INVITATION
 }
 
 model DiscussionEvent {
   id Int @id @default(autoincrement())
 
-  eventType String
+  eventType EventType
 
   concernedUserRelation User?   @relation(fields: [concernedUser], references: [name])
   concernedUser         String? @unique
+  // chan inv relation
 
   discussionElement   DiscussionElement @relation(fields: [discussionElementId], references: [id], onDelete: Cascade)
   discussionElementId Int               @unique
+  ChanInvitation      ChanInvitation[]
 }
 
 model DiscussionMessage {
@@ -203,6 +246,8 @@ model DiscussionMessage {
 
   content String
 
+  relatedUsers        User[]
+  relatedRoles        Role[]
   related             DiscussionElement? @relation(name: "related", fields: [relatedId], references: [id])
   relatedId           Int?
   discussionElement   DiscussionElement  @relation(name: "ownship", fields: [discussionElementId], references: [id], onDelete: Cascade)

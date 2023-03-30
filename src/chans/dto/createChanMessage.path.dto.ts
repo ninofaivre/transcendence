@@ -1,7 +1,7 @@
 import { IsId } from "src/decorator/isId.decorator";
 
-export class DeleteChanPathDTO
+export class CreateChanMessagePathDTO
 {
 	@IsId()
-	id: number
+	chanId: number
 }

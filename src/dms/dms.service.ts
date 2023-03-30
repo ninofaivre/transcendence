@@ -2,12 +2,14 @@ import { ConflictException, ForbiddenException, Injectable, NotFoundException } 
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { AppService } from 'src/app.service';
+import { EventType } from '@prisma/client';
 
 enum EventTypeList
 {
 	NEW_DM = 'NEW_DM',
 	DM_DELETED = "DM_DELETED",
 	DM_NEW_EVENT = "DM_NEW_EVENT",
+	DM_NEW_MESSAGE = "DM_NEW_MESSAGE",
 }
 
 @Injectable()
@@ -46,7 +48,7 @@ export class DmsService
 	}
 
 
-	async DmNewEvent(username: string, usernameToNotify: string, dmId: number, event: string) // event will change later from string to prisma schema enum type when it will work again
+	async DmNewEvent(username: string, usernameToNotify: string, dmId: number, event: EventType) // event will change later from string to prisma schema enum type when it will work again
 	{
 		const { discussionElement: res } = await this.prisma.discussionEvent.create({
 			data:
@@ -188,7 +190,7 @@ export class DmsService
 				requestedUserName: true,
 				requestingUserName: true,
 			}})
-		await this.DmNewEvent(username, requestedUserName || requestingUserName, id, 'AUTHOR_LEAVED')
+		await this.DmNewEvent(username, requestedUserName || requestingUserName, id, EventType.AUTHOR_LEAVED)
 	}
 
 	async joinDm(username: string, id: number)
@@ -233,7 +235,7 @@ export class DmsService
 				requestingUserName: true,
 			}})
 		console.log("join:", requestedUserName, requestingUserName)
-		await this.DmNewEvent(username, requestedUserName || requestingUserName, id, 'AUTHOR_JOINED')
+		await this.DmNewEvent(username, requestedUserName || requestingUserName, id, EventType.AUTHOR_JOINED)
 	}
 
 	async getDmMessages(username: string, id: number, nMessages: number, start?: number)
@@ -255,8 +257,8 @@ export class DmsService
 					select: this.discussionElementsSelect,
 					take: nMessages,
 					orderBy: { id: 'desc' },
-					cursor: (!!start) ? { id: start } : undefined,
-					skip: Number(!!start),
+					cursor: (start !== undefined) ? { id: start } : undefined,
+					skip: Number(start !== undefined) ? 1 : undefined,
 				}
 			}})
 		if (!res)
@@ -283,13 +285,15 @@ export class DmsService
 					where: { id: relatedId },
 					select: { id: true },
 					take: 1
-				}
+				},
+				requestingUserName: true,
+				requestedUserName: true
 			} : undefined})
 		if (!toCheck)
 			throw new NotFoundException(`directMessage with id ${dmId} not found`)
 		if (relatedId !== undefined && !toCheck.elements?.length)
 			throw new NotFoundException(`element with id ${relatedId} not found in directMessage with id ${dmId}`)
-		return (await this.prisma.discussionMessage.create({
+		const res = (await this.prisma.discussionMessage.create({
 			data:
 			{
 				content: content,
@@ -313,5 +317,67 @@ export class DmsService
 			{
 				discussionElement: { select: this.discussionElementsSelect }
 			}})).discussionElement
+		const toNotify: string = (toCheck.requestingUserName !== username) ? toCheck.requestingUserName : toCheck.requestedUserName
+		if (toNotify)
+		{
+			await this.appService.pushEvent(toNotify,
+				{
+					type: EventTypeList.DM_NEW_MESSAGE,
+					data: { directMessageId: dmId, message: res } 
+				})
+		}
+		return res
 	}
+	
+	async deleteDmMessage(username: string, dmId: number, msgId: number)
+	{
+		const toCheck = await this.prisma.directMessage.findUnique({
+			where:
+			{
+				id: dmId,
+				OR:
+				[
+					{ requestedUserName: username },
+					{ requestingUserName: username }
+				]
+			},
+			select:
+			{
+				elements:
+				{
+					where:
+					{
+						id: msgId,
+						message: { discussionElementId: msgId },
+						author: username
+					},
+					select: { message: { select: { id: true } } },
+					take: 1
+				},
+				requestingUserName: true,
+				requestedUserName: true
+			}})
+		if (!toCheck)
+			throw new NotFoundException(`directMessage with id ${dmId} not found`)
+		if (!toCheck.elements.length)
+			throw new NotFoundException(`message with id ${msgId} not found`)
+		const trueMsgId: number = toCheck.elements[0].message.id
+		const res = await this.prisma.discussionElement.update({ where: { id: msgId },
+			data:
+			{
+				message: { delete: { id: trueMsgId } },
+				event: { create: { eventType: EventType.MESSAGE_DELETED } },
+			},
+			select: this.discussionElementsSelect})
+		const toNotify: string = (toCheck.requestedUserName !== username) ? toCheck.requestedUserName : toCheck.requestingUserName
+		if (toNotify)
+		{
+			await this.appService.pushEvent(toNotify,
+				{
+					type: EventTypeList.DM_NEW_EVENT,
+					data: { directMessageId: dmId, event: res }
+				})
+		}
+	}
+
 }

@@ -7,19 +7,27 @@ export class AppService
 {
 	private eventSource = new Map<String, Subject<MessageEvent>>()
 
-	addSubject(username: string) {
+	addSubject(username: string)
+	{
 		this.eventSource.set(username, new Subject<MessageEvent>)
 	}
 
-	async pushEvent(username: string, event: MessageEvent) {
+	async pushEvent(username: string, event: MessageEvent)
+	{
 		this.eventSource.get(username)?.next(event)
+	}
+
+	async pushEventMultipleUser(usernames: string[], event: MessageEvent)
+	{
+		usernames.forEach(el => this.eventSource.get(el)?.next(event))
 	}
 
 	sendObservable(username: string) {
 		return this.eventSource.get(username).asObservable()
 	}
 
-	deleteSubject(username: string) {
+	deleteSubject(username: string)
+	{
 		console.log("close /sse for", username)
 		this.eventSource.delete(username)
 	}

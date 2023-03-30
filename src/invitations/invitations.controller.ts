@@ -37,7 +37,7 @@ export class InvitationsController
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete('/friendInvitations/:type/:id')
+	@Delete('/friend/:type/:id')
 	async deleteFriendInvitation(@Request()req: any, @Param()pathDTO: DeleteFriendInvitationPathDTO)
 	{
 		return this.invitationsService.deleteFriendInvitation(req.user.username, pathDTO.type, pathDTO.id)

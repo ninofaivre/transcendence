@@ -27,34 +27,11 @@ export class DmsController
 		return this.dmsService.getDms(req.user.username)
 	}
 
-	@ApiTags('me')
-	@UseGuards(JwtAuthGuard)
-	@Post('/me')
-	async joinDm(@Request()req: any, @Body()dto: JoinDmDTO)
-	{
-		return this.dmsService.joinDm(req.user.username, dto.DmId)
-	}
-
-	@ApiTags('me')
-	@UseGuards(JwtAuthGuard)
-	@Delete('/me/:DmId')
-	async leaveDm(@Request()req: any, @Param()pathDTO: LeaveDmPathDTO)
-	{
-		return this.dmsService.leaveDm(req.user.username, pathDTO.DmId)
-	}
-
 	@UseGuards(JwtAuthGuard)
 	@Post('/')
 	async createDm(@Request()req: any, @Body()dto: OneUsernameDTO)
 	{
 		return this.dmsService.createDm(req.user.username, dto.username)
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@Delete('/:DmId')
-	async deleteDm(@Request()req: any, @Param()pathDTO: DeleteDmPathDTO)
-	{
-		return this.dmsService.deleteDm(req.user.username, pathDTO.DmId)
 	}
 
 	@UseGuards(JwtAuthGuard)

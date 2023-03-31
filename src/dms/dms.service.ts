@@ -18,35 +18,19 @@ export class DmsService
 	constructor(private readonly prisma: PrismaService,
 			    private readonly appService: AppService) {}
 
-
-	private directMessageSelect: Prisma.DirectMessageSelect =
-	{
+	private directMessageSelect = Prisma.validator<Prisma.DirectMessageSelect>()
+	({
 		id: true,
+		friendShipId: true,
+
 		requestedUserName: true,
+		requestedUserStatus: true,
+		requestedUserStatusMutedUntil: true,
+
 		requestingUserName: true,
-	}
-
-	private discussionEventsSelect: Prisma.DiscussionEventSelect =
-	{
-		eventType: true,
-		concernedUser: true,
-	}
-
-	private discussionMessagesSelect: Prisma.DiscussionMessageSelect =
-	{
-		content: true,
-		relatedId: true,
-	}
-
-	private discussionElementsSelect: Prisma.DiscussionElementSelect =
-	{
-		id: true,
-		event: { select: this.discussionEventsSelect },
-		message: { select: this.discussionMessagesSelect },
-		author: true,
-		creationDate: true
-	}
-
+		requestingUserStatus: true,
+		requestingUserStatusMutedUntil: true
+	})
 
 	async DmNewEvent(username: string, usernameToNotify: string, dmId: number, event: EventType) // event will change later from string to prisma schema enum type when it will work again
 	{
@@ -65,7 +49,7 @@ export class DmsService
 			},
 			select:
 			{
-				discussionElement: { select: this.discussionElementsSelect }
+				discussionElement: { select: this.appService.discussionElementsSelect }
 			}})
 		return this.appService.pushEvent(usernameToNotify,
 			{
@@ -76,16 +60,17 @@ export class DmsService
 
 	async getDms(username: string)
 	{
-		return this.prisma.directMessage.findMany({
+		const res = await this.prisma.directMessage.findMany({
 			where:
 			{
 				OR:
 				[
 					{ requestedUserName: username },
 					{ requestingUserName: username }
-				]
+				],
 			},
 			select: this.directMessageSelect})
+		return { disabled: res.filter(el => el.friendShipId), enabled: res.filter(el => !el.friendShipId) }
 	}
 
 	async createDm(username: string, friendUsername: string)
@@ -119,7 +104,7 @@ export class DmsService
 		const res = await this.prisma.directMessage.create({
 			data:
 			{
-				friendShipId: toCheck.friend[0].id || toCheck.friend[0].id,
+				friendShipId: toCheck.friend[0].id || toCheck.friendOf[0].id,
 				requestingUserName: username,
 				requestedUserName: friendUsername
 			},
@@ -144,7 +129,7 @@ export class DmsService
 			{
 				elements:
 				{
-					select: this.discussionElementsSelect,
+					select: this.appService.discussionElementsSelect,
 					take: nMessages,
 					orderBy: { id: 'desc' },
 					cursor: (start !== undefined) ? { id: start } : undefined,
@@ -167,6 +152,7 @@ export class DmsService
 					{ requestedUserName: username },
 					{ requestingUserName: username },
 				],
+				friendShip: { id: { not: null } },
 			},
 			select: (relatedId !== undefined) ?
 			{
@@ -205,7 +191,7 @@ export class DmsService
 			},
 			select:
 			{
-				discussionElement: { select: this.discussionElementsSelect }
+				discussionElement: { select: this.appService.discussionElementsSelect }
 			}})).discussionElement
 		const toNotify: string = (toCheck.requestingUserName !== username) ? toCheck.requestingUserName : toCheck.requestedUserName
 		if (toNotify)
@@ -229,7 +215,7 @@ export class DmsService
 				[
 					{ requestedUserName: username },
 					{ requestingUserName: username }
-				]
+				],
 			},
 			select:
 			{
@@ -258,7 +244,7 @@ export class DmsService
 				message: { delete: { id: trueMsgId } },
 				event: { create: { eventType: EventType.MESSAGE_DELETED } },
 			},
-			select: this.discussionElementsSelect})
+			select: this.appService.discussionElementsSelect})
 		const toNotify: string = (toCheck.requestedUserName !== username) ? toCheck.requestedUserName : toCheck.requestingUserName
 		if (toNotify)
 		{

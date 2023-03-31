@@ -7,12 +7,14 @@ import { AppService } from 'src/app.service';
 import { EventType } from '@prisma/client';
 import { CreateChanMessageDTO } from './dto/createChanMessage.dto';
 import { NotFoundError } from 'rxjs';
+import { PermissionsService } from './permissions/permissions.service';
 
 enum EventTypeList
 {
 	CHAN_DELETED = "CHAN_DELETED",
 	CHAN_NEW_EVENT = "CHAN_NEW_EVENT",
 	CHAN_NEW_MESSAGE = "CHAN_NEW_MESSAGE",
+	DM_NEW_EVENT = "DM_NEW_EVENT",
 }
 
 @Injectable()
@@ -20,6 +22,7 @@ export class ChansService
 {
 
 	constructor(private readonly prisma: PrismaService,
+				private readonly permissionsService: PermissionsService,
 			    private readonly appService: AppService) {}
 
 
@@ -153,7 +156,7 @@ export class ChansService
 			{
 				roles:
 				{
-					where: this.getRolesDoesUserHasRighTo(username, username, PermissionList.DESTROY),
+					where: this.permissionsService.getRolesDoesUserHasRighTo(username, username, PermissionList.DESTROY),
 					take: 1,
 					select: { id: true }
 				},
@@ -278,7 +281,7 @@ export class ChansService
 				},
 				roles:
 				{
-					where: this.getRolesDoesUserHasRighTo(username, username, PermissionList.SEND_MESSAGE),
+					where: this.permissionsService.getRolesDoesUserHasRighTo(username, username, PermissionList.SEND_MESSAGE),
 					take: 1,
 					select: { id: true },
 				},
@@ -340,68 +343,6 @@ export class ChansService
 		return res.elements.reverse()
 	}
 
-	getRolesDoesUserHasRighTo(requiringUsername: string, requiredUsername: string, perm: PermissionList): Prisma.RoleWhereInput
-	{
-		return ((requiringUsername === requiredUsername) ?
-			{
-				permissions: { has: perm },
-				users: { some: { name: requiringUsername } },
-			}:
-			{
-				permissions: { has: perm },
-				OR:
-				[
-					{
-						roleApplyOn: RoleApplyingType.ROLES,
-						users:
-						{
-							some: { name: requiringUsername },
-							none: { name: requiredUsername }
-						},
-						roles:
-						{
-							some: { users: { some: { name: requiredUsername } } }
-						}
-					},
-					{
-						roleApplyOn: RoleApplyingType.ROLES_AND_SELF,
-						users: { some: { name: requiringUsername } },
-						OR:
-						[
-							{ users: { some: { name: requiredUsername } } },
-							{
-								roles:
-								{
-									some: { users: { some: { name: requiredUsername } } }
-								}
-							}
-						]
-					}
-				]
-			})
-	}
-
-	async doesUserHasRightTo(requiringUsername: string, requiredUsername: string, perm: PermissionList, chanId: number): Promise<boolean>
-	{
-		return !!(await this.prisma.chan.findUnique({
-			where:
-			{
-				id: chanId,
-				OR:
-				[
-					{ ownerName: requiringUsername },
-					{
-						roles:
-						{
-							some: this.getRolesDoesUserHasRighTo(requiringUsername, requiredUsername, perm)
-						},
-						ownerName: { not: requiredUsername }
-					},
-				]
-			},
-			select: { id: true }}))
-	}
-	
 	async deleteChanMessage(username: string, chanId: number, msgId: number)
 	{
 		const toCheck = await this.prisma.chan.findUnique({
@@ -437,7 +378,7 @@ export class ChansService
 		if (!toCheck.elements.length)
 			throw new NotFoundException(`msg with id ${msgId} not found in chan with id ${chanId}`)
 		const author = toCheck.elements[0].author
-		if (!(await this.doesUserHasRightTo(username, author, PermissionList.DELETE_MESSAGE, chanId)))
+		if (!(await this.permissionsService.doesUserHasRightTo(username, author, PermissionList.DELETE_MESSAGE, chanId)))
 			throw new ForbiddenException(`you don't have the right to do delete this msg`)
 		const res = await this.prisma.discussionElement.update({ where: { id: msgId },
 			data:
@@ -462,7 +403,7 @@ export class ChansService
 				users: { where: { name: toKick }, select: { name: true }, take: 1 },
 				roles:
 				{
-					where: this.getRolesDoesUserHasRighTo(username, toKick, PermissionList.KICK),
+					where: this.permissionsService.getRolesDoesUserHasRighTo(username, toKick, PermissionList.KICK),
 					select: { id: true },
 					take: 1
 				},
@@ -530,4 +471,65 @@ export class ChansService
 				data: { chanId: chanId, message: message }
 			})
 	}
+
+	async acceptChanInvitation(username: string, chanInvitationId: number) // need to split this dirty func
+	{
+		const toCheck = await this.prisma.chanInvitation.findUnique({
+			where:
+			{
+				id: chanInvitationId,
+				requestedUserName: username
+			},
+			select: { chanId: true }})
+		if (!toCheck)
+			throw new ForbiddenException(`chanInvitation with id ${chanInvitationId} not found`)
+		let invitations = (await this.prisma.user.findUnique({ where: { name: username },
+			select:
+			{
+				incomingChanInvitation:
+				{
+					where: { chanId: toCheck.chanId },
+					select:
+					{
+						id: true,
+						requestingUserName: true,
+						discussionEvent: { select: { id: true } },
+						friendShip: { select: { directMessage: { select: { id: true } } } }
+					}
+				}
+			}})).incomingChanInvitation
+		await this.prisma.chanInvitation.deleteMany({ where: { id: { in: invitations.map(el => el.id) } } })
+		// Add user to the chan here
+		await this.prisma.discussionEvent.updateMany({
+			where: { id: { in: invitations.map(el => el.discussionEvent.id) } },
+			data:
+			{
+				eventType: EventType.ACCEPTED_CHAN_INVITATION,
+			}})
+		const res = (await this.prisma.discussionEvent.findMany({
+			where: { id: { in: invitations.map(el => el.discussionEvent.id) } },
+			select:
+			{
+				discussionElement: { select: { directMessageId: true, ...this.appService.discussionElementsSelect } }
+			}})).map(el => el.discussionElement)
+		const a = res.reduce((acc, curr) =>
+			{
+				const { directMessageId, ...rest } = curr
+				acc.set(directMessageId, rest)
+				return acc
+			}, new Map<number, any>())
+		await Promise.all(invitations.map(async inv =>
+			{
+				return this.appService.pushEvent(inv.requestingUserName,
+					{
+						type: EventTypeList.DM_NEW_EVENT,
+						data:
+						{
+							directMessageId: inv.friendShip.directMessage.id,
+							event: a.get(inv.friendShip.directMessage.id)
+						}
+					})
+			}))
+	}
+
 }

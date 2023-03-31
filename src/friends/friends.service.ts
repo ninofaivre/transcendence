@@ -52,11 +52,32 @@ export class FriendsService
 					id: id
 				},
 				select: { invitingUserName: true }})
+			const directMessage = await this.prisma.user.findUnique({ where: { name: username },
+				select:
+				{
+					directMessage:
+					{
+						where: { requestedUserName: invitingUserName },
+						select: { id: true },
+					},
+					directMessageOf:
+					{
+						where: { requestingUserName: invitingUserName },
+						select: { id: true }
+					}
+				}})
 			const newFriendShip = await this.prisma.friendShip.create({
 				data:
 				{
 					requestingUser: { connect: { name: invitingUserName } },
-					requestedUser: { connect: { name: username } }
+					requestedUser: { connect: { name: username } },
+					directMessage: directMessage &&
+					{
+						connect:
+						{
+							id: directMessage.directMessage[0].id || directMessage.directMessageOf[0].id,
+						}
+					}
 				},
 				select: this.friendShipSelect })
 			await this.appService.pushEvent(invitingUserName,
@@ -64,6 +85,7 @@ export class FriendsService
 					type: EventTypeList.NEW_FRIEND,
 					data: { deletedFriendInvitationId: id, friend: newFriendShip }
 				})
+			return newFriendShip
 		}
 		catch (e)
 		{

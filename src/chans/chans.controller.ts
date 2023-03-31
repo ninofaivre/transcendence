@@ -2,6 +2,7 @@ import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Query,
 import { ApiBody, ApiExtraModels, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ChansService } from './chans.service';
+import { AcceptChanInvitationDTO } from './dto/acceptChanInvitation.dto';
 import { CreateChanDTO, CreatePrivateChanDTO, CreatePublicChanDTO } from './dto/createChan.dto';
 import { CreateChanMessageDTO } from './dto/createChanMessage.dto';
 import { CreateChanMessagePathDTO } from './dto/createChanMessage.path.dto';
@@ -33,6 +34,14 @@ export class ChansController
 	async leaveChan(@Request()req: any, @Param()dto: DeleteChanPathDTO)
 	{
 		return this.chansService.leaveChan(req.user.username, dto.id)
+	}
+
+	@ApiTags('me')
+	@UseGuards(JwtAuthGuard)
+	@Post('/me')
+	async acceptChanInvitation(@Request()req: any, @Body()dto: AcceptChanInvitationDTO)
+	{
+		this.chansService.acceptChanInvitation(req.user.username, dto.chanInvitationId)
 	}
 
 	@UseGuards(JwtAuthGuard)

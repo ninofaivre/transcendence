@@ -2,9 +2,11 @@ import { Module } from '@nestjs/common';
 import { ChansService } from './chans.service';
 import { ChansController } from './chans.controller';
 import { AppService } from 'src/app.service';
+import { PermissionsService } from './permissions/permissions.service';
 
 @Module({
-  providers: [ChansService, AppService],
-  controllers: [ChansController]
+  providers: [ChansService, AppService, PermissionsService],
+  controllers: [ChansController],
+  exports: [PermissionsService]
 })
 export class ChansModule {}

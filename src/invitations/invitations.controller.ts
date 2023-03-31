@@ -2,7 +2,10 @@ import { Body, Controller, Delete, Get, Param, Post, Request, UseGuards } from '
 import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { OneUsernameDTO } from 'src/user/dto/oneUsername.dto';
+import { CreateChanInvitationDTO } from './dto/createChanInvitation.dto';
+import { DeleteChanInvitationsPathDTO } from './dto/deleteChanInvitation.path.dto';
 import { DeleteFriendInvitationPathDTO } from './dto/deleteFriendInvitation.path.dto';
+import { ChanInvitationType, GetChanInvitationsPathDTO } from './dto/getChanInvitations.path.dto';
 import { GetFriendInvitationsPathDTO } from './dto/getFriendInvitations.path.dto';
 import { InvitationsService } from './invitations.service';
 import { InvitationPathType } from './types/invitationPath.type';
@@ -41,6 +44,34 @@ export class InvitationsController
 	async deleteFriendInvitation(@Request()req: any, @Param()pathDTO: DeleteFriendInvitationPathDTO)
 	{
 		return this.invitationsService.deleteFriendInvitation(req.user.username, pathDTO.type, pathDTO.id)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('/chan')
+	async getChanInvitations(@Request()req: any)
+	{
+		return this.invitationsService.getChanInvitations(req.user.username)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('/chan/:chanInvitationType')
+	async getChanInvitationsByType(@Request()req: any, @Param()pathDTO: GetChanInvitationsPathDTO)
+	{
+		return this.invitationsService.getChanInvitations(req.user.username, pathDTO.chanInvitationType)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post(`/chan/${ChanInvitationType.OUTCOMING}`)
+	async createChanInvitation(@Request()req: any, @Body()dto: CreateChanInvitationDTO)
+	{
+		return this.invitationsService.createChanInvitation(req.user.username, dto.username, dto.chanId)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Delete('/chan/:chanInvitationType/:chanInvitationId')
+	async deleteChanInvitation(@Request()req: any, @Param()pathDTO: DeleteChanInvitationsPathDTO)
+	{
+		return this.invitationsService.deleteChanInvitation(req.user.username, pathDTO.chanInvitationId, pathDTO.chanInvitationType) 
 	}
 
 }

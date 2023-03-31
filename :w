@@ -3,7 +3,6 @@ import { EventType, PermissionList, Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { AppService } from 'src/app.service';
 import { PermissionsService } from 'src/chans/permissions/permissions.service';
-import { ChanInvitationType } from './dto/getChanInvitations.path.dto';
 import { InvitationPathType } from './types/invitationPath.type';
 
 enum EventTypeList
@@ -11,7 +10,6 @@ enum EventTypeList
 	NEW_FRIEND_INVITATION = "NEW_FRIEND_INVITATION",
 	FRIEND_INVITATION_REFUSED = "FRIEND_INVITATION_REFUSED",
 	FRIEND_INVITATION_CANCELED = "FRIEND_INVITATION_CANCELED",
-	DM_NEW_EVENT = "DM_NEW_EVENT",
 }
 
 @Injectable()
@@ -118,17 +116,18 @@ export class InvitationsService
 		}
 	}
 
-	async getChanInvitations(username: string, chanInvitationType?: ChanInvitationType)
+	async getChanInvitations(username: string)
 	{
-		const res = await this.prisma.user.findUnique({ where: { name: username },
-			select:
+		return this.prisma.chanInvitation.findMany({
+			where:
 			{
-				incomingChanInvitation: (chanInvitationType === 'INCOMING') && { select: this.chanInvitationsSelect },
-				outcomingChanInvitation: (chanInvitationType === 'OUTCOMING') && { select: this.chanInvitationsSelect },
-			}})
-		if (!chanInvitationType)
-			return { incoming: res.incomingChanInvitation, outcoming: res.outcomingChanInvitation }
-		return res.incomingChanInvitation || res.outcomingChanInvitation
+				OR:
+				[
+					{ friendShip: { requestedUserName: username } },
+					{ friendShip: { requestingUserName: username } }
+				]
+			},
+			select: this.chanInvitationsSelect})
 	}
 
 	async createChanInvitation(invitingUsername: string, invitedUsername: string, chanId: number)
@@ -168,105 +167,28 @@ export class InvitationsService
 			{
 				chan: { connect: { id: chanId } },
 				friendShip: { connect: { id: toCheck.friend[0]?.id || toCheck.friendOf[0]?.id } },
-				requestingUser: { connect: { name: invitingUsername } },
-				requestedUser: { connect: { name: invitedUsername } },
 				discussionEvent:
 				{
 					create:
 					{
 						concernedUserRelation: { connect: { name: invitedUsername } },
-						eventType: EventType.PENDING_CHAN_INVITATION,
-						deletedInvitationChanRelated: { connect: { id: chanId } },
+						eventType: EventType.CHAN_INVITATION,
 						discussionElement:
 						{
 							create:
 							{
-								authorRelation: { connect: { name: invitingUsername } },
 								directMessage:
 								{
 									connectOrCreate:
 									{
-										where: { id: toCheck.friend[0]?.directMessage?.id || toCheck.friendOf[0]?.directMessage?.id || null },
-										create:
-										{
-											requestingUser: { connect: { name: invitingUsername } },
-											requestedUser: { connect: { name: invitedUsername } },
-											friendShip: { connect: { id: toCheck.friend[0].id || toCheck.friendOf[0].id } },
-										}
+										id: toCheck.friend[0]?.directMessage?.id
 									}
 								}
 							}
 						}
 					}
 				}
-			},
-			select:
-			{
-				discussionEvent:
-				{
-					select:
-					{
-						discussionElement:
-						{
-							select: { ...this.appService.discussionElementsSelect, directMessageId: true }
-						}
-					}
-				}
-			}})
-		const directMessageId = res.discussionEvent.discussionElement.directMessageId
-		delete res.discussionEvent.discussionElement.directMessageId
-		await this.appService.pushEvent(invitedUsername,
-			{
-				type: EventTypeList.DM_NEW_EVENT,
-				data:
-				{
-					directMessageId: directMessageId,
-					event: res.discussionEvent.discussionElement
-				}
-			})
-		return res.discussionEvent.discussionElement
-	}
-
-	async deleteChanInvitation(username: string, invitationId: number, chanInvitationType: ChanInvitationType)
-	{
-		try
-		{
-			const { requestingUserName, requestedUserName, discussionEvent: { id: discussionEventId } } =
-				await this.prisma.chanInvitation.delete({ where:
-					{
-						id: invitationId,
-						requestingUserName: chanInvitationType === 'OUTCOMING' && username || undefined,
-						requestedUserName: chanInvitationType === 'INCOMING' && username || undefined,
-					},
-					select:
-					{
-						discussionEvent: { select: { id: true } },
-						requestingUserName: chanInvitationType === 'INCOMING',
-						requestedUserName: chanInvitationType === 'OUTCOMING',
-					}})
-			const res = await this.prisma.discussionEvent.update({
-				where: { id: discussionEventId },
-				data:
-				{
-					eventType: (chanInvitationType === 'INCOMING') ? EventType.REFUSED_CHAN_INVITATION : EventType.CANCELED_CHAN_INVITATION
-				},
-				select: { discussionElement: { select: { directMessageId: true ,...this.appService.discussionElementsSelect } } }})
-			const directMessageId: number = res.discussionElement.directMessageId
-			delete res.discussionElement.directMessageId
-			await this.appService.pushEvent(requestedUserName || requestingUserName,
-				{
-					type: EventTypeList.DM_NEW_EVENT,
-					data:
-					{
-						directMessageId: directMessageId,
-						event: res.discussionElement
-					}
-				})
-			return res.discussionElement
-		}
-		catch
-		{
-			throw new NotFoundException(`invitation with id ${invitationId} not found`)
-		}
+			}
+		})
 	}
 }

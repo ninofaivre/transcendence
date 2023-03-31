@@ -74,7 +74,11 @@ model ChanInvitation {
   friendShip        FriendShip      @relation(fields: [friendShipId], references: [id])
   friendShipId      Int
   discussionEvent   DiscussionEvent @relation(fields: [discussionEventId], references: [id])
-  discussionEventId Int
+  discussionEventId Int @unique
+  requestingUser	User @relation(name: "outcomingChanInvitation", fields: [requestingUserName], references: [name])
+  requestingUserName	String
+  requestedUser	User @relation(name: "incomingChanInvitation", fields: [requestedUserName], references: [name])
+  requestedUserName	String
 
   @@unique([chanId, friendShipId])
 }
@@ -131,6 +135,9 @@ model User {
   outcomingFriendInvitation FriendInvitation[] @relation("outcomingFriendInvitation")
   incomingFriendInvitation  FriendInvitation[] @relation("incomingFriendInvitation")
 
+  outcomingChanInvitation	ChanInvitation[] @relation("outcomingChanInvitation")
+  incomingChanInvitation	ChanInvitation[] @relation("incomingChanInvitation")
+
   blockedUser   BlockedShip[] @relation("blocked")
   blockedByUser BlockedShip[] @relation("blockedBy")
 
@@ -179,8 +186,15 @@ model Chan {
   mutedUsers MutedUserChan[]
 
   invitations ChanInvitation[]
+  eventsDeletedInvitation	DiscussionEvent[]
 
   elements DiscussionElement[]
+}
+
+enum DirectMessageStatus {
+  CLOSED
+  OPEN
+  MUTED
 }
 
 model DirectMessage {
@@ -189,13 +203,19 @@ model DirectMessage {
   creationDate     DateTime  @default(now())
   modificationDate DateTime? @updatedAt
 
-  requestingUser     User?   @relation(name: "directMessage", fields: [requestingUserName], references: [name])
-  requestingUserName String?
-  requestedUser      User?   @relation("directMessageOf", fields: [requestedUserName], references: [name])
-  requestedUserName  String?
+  requestingUser                 User                @relation(name: "directMessage", fields: [requestingUserName], references: [name])
+  requestingUserName             String
+  requestingUserStatus           DirectMessageStatus @default(OPEN)
+  requestingUserStatusMutedUntil DateTime?
+  requestedUser                  User                @relation("directMessageOf", fields: [requestedUserName], references: [name])
+  requestedUserName              String
+  requestedUserStatus            DirectMessageStatus @default(OPEN)
+  requestedUserStatusMutedUntil  DateTime?
 
-  friendShip   FriendShip @relation(fields: [friendShipId], references: [id], onDelete: Cascade)
-  friendShipId Int        @unique
+  friendShip   FriendShip? @relation(fields: [friendShipId], references: [id])
+  friendShipId Int?        @unique
+
+  @@unique([requestingUserName, requestedUserName])
 
   elements DiscussionElement[]
 }
@@ -224,7 +244,11 @@ enum EventType {
   AUTHOR_KICKED_CONCERNED
   AUTHOR_JOINED
   MESSAGE_DELETED
-  CHAN_INVITATION
+  PENDING_CHAN_INVITATION
+  ACCEPTED_CHAN_INVITATION
+  CANCELED_CHAN_INVITATION
+  REFUSED_CHAN_INVITATION
+  CHAN_DELETED_INVITATION
 }
 
 model DiscussionEvent {
@@ -234,11 +258,12 @@ model DiscussionEvent {
 
   concernedUserRelation User?   @relation(fields: [concernedUser], references: [name])
   concernedUser         String? @unique
-  // chan inv relation
 
   discussionElement   DiscussionElement @relation(fields: [discussionElementId], references: [id], onDelete: Cascade)
   discussionElementId Int               @unique
-  ChanInvitation      ChanInvitation[]
+  ChanInvitation      ChanInvitation?
+  deletedInvitationChanRelated	Chan? @relation(fields:[deletedInvitationChanRelatedTitle], references:[title])
+	deletedInvitationChanRelatedTitle	String? @unique
 }
 
 model DiscussionMessage {

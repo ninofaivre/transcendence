@@ -1,7 +1,7 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
-import { AppService } from 'src/app.service';
+import { SseService } from 'src/sse/sse.service';
 
 enum EventTypeList
 {
@@ -14,7 +14,7 @@ export class FriendsService
 {
 
 	constructor(private readonly prisma: PrismaService,
-			   	private readonly appService: AppService) {}
+			   	private readonly sseService: SseService) {}
 
 
 	private friendShipSelect: Prisma.FriendShipSelect =
@@ -71,16 +71,16 @@ export class FriendsService
 				{
 					requestingUser: { connect: { name: invitingUserName } },
 					requestedUser: { connect: { name: username } },
-					directMessage: directMessage &&
+					directMessage: (directMessage.directMessage.length || directMessage.directMessageOf.length) ?
 					{
 						connect:
 						{
-							id: directMessage.directMessage[0].id || directMessage.directMessageOf[0].id,
+							id: directMessage.directMessage[0]?.id || directMessage.directMessageOf[0]?.id,
 						}
-					}
+					}: undefined
 				},
 				select: this.friendShipSelect })
-			await this.appService.pushEvent(invitingUserName,
+			await this.sseService.pushEvent(invitingUserName,
 				{
 					type: EventTypeList.NEW_FRIEND,
 					data: { deletedFriendInvitationId: id, friend: newFriendShip }
@@ -108,7 +108,7 @@ export class FriendsService
 					requestedUserName: true,
 					requestingUserName: true,
 				}})
-			await this.appService.pushEvent((username === requestedUserName) && requestingUserName || requestedUserName,
+			await this.sseService.pushEvent((username === requestedUserName) && requestingUserName || requestedUserName,
 				{
 					type: EventTypeList.DELETED_FRIEND,
 					data: { deletedFriendId: id }

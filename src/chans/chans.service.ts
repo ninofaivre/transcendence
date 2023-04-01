@@ -8,6 +8,7 @@ import { EventType } from '@prisma/client';
 import { CreateChanMessageDTO } from './dto/createChanMessage.dto';
 import { NotFoundError } from 'rxjs';
 import { PermissionsService } from './permissions/permissions.service';
+import { SseService } from 'src/sse/sse.service';
 
 enum EventTypeList
 {
@@ -23,7 +24,8 @@ export class ChansService
 
 	constructor(private readonly prisma: PrismaService,
 				private readonly permissionsService: PermissionsService,
-			    private readonly appService: AppService) {}
+			    private readonly appService: AppService,
+			    private readonly sseService: SseService) {}
 
 
 	private usersSelect = Prisma.validator<Prisma.UserSelect>()
@@ -172,7 +174,7 @@ export class ChansService
 			{
 				users: { select: this.usersSelect }
 			}})).users
-		toNotify.forEach(el => this.appService.pushEvent(el.name, { type: EventTypeList.CHAN_DELETED, data: { chanId: id } }))
+		toNotify.forEach(el => this.sseService.pushEvent(el.name, { type: EventTypeList.CHAN_DELETED, data: { chanId: id } }))
 	}
 
 	async leaveChan(username: string, id: number)
@@ -216,7 +218,7 @@ export class ChansService
 			}
 		},
 		select: { discussionElement: { select: this.discussionElementsSelect }}})).discussionElement
-		toNotify.forEach(el => this.appService.pushEvent(el.name, { type: EventTypeList.CHAN_NEW_EVENT, data: { chanId: id, event: res } }))
+		toNotify.forEach(el => this.sseService.pushEvent(el.name, { type: EventTypeList.CHAN_NEW_EVENT, data: { chanId: id, event: res } }))
 	}
 
 	async createChanMessage(username: string, chanId: number, content: string, relatedId?: number, usersAt?: string[])
@@ -456,7 +458,7 @@ export class ChansService
 
 	async notifyChanEvent(users: { name: string }[], chanId: number, event: Prisma.PromiseReturnType<typeof this.createChanEvent>)
 	{
-		return this.appService.pushEventMultipleUser(users.map(el => el.name),
+		return this.sseService.pushEventMultipleUser(users.map(el => el.name),
 			{
 				type: EventTypeList.CHAN_NEW_EVENT,
 				data: { chanId: chanId, event: event }
@@ -465,15 +467,44 @@ export class ChansService
 	
 	async notifyChanMessage(users: { name: string }[], chanId: number, message: Prisma.PromiseReturnType<typeof this.createChanMessage>)
 	{
-		return this.appService.pushEventMultipleUser(users.map(el => el.name),
+		return this.sseService.pushEventMultipleUser(users.map(el => el.name),
 			{
 				type: EventTypeList.CHAN_NEW_MESSAGE,
 				data: { chanId: chanId, message: message }
 			})
 	}
 
+	private async addUserToChan(username: string, chanId: number)
+	{
+		const toNotify = (await this.prisma.chan.update({ where: { id: chanId },
+			data: { users: { connect: { name: username } }, },
+			select: { users: { select: { name: true } } }})).users.map(el => el.name)
+		const res = await this.prisma.discussionElement.create({
+			data:
+			{
+				chan: { connect: { id: chanId } },
+				authorRelation: { connect: { name: username } },
+				event:
+				{
+					create:
+					{
+						eventType: EventType.AUTHOR_JOINED
+					}
+				}
+			},
+			select: this.appService.discussionElementsSelect})
+		
+		await this.sseService.pushEventMultipleUser(toNotify,
+			{
+				type: EventTypeList.CHAN_NEW_EVENT,
+				data: { chanId: chanId, event: res }
+			})
+		return res
+	}
+
 	async acceptChanInvitation(username: string, chanInvitationId: number) // need to split this dirty func
 	{
+		/* Check que l'invitation existe et récupère le chanel pour lequel elle est */
 		const toCheck = await this.prisma.chanInvitation.findUnique({
 			where:
 			{
@@ -483,6 +514,9 @@ export class ChansService
 			select: { chanId: true }})
 		if (!toCheck)
 			throw new ForbiddenException(`chanInvitation with id ${chanInvitationId} not found`)
+		/* Check que l'invitation existe et récupère le chanel pour lequel elle est */
+
+		/* Récupère les invitations vers le même chan pour le même user */
 		let invitations = (await this.prisma.user.findUnique({ where: { name: username },
 			select:
 			{
@@ -498,14 +532,22 @@ export class ChansService
 					}
 				}
 			}})).incomingChanInvitation
+		/* Récupère les invitations vers le même chan pour le même user */
+
+		const joinEvent = await this.addUserToChan(username, toCheck.chanId)
+
+		// delete toute les invitations
 		await this.prisma.chanInvitation.deleteMany({ where: { id: { in: invitations.map(el => el.id) } } })
-		// Add user to the chan here
+
+		// update event in direct message
 		await this.prisma.discussionEvent.updateMany({
 			where: { id: { in: invitations.map(el => el.discussionEvent.id) } },
 			data:
 			{
 				eventType: EventType.ACCEPTED_CHAN_INVITATION,
 			}})
+
+		// select all event and send it via sse
 		const res = (await this.prisma.discussionEvent.findMany({
 			where: { id: { in: invitations.map(el => el.discussionEvent.id) } },
 			select:
@@ -520,7 +562,7 @@ export class ChansService
 			}, new Map<number, any>())
 		await Promise.all(invitations.map(async inv =>
 			{
-				return this.appService.pushEvent(inv.requestingUserName,
+				return this.sseService.pushEventMultipleUser([inv.requestingUserName, username],
 					{
 						type: EventTypeList.DM_NEW_EVENT,
 						data:
@@ -530,6 +572,7 @@ export class ChansService
 						}
 					})
 			}))
+		return { chan: { id: toCheck.chanId, event: joinEvent }, dms: a }
 	}
 
 }

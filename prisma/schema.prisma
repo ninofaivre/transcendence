@@ -257,13 +257,13 @@ model DiscussionEvent {
   eventType EventType
 
   concernedUserRelation User?   @relation(fields: [concernedUser], references: [name])
-  concernedUser         String? @unique
+  concernedUser         String?
 
   discussionElement   DiscussionElement @relation(fields: [discussionElementId], references: [id], onDelete: Cascade)
   discussionElementId Int               @unique
   ChanInvitation      ChanInvitation?
   deletedInvitationChanRelated	Chan? @relation(fields:[deletedInvitationChanRelatedTitle], references:[title])
-	deletedInvitationChanRelatedTitle	String? @unique
+	deletedInvitationChanRelatedTitle	String?
 }
 
 model DiscussionMessage {

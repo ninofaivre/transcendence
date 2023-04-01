@@ -12,6 +12,7 @@ import { ChansModule } from './chans/chans.module';
 import { InvitationsModule } from './invitations/invitations.module';
 import { DmsModule } from './dms/dms.module';
 import { FriendsModule } from './friends/friends.module';
+import { SseModule } from './sse/sse.module';
 
 @Module({
 	imports:
@@ -52,9 +53,11 @@ import { FriendsModule } from './friends/friends.module';
 		ChansModule,
 		InvitationsModule,
 		DmsModule,
-		FriendsModule
+		FriendsModule,
+		SseModule
 	],
 	controllers: [AppController],
 	providers: [AppService],
+	exports: [AppService]
 })
 export class AppModule {}

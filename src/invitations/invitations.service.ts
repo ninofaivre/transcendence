@@ -3,6 +3,7 @@ import { EventType, PermissionList, Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { AppService } from 'src/app.service';
 import { PermissionsService } from 'src/chans/permissions/permissions.service';
+import { SseService } from 'src/sse/sse.service';
 import { ChanInvitationType } from './dto/getChanInvitations.path.dto';
 import { InvitationPathType } from './types/invitationPath.type';
 
@@ -12,6 +13,9 @@ enum EventTypeList
 	FRIEND_INVITATION_REFUSED = "FRIEND_INVITATION_REFUSED",
 	FRIEND_INVITATION_CANCELED = "FRIEND_INVITATION_CANCELED",
 	DM_NEW_EVENT = "DM_NEW_EVENT",
+	CHAN_NEW_INVITATION = "CHAN_NEW_INVITATION",
+	CHAN_INVITATION_CANCELED = "CHAN_INVITATION_CANCELED",
+	CHAN_INVITATION_REFUSED = "CHAN_INVITATION_REFUSED",
 }
 
 @Injectable()
@@ -20,7 +24,8 @@ export class InvitationsService
 
 	constructor(private readonly prisma: PrismaService,
 				private readonly appService: AppService,
-			    private readonly permissionsService: PermissionsService) {}
+			    private readonly permissionsService: PermissionsService,
+			    private readonly sseService: SseService) {}
 
 
 	private friendInvitationSelect = Prisma.validator<Prisma.FriendInvitationSelect>()
@@ -81,7 +86,7 @@ export class InvitationsService
 					invitedUserName: invitedUsername
 				},
 				select: this.friendInvitationSelect })
-			await this.appService.pushEvent(invitedUsername, { type: EventTypeList.NEW_FRIEND_INVITATION, data: res })
+			await this.sseService.pushEvent(invitedUsername, { type: EventTypeList.NEW_FRIEND_INVITATION, data: res })
 			return res
 		}
 		catch (e)
@@ -106,7 +111,7 @@ export class InvitationsService
 					invitedUserName: type === 'OUTCOMING',
 					invitingUserName: type === 'INCOMING',
 				}})
-			await this.appService.pushEvent(res.invitedUserName || res.invitingUserName,
+			await this.sseService.pushEvent(res.invitedUserName || res.invitingUserName,
 				{
 					type: type === 'INCOMING' && EventTypeList.FRIEND_INVITATION_REFUSED|| EventTypeList.FRIEND_INVITATION_CANCELED,
 					data: { friendInvitationId: id }
@@ -123,8 +128,8 @@ export class InvitationsService
 		const res = await this.prisma.user.findUnique({ where: { name: username },
 			select:
 			{
-				incomingChanInvitation: (chanInvitationType === 'INCOMING') && { select: this.chanInvitationsSelect },
-				outcomingChanInvitation: (chanInvitationType === 'OUTCOMING') && { select: this.chanInvitationsSelect },
+				incomingChanInvitation: (chanInvitationType !== 'OUTCOMING') && { select: this.chanInvitationsSelect },
+				outcomingChanInvitation: (chanInvitationType !== 'INCOMING') && { select: this.chanInvitationsSelect },
 			}})
 		if (!chanInvitationType)
 			return { incoming: res.incomingChanInvitation, outcoming: res.outcomingChanInvitation }
@@ -191,7 +196,7 @@ export class InvitationsService
 										{
 											requestingUser: { connect: { name: invitingUsername } },
 											requestedUser: { connect: { name: invitedUsername } },
-											friendShip: { connect: { id: toCheck.friend[0].id || toCheck.friendOf[0].id } },
+											friendShip: { connect: { id: toCheck.friend[0]?.id || toCheck.friendOf[0]?.id } },
 										}
 									}
 								}
@@ -202,6 +207,7 @@ export class InvitationsService
 			},
 			select:
 			{
+				...this.chanInvitationsSelect,
 				discussionEvent:
 				{
 					select:
@@ -213,18 +219,24 @@ export class InvitationsService
 					}
 				}
 			}})
-		const directMessageId = res.discussionEvent.discussionElement.directMessageId
-		delete res.discussionEvent.discussionElement.directMessageId
-		await this.appService.pushEvent(invitedUsername,
+		const { discussionEvent, ...chanInvitation } = res
+		const directMessageId = discussionEvent.discussionElement.directMessageId
+		delete discussionEvent.discussionElement.directMessageId
+		await this.sseService.pushEvent(invitedUsername,
+			{
+				type: EventTypeList.CHAN_NEW_INVITATION,
+				data: { chanInvitation }
+			})
+		await this.sseService.pushEventMultipleUser([invitedUsername, invitingUsername],
 			{
 				type: EventTypeList.DM_NEW_EVENT,
 				data:
 				{
 					directMessageId: directMessageId,
-					event: res.discussionEvent.discussionElement
+					event: discussionEvent.discussionElement
 				}
 			})
-		return res.discussionEvent.discussionElement
+		return chanInvitation
 	}
 
 	async deleteChanInvitation(username: string, invitationId: number, chanInvitationType: ChanInvitationType)
@@ -253,16 +265,22 @@ export class InvitationsService
 				select: { discussionElement: { select: { directMessageId: true ,...this.appService.discussionElementsSelect } } }})
 			const directMessageId: number = res.discussionElement.directMessageId
 			delete res.discussionElement.directMessageId
-			await this.appService.pushEvent(requestedUserName || requestingUserName,
+			const ev1 = this.sseService.pushEvent(requestedUserName || requestingUserName,
+				{
+					type: (chanInvitationType === 'INCOMING') ? EventTypeList.CHAN_INVITATION_REFUSED : EventTypeList.FRIEND_INVITATION_CANCELED,
+					data: { chanInvitationId: invitationId }
+				})
+			const ev2 = this.sseService.pushEventMultipleUser([requestedUserName || requestingUserName, username],
 				{
 					type: EventTypeList.DM_NEW_EVENT,
 					data:
 					{
 						directMessageId: directMessageId,
+						chanInvitationId: invitationId,
 						event: res.discussionElement
 					}
 				})
-			return res.discussionElement
+			await Promise.all([ev1, ev2])
 		}
 		catch
 		{

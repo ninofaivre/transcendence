@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { AppService } from 'src/app.service';
 import { EventType } from '@prisma/client';
+import { SseService } from 'src/sse/sse.service';
 
 enum EventTypeList
 {
@@ -16,7 +17,8 @@ enum EventTypeList
 export class DmsService
 {
 	constructor(private readonly prisma: PrismaService,
-			    private readonly appService: AppService) {}
+			    private readonly appService: AppService,
+			    private readonly sseService: SseService) {}
 
 	private directMessageSelect = Prisma.validator<Prisma.DirectMessageSelect>()
 	({
@@ -51,7 +53,7 @@ export class DmsService
 			{
 				discussionElement: { select: this.appService.discussionElementsSelect }
 			}})
-		return this.appService.pushEvent(usernameToNotify,
+		return this.sseService.pushEvent(usernameToNotify,
 			{
 				type: EventTypeList.DM_NEW_EVENT,
 				data: { directMessageId: dmId, event: res }
@@ -70,7 +72,7 @@ export class DmsService
 				],
 			},
 			select: this.directMessageSelect})
-		return { disabled: res.filter(el => el.friendShipId), enabled: res.filter(el => !el.friendShipId) }
+		return { disabled: res.filter(el => !el.friendShipId), enabled: res.filter(el => el.friendShipId) }
 	}
 
 	async createDm(username: string, friendUsername: string)
@@ -104,12 +106,12 @@ export class DmsService
 		const res = await this.prisma.directMessage.create({
 			data:
 			{
-				friendShipId: toCheck.friend[0].id || toCheck.friendOf[0].id,
+				friendShipId: toCheck.friend[0]?.id || toCheck.friendOf[0]?.id,
 				requestingUserName: username,
 				requestedUserName: friendUsername
 			},
 			select: this.directMessageSelect})
-		await this.appService.pushEvent(friendUsername, { type: EventTypeList.NEW_DM, data: res })
+		await this.sseService.pushEvent(friendUsername, { type: EventTypeList.NEW_DM, data: res })
 		return res
 	}
 
@@ -152,7 +154,7 @@ export class DmsService
 					{ requestedUserName: username },
 					{ requestingUserName: username },
 				],
-				friendShip: { id: { not: null } },
+				friendShip: { is: {} },
 			},
 			select: (relatedId !== undefined) ?
 			{
@@ -196,7 +198,7 @@ export class DmsService
 		const toNotify: string = (toCheck.requestingUserName !== username) ? toCheck.requestingUserName : toCheck.requestedUserName
 		if (toNotify)
 		{
-			await this.appService.pushEvent(toNotify,
+			await this.sseService.pushEvent(toNotify,
 				{
 					type: EventTypeList.DM_NEW_MESSAGE,
 					data: { directMessageId: dmId, message: res } 
@@ -248,7 +250,7 @@ export class DmsService
 		const toNotify: string = (toCheck.requestedUserName !== username) ? toCheck.requestedUserName : toCheck.requestingUserName
 		if (toNotify)
 		{
-			await this.appService.pushEvent(toNotify,
+			await this.sseService.pushEvent(toNotify,
 				{
 					type: EventTypeList.DM_NEW_EVENT,
 					data: { directMessageId: dmId, event: res }

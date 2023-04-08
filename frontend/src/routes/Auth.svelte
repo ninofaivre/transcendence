@@ -1,7 +1,5 @@
 <script lang="ts">
-	import type { ToastSettings } from "@skeletonlabs/skeleton"
-
-	import { Toast, toastStore } from "@skeletonlabs/skeleton"
+	import { type ToastSettings, toastStore } from "@skeletonlabs/skeleton"
 	import { getCookie, fetchPostJSON } from "$lib/global"
 
 	export let logged_in = false
@@ -31,16 +29,17 @@
 	const login_failed_toast: ToastSettings = {
 		message: "Log in failed"
 	}
+
 	async function formSubmit(e: SubmitEvent) {
 		if (e.submitter) {
-			if (e.submitter.id === "0") {
+			if (e.submitter.id === "login") {
 				console.log(`${username} is logging in...`)
 				if (!(await login()).ok) {
 					console.log("Log-in failed")
 					toastStore.trigger(login_failed_toast)
 					return
 				} else logged_in = true
-			} else if (e.submitter.id === "1") {
+			} else if (e.submitter.id === "signup") {
 				if (!(await signup()).ok) {
 					toastStore.trigger(signup_failed_toast)
 					console.log("Sign-up failed")
@@ -51,20 +50,21 @@
 				throw new Error(`Trying to submit data from unknown submitter with id=${e.submitter.id}`)
 		}
 	}
+    
 </script>
 
-<div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-	<div class="rounded-lg bg-white py-8 px-6 sm:px-10">
+<div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
+	<div class="p-8 bg-gray-50 rounded-lg sm:px-10">
 		<form method="POST" on:submit|preventDefault={formSubmit}>
-			<label class="label">
+			<label class="text-black label">
 				Username
 				<input bind:value={username} type="text" required class="input" />
-				<label class="label">
+				<label class="text-black label">
 					Password
 					<input bind:value={password} type="password" required class="input" />
 				</label>
-				<button id="0" type="submit" class="btn variant-filled"> Log in </button>
-				<button id="1" type="submit" class="btn variant-filled"> Sign up </button>
+				<button id="login" type="submit" class="btn variant-filled-success"> Log in </button>
+				<button id="signup" type="submit" class="btn variant-filled-primary"> Sign up </button>
 			</label>
 		</form>
 	</div>

@@ -16,7 +16,7 @@ export const load = (async ({ fetch }) => {
 
     console.log("Loaded", PUBLIC_BACKEND_URL + '/chat/getAllDiscussions', discussions)
 
-    const res2 = await fetchGet('/chat/myName')
+    const res2 = await fetchGet('/users/myName')
     const { data: my_name } = await res2.json()
 
     console.log(my_name)

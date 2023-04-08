@@ -3,12 +3,12 @@
 	import type { Discussion as DiscussionType } from "$lib/types" // app.d.ts
 	import type { PageData } from "./$types" // Generated type file
 	import type { Message } from "$lib/types"
-
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"
 	import CreateDiscussion from "./CreateDiscussion.svelte"
-
-	;/ *utils /
+	import DiscussionList from "./DiscussionList.svelte"
+	import ChatBox from "./ChatBox.svelte"
+	/* utils */
 	import { sse } from "$lib/sse"
 
 	export let data: PageData
@@ -17,6 +17,7 @@
 	$: discussions = Object.values(data.discussions)
 
 	let idx = 0
+	$: discussionId = idx + 1
 	let all_messages: Message[][] = []
 
 	//onDestroy(data.unsubscribe);
@@ -44,23 +45,50 @@
 </script>
 
 {#if discussions.length}
-	<!-- <DiscussionList { discussions } bind:curr_disc_idx={idx} /> -->
-	<br />
-	<br />
-	<CreateDiscussion />
+	<!-- Horizontal grid -->
+	<div class="grid grid-cols-[auto_1fr]" id="wrapper">
+		<!-- Vertical grid 1-->
+		<div class="both grid grid-rows-[1fr_auto]" id="convo">
+			<section class="p-4">
+				<CreateDiscussion />
+			</section>
+			<section class="overflow-y-auto">
+				<DiscussionList {discussions} bind:curr_disc_idx={idx} />
+			</section>
+		</div>
 
-	<div id="discussion-title">
-		{discussions[idx].title || discussions[idx].users}
+		<!-- Vertical grid 2-->
+		<div class="both grid grid-rows-[1fr_auto]" id="messages">
+			<!-- Messages -->
+			<DiscussionDisplay
+				bind:displayed_messages={all_messages[idx]}
+				{discussionId}
+				my_name={data.my_name}
+			/>
+
+			<!-- Input box -->
+			<section class="border-t border-black p-4">
+				<ChatBox {discussionId} />
+			</section>
+		</div>
 	</div>
-
-	<DiscussionDisplay
-		bind:displayed_messages={all_messages[idx]}
-		discussionId={idx + 1}
-		my_name={data.my_name} />
 {:else}
-	<div id="placeholder">You haven't started any conversations yet</div>
+	<div id="placeholder" class="w-full text-center text-3xl font-bold">
+		You haven't started any conversations yet height: calc(100vh);
+	</div>
 	<CreateDiscussion />
 {/if}
 
-<style>
+<style lang="postcss">
+	#wrapper {
+		height: calc(100vh - 74px);
+	}
+
+	#messages {
+		height: calc(100vh - 74px);
+	}
+
+	#convo {
+		height: calc(100vh - 74px);
+	}
 </style>

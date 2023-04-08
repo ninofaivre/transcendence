@@ -49,6 +49,7 @@
 		Create new discussion
 	</button>
 {:else}
+	<!-- TODO: Try width: min-content; on the form's parent or display: inline-block; on the form element to see if it fixes unwantd widening  -->
 	<form
 		bind:this={form}
 		on:submit|preventDefault|stopPropagation={handleDiscussionCreation}

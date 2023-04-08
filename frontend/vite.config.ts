@@ -16,6 +16,9 @@ export default defineConfig({
         https: {
             key: "../secrets/key.pem",
             cert: "../secrets/cert.pem",
-        }
+        },
+		proxy: {
+			 '/api': 'http://localhost:3000',
+		},
     }
 });

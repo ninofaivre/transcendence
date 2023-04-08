@@ -1,9 +1,9 @@
-import { Controller, Res, Request, Body, Get, Post, UseGuards, Sse, MessageEvent } from '@nestjs/common';
+import { Controller, Res, Request, Body, Get, Post, UseGuards, Sse, MessageEvent, ValidationPipe } from '@nestjs/common';
 import { LocalAuthGuard } from './local-auth.guard'
-import { JwtAuthGuard } from './jwt-auth.guard'
 import { AuthService } from './auth.service'
-//import { Observable, interval, map } from 'rxjs'
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }

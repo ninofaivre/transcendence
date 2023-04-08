@@ -1,16 +1,19 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma.service'
-import { UsersService } from '../users/users.service'
+import { PrismaService } from 'nestjs-prisma';
+import { UserService } from '../user/user.service'
+import { ChatService } from './chat.service';
 import { CreateMessageDTO } from './dto/createMessage.dto';
 import { GetnMessagesQueryDTO } from './dto/getnMessages.query.dto';
 
 @Injectable()
 export class MessagesService
 {
-	constructor(private readonly prisma: PrismaService,
-				private usersService: UsersService) {}
+	constructor(private chatService: ChatService,
+				private readonly prisma: PrismaService,
+				private userService: UserService) {}
 
+	/*
 	async getnMessages(username: string, discussionId: number, getnMessagesQueryDTO: GetnMessagesQueryDTO)// need to add pagination
 	{
 		// actuellement pas d'erreur si l'id du message est invalide
@@ -42,9 +45,9 @@ export class MessagesService
 		const res = await this.prisma.message.create({ data: { from: username, content: createMessageDTO.content, discussionId: createMessageDTO.discussionId } })
 		for (let user of (await this.prisma.discussion.findUnique({ where: { id: createMessageDTO.discussionId } }).users()))
 		{
-			if (this.usersService.updateTest[user.name])
-				this.usersService.updateTest[user.name]["messages"].push(res)
+			this.chatService.pushEvent(user.name, { data: res, type: "createdMessage" })
 		}
 		return res
 	}
+	*/
 }

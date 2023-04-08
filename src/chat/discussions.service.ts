@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma.service'
-import { UsersService } from '../users/users.service'
+import { PrismaService } from 'nestjs-prisma';
+import { UserService } from '../user/user.service'
 import { NotFoundException, UnauthorizedException } from '@nestjs/common'
-import { CreateDiscussionDTO } from './dto/createDiscussion.dto';
 import { ChatService } from './chat.service';
 
 @Injectable()
 export class DiscussionsService
 {
-	constructor(private usersService: UsersService,
+	constructor(private userService: UserService,
 				private readonly chatService: ChatService,
 				private readonly prisma: PrismaService) {}
 	
+	/*
 	async getAllUsers(id: number)
 	{
 		return this.prisma.discussion.findUnique({ where: { id: id } }).users()
@@ -39,13 +39,10 @@ export class DiscussionsService
 		for (let currUser of createDiscussionDTO.users)
 			connect.push({ name: currUser })
 		// need polish tmp dirty test
-		let tmp = await this.prisma.discussion.create({ data: { title: createDiscussionDTO.title,users: { connect: connect } } })
+		let tmp = await this.prisma.discussion.create({ data: { title: createDiscussionDTO.title, users: { connect: connect } } })
 		tmp["users"] = createDiscussionDTO.users
 		for (let i of createDiscussionDTO.users)
-		{
-			if (this.usersService.updateTest[i])
-				this.usersService.updateTest[i]["discussions"].push(tmp)
-		}
+			this.chatService.pushEvent(i, { data: tmp, type: "createdDiscussion" })
 		return tmp
 	}
 
@@ -61,4 +58,5 @@ export class DiscussionsService
 			disconnect.push({ name: currUser })
 		return this.prisma.discussion.update({ where: { id: dto.discussionID }, data: { users: { disconnect: disconnect } } })
 	}
+	*/
 }

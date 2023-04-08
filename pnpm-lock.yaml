@@ -31,6 +31,9 @@ dependencies:
   '@nestjs/websockets':
     specifier: ^9.4.0
     version: 9.4.0(@nestjs/common@9.4.0)(@nestjs/core@9.4.0)(@nestjs/platform-socket.io@9.4.0)(reflect-metadata@0.1.13)(rxjs@7.8.0)
+  '@prisma/client':
+    specifier: ^4.12.0
+    version: 4.12.0(prisma@4.12.0)
   bcrypt:
     specifier: ^5.1.0
     version: 5.1.0
@@ -96,9 +99,6 @@ devDependencies:
   '@nestjs/testing':
     specifier: ^9.4.0
     version: 9.4.0(@nestjs/common@9.4.0)(@nestjs/core@9.4.0)(@nestjs/platform-express@9.4.0)
-  '@prisma/client':
-    specifier: ^4.12.0
-    version: 4.12.0(prisma@4.12.0)
   '@types/bcrypt':
     specifier: ^5.0.0
     version: 5.0.0
@@ -1307,9 +1307,11 @@ packages:
     dependencies:
       '@prisma/engines-version': 4.12.0-67.659ef412370fa3b41cd7bf6e94587c1dfb7f67e7
       prisma: 4.12.0
+    dev: false
 
   /@prisma/engines-version@4.12.0-67.659ef412370fa3b41cd7bf6e94587c1dfb7f67e7:
     resolution: {integrity: sha512-JIHNj5jlXb9mcaJwakM0vpgRYJIAurxTUqM0iX0tfEQA5XLZ9ONkIckkhuAKdAzocZ+80GYg7QSsfpjg7OxbOA==}
+    dev: false
 
   /@prisma/engines@4.12.0:
     resolution: {integrity: sha512-0alKtnxhNB5hYU+ymESBlGI4b9XrGGSdv7Ud+8TE/fBNOEhIud0XQsAR+TrvUZgS4na5czubiMsODw0TUrgkIA==}

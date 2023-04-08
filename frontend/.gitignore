@@ -10,6 +10,5 @@ node_modules
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 Session.vim
-pnpm-lock.yaml
 package-lock.json
 *.mjs

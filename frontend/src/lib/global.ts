@@ -41,6 +41,10 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
 	})
 }
 
+export async function logout() {
+	return fetchGet("/api/auth/logout")
+}
+
 // This function is called when the element is mounted svelte's `use:` directive
 export function clickOutside(node: Node) {
 	// Create a handler

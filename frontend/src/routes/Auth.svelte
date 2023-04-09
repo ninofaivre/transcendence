@@ -10,7 +10,7 @@
 	let password = ""
 
 	async function login() {
-		return fetchPostJSON("/auth/login", {
+		return fetchPostJSON("/api/auth/login", {
 			username,
 			password
 		})
@@ -50,16 +50,15 @@
 				throw new Error(`Trying to submit data from unknown submitter with id=${e.submitter.id}`)
 		}
 	}
-    
 </script>
 
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
-	<div class="p-8 bg-gray-50 rounded-lg sm:px-10">
+	<div class="rounded-lg bg-gray-50 p-8 sm:px-10">
 		<form method="POST" on:submit|preventDefault={formSubmit}>
-			<label class="text-black label">
+			<label class="label text-black">
 				Username
 				<input bind:value={username} type="text" required class="input" />
-				<label class="text-black label">
+				<label class="label text-black">
 					Password
 					<input bind:value={password} type="password" required class="input" />
 				</label>

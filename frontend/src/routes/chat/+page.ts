@@ -1,6 +1,6 @@
-import { PUBLIC_BACKEND_URL } from '$env/static/public'
-import type { PageLoad } from './$types.d';
-import { fetchGet } from '$lib/global'
+import { PUBLIC_BACKEND_URL } from "$env/static/public"
+import type { PageLoad } from "./$types.d"
+import { fetchGet } from "$lib/global"
 //import { current_user } from '$lib/stores'
 
 //let user = "username not set";
@@ -10,20 +10,18 @@ import { fetchGet } from '$lib/global'
 //});
 
 export const load = (async ({ fetch }) => {
+	const res1 = await fetchGet("/chat/getAllDiscussions")
+	const discussions = await res1.json()
 
-    const res1 = await fetchGet('/chat/getAllDiscussions');
-    const discussions = await res1.json();
+	console.log("Loaded", PUBLIC_BACKEND_URL + "/chat/getAllDiscussions", discussions)
 
-    console.log("Loaded", PUBLIC_BACKEND_URL + '/chat/getAllDiscussions', discussions)
+	const res2 = await fetchGet("/api/user/myName")
+	const { data: my_name } = await res2.json()
 
-    const res2 = await fetchGet('/users/myName')
-    const { data: my_name } = await res2.json()
+	console.log(my_name)
 
-    console.log(my_name)
-
-    return {
-        discussions,
-        my_name,
-    }
-}) satisfies PageLoad;
-
+	return {
+		discussions,
+		my_name
+	}
+}) satisfies PageLoad

@@ -17,7 +17,7 @@
 	}
 
 	async function signup() {
-		return fetchPostJSON("/users/sign-up", {
+		return fetchPostJSON("/api/user/sign-up", {
 			name: username,
 			password
 		})

@@ -11,10 +11,10 @@ import { fetchGet } from '$lib/global'
 
 export const load = (async ({ fetch }) => {
 
-    const res1 = await fetchGet('/users/getAllDiscussions');
+    const res1 = await fetchGet('/chat/getAllDiscussions');
     const discussions = await res1.json();
 
-    console.log("Loaded", PUBLIC_BACKEND_URL + '/users/getAllDiscussions', discussions)
+    console.log("Loaded", PUBLIC_BACKEND_URL + '/chat/getAllDiscussions', discussions)
 
     const res2 = await fetchGet('/users/myName')
     const { data: my_name } = await res2.json()

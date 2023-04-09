@@ -11,6 +11,3 @@
 	<Auth bind:logged_in/>
 
 <!--{/if}-->
-
-<style>
-</style>

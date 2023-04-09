@@ -1,5 +1,5 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { PermissionList, Prisma, RoleApplyingType } from '@prisma/client';
+import { ChanType, PermissionList, Prisma, RoleApplyingType } from '@prisma/client';
 import { hash } from 'bcrypt';
 import { PrismaService } from 'nestjs-prisma';
 import { CreateChanTest } from './dto/createChan.dto';
@@ -97,7 +97,8 @@ export class ChansService
 			{
 				users: { some: { name: username } }
 			},
-			select: this.chansSelect})
+			select: this.chansSelect,
+			orderBy: { type: 'desc' }})
 	}
 
 	async createChan(username: string, chan: CreateChanTest)
@@ -109,9 +110,7 @@ export class ChansService
 			const res = await this.prisma.chan.create({
 				data:
 				{
-					type: chan.type,
-					title: chan.title,
-					password: chan.password,
+					...chan,
 					owner: { connect: { name: username } },
 					users: { connect: { name: username } },
 					roles:
@@ -573,6 +572,25 @@ export class ChansService
 					})
 			}))
 		return { chan: { id: toCheck.chanId, event: joinEvent }, dms: a }
+	}
+
+	async searchChans(titleContains: string, nRes: number)
+	{
+		const res = await this.prisma.chan.findMany({
+			where:
+			{
+				type: ChanType.PUBLIC,
+				title: { contains: titleContains },
+			},
+			select: { id: true, title: true, _count: { select: { users: true } }, password: true },
+			take: nRes,
+			orderBy: { title: 'asc' }
+		})
+		return res.map(el => { 
+			const hasPassword: boolean = !!el.password
+			const { password, _count, ...trimmedEl } = el
+			return { hasPassword, nUsers: _count.users,...trimmedEl }
+		})
 	}
 
 }

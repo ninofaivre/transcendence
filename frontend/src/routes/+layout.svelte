@@ -6,20 +6,12 @@
 	// Most of your app wide CSS should be put in this file
 	import "../app.postcss"
 
-	import type { LayoutData } from "./$types"
-
 	import { AppShell, AppBar, LightSwitch, Toast } from "@skeletonlabs/skeleton"
 	import { logout } from "$lib/global"
-	import { page } from "$app/stores"
-
-	export let data: LayoutData
+	import { logged_in, my_name } from "$lib/stores"
 
 	function setup_logout(node: HTMLButtonElement) {
 		node.addEventListener("click", () => logout())
-	}
-
-	function checkLoggedIn() {
-		if ($page.data.loggedIn === false) window.location.href = "/"
 	}
 </script>
 
@@ -36,10 +28,23 @@
 			<a class="btn text-lg font-semibold" href="/chat" target="_blank"> Chat </a>
 			<a class="btn text-lg font-semibold" href="/pong" target="_blank"> Pong </a>
 			<svelte:fragment slot="trail">
-				<button use:setup_logout class="btn variant-filled-secondary text-xs font-semibold">
-					Log out
-				</button>
-				<div class="card">{data.myName}</div>
+				{#if $logged_in}
+					<button
+						use:setup_logout
+						class="btn variant-filled-secondary text-xs font-semibold"
+					>
+						Log out
+					</button>
+					<div class="card">
+						{#await $my_name}
+							...
+						{:then name}
+							{name}
+						{:catch error}
+							{error.message}
+						{/await}
+					</div>
+				{/if}
 				<LightSwitch />
 			</svelte:fragment>
 		</AppBar>

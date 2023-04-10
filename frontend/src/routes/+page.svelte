@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { type ToastSettings, toastStore } from "@skeletonlabs/skeleton"
 	import { getCookie, fetchPostJSON } from "$lib/global"
+	import { logged_in } from "$lib/stores"
 
-	export let logged_in = false
-
-	if (getCookie("access_token")) logged_in = true
+	if (getCookie("access_token")) logged_in.set(true)
 
 	let username = ""
 	let password = ""
 
 	async function login() {
+		logged_in.set(true)
 		return fetchPostJSON("/api/auth/login", {
 			username,
 			password,
@@ -38,7 +38,7 @@
 					console.log("Log-in failed")
 					toastStore.trigger(login_failed_toast)
 					return
-				} else logged_in = true
+				} else logged_in.set(true)
 			} else if (e.submitter.id === "signup") {
 				if (!(await signup()).ok) {
 					toastStore.trigger(signup_failed_toast)

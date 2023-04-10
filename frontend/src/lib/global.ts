@@ -1,4 +1,5 @@
 import { PUBLIC_BACKEND_URL } from "$env/static/public"
+import { logged_in } from "$lib/stores"
 
 export function getCookie(cname: string) {
 	const name = cname + "="
@@ -42,7 +43,8 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
 }
 
 export async function logout() {
-	return fetchGet("/api/auth/logout")
+	logged_in.set(false)
+	return await fetchGet("/api/auth/logout")
 }
 
 // This function is called when the element is mounted svelte's `use:` directive

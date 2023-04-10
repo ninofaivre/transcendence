@@ -23,21 +23,21 @@ export function deleteCookie(cname: string) {
 export async function fetchGet(apiEndPoint: string) {
 	return fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
 		mode: "cors",
-		credentials: "include"
+		credentials: "include",
 	})
 }
 
 export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
 	let body = JSON.stringify(jsBody)
 	let headers = {
-		"Content-Type": "application/json"
+		"Content-Type": "application/json",
 	}
 	return fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
 		mode: "cors",
 		credentials: "include",
 		method: "POST",
 		headers,
-		body
+		body,
 	})
 }
 
@@ -59,6 +59,6 @@ export function clickOutside(node: Node) {
 	return {
 		destroy() {
 			document.removeEventListener("click", handleClick, true)
-		}
+		},
 	}
 }

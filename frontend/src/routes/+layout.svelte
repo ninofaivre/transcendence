@@ -13,6 +13,14 @@
 	function setup_logout(node: HTMLButtonElement) {
 		node.addEventListener("click", () => logout())
 	}
+
+	// For all pages, check if user is logged in else redirect to the home/auth page
+	if ($logged_in === false) {
+		if (window.location.pathname != "/") {
+			console.log(window.location.href)
+			window.location.href = "/"
+		}
+	}
 </script>
 
 <!-- App Shell -->

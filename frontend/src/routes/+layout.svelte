@@ -36,13 +36,7 @@
 						Log out
 					</button>
 					<div class="card">
-						{#await $my_name}
-							...
-						{:then name}
-							{name}
-						{:catch error}
-							{error.message}
-						{/await}
+						{$my_name}
 					</div>
 				{/if}
 				<LightSwitch />

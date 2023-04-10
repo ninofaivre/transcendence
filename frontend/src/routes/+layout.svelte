@@ -18,7 +18,7 @@
 	if ($logged_in === false) {
 		if (window.location.pathname != "/") {
 			console.log(window.location.href)
-			window.location.href = "/"
+			window.location.pathname = "/"
 		}
 	}
 </script>
@@ -33,8 +33,8 @@
 					<a href="/">Transcendance</a>
 				</strong>
 			</svelte:fragment>
-			<a class="btn text-lg font-semibold" href="/chat" target="_blank"> Chat </a>
-			<a class="btn text-lg font-semibold" href="/pong" target="_blank"> Pong </a>
+			<a class="btn text-lg font-semibold" href="/chat" target="_self"> Chat </a>
+			<a class="btn text-lg font-semibold" href="/pong" target="_self"> Pong </a>
 			<svelte:fragment slot="trail">
 				{#if $logged_in}
 					<button

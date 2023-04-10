@@ -3,15 +3,8 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { AppService } from 'src/app.service';
 import { EventType } from '@prisma/client';
-import { SseService } from 'src/sse/sse.service';
+import { EventTypeList, SseService } from 'src/sse/sse.service';
 
-enum EventTypeList
-{
-	NEW_DM = 'NEW_DM',
-	DM_DELETED = "DM_DELETED",
-	DM_NEW_EVENT = "DM_NEW_EVENT",
-	DM_NEW_MESSAGE = "DM_NEW_MESSAGE",
-}
 
 @Injectable()
 export class DmsService
@@ -19,20 +12,6 @@ export class DmsService
 	constructor(private readonly prisma: PrismaService,
 			    private readonly appService: AppService,
 			    private readonly sseService: SseService) {}
-
-	private directMessageSelect = Prisma.validator<Prisma.DirectMessageSelect>()
-	({
-		id: true,
-		friendShipId: true,
-
-		requestedUserName: true,
-		requestedUserStatus: true,
-		requestedUserStatusMutedUntil: true,
-
-		requestingUserName: true,
-		requestingUserStatus: true,
-		requestingUserStatusMutedUntil: true
-	})
 
 	async DmNewEvent(username: string, usernameToNotify: string, dmId: number, event: EventType) // event will change later from string to prisma schema enum type when it will work again
 	{
@@ -71,7 +50,7 @@ export class DmsService
 					{ requestingUserName: username }
 				],
 			},
-			select: this.directMessageSelect})
+			select: this.appService.directMessageSelect})
 		return { disabled: res.filter(el => !el.friendShipId), enabled: res.filter(el => el.friendShipId) }
 	}
 
@@ -110,7 +89,7 @@ export class DmsService
 				requestingUserName: username,
 				requestedUserName: friendUsername
 			},
-			select: this.directMessageSelect})
+			select: this.appService.directMessageSelect})
 		await this.sseService.pushEvent(friendUsername, { type: EventTypeList.NEW_DM, data: res })
 		return res
 	}

@@ -69,8 +69,9 @@ model FriendInvitation {
 model ChanInvitation {
   id Int @id @default(autoincrement())
 
-  chan              Chan            @relation(fields: [chanId], references: [id])
+  chan              Chan            @relation(fields: [chanId, chanTitle], references: [id, title], onDelete: Cascade)
   chanId            Int
+  chanTitle			String
   friendShip        FriendShip      @relation(fields: [friendShipId], references: [id])
   friendShipId      Int
   discussionEvent   DiscussionEvent @relation(fields: [discussionEventId], references: [id])
@@ -189,6 +190,8 @@ model Chan {
   eventsDeletedInvitation	DiscussionEvent[]
 
   elements DiscussionElement[]
+
+	@@unique([id, title])
 }
 
 enum DirectMessageStatus {
@@ -262,8 +265,8 @@ model DiscussionEvent {
   discussionElement   DiscussionElement @relation(fields: [discussionElementId], references: [id], onDelete: Cascade)
   discussionElementId Int               @unique
   ChanInvitation      ChanInvitation?
-  deletedInvitationChanRelated	Chan? @relation(fields:[deletedInvitationChanRelatedTitle], references:[title])
-	deletedInvitationChanRelatedTitle	String?
+  chanInvitationRelated Chan? @relation(fields:[chanInvitationRelatedTitle], references:[title])
+  chanInvitationRelatedTitle	String?
 }
 
 model DiscussionMessage {

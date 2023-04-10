@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, NotImplementedException, Param, Post, Query, Request, UseGuards, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotImplementedException, Param, Post, Query, Req, Request, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiBody, ApiExtraModels, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { plainToClass, plainToInstance, Transform, Type } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -45,77 +45,20 @@ export class ChansController
 		return this.chansService.leaveChan(req.user.username, dto.id)
 	}
 
-	// @ApiBody({
-	// 	type: JoinChanDTO,
-	// 	examples:
-	// 	{
-	// 		JoinById:
-	// 		{
-	// 			value:
-	// 			{
-	// 				chanId: 69,
-	// 				password: 'optionnalPassword'
-	// 			}
-	// 		},
-	// 		JoinByInvitation:
-	// 		{
-	// 			value:
-	// 			{
-	// 				chanInvitationId: 69,
-	// 			}
-	// 		},
-	// 	}
-	// })
-	// @ApiTags('me')
-	// @UseGuards(JwtAuthGuard)
-	// @Post('/me')
-	// async joinChan(@Request()req: any, @Body({
-	// 	transform: async (value) =>
-	// 	{
-	// 		let transformed: JoinChanByIdDTO | JoinChanByInvitationDTO
-	//
-	// 		if (value.chanId)
-	// 			transformed = plainToClass(JoinChanByIdDTO, value)
-	// 		else if (value.chanInvitationId)
-	// 			transformed = plainToClass(JoinChanByInvitationDTO, value)
-	// 		else
-	// 			throw new BadRequestException('there must be at least a chanId or a chanInvitationId defined as a positive integer')
-	//
-	// 		const validation = await validate(transformed, {
-	// 			whitelist: true,
-	// 			forbidNonWhitelisted: true,
-	// 			forbidUnknownValues: true,
-	// 			stopAtFirstError: true,
-	// 		})
-	//
-	// 		if (validation.length)
-	// 		{
-	// 			const validationPipe = new ValidationPipe()
-	// 			const exceptionFactory = validationPipe.createExceptionFactory()
-	// 			throw exceptionFactory(validation)
-	// 		}
-	//
-	// 		return transformed
-	// 	}
-	// })joinDTO: JoinChanByIdDTO | JoinChanByInvitationDTO)
-	// {
-	// 	if (joinDTO instanceof JoinChanByInvitationDTO)
-	// 		return this.chansService.acceptChanInvitation(req.user.username, joinDTO.chanInvitationId)
-	// 	if (joinDTO instanceof JoinChanByIdDTO)
-	// 		throw new NotImplementedException('working on')
-	// }
 	@ApiTags('me')
 	@UseGuards(JwtAuthGuard)
-	@Post('/me/byInvitation')
-	async joinChanByInvitation()
+	@Post('/me/JoinByInvitation')
+	async joinChanByInvitation(@Req()req: any, @Body()dto: JoinChanByInvitationDTO)
 	{
+		return this.chansService.joinChanByInvitation(req.user.username, dto.chanInvitationId)
 	}
 
 	@ApiTags('me')
 	@UseGuards(JwtAuthGuard)
-	@Post('/me/byId')
-	async joinChanById()
+	@Post('/me/JoinById')
+	async joinChanById(@Req()req: any, @Body()dto: JoinChanByIdDTO)
 	{
+		return this.chansService.joinChanByid(req.user.username, dto.chanId, dto.password)
 	}
 
 	@UseGuards(JwtAuthGuard)

@@ -20,7 +20,8 @@ export class AuthController {
 	}
 
     @Get('/logout')
-    async logout(@Res({ passthrough: true }) res: any) {
+    async logout(@Res({ passthrough: true }) res: any)
+	{
         res.cookie('access_token', '', { expires: new Date(0) })
     }
 

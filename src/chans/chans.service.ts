@@ -1,6 +1,6 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ChanType, PermissionList, Prisma, RoleApplyingType } from '@prisma/client';
-import { hash } from 'bcrypt';
+import { compare, compareSync, hash } from 'bcrypt';
 import { PrismaService } from 'nestjs-prisma';
 import { CreateChanTest } from './dto/createChan.dto';
 import { AppService } from 'src/app.service';
@@ -89,7 +89,7 @@ export class ChansService
 	]
 
 
-	async getUserChans(username: string) // /me
+	async getUserChans(username: string)
 	{
 		// TODO: test later if find user then select chan is faster
 		return this.prisma.chan.findMany({
@@ -161,12 +161,50 @@ export class ChansService
 					take: 1,
 					select: { id: true }
 				},
-				ownerName: true
+				ownerName: true,
+				invitations: { select: { discussionEventId: true } }
 			}})
 		if (!toCheck)
 			throw new NotFoundException("chan not found")
 		if (!toCheck.roles.length && toCheck.ownerName !== username)
 			throw new ForbiddenException("you don't have right to destroy this chan")
+		
+		/* Update Invitations Dms Events */
+		await this.prisma.discussionEvent.updateMany({
+			where: { id: { in: toCheck.invitations.map(el => el.discussionEventId) } },
+			data:
+			{
+				eventType: EventType.CHAN_DELETED_INVITATION
+			}})
+		const newEvents = (await this.prisma.discussionEvent.findMany({
+			where: { id: { in: toCheck.invitations.map(el => el.discussionEventId) } },
+			select:
+			{
+				discussionElement:
+				{
+					select:
+					{
+						directMessage: { select: { id: true, requestingUserName: true, requestedUserName: true } },
+						...this.appService.discussionElementsSelect
+					}
+				}
+			}})).map(el => el.discussionElement)
+
+			await Promise.all(newEvents.map(async ev =>
+			{
+				const { directMessage, ...event } = ev
+				return this.sseService.pushEventMultipleUser([directMessage.requestingUserName, directMessage.requestedUserName],
+					{
+						type: EventTypeList.DM_NEW_EVENT,
+						data:
+						{
+							directMessageId: directMessage.id,
+							event: event
+						}
+					})
+			}))
+		/* Update Invitations Dms Events */
+
 		const toNotify = (await this.prisma.chan.delete({
 			where: { id: id },
 			select:
@@ -294,7 +332,7 @@ export class ChansService
 				}
 			}})
 		if (!toCheck)
-			throw new NotFoundError(`chan with id ${chanId} not found`)
+			throw new NotFoundException(`chan with id ${chanId} not found`)
 		if (relatedId && !toCheck.elements.length)
 			throw new ForbiddenException(`msg with id ${relatedId} not found`)
 		if (usersAt && toCheck.users.length != usersAt.length)
@@ -475,10 +513,10 @@ export class ChansService
 
 	private async addUserToChan(username: string, chanId: number)
 	{
-		const toNotify = (await this.prisma.chan.update({ where: { id: chanId },
+		const res = await this.prisma.chan.update({ where: { id: chanId },
 			data: { users: { connect: { name: username } }, },
-			select: { users: { select: { name: true } } }})).users.map(el => el.name)
-		const res = await this.prisma.discussionElement.create({
+			select: this.chansSelect})
+		const newEvent = await this.prisma.discussionElement.create({
 			data:
 			{
 				chan: { connect: { id: chanId } },
@@ -493,35 +531,23 @@ export class ChansService
 			},
 			select: this.appService.discussionElementsSelect})
 		
-		await this.sseService.pushEventMultipleUser(toNotify,
+		await this.sseService.pushEventMultipleUser(res.users.map(el => el.name),
 			{
 				type: EventTypeList.CHAN_NEW_EVENT,
-				data: { chanId: chanId, event: res }
+				data: { chanId: chanId, event: newEvent }
 			})
 		return res
 	}
 
-	async acceptChanInvitation(username: string, chanInvitationId: number) // need to split this dirty func
+	async deleteAllInvitationsToChanForUser(username: string, chanId: number)
 	{
-		/* Check que l'invitation existe et récupère le chanel pour lequel elle est */
-		const toCheck = await this.prisma.chanInvitation.findUnique({
-			where:
-			{
-				id: chanInvitationId,
-				requestedUserName: username
-			},
-			select: { chanId: true }})
-		if (!toCheck)
-			throw new ForbiddenException(`chanInvitation with id ${chanInvitationId} not found`)
-		/* Check que l'invitation existe et récupère le chanel pour lequel elle est */
-
-		/* Récupère les invitations vers le même chan pour le même user */
+		// Get all Invitations
 		let invitations = (await this.prisma.user.findUnique({ where: { name: username },
 			select:
 			{
 				incomingChanInvitation:
 				{
-					where: { chanId: toCheck.chanId },
+					where: { chanId: chanId },
 					select:
 					{
 						id: true,
@@ -531,14 +557,11 @@ export class ChansService
 					}
 				}
 			}})).incomingChanInvitation
-		/* Récupère les invitations vers le même chan pour le même user */
 
-		const joinEvent = await this.addUserToChan(username, toCheck.chanId)
-
-		// delete toute les invitations
+		// Delete all Invitations
 		await this.prisma.chanInvitation.deleteMany({ where: { id: { in: invitations.map(el => el.id) } } })
 
-		// update event in direct message
+		// Update all invitations events in dms
 		await this.prisma.discussionEvent.updateMany({
 			where: { id: { in: invitations.map(el => el.discussionEvent.id) } },
 			data:
@@ -546,32 +569,79 @@ export class ChansService
 				eventType: EventType.ACCEPTED_CHAN_INVITATION,
 			}})
 
-		// select all event and send it via sse
-		const res = (await this.prisma.discussionEvent.findMany({
+		// select on findMany because not possible on updateMany
+		const newEvents = (await this.prisma.discussionEvent.findMany({
 			where: { id: { in: invitations.map(el => el.discussionEvent.id) } },
 			select:
 			{
-				discussionElement: { select: { directMessageId: true, ...this.appService.discussionElementsSelect } }
+				discussionElement:
+				{
+					select:
+					{
+						directMessage: { select: { id: true, requestingUserName: true, requestedUserName: true } },
+						...this.appService.discussionElementsSelect
+					}
+				}
 			}})).map(el => el.discussionElement)
-		const a = res.reduce((acc, curr) =>
+
+		// sse notify for updated invitations events in dms
+		await Promise.all(newEvents.map(async ev =>
 			{
-				const { directMessageId, ...rest } = curr
-				acc.set(directMessageId, rest)
-				return acc
-			}, new Map<number, any>())
-		await Promise.all(invitations.map(async inv =>
-			{
-				return this.sseService.pushEventMultipleUser([inv.requestingUserName, username],
+				const { directMessage, ...event } = ev
+				return this.sseService.pushEventMultipleUser([directMessage.requestingUserName, directMessage.requestedUserName],
 					{
 						type: EventTypeList.DM_NEW_EVENT,
 						data:
 						{
-							directMessageId: inv.friendShip.directMessage.id,
-							event: a.get(inv.friendShip.directMessage.id)
+							directMessageId: directMessage.id,
+							event: event
 						}
 					})
 			}))
-		return { chan: { id: toCheck.chanId, event: joinEvent }, dms: a }
+	}
+
+	async pushUserToChanAndEmitDmEvent(username: string, chanId: number)
+	{
+		const newChan = await this.addUserToChan(username, chanId)
+		await this.deleteAllInvitationsToChanForUser(username, chanId)
+		return newChan
+	}
+
+	async joinChanByInvitation(username: string, chanInvitationId: number) // need to split this dirty func
+	{
+		const toCheck = await this.prisma.chanInvitation.findUnique({
+			where:
+			{
+				id: chanInvitationId,
+				requestedUserName: username
+			},
+			select: { chanId: true }})
+		if (!toCheck)
+			throw new ForbiddenException(`chanInvitation with id ${chanInvitationId} not found`)
+		return this.pushUserToChanAndEmitDmEvent(username, toCheck.chanId)
+	}
+
+	async joinChanByid(username: string, chanId: number, password?: string)
+	{
+		const toCheck = await this.prisma.chan.findUnique({
+			where:
+			{
+				id: chanId,
+				type: ChanType.PUBLIC
+			},
+			select:
+			{
+				password: true
+			}
+		})
+		if (!toCheck)
+			throw new ForbiddenException(`chan with id ${chanId} does not exist or is PRIVATE`)
+		if (!toCheck.password && password)
+			throw new BadRequestException(`chan with id ${chanId} does not have password but one was provided`)
+		if (toCheck.password && (!password || !compareSync(password, toCheck.password)))
+			throw new ForbiddenException(`wrong password`)
+
+		return this.pushUserToChanAndEmitDmEvent(username, chanId)
 	}
 
 	async searchChans(titleContains: string, nRes: number)

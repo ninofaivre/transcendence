@@ -3,20 +3,9 @@ import { EventType, PermissionList, Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { AppService } from 'src/app.service';
 import { PermissionsService } from 'src/chans/permissions/permissions.service';
-import { SseService } from 'src/sse/sse.service';
+import { EventTypeList, SseService } from 'src/sse/sse.service';
 import { ChanInvitationType } from './dto/getChanInvitations.path.dto';
 import { InvitationPathType } from './types/invitationPath.type';
-
-enum EventTypeList
-{
-	NEW_FRIEND_INVITATION = "NEW_FRIEND_INVITATION",
-	FRIEND_INVITATION_REFUSED = "FRIEND_INVITATION_REFUSED",
-	FRIEND_INVITATION_CANCELED = "FRIEND_INVITATION_CANCELED",
-	DM_NEW_EVENT = "DM_NEW_EVENT",
-	CHAN_NEW_INVITATION = "CHAN_NEW_INVITATION",
-	CHAN_INVITATION_CANCELED = "CHAN_INVITATION_CANCELED",
-	CHAN_INVITATION_REFUSED = "CHAN_INVITATION_REFUSED",
-}
 
 @Injectable()
 export class InvitationsService
@@ -168,6 +157,20 @@ export class InvitationsService
 			throw new ForbiddenException(`${invitedUsername} is not in your friendList`)
 		if (!await this.permissionsService.doesUserHasRightTo(invitingUsername, invitingUsername, PermissionList.INVITE, chanId))
 			throw new ForbiddenException(`you don't have right to invite in this chan`)
+		let newDirectMessageId
+		if (!toCheck.friend[0]?.directMessage?.id && !toCheck.friendOf[0]?.directMessage?.id)
+		{
+			const res = await this.prisma.directMessage.create({
+			data:
+			{
+				friendShipId: toCheck.friend[0]?.id || toCheck.friendOf[0]?.id,
+				requestingUserName: invitingUsername,
+				requestedUserName: invitedUsername 
+			},
+			select: this.appService.directMessageSelect})
+			await this.sseService.pushEventMultipleUser([invitingUsername, invitedUsername], { type: EventTypeList.NEW_DM, data: res })
+			newDirectMessageId = res.id
+		}
 		const res = await this.prisma.chanInvitation.create({
 			data:
 			{
@@ -181,7 +184,7 @@ export class InvitationsService
 					{
 						concernedUserRelation: { connect: { name: invitedUsername } },
 						eventType: EventType.PENDING_CHAN_INVITATION,
-						deletedInvitationChanRelated: { connect: { id: chanId } },
+						chanInvitationRelated: { connect: { id: chanId } },
 						discussionElement:
 						{
 							create:
@@ -189,15 +192,9 @@ export class InvitationsService
 								authorRelation: { connect: { name: invitingUsername } },
 								directMessage:
 								{
-									connectOrCreate:
+									connect:
 									{
-										where: { id: toCheck.friend[0]?.directMessage?.id || toCheck.friendOf[0]?.directMessage?.id || null },
-										create:
-										{
-											requestingUser: { connect: { name: invitingUsername } },
-											requestedUser: { connect: { name: invitedUsername } },
-											friendShip: { connect: { id: toCheck.friend[0]?.id || toCheck.friendOf[0]?.id } },
-										}
+										id: toCheck.friend[0]?.directMessage?.id || toCheck.friendOf[0]?.directMessage?.id || newDirectMessageId,
 									}
 								}
 							}

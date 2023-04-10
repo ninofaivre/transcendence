@@ -9,7 +9,6 @@
 	let password = ""
 
 	async function login() {
-		logged_in.set(true)
 		return fetchPostJSON("/api/auth/login", {
 			username,
 			password,
@@ -43,9 +42,7 @@
 				if (!(await signup()).ok) {
 					toastStore.trigger(signup_failed_toast)
 					console.log("Sign-up failed")
-					return
-				}
-				console.log(`Signing up ${username}...`)
+				} else console.log(`Signing up ${username}...`)
 			} else
 				throw new Error(
 					`Trying to submit data from unknown submitter with id=${e.submitter.id}`,

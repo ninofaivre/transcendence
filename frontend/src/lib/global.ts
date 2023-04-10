@@ -43,11 +43,11 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
 }
 
 export async function logout() {
-	logged_in.set(false)
-	return await fetchGet("/api/auth/logout")
+	fetchGet("/api/auth/logout").then(() => logged_in.set(false))
 }
 
-// This function is called when the element is mounted svelte's `use:` directive
+// Unused for now. There to serve as an example of an use:directive
+// This function is called when the element is mounted by svelte's `use:` directive
 export function clickOutside(node: Node) {
 	// Create a handler
 	const handleClick = (event: MouseEvent) => {

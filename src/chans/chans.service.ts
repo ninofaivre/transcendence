@@ -514,8 +514,14 @@ export class ChansService
 	private async addUserToChan(username: string, chanId: number)
 	{
 		const res = await this.prisma.chan.update({ where: { id: chanId },
-			data: { users: { connect: { name: username } }, },
+			data: { users: { connect: { name: username } } },
 			select: this.chansSelect})
+		if (res.roles.some(el => el.name === 'DEFAULT'))
+		{
+			await this.prisma.role.update({
+				where: { chanId_name: { chanId: chanId, name: 'DEFAULT' } },
+				data: { users: { connect: { name: username } }}})
+		}
 		const newEvent = await this.prisma.discussionElement.create({
 			data:
 			{

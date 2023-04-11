@@ -3,8 +3,6 @@
 	import { getCookie, fetchPostJSON } from "$lib/global"
 	import { logged_in } from "$lib/stores"
 
-	if (getCookie("access_token")) logged_in.set(true)
-
 	let username = ""
 	let password = ""
 
@@ -37,7 +35,10 @@
 					console.log("Log-in failed")
 					toastStore.trigger(login_failed_toast)
 					return
-				} else logged_in.set(true)
+				} else {
+					logged_in.set(true)
+					console.log($logged_in)
+				}
 			} else if (e.submitter.id === "signup") {
 				if (!(await signup()).ok) {
 					toastStore.trigger(signup_failed_toast)

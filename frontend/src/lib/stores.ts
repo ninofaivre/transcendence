@@ -1,8 +1,6 @@
 import { writable, derived } from "svelte/store"
 import { fetchGet } from "$lib/global"
 
-// export const logged_in = writable(false)
-//
 export const logged_in = writable(false)
 
 export const my_name = derived(

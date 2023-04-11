@@ -7,18 +7,25 @@
 	import "../app.postcss"
 
 	import { AppShell, AppBar, LightSwitch, Toast } from "@skeletonlabs/skeleton"
-	import { logout } from "$lib/global"
+	import { logout, getCookie } from "$lib/global"
 	import { logged_in, my_name } from "$lib/stores"
 
 	function setup_logout(node: HTMLButtonElement) {
 		node.addEventListener("click", () => logout())
 	}
 
-	// For all pages, check if user is logged in else redirect to the home/auth page
-	if ($logged_in === false) {
-		if (window.location.pathname != "/") {
-			console.log(window.location.href)
-			window.location.pathname = "/"
+	// The first time check if our cookie is still here
+	if (getCookie("access_token")) logged_in.set(true)
+
+	$: console.log($logged_in)
+
+	// For all pages, check if user is logged in else redirect to the home/auth page... hopefully
+	$: {
+		if ($logged_in === false) {
+			console.log("You are not logged_in")
+			if (window.location.pathname !== "/") {
+				window.location.pathname = "/"
+			}
 		}
 	}
 </script>

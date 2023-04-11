@@ -28,7 +28,7 @@ export class FriendsController
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete('/friends/:friendShipId')
+	@Delete('/:friendShipId')
 	async deleteFriend(@Request()req: any, @Param()pathDTO: DeleteFriendPathDTO)
 	{
 		return this.friendsService.deleteFriend(req.user.username, pathDTO.friendShipId)

@@ -7,16 +7,6 @@ import { Prisma, User } from '@prisma/client';
 import { filterType as blockedFilterType } from './dto/getBlockedList.query.dto';
 import { concat, Subject } from 'rxjs';
 
-enum EventTypeList
-{
-	CREATED_INVITATION = "CREATED_INVITATION",
-	REFUSED_INVITATION = "REFUSED_INVITATION",
-	CANCELED_INVITATION = "CANCELED_INVITATION",
-	ACCEPTED_INVITATION = "ACCEPTED_INVITATION",
-	DELETED_DM = "DELETED_DM", // n'existera plus à terme (un dm se détruira lorsque les deux users le quitteront)
-	DELETED_FRIEND = "DELETED_FRIEND",
-}
-
 @Injectable()
 export class UserService
 {

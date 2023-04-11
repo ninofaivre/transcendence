@@ -1,10 +1,10 @@
-import { ApiProperty, ApiPropertyOptional, getSchemaPath, ApiExtraModels } from "@nestjs/swagger"
+import { ApiProperty, ApiPropertyOptional, getSchemaPath, ApiExtraModels, IntersectionType, PartialType } from "@nestjs/swagger"
 import { Equals, IsEnum, IsOptional, IsString, ValidateNested } from "class-validator"
 import { Type } from "class-transformer"
 import { IsChanTitle } from "../decorator/isChanTitle.decorator"
 import { ChanType } from "@prisma/client"
 
-export class CreatePublicChanDTO
+class CreatePublicChanDTO
 {
 	@ApiProperty({
 		enum: ChanType,
@@ -26,7 +26,7 @@ export class CreatePublicChanDTO
 	password?: string
 }
 
-export class CreatePrivateChanDTO
+class CreatePrivateChanDTO
 {
 	@ApiProperty({
 		enum: ChanType,
@@ -43,12 +43,8 @@ export class CreatePrivateChanDTO
 	title?: string
 }
 
-export class CreateChanTest
-{
-	type: ChanType
-	title?: string
-	password?: string
-}
+export class CreateChanTest extends IntersectionType(PartialType(CreatePrivateChanDTO), PartialType(CreatePublicChanDTO))
+{ type: ChanType }
 
 @ApiExtraModels(CreatePrivateChanDTO, CreatePublicChanDTO)
 export class CreateChanDTO
@@ -79,5 +75,5 @@ export class CreateChanDTO
 				]
 			}
 		})
-	chan: CreatePrivateChanDTO | CreatePublicChanDTO
+	chan: CreateChanTest
 }

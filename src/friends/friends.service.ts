@@ -1,13 +1,7 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
-import { SseService } from 'src/sse/sse.service';
-
-enum EventTypeList
-{
-	NEW_FRIEND = "NEW_FRIEND",
-	DELETED_FRIEND = "DELETED_FRIEND"
-}
+import { EventTypeList, SseService } from 'src/sse/sse.service';
 
 @Injectable()
 export class FriendsService

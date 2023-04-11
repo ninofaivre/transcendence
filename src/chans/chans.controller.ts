@@ -1,10 +1,10 @@
-import { BadRequestException, Body, Controller, Delete, Get, NotImplementedException, Param, Post, Query, Req, Request, UseGuards, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotImplementedException, Param, Patch, Post, Query, Req, Request, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiBody, ApiExtraModels, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { plainToClass, plainToInstance, Transform, Type } from 'class-transformer';
 import { validate } from 'class-validator';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ChansService } from './chans.service';
-import { CreateChanDTO, CreatePrivateChanDTO, CreatePublicChanDTO } from './dto/createChan.dto';
+import { CreateChanDTO } from './dto/createChan.dto';
 import { CreateChanMessageDTO } from './dto/createChanMessage.dto';
 import { CreateChanMessagePathDTO } from './dto/createChanMessage.path.dto';
 import { DeleteChanPathDTO } from './dto/deleteChan.path.dto';
@@ -95,6 +95,12 @@ export class ChansController
 	async createChan(@Request()req: any, @Body()dto: CreateChanDTO)
 	{
 		return this.chansService.createChan(req.user.username, dto.chan)
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Patch('/:chanId')
+	async updateChan(@Request()req: any)
+	{ 
 	}
 
 	@UseGuards(JwtAuthGuard)

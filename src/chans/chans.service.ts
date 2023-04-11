@@ -1,22 +1,13 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ChanType, PermissionList, Prisma, RoleApplyingType } from '@prisma/client';
-import { compare, compareSync, hash } from 'bcrypt';
+import { compareSync, hash } from 'bcrypt';
 import { PrismaService } from 'nestjs-prisma';
 import { CreateChanTest } from './dto/createChan.dto';
 import { AppService } from 'src/app.service';
 import { EventType } from '@prisma/client';
 import { CreateChanMessageDTO } from './dto/createChanMessage.dto';
-import { NotFoundError } from 'rxjs';
 import { PermissionsService } from './permissions/permissions.service';
-import { SseService } from 'src/sse/sse.service';
-
-enum EventTypeList
-{
-	CHAN_DELETED = "CHAN_DELETED",
-	CHAN_NEW_EVENT = "CHAN_NEW_EVENT",
-	CHAN_NEW_MESSAGE = "CHAN_NEW_MESSAGE",
-	DM_NEW_EVENT = "DM_NEW_EVENT",
-}
+import { EventTypeList, SseService } from 'src/sse/sse.service';
 
 @Injectable()
 export class ChansService

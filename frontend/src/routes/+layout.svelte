@@ -38,8 +38,8 @@
 					<a href="/">Transcendance</a>
 				</strong>
 			</svelte:fragment>
-			<a class="btn text-lg font-semibold" href="/chat"> Chat </a>
-			<a class="btn text-lg font-semibold" href="/pong"> Pong </a>
+			<a class="btn text-lg font-semibold" href="/chat" target="_self"> Chat </a>
+			<a class="btn text-lg font-semibold" href="/pong" target="_self"> Pong </a>
 			<svelte:fragment slot="trail">
 				{#if $logged_in}
 					<button

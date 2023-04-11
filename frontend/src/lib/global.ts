@@ -1,4 +1,5 @@
 import { PUBLIC_BACKEND_URL } from "$env/static/public"
+import { logged_in } from "$lib/stores"
 
 export function getCookie(cname: string) {
 	const name = cname + "="
@@ -23,29 +24,30 @@ export function deleteCookie(cname: string) {
 export async function fetchGet(apiEndPoint: string) {
 	return fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
 		mode: "cors",
-		credentials: "include"
+		credentials: "include",
 	})
 }
 
 export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
 	let body = JSON.stringify(jsBody)
 	let headers = {
-		"Content-Type": "application/json"
+		"Content-Type": "application/json",
 	}
 	return fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
 		mode: "cors",
 		credentials: "include",
 		method: "POST",
 		headers,
-		body
+		body,
 	})
 }
 
 export async function logout() {
-	return fetchGet("/api/auth/logout")
+	fetchGet("/api/auth/logout").then(() => logged_in.set(false))
 }
 
-// This function is called when the element is mounted svelte's `use:` directive
+// Unused for now. There to serve as an example of an use:directive
+// This function is called when the element is mounted by svelte's `use:` directive
 export function clickOutside(node: Node) {
 	// Create a handler
 	const handleClick = (event: MouseEvent) => {
@@ -59,6 +61,6 @@ export function clickOutside(node: Node) {
 	return {
 		destroy() {
 			document.removeEventListener("click", handleClick, true)
-		}
+		},
 	}
 }

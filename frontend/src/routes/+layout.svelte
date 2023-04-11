@@ -9,25 +9,23 @@
 	import { AppShell, AppBar, LightSwitch, Toast } from "@skeletonlabs/skeleton"
 	import { logout, getCookie } from "$lib/global"
 	import { logged_in, my_name } from "$lib/stores"
+	import { onDestroy, onMount } from "svelte"
+	import { goto } from "$app/navigation"
 
 	function setup_logout(node: HTMLButtonElement) {
 		node.addEventListener("click", () => logout())
 	}
-
-	// The first time check if our cookie is still here
-	if (getCookie("access_token")) logged_in.set(true)
-
-	$: console.log($logged_in)
 
 	// For all pages, check if user is logged in else redirect to the home/auth page... hopefully
 	$: {
 		if ($logged_in === false) {
 			console.log("You are not logged_in")
 			if (window.location.pathname !== "/") {
-				window.location.pathname = "/"
+				goto("/")
 			}
 		}
 	}
+	onMount(() => console.log("Layout mounted"))
 </script>
 
 <!-- App Shell -->
@@ -40,8 +38,8 @@
 					<a href="/">Transcendance</a>
 				</strong>
 			</svelte:fragment>
-			<a class="btn text-lg font-semibold" href="/chat" target="_self"> Chat </a>
-			<a class="btn text-lg font-semibold" href="/pong" target="_self"> Pong </a>
+			<a class="btn text-lg font-semibold" href="/chat"> Chat </a>
+			<a class="btn text-lg font-semibold" href="/pong"> Pong </a>
 			<svelte:fragment slot="trail">
 				{#if $logged_in}
 					<button

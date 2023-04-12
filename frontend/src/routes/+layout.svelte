@@ -33,6 +33,8 @@
 		console.log("You are logged_in")
 	}
 
+	if (getCookie("access_token")) logged_in.set(true)
+
 	// The check to set the store to true is done is the layout load function
 	// but the redirection needs to happen when the component is initialized
 	$: {

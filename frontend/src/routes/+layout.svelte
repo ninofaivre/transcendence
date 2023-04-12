@@ -19,19 +19,27 @@
 	}
 
 	// For all pages, check if user is logged in else redirect to the home/auth page... hopefully
-	function authGuard({ cancel, willUnload }: BeforeNavigate) {
+	function authGuard({ cancel, willUnload, to }: BeforeNavigate) {
 		console.log("Checking credentials...")
-		if (!getCookie("access_token")) {
-			console.log("You are NOT logged_in")
-			willUnload = false
-			cancel()
-			return
+		console.log(to)
+		if (to?.route.id !== "/") {
+			if (!getCookie("access_token")) {
+				console.log("You are NOT logged_in")
+				willUnload = false
+				cancel()
+				return
+			}
 		}
 		console.log("You are logged_in")
 	}
 
-	beforeNavigate(authGuard)
+	// The check to set the store to true is done is the layout load function
+	// but the redirection needs to happen when the component is initialized
+	$: {
+		if ($logged_in == false) goto("/")
+	}
 
+	beforeNavigate(authGuard)
 	onMount(() => console.log("Layout mounted"))
 </script>
 

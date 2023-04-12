@@ -6,21 +6,43 @@
 	// Most of your app wide CSS should be put in this file
 	import "../app.postcss"
 
+	import type { BeforeNavigate } from "@sveltejs/kit"
+
 	import { AppShell, AppBar, LightSwitch, Toast } from "@skeletonlabs/skeleton"
-	import { logout } from "$lib/global"
+	import { logout, getCookie } from "$lib/global"
 	import { logged_in, my_name } from "$lib/stores"
+	import { onDestroy, onMount } from "svelte"
+	import { beforeNavigate, goto } from "$app/navigation"
 
 	function setup_logout(node: HTMLButtonElement) {
 		node.addEventListener("click", () => logout())
 	}
 
-	// For all pages, check if user is logged in else redirect to the home/auth page
-	if ($logged_in === false) {
-		if (window.location.pathname != "/") {
-			console.log(window.location.href)
-			window.location.pathname = "/"
+	// For all pages, check if user is logged in else redirect to the home/auth page... hopefully
+	function authGuard({ cancel, willUnload, to }: BeforeNavigate) {
+		console.log("Checking credentials...")
+		console.log(to)
+		if (to?.route.id !== "/") {
+			if (!getCookie("access_token")) {
+				console.log("You are NOT logged_in")
+				willUnload = false
+				cancel()
+				return
+			}
 		}
+		console.log("You are logged_in")
 	}
+
+	if (getCookie("access_token")) logged_in.set(true)
+
+	// The check to set the store to true is done is the layout load function
+	// but the redirection needs to happen when the component is initialized
+	$: {
+		if ($logged_in == false) goto("/")
+	}
+
+	beforeNavigate(authGuard)
+	onMount(() => console.log("Layout mounted"))
 </script>
 
 <!-- App Shell -->
@@ -33,8 +55,8 @@
 					<a href="/">Transcendance</a>
 				</strong>
 			</svelte:fragment>
-			<a class="btn text-lg font-semibold" href="/chat" target="_self"> Chat </a>
-			<a class="btn text-lg font-semibold" href="/pong" target="_self"> Pong </a>
+			<a class="btn text-lg font-semibold" href="/chat"> Chat </a>
+			<a class="btn text-lg font-semibold" href="/pong"> Pong </a>
 			<svelte:fragment slot="trail">
 				{#if $logged_in}
 					<button

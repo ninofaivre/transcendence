@@ -6,25 +6,32 @@
 	// Most of your app wide CSS should be put in this file
 	import "../app.postcss"
 
+	import type { BeforeNavigate } from "@sveltejs/kit"
+
 	import { AppShell, AppBar, LightSwitch, Toast } from "@skeletonlabs/skeleton"
 	import { logout, getCookie } from "$lib/global"
 	import { logged_in, my_name } from "$lib/stores"
 	import { onDestroy, onMount } from "svelte"
-	import { goto } from "$app/navigation"
+	import { beforeNavigate, goto } from "$app/navigation"
 
 	function setup_logout(node: HTMLButtonElement) {
 		node.addEventListener("click", () => logout())
 	}
 
 	// For all pages, check if user is logged in else redirect to the home/auth page... hopefully
-	$: {
-		if ($logged_in === false) {
-			console.log("You are not logged_in")
-			if (window.location.pathname !== "/") {
-				goto("/")
-			}
+	function authGuard({ cancel, willUnload }: BeforeNavigate) {
+		console.log("Checking credentials...")
+		if (!getCookie("access_token")) {
+			console.log("You are NOT logged_in")
+			willUnload = false
+			cancel()
+			return
 		}
+		console.log("You are logged_in")
 	}
+
+	beforeNavigate(authGuard)
+
 	onMount(() => console.log("Layout mounted"))
 </script>
 
@@ -38,8 +45,8 @@
 					<a href="/">Transcendance</a>
 				</strong>
 			</svelte:fragment>
-			<a class="btn text-lg font-semibold" href="/chat" target="_self"> Chat </a>
-			<a class="btn text-lg font-semibold" href="/pong" target="_self"> Pong </a>
+			<a class="btn text-lg font-semibold" href="/chat"> Chat </a>
+			<a class="btn text-lg font-semibold" href="/pong"> Pong </a>
 			<svelte:fragment slot="trail">
 				{#if $logged_in}
 					<button

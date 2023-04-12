@@ -43,7 +43,9 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
 }
 
 export async function logout() {
-	fetchGet("/api/auth/logout").then(() => logged_in.set(false))
+	fetchGet("/api/auth/logout")
+		.then(() => logged_in.set(false))
+		.catch(() => deleteCookie("access_token"))
 }
 
 // Unused for now. There to serve as an example of an use:directive

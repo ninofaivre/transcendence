@@ -4,7 +4,7 @@ import { Type } from "class-transformer"
 import { IsChanTitle } from "../decorator/isChanTitle.decorator"
 import { ChanType } from "@prisma/client"
 
-class CreatePublicChanDTO
+export class CreatePublicChanDTO
 {
 	@ApiProperty({
 		enum: ChanType,
@@ -26,7 +26,7 @@ class CreatePublicChanDTO
 	password?: string
 }
 
-class CreatePrivateChanDTO
+export class CreatePrivateChanDTO
 {
 	@ApiProperty({
 		enum: ChanType,
@@ -43,37 +43,8 @@ class CreatePrivateChanDTO
 	title?: string
 }
 
-export class CreateChanTest extends IntersectionType(PartialType(CreatePrivateChanDTO), PartialType(CreatePublicChanDTO))
-{ type: ChanType }
-
-@ApiExtraModels(CreatePrivateChanDTO, CreatePublicChanDTO)
-export class CreateChanDTO
+export class CreateChanDTO extends IntersectionType(PartialType(CreatePrivateChanDTO), PartialType(CreatePublicChanDTO))
 {
-	@ApiProperty({
-		oneOf:
-		[
-			{ $ref: getSchemaPath(CreatePrivateChanDTO) },
-			{ $ref: getSchemaPath(CreatePublicChanDTO) }
-		],
-	})
-	@ValidateNested()
-	@Type(null, {
-			keepDiscriminatorProperty: true,
-			discriminator:
-			{
-				property: 'type',
-				subTypes:
-				[
-					{
-						name: 'PUBLIC',
-						value: CreatePublicChanDTO,
-					},
-					{
-						name: 'PRIVATE',
-						value: CreatePrivateChanDTO,
-					}
-				]
-			}
-		})
-	chan: CreateChanTest
+	@IsEnum(ChanType)
+	type: ChanType
 }

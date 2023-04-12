@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { ChanType, PermissionList, Prisma, RoleApplyingType } from '@prisma/client';
 import { compareSync, hash } from 'bcrypt';
 import { PrismaService } from 'nestjs-prisma';
-import { CreateChanTest } from './dto/createChan.dto';
+import { CreateChanDTO } from './dto/createChan.dto';
 import { AppService } from 'src/app.service';
 import { EventType } from '@prisma/client';
 import { CreateChanMessageDTO } from './dto/createChanMessage.dto';
@@ -31,6 +31,11 @@ export class ChansService
 		roles: { select: { name: true } },
 		name: true,
 		users: { select: this.usersSelect },
+	})
+
+	private rolesGetPayload = Prisma.validator<Prisma.RoleArgs>()
+	({
+		select: this.rolesSelect
 	})
 
 	private chansSelect = Prisma.validator<Prisma.ChanSelect>()
@@ -79,6 +84,30 @@ export class ChansService
 		'MUTE'
 	]
 
+	private namesArrayToStringArray(users: { name: string }[])
+	{
+		return users.map(el => el.name)
+	}
+
+	private formatRole(role: Prisma.RoleGetPayload<typeof this.rolesGetPayload>)
+	{
+		const { roles, users, ...rest } = role
+		return {
+			roles: this.namesArrayToStringArray(roles),
+			users: this.namesArrayToStringArray(users),
+			...rest
+		}
+	}
+
+	formatChan(chan: Prisma.PromiseReturnType<typeof this.createChan>)
+	{
+		const { roles, users, ...rest } = chan
+		return {
+			users: this.namesArrayToStringArray(users),
+			roles: roles.map(el => this.formatRole(el)),
+			...rest
+		}
+	}
 
 	async getUserChans(username: string)
 	{
@@ -92,7 +121,7 @@ export class ChansService
 			orderBy: { type: 'desc' }})
 	}
 
-	async createChan(username: string, chan: CreateChanTest)
+	async createChan(username: string, chan: CreateChanDTO)
 	{
 		if (chan.password)
 			chan.password = await hash(chan.password, 10)

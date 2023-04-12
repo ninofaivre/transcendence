@@ -1,10 +1,10 @@
 import { BadRequestException, Body, Controller, Delete, Get, NotImplementedException, Param, Patch, Post, Query, Req, Request, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiBody, ApiExtraModels, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { plainToClass, plainToInstance, Transform, Type } from 'class-transformer';
-import { validate } from 'class-validator';
+import { validate, validateSync } from 'class-validator';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ChansService } from './chans.service';
-import { CreateChanDTO } from './dto/createChan.dto';
+import { CreateChanDTO, CreatePrivateChanDTO, CreatePublicChanDTO } from './dto/createChan.dto';
 import { CreateChanMessageDTO } from './dto/createChanMessage.dto';
 import { CreateChanMessagePathDTO } from './dto/createChanMessage.path.dto';
 import { DeleteChanPathDTO } from './dto/deleteChan.path.dto';
@@ -34,7 +34,8 @@ export class ChansController
 	@Get('/me')
 	async getUserChans(@Request()req: any)
 	{
-		return this.chansService.getUserChans(req.user.username)
+		return (await this.chansService.getUserChans(req.user.username))
+			.map(el => this.chansService.formatChan(el))
 	}
 
 	@ApiTags('me')
@@ -50,7 +51,7 @@ export class ChansController
 	@Post('/me/JoinByInvitation')
 	async joinChanByInvitation(@Req()req: any, @Body()dto: JoinChanByInvitationDTO)
 	{
-		return this.chansService.joinChanByInvitation(req.user.username, dto.chanInvitationId)
+		return this.chansService.formatChan(await this.chansService.joinChanByInvitation(req.user.username, dto.chanInvitationId))
 	}
 
 	@ApiTags('me')
@@ -58,43 +59,68 @@ export class ChansController
 	@Post('/me/JoinById')
 	async joinChanById(@Req()req: any, @Body()dto: JoinChanByIdDTO)
 	{
-		return this.chansService.joinChanByid(req.user.username, dto.chanId, dto.password)
+		return this.chansService.formatChan(await this.chansService.joinChanByid(req.user.username, dto.chanId, dto.password))
 	}
 
 	@UseGuards(JwtAuthGuard)
 	@Post('/')
+	@ApiExtraModels(CreatePublicChanDTO, CreatePrivateChanDTO)
 	@ApiBody({
-		type: CreateChanDTO,
-		examples: // TODO find a cleaner way to retrieve CreatePublicChanDTO and CreatePrivateChanDTO examples (mb with $ref)
+		schema:
+		{
+			discriminator:
+			{
+				propertyName: 'type',
+				mapping:
+				{
+					PRIVATE: getSchemaPath(CreatePrivateChanDTO),
+					PUBLIC: getSchemaPath(CreatePublicChanDTO)
+				}
+			},
+			oneOf:
+			[
+				{ $ref: getSchemaPath(CreatePublicChanDTO) },
+				{ $ref: getSchemaPath(CreatePrivateChanDTO) },
+			],
+		},
+		examples: // it's fucking dumb
 		{
 			PUBLIC:
 			{
 				value:
 				{
-					chan:
-					{
-						type: "PUBLIC",
-						title: "MySuperPublicChanTitle",
-						password: "MySuperPassword",
-					} 
+					type: "PUBLIC",
+					title: "MySuperPublicChanTitle",
+					password: "MySuperPassword",
 				}
 			},
 			PRIVATE:
 			{
 				value:
 				{
-					chan:
-					{
-						type: "PRIVATE",
-						title: "MySuperPrivateChanTitle",
-					} 
+					type: "PRIVATE",
+					title: "MySuperPrivateChanTitle",
 				}
 			}
 		}
 	})
-	async createChan(@Request()req: any, @Body()dto: CreateChanDTO)
+	async createChan(@Request()req: any, @Body({
+		transform: async (value: CreateChanDTO) =>
+		{
+			const errors = await validate(plainToClass((value.type === 'PUBLIC') ? CreatePublicChanDTO : CreatePrivateChanDTO, value),
+				{
+					whitelist: true,
+					forbidNonWhitelisted: true,
+					forbidUnknownValues: true,
+					stopAtFirstError: true
+				})
+			if (errors.length)
+				throw (new ValidationPipe().createExceptionFactory())(errors)
+			return value
+		}
+	})dto: CreateChanDTO)
 	{
-		return this.chansService.createChan(req.user.username, dto.chan)
+		return this.chansService.formatChan(await this.chansService.createChan(req.user.username, dto))
 	}
 
 	@UseGuards(JwtAuthGuard)

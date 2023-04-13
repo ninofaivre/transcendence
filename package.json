@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "^10.1.0",
-    "@nestjs/cli": "^9.3.0",
+    "@nestjs/cli": "^9.4.0",
     "@nestjs/schematics": "^9.1.0",
     "@nestjs/testing": "^9.4.0",
     "@prisma/language-server": "^4.12.0",

@@ -21,28 +21,58 @@
 	// For all pages, check if user is logged in else redirect to the home/auth page... hopefully
 	function authGuard({ cancel, willUnload, to }: BeforeNavigate) {
 		console.log("Checking credentials...")
-		console.log(to)
-		if (to?.route.id !== "/") {
-			if (!getCookie("access_token")) {
-				console.log("You are NOT logged_in")
+		console.log(to?.route.id)
+		console.log(getCookie("access_token"))
+		if (!getCookie("access_token")) {
+			if (to?.route.id !== "/") {
+				console.log(
+					"You are NOT logged_in an trying to go somewhere else. I will prevent navigation",
+				)
 				willUnload = false
 				cancel()
-				return
-			}
+			} else console.log("You are NOT logged_in but since you are going home, go")
+		} else {
+			willUnload = true
+			console.log("You are logged_in. I will not prevent navigation")
 		}
-		console.log("You are logged_in")
 	}
+	beforeNavigate(authGuard)
 
-	if (getCookie("access_token")) logged_in.set(true)
+	if (getCookie("access_token")) {
+		logged_in.set(true)
+		console.log("We found our cookie. You are now logged in")
+	}
 
 	// The check to set the store to true is done is the layout load function
 	// but the redirection needs to happen when the component is initialized
 	$: {
-		if ($logged_in == false) goto("/")
+		if ($logged_in == false) {
+			console.log("You are NOT logged in, redirecting to home page...")
+			goto("/")
+		}
 	}
 
-	beforeNavigate(authGuard)
 	onMount(() => console.log("Layout mounted"))
+
+	// const localStore = localStorage.setItem
+
+	// localStorage.setItem = function (key, value) {
+	// 	const event = new Event("localUpdated")
+
+	// 	document.dispatchEvent(event)
+	// 	localStore.apply(this, arguments)
+	// }
+
+	// const localStoreHandler = function (e) {
+	// 	console.log(`👉 localStorage.set('${e.key}', '${e.value}') updated`)
+	// }
+
+	// document.addEventListener("localUpdated", localStoreHandler, false)
+
+	// localStorage.setItem("username", "amoos")
+
+	// // After 2 second
+	// setTimeout(() => localStorage.setItem("username", "rifat"), 2000)
 </script>
 
 <!-- App Shell -->

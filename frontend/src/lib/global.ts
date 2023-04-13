@@ -22,10 +22,12 @@ export function deleteCookie(cname: string) {
 }
 
 export async function fetchGet(apiEndPoint: string) {
-	return fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
+	const response = await fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
 		mode: "cors",
 		credentials: "include",
 	})
+	if (response.status == 401) logged_in.set(false)
+	return response
 }
 
 export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
@@ -33,19 +35,27 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
 	let headers = {
 		"Content-Type": "application/json",
 	}
-	return fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
+	const response = await fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
 		mode: "cors",
 		credentials: "include",
 		method: "POST",
 		headers,
 		body,
 	})
+	if (response.status == 401) logged_in.set(false)
+	return response
 }
 
 export async function logout() {
 	fetchGet("/api/auth/logout")
-		.then(() => logged_in.set(false))
 		.catch(() => deleteCookie("access_token"))
+		.finally(() => {
+			logged_in.set(false) // Why the fuck does that not trigger redirection ?
+			// logged_in.update((bool) => {
+			// 	bool = !!bool
+			// })
+			console.log("Logging out...")
+		})
 }
 
 // Unused for now. There to serve as an example of an use:directive

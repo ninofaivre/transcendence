@@ -7,10 +7,15 @@
 	let password = ""
 
 	async function login() {
-		return fetchPostJSON("/api/auth/login", {
+		const response = fetchPostJSON("/api/auth/login", {
 			username,
 			password,
 		})
+		if ((await response).ok) {
+			logged_in.set(true)
+			console.log("Login successful")
+		}
+		return response
 	}
 
 	async function signup() {
@@ -34,10 +39,6 @@
 				if (!(await login()).ok) {
 					console.log("Log-in failed")
 					toastStore.trigger(login_failed_toast)
-					return
-				} else {
-					logged_in.set(true)
-					console.log($logged_in)
 				}
 			} else if (e.submitter.id === "signup") {
 				if (!(await signup()).ok) {

@@ -11,11 +11,13 @@ export default defineConfig({
 		include: ["src/**/*.{test,spec}.{js,ts}"],
 	},
 	server: {
-		https: {
-			key: "../secrets/key.pem",
-			cert: "../secrets/cert.pem",
-		},
+		// https: {
+		// 	key: "../secrets/key.pem",
+		// 	cert: "../secrets/cert.pem",
+		// },
 		proxy: {
+			// string shorthand: http://localhost:5173/api -> http://localhost:3000/api
+			"/api": "http://localhost:3000",
 			// with options: http://localhost:5173/api/bar-> http://example.com/bar
 			// "/api": {
 			// 	target: "http://localhost:3000/api",
@@ -38,8 +40,6 @@ export default defineConfig({
 			// 		})
 			// 	},
 			// },
-			// string shorthand: http://localhost:5173/api -> http://localhost:3000/api
-			// "/api": "http://localhost:3000",
 		},
 	},
 })

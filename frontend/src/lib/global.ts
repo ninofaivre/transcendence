@@ -23,10 +23,16 @@ export function deleteCookie(cname: string) {
 
 export async function fetchGet(apiEndPoint: string) {
 	const response = await fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
-		mode: "cors",
+		// mode: "cors",
 		credentials: "include",
 	})
-	if (response.status == 401) logged_in.set(false)
+	if (response.status == 401) {
+		console.log(
+			`GET request to ${PUBLIC_BACKEND_URL + apiEndPoint} returned 401`,
+			"Logging out...",
+			logged_in.set(false), // Why the fuck does that not trigger redirection ?
+		)
+	}
 	return response
 }
 
@@ -36,13 +42,34 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
 		"Content-Type": "application/json",
 	}
 	const response = await fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
-		mode: "cors",
+		// mode: "cors",
 		credentials: "include",
 		method: "POST",
 		headers,
 		body,
 	})
-	if (response.status == 401) logged_in.set(false)
+	if (response.status == 401) {
+		console.log(
+			`POST request to ${PUBLIC_BACKEND_URL + apiEndPoint} returned 401`,
+			"Logging out...",
+			logged_in.set(false), // Why the fuck does that not trigger redirection ?
+		)
+	}
+	return response
+}
+
+export async function login(username: string, password: string) {
+	const response = fetchPostJSON("/api/auth/login", {
+		username,
+		password,
+	})
+	if ((await response).ok) {
+		console.log("Login successful")
+		logged_in.set(true)
+	} else {
+		console.log("Login UNsuccessful", "Setting logged in as false")
+		logged_in.set(false)
+	}
 	return response
 }
 
@@ -50,29 +77,7 @@ export async function logout() {
 	fetchGet("/api/auth/logout")
 		.catch(() => deleteCookie("access_token"))
 		.finally(() => {
-			logged_in.set(false) // Why the fuck does that not trigger redirection ?
-			// logged_in.update((bool) => {
-			// 	bool = !!bool
-			// })
 			console.log("Logging out...")
+			logged_in.set(false) // Why the fuck does that not trigger redirection ?
 		})
-}
-
-// Unused for now. There to serve as an example of an use:directive
-// This function is called when the element is mounted by svelte's `use:` directive
-export function clickOutside(node: Node) {
-	// Create a handler
-	const handleClick = (event: MouseEvent) => {
-		if (!node.contains(event.target as Node)) {
-			node.dispatchEvent(new CustomEvent("outclick"))
-		}
-	}
-	// Add handler to the whole page
-	document.addEventListener("click", handleClick, true)
-
-	return {
-		destroy() {
-			document.removeEventListener("click", handleClick, true)
-		},
-	}
 }

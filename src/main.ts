@@ -9,10 +9,9 @@ import { PrismaClientExceptionFilter, PrismaService } from "nestjs-prisma";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    // httpsOptions:
-    // {
-    // 	key: fs.readFileSync('./secrets/key.pem'),
-    // 	cert: fs.readFileSync('./secrets/cert.pem'),
+    // httpsOptions: {
+    //   key: fs.readFileSync("./secrets/key.pem"),
+    //   cert: fs.readFileSync("./secrets/cert.pem"),
     // },
     // cors:
     // {

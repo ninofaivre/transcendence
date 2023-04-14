@@ -1,7 +1,8 @@
 import { writable, derived } from "svelte/store"
 import { fetchGet } from "$lib/global"
+import { localStorageStore } from "@skeletonlabs/skeleton"
 
-export const logged_in = writable(false)
+export const logged_in = localStorageStore("logged", false)
 
 export const my_name = derived(
 	logged_in,

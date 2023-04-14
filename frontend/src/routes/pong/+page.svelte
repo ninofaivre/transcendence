@@ -5,9 +5,10 @@
 	import { io } from "socket.io-client"
 	import { onDestroy } from "svelte"
 
-	const game_socket = io(PUBLIC_BACKEND_URL)
-	const game_socket_store = writable(game_socket)
-	onDestroy(game_socket.close)
+  // This produces a bug !
+	// const game_socket = io(PUBLIC_BACKEND_URL)
+	// const game_socket_store = writable(game_socket)
+	// onDestroy(game_socket.close)
 
 	//	$game_socket_store.on('ennemy_paddle', (message) => {
 	//	  })

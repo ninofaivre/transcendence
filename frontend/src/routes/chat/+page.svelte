@@ -76,8 +76,8 @@
 	</div>
 {:else}
 	<div id="convo" class="my-10 flex h-full flex-col justify-center">
-		<div class="text-center text-3xl font-bold">
-			You haven't started any conversations yet height
+		<div class="mx-auto text-center text-3xl font-bold">
+			You haven't started any conversations yet
 		</div>
 		<div class="mx-auto my-10">
 			<CreateDiscussion />

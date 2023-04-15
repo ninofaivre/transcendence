@@ -11,17 +11,19 @@
 	let form: HTMLFormElement
 	async function handleDiscussionCreation() {
 		show_discussion_creation_form = false
+
 		let formdata = new FormData(form) // `form` is bound to the form node
 		console.log(formdata)
 		console.log(formdata.getAll("users"))
-		let res = await fetchPostJSON("/chat/createDiscussion", {
+		let res = await fetchPostJSON("/api/chans", {
+			type: "PRIVATE",
 			title: formdata.get("title"),
-			users: formdata.getAll("users")
+			// users: formdata.getAll("users"),
 		})
 		if (!res.ok) {
 			let body = await res.json()
 			toastStore.trigger({
-				message: `Error: ${res.statusText}\nCould not create new discussion because ${body.message}`
+				message: `Error: ${res.statusText}\nCould not create new discussion because ${body.message}`,
 			})
 		}
 	}
@@ -36,7 +38,7 @@
 	let friends: string[] = ["alice", "bob", "cha", "denis", "john", "zelda"]
 	let friendOptions: AutocompleteOption[] = friends.map((username) => ({
 		label: username,
-		value: username
+		value: username,
 	}))
 
 	function onInputChipSelect(event: any): void {
@@ -45,7 +47,10 @@
 </script>
 
 {#if !show_discussion_creation_form}
-	<button on:click={() => (show_discussion_creation_form = true)} class="btn variant-filled w-full">
+	<button
+		on:click={() => (show_discussion_creation_form = true)}
+		class="btn variant-filled w-full"
+	>
 		Create new discussion
 	</button>
 {:else}

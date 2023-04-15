@@ -10,6 +10,8 @@
 	import ChatBox from "./ChatBox.svelte"
 	/* utils */
 	import { sse } from "$lib/sse"
+	/* stores */
+	import { my_name } from "$lib/stores"
 
 	export let data: PageData
 
@@ -63,7 +65,7 @@
 			<DiscussionDisplay
 				bind:displayed_messages={all_messages[idx]}
 				{discussionId}
-				my_name={data.my_name}
+				my_name={$my_name}
 			/>
 
 			<!-- Input box -->
@@ -73,10 +75,14 @@
 		</div>
 	</div>
 {:else}
-	<div id="placeholder" class="w-full text-center text-3xl font-bold">
-		You haven't started any conversations yet height: calc(100vh);
+	<div id="convo" class="my-10 flex h-full flex-col justify-center">
+		<div class="text-center text-3xl font-bold">
+			You haven't started any conversations yet height
+		</div>
+		<div class="mx-auto my-10">
+			<CreateDiscussion />
+		</div>
 	</div>
-	<CreateDiscussion />
 {/if}
 
 <style lang="postcss">

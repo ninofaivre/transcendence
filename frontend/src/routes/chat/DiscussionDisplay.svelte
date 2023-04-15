@@ -20,7 +20,9 @@
 	const switchMessages = async (_discussionId: typeof discussionId) => {
 		let fetched_messages
 		try {
-			const response = await fetchGet("/chat/getnMessages/" + discussionId + "?n=" + initial_load)
+			const response = await fetchGet(
+				"/api/chat/getnMessages/" + discussionId + "?n=" + initial_load,
+			)
 			fetched_messages = await response.json()
 		} catch (err: any) {
 			// Can't type what's caught because it could catch anything
@@ -35,7 +37,7 @@
 
 	function infiniteHandler(e: InfiniteEvent) {
 		const {
-			detail: { loaded, complete }
+			detail: { loaded, complete },
 		} = e
 		if (displayed_messages) {
 			fetchGet(
@@ -46,7 +48,7 @@
 					displayed_messages.length +
 					"&" +
 					"n=" +
-					loading_greediness
+					loading_greediness,
 			)
 				.then((response) => response.json())
 				.then((fetched_messages) => {
@@ -73,7 +75,9 @@
 			<InfiniteLoading on:infinite={infiniteHandler} direction="top" distance={reactivity}>
 				<!-- <div slot="noResults"></div> -->
 				<!-- <div slot="noMore"></div> -->
-				<div slot="error">Ooops, something went wrong when trying to fecth previous messages</div>
+				<div slot="error">
+					Ooops, something went wrong when trying to fecth previous messages
+				</div>
 			</InfiniteLoading>
 			{#each displayed_messages as message}
 				<ChatBubble from_me={message.from === my_name} from={message.from}>

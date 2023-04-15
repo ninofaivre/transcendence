@@ -30,7 +30,7 @@ export async function fetchGet(apiEndPoint: string) {
 		console.log(
 			`GET request to ${PUBLIC_BACKEND_URL + apiEndPoint} returned 401`,
 			"Logging out...",
-			logged_in.set(false), // Why the fuck does that not trigger redirection ?
+			logged_in.set(false),
 		)
 	}
 	return response
@@ -52,7 +52,7 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
 		console.log(
 			`POST request to ${PUBLIC_BACKEND_URL + apiEndPoint} returned 401`,
 			"Logging out...",
-			logged_in.set(false), // Why the fuck does that not trigger redirection ?
+			logged_in.set(false),
 		)
 	}
 	return response

@@ -1,27 +1,17 @@
 import { PUBLIC_BACKEND_URL } from "$env/static/public"
-import type { PageLoad } from "./$types.d"
 import { fetchGet } from "$lib/global"
-//import { current_user } from '$lib/stores'
 
-//let user = "username not set";
+export const load = async ({}) => {
+	const api_get_discussions = "/api/chans/me"
+	try {
+		const res1 = await fetchGet(api_get_discussions)
+		const discussions = await res1.json()
+		console.log("Loaded", PUBLIC_BACKEND_URL + api_get_discussions, discussions)
 
-//const unsubscribe = current_user.subscribe( (value: string) => {
-//	user = value;
-//});
-
-export const load = (async ({ fetch }) => {
-	const res1 = await fetchGet("/chat/getAllDiscussions")
-	const discussions = await res1.json()
-
-	console.log("Loaded", PUBLIC_BACKEND_URL + "/chat/getAllDiscussions", discussions)
-
-	const res2 = await fetchGet("/api/user/myName")
-	const { data: my_name } = await res2.json()
-
-	console.log(my_name)
-
-	return {
-		discussions,
-		my_name
+		return {
+			discussions,
+		}
+	} catch (e: any) {
+		console.error("Failed to load data:", e)
 	}
-}) satisfies PageLoad
+}

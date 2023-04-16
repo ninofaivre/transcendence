@@ -6,7 +6,8 @@ import { reactivePreprocess } from 'svelte-reactive-preprocessor';
 const config = {
   // Consult https://kit.svelte.dev/docs/integrations#preprocessors
   // for more information about preprocessors
-  preprocess: [vitePreprocess(), reactivePreprocess()],
+  // preprocess: [vitePreprocess(), reactivePreprocess()],
+  preprocess: [vitePreprocess()],
 
   kit: {
     adapter: adapter({

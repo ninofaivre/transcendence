@@ -12,7 +12,7 @@
 
 		fetchPostJSON("/chat/createMessage", {
 			discussionId,
-			content: new_message
+			content: new_message,
 		})
 			.then(() => {
 				new_message = ""
@@ -44,7 +44,7 @@
 		{placeholder}
 		class="textarea mx-auto w-full"
 	/>
-	<button on:click={sendMessage} class="btn variant-filled"> Send </button>
+	<button on:click={sendMessage} class="btn variant-filled mx-2 my-auto"> Send </button>
 </div>
 
 <style>

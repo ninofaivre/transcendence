@@ -73,7 +73,7 @@
 			emptyState="No such friend found"
 			class="card overflow-y-auto p-4"
 		/>
-		<button type="submit" class="btn variant-filled"> Create Discussion </button>
+		<button type="submit" class="btn variant-filled"> Create room </button>
 		<button
 			type="button"
 			class="btn variant-filled"

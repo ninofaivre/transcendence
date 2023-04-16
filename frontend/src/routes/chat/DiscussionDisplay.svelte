@@ -5,7 +5,6 @@
 	import type { InfiniteEvent } from "svelte-infinite-loading/types/index"
 
 	import InfiniteLoading from "svelte-infinite-loading"
-	import ChatBox from "./ChatBox.svelte"
 	import ChatBubble from "./ChatBubble.svelte"
 	import { fetchGet } from "$lib/global"
 	import { onMount } from "svelte"
@@ -17,37 +16,38 @@
 
 	const initial_load = 10
 	const reactivity = 10
+	let load_error: boolean
 	const switchMessages = async (_discussionId: typeof discussionId) => {
+		const api: string = "/api/chans/" + discussionId + "/messages?"
+		load_error = false
 		let fetched_messages
 		try {
-			const response = await fetchGet(
-				"/api/chat/getnMessages/" + discussionId + "?n=" + initial_load,
-			)
+			// http://localhost:3000/api/chans/1/messages?nMessages=2
+			const response = await fetchGet(api + "nMessages=" + initial_load)
 			fetched_messages = await response.json()
 		} catch (err: any) {
-			// Can't type what's caught because it could catch anything
-			alert("Could not fetch conversation:" + err.message + "\n Try to reload the page")
+			load_error = true
+			console.log(fetched_messages)
+			console.error("Could not fetch conversation:", err.message)
 			return
 		}
 		if (_discussionId === discussionId) displayed_messages = fetched_messages
 	}
 
 	let loading_greediness = 2
-	const api: string = "/chat/getnMessages/"
-
 	function infiniteHandler(e: InfiniteEvent) {
+		const api: string = "/api/chans/" + discussionId + "/messages?"
 		const {
 			detail: { loaded, complete },
 		} = e
 		if (displayed_messages) {
 			fetchGet(
-				`${api}` +
-					discussionId +
-					"?" +
+				api +
 					"start=" +
-					displayed_messages.length +
+					// displayed_messages.length + // Tell me how many you've got to API
+					displayed_messages[0].id + // Tell API what's the id of the oldest message you've got
 					"&" +
-					"n=" +
+					"nMessages=" +
 					loading_greediness,
 			)
 				.then((response) => response.json())
@@ -57,6 +57,7 @@
 						loaded()
 					} else {
 						complete()
+						;("")
 					}
 				})
 		}
@@ -71,6 +72,11 @@
 	<div class="flex flex-col" bind:this={message_container}>
 		{#if !displayed_messages?.length}
 			<p class="text-center font-semibold">This conversation has not started yet</p>
+		{:else if load_error}
+			<p class="text-center font-semibold">
+				We encountered an error trying to fetch this conversation's messages. Please try
+				again later
+			</p>
 		{:else}
 			<InfiniteLoading on:infinite={infiniteHandler} direction="top" distance={reactivity}>
 				<!-- <div slot="noResults"></div> -->

@@ -18,8 +18,7 @@
 				new_message = ""
 			})
 			.catch((err: any) => {
-				console.log(err)
-				alert(`Could not send message because ${err.message}`)
+				console.error("Could not send message because: ", err.message, err)
 			})
 
 		disabled = false

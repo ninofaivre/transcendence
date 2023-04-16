@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	/* types */
 	import type { Discussion as DiscussionType } from "$lib/types" // app.d.ts
 	import type { PageData } from "./$types" // Generated type file
@@ -8,12 +9,14 @@
 	import CreateDiscussion from "./CreateDiscussion.svelte"
 	import DiscussionList from "./DiscussionList.svelte"
 	import ChatBox from "./ChatBox.svelte"
-	/* utils */
-	import { sse } from "$lib/sse"
 	/* stores */
 	import { my_name } from "$lib/stores"
+	import { onDestroy } from "svelte"
 
 	export let data: PageData
+
+	// export const sse = new EventSource("http:localhost:3000/api/sse", { withCredentials: true })
+	const sse = new EventSource(PUBLIC_BACKEND_URL + "/api/sse")
 
 	let discussions: DiscussionType[]
 	$: discussions = Object.values(data.discussions)
@@ -22,7 +25,9 @@
 	$: discussionId = idx + 1
 	let all_messages: Message[][] = []
 
-	//onDestroy(data.unsubscribe);
+	onDestroy(() => {
+		sse.close()
+	})
 
 	sse.onmessage = ({ data }) => {
 		const parsedData = JSON.parse(data)

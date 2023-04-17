@@ -1,16 +1,13 @@
 import { Body, Controller, Delete, Get, NotImplementedException, Param, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { OneUsernameDTO } from 'src/user/dto/oneUsername.dto';
 import { DmsService } from './dms.service';
+import { OneUsernameDTO } from 'src/dto/oneUsername.dto';
 import { CreateDmMessageDTO } from './dto/createDmMessage.dto';
 import { CreateDmMessagePathDTO } from './dto/createDmMessage.path.dto';
-import { DeleteDmPathDTO } from './dto/deleteDm.path.dto';
 import { DeleteDmMessagePathDTO } from './dto/deleteDmMessage.path.dto';
 import { GetDmMessagesPathDTO } from './dto/getDmMessages.path.dto';
 import { GetDmMessagesQueryDTO } from './dto/getDmMessages.query.dto';
-import { JoinDmDTO } from './dto/joinDm.dto';
-import { LeaveDmPathDTO } from './dto/leaveDm.path.dto';
 
 @ApiTags('dms')
 @Controller('dms')

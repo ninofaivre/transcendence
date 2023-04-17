@@ -1,20 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger'
-import { IsString, Length } from 'class-validator'
-import { Username } from '../decorator/username.decorator'
+import { z } from 'zod'
+import { createZodDto } from '@anatine/zod-nestjs'
+import { username } from 'src/zod/username.zod'
 
-export class CreateUserDTO 
-{
-	@Username()
-	name: string
+const CreateUserSchema = z.object
+({
+	name: username,
+	password: z.string().min(8).max(150)
+}).strict()
 
-	@ApiProperty({
-		description: 'password',
-		default: 'my-secret-password',
-		minimum: 8,
-		maximum: 150,
-		format: 'password'
-	})
-	@IsString()
-	@Length(8, 150)
-	password: string
-}
+export class CreateUserDTO extends createZodDto(CreateUserSchema) {}

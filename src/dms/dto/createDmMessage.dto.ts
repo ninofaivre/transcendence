@@ -1,21 +1,12 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
-import { IsId } from "src/decorator/isId.decorator";
+import { createZodDto } from "@anatine/zod-nestjs";
+import { id } from "src/zod/id.zod";
+import { z } from "zod";
 
-export class CreateDmMessageDTO
-{
-	@ApiProperty({
-		example: "my super message"
-	})
-	@IsNotEmpty()
-	@IsString()
-	content: string
+const CreateDmMessageSchema =
+z.object
+({
+	content: z.string().nonempty(),
+	relatedId: id.optional()
+}).strict()
 
-	@ApiPropertyOptional({
-		type: 'integer',
-		minimum: 1
-	})
-	@IsOptional()
-	@IsId()
-	relatedId?: number
-}
+export class CreateDmMessageDTO extends createZodDto(CreateDmMessageSchema) {}

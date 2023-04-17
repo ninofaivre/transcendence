@@ -1,50 +1,37 @@
-import { ApiProperty, ApiPropertyOptional, getSchemaPath, ApiExtraModels, IntersectionType, PartialType } from "@nestjs/swagger"
-import { Equals, IsEnum, IsOptional, IsString, ValidateNested } from "class-validator"
-import { Type } from "class-transformer"
-import { IsChanTitle } from "../decorator/isChanTitle.decorator"
-import { ChanType } from "@prisma/client"
+import { createZodDto } from "@anatine/zod-nestjs";
+import { extendApi } from "@anatine/zod-openapi";
+import { ChanType } from "@prisma/client";
+import { z } from "zod";
 
-export class CreatePublicChanDTO
+export const CreatePublicChanSchema = extendApi(
+z.object
+({
+	type: z.literal(ChanType.PUBLIC),
+	title: z.string().nonempty().refine(title => title !== "me"),
+	password: z.string().nonempty().optional().nullable()
+}).strict(),
 {
-	@ApiProperty({
-		enum: ChanType,
-		default: ChanType.PUBLIC
-	})
-	@Equals(ChanType.PUBLIC)
-	@IsEnum(ChanType)
-	type: ChanType
+	title: "PUBLIC",
+})
 
-	@ApiProperty({
-	})
-	@IsChanTitle()
-	title: string
-
-	@ApiPropertyOptional({
-	})
-	@IsOptional()
-	@IsString()
-	password?: string
-}
-
-export class CreatePrivateChanDTO
+export const CreatePrivateChanSchema = extendApi(
+z.object
+({
+	type: z.literal(ChanType.PRIVATE),
+	title: z.string().optional().nullable(),
+	password: z.never()
+}).strict(),
 {
-	@ApiProperty({
-		enum: ChanType,
-		default: ChanType.PRIVATE
-	})
-	@Equals(ChanType.PRIVATE)
-	@IsEnum(ChanType)
-	type: ChanType
+	title: "PRIVATE",
+})
 
-	@ApiPropertyOptional({
-	})
-	@IsOptional()
-	@IsChanTitle()
-	title?: string
-}
-
-export class CreateChanDTO extends IntersectionType(PartialType(CreatePrivateChanDTO), PartialType(CreatePublicChanDTO))
+export const CreateChanSchema = extendApi(
+z.discriminatedUnion("type",
+[
+	CreatePrivateChanSchema,
+	CreatePublicChanSchema
+]),
 {
-	@IsEnum(ChanType)
-	type: ChanType
-}
+})
+
+export class CreateChanDTO extends createZodDto(CreateChanSchema) {}

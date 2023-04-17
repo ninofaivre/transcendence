@@ -13,6 +13,8 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { DmsModule } from './dms/dms.module';
 import { FriendsModule } from './friends/friends.module';
 import { SseModule } from './sse/sse.module';
+import { APP_PIPE } from '@nestjs/core'
+import { ZodValidationPipe } from '@anatine/zod-nestjs'
 
 @Module({
 	imports:
@@ -57,7 +59,14 @@ import { SseModule } from './sse/sse.module';
 		SseModule
 	],
 	controllers: [AppController],
-	providers: [AppService],
+	providers:
+	[
+		AppService,
+		{
+		  provide: APP_PIPE,
+		  useClass: ZodValidationPipe,
+		},
+	],
 	exports: [AppService]
 })
 export class AppModule {}

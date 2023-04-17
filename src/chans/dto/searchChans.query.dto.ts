@@ -1,19 +1,11 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
-import { IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from "class-validator"
+import { createZodDto } from "@anatine/zod-nestjs"
+import { z } from "zod"
 
-export class SearchChansQueryDTO
-{
-	@ApiProperty({
-	})
-	@IsNotEmpty()
-	@IsString()
-	titleContains: string
+const SearchChansQuerySchema =
+z.object
+({
+	titleContains: z.string().nonempty(),
+	nResult: z.coerce.number().positive().int().default(10)
+}).strict()
 
-	@ApiPropertyOptional({
-	})
-	@Min(1)
-	@Max(50)
-	@IsOptional()
-	@IsInt()
-	nResult: number = 10
-}
+export class SearchChansQueryDTO extends createZodDto(SearchChansQuerySchema) {}

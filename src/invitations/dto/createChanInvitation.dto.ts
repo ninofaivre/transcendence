@@ -1,11 +1,13 @@
-import { IsId } from "src/decorator/isId.decorator";
-import { Username } from "src/user/decorator/username.decorator";
+import { createZodDto } from "@anatine/zod-nestjs"
+import { id } from "src/zod/id.zod"
+import { usernameSet } from "src/zod/username.zod"
+import { z } from "zod"
 
-export class CreateChanInvitationDTO
-{
-	@Username()
-	username: string
+const CreateChanInvitationSchema =
+z.object
+({
+	usernames: usernameSet,
+	chanId: id
+})
 
-	@IsId()
-	chanId: number
-}
+export class CreateChanInvitationDTO extends createZodDto(CreateChanInvitationSchema) {}

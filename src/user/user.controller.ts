@@ -2,14 +2,10 @@ import { Body, Get, Post, UseGuards, ValidationPipe, Sse, MessageEvent, Delete, 
 import { Controller, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { UserService } from './user.service'
-import { CreateUserDTO } from './dto/createUser.dto'
-import { Observable, interval, map, finalize } from 'rxjs'
-import { OneUsernameDTO } from './dto/oneUsername.dto';
-import { ApiParam, ApiResponseProperty, ApiTags } from '@nestjs/swagger';
-import { GetBlockedListQueryDTO } from './dto/getBlockedList.query.dto';
-import { Username } from './decorator/username.decorator';
+import { ApiBody, ApiParam, ApiProperty, ApiResponseProperty, ApiTags } from '@nestjs/swagger';
 import { ChatService } from 'src/chat/chat.service';
-import { DiscussionIdPathDTO } from 'src/chat/dto/discussionId.path.dto';
+import { CreateUserDTO } from './dto/createUser.dto';
+import { CreateChanDTO } from './dto/test.dto';
 
 @ApiTags('user')
 @Controller('user')
@@ -26,11 +22,17 @@ export class UserController
 	}
 
 	@Post('/sign-up')
-	async createUser(@Body(ValidationPipe)user: CreateUserDTO)
+	async createUser(@Body()user: CreateUserDTO)
 	{
-		return this.userService.createUser(user)
+		console.log(user)
+			return this.userService.createUser(user)
 	}
 
+	// @Post('/test')
+	// async test(@Body()test: CreateChanDTO)
+	// {
+	// 	console.log(test)
+	// }
 
 	// @UseGuards(JwtAuthGuard)
 	// @Get('/blockedUsers')

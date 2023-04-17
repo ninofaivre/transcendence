@@ -1,7 +1,11 @@
-import { IsId } from "src/decorator/isId.decorator";
+import { createZodDto } from "@anatine/zod-nestjs";
+import { id } from "src/zod/id.zod";
+import { z } from "zod";
 
-export class GetDmMessagesPathDTO
-{
-	@IsId()
-	dmId: number
-}
+const GetDmMessagesPathSchema =
+z.object
+({ 
+	dmId: id 
+}).strict()
+
+export class GetDmMessagesPathDTO extends createZodDto(GetDmMessagesPathSchema) {}

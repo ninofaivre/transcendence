@@ -1,10 +1,8 @@
-import { BadRequestException, Body, Controller, Delete, Get, NotImplementedException, Param, Patch, Post, Query, Req, Request, UseGuards, ValidationPipe } from '@nestjs/common';
-import { ApiBody, ApiExtraModels, ApiTags, getSchemaPath } from '@nestjs/swagger';
-import { plainToClass, plainToInstance, Transform, Type } from 'class-transformer';
-import { validate, validateSync } from 'class-validator';
+import { Body, Controller, Delete, Get, NotImplementedException, Param, Patch, Post, Query, Req, Request, UseGuards, ValidationPipe } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ChansService } from './chans.service';
-import { CreateChanDTO, CreatePrivateChanDTO, CreatePublicChanDTO } from './dto/createChan.dto';
+import { CreateChanDTO } from './dto/createChan.dto';
 import { CreateChanMessageDTO } from './dto/createChanMessage.dto';
 import { CreateChanMessagePathDTO } from './dto/createChanMessage.path.dto';
 import { DeleteChanPathDTO } from './dto/deleteChan.path.dto';
@@ -14,6 +12,8 @@ import { GetChanMessagesQueryDTO } from './dto/getChanMessages.query.dto';
 import { JoinChanByIdDTO, JoinChanByInvitationDTO } from './dto/joinChan.dto';
 import { KickUserFromChanPathDTO } from './dto/kickUserFromChan.path.dto';
 import { SearchChansQueryDTO } from './dto/searchChans.query.dto';
+import { UpdateChanDTO } from './dto/updateChan.dto';
+import { LeaveChanPathDTO } from './dto/leaveChan.path.dto';
 
 @ApiTags('chans')
 @Controller('chans')
@@ -41,7 +41,7 @@ export class ChansController
 	@ApiTags('me')
 	@UseGuards(JwtAuthGuard)
 	@Delete('/me/:id')
-	async leaveChan(@Request()req: any, @Param()dto: DeleteChanPathDTO)
+	async leaveChan(@Request()req: any, @Param()dto: LeaveChanPathDTO)
 	{
 		return this.chansService.leaveChan(req.user.username, dto.id)
 	}
@@ -51,7 +51,7 @@ export class ChansController
 	@Post('/me/JoinByInvitation')
 	async joinChanByInvitation(@Req()req: any, @Body()dto: JoinChanByInvitationDTO)
 	{
-		return this.chansService.formatChan(await this.chansService.joinChanByInvitation(req.user.username, dto.chanInvitationId))
+		return this.chansService.formatChan(await this.chansService.joinChanByInvitation(req.user.username, dto.invitationId))
 	}
 
 	@ApiTags('me')
@@ -64,69 +64,16 @@ export class ChansController
 
 	@UseGuards(JwtAuthGuard)
 	@Post('/')
-	@ApiExtraModels(CreatePublicChanDTO, CreatePrivateChanDTO)
-	@ApiBody({
-		schema:
-		{
-			discriminator:
-			{
-				propertyName: 'type',
-				mapping:
-				{
-					PRIVATE: getSchemaPath(CreatePrivateChanDTO),
-					PUBLIC: getSchemaPath(CreatePublicChanDTO)
-				}
-			},
-			oneOf:
-			[
-				{ $ref: getSchemaPath(CreatePublicChanDTO) },
-				{ $ref: getSchemaPath(CreatePrivateChanDTO) },
-			],
-		},
-		examples: // it's fucking dumb
-		{
-			PUBLIC:
-			{
-				value:
-				{
-					type: "PUBLIC",
-					title: "MySuperPublicChanTitle",
-					password: "MySuperPassword",
-				}
-			},
-			PRIVATE:
-			{
-				value:
-				{
-					type: "PRIVATE",
-					title: "MySuperPrivateChanTitle",
-				}
-			}
-		}
-	})
-	async createChan(@Request()req: any, @Body({
-		transform: async (value: CreateChanDTO) =>
-		{
-			const errors = await validate(plainToClass((value.type === 'PUBLIC') ? CreatePublicChanDTO : CreatePrivateChanDTO, value),
-				{
-					whitelist: true,
-					forbidNonWhitelisted: true,
-					forbidUnknownValues: true,
-					stopAtFirstError: true
-				})
-			if (errors.length)
-				throw (new ValidationPipe().createExceptionFactory())(errors)
-			return value
-		}
-	})dto: CreateChanDTO)
+	async createChan(@Request()req: any, @Body()dto: CreateChanDTO)
 	{
 		return this.chansService.formatChan(await this.chansService.createChan(req.user.username, dto))
 	}
 
 	@UseGuards(JwtAuthGuard)
 	@Patch('/:chanId')
-	async updateChan(@Request()req: any)
+	async updateChan(@Request()req: any, @Body()dto: UpdateChanDTO, @Param()pathDTO: any)
 	{ 
+		return this.chansService.updateChan(req.user.username, pathDTO.chanId, dto)
 	}
 
 	@UseGuards(JwtAuthGuard)

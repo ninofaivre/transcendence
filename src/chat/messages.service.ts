@@ -3,8 +3,8 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { UserService } from '../user/user.service'
 import { ChatService } from './chat.service';
-import { CreateMessageDTO } from './dto/createMessage.dto';
-import { GetnMessagesQueryDTO } from './dto/getnMessages.query.dto';
+// import { CreateMessageDTO } from './dto/createMessage.dto';
+// import { GetnMessagesQueryDTO } from './dto/getnMessages.query.dto';
 
 @Injectable()
 export class MessagesService

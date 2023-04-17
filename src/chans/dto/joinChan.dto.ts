@@ -1,22 +1,20 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
-import { IsId } from "src/decorator/isId.decorator";
+import { createZodDto } from "@anatine/zod-nestjs";
+import { id } from "src/zod/id.zod";
+import { z } from "zod";
 
-export class JoinChanByInvitationDTO
-{
-	@IsId()
-	chanInvitationId: number
-}
+const JoinChanByIdSchema =
+z.object
+({
+	chanId: id,
+	password: z.string().nonempty().optional()
+}).strict()
 
-export class JoinChanByIdDTO
-{
-	@IsId()
-	chanId: number
+export class JoinChanByIdDTO extends createZodDto(JoinChanByIdSchema) {}
 
-	@ApiPropertyOptional({
-	})
-	@IsNotEmpty()
-	@IsString()
-	@IsOptional()
-	password: string
-}
+const JoinChanByInvitationSchema =
+z.object
+({
+	invitationId: id
+})
+
+export class JoinChanByInvitationDTO extends createZodDto(JoinChanByInvitationSchema) {}

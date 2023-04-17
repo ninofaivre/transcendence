@@ -6,6 +6,7 @@ import { ValidationPipe } from '@nestjs/common';
 import * as fs from 'fs'
 import { SwaggerTheme } from 'swagger-themes';
 import { PrismaClientExceptionFilter, PrismaService } from 'nestjs-prisma';
+import { patchNestjsSwagger } from '@anatine/zod-nestjs';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
@@ -22,14 +23,14 @@ async function bootstrap() {
 	});
 
     app.use(cookieParser())
-    app.useGlobalPipes(new ValidationPipe({
-		whitelist: true,
-		forbidNonWhitelisted: true,
-		forbidUnknownValues: true,
-		transform: true,
-		transformOptions: { enableImplicitConversion: true },
-		stopAtFirstError: true,
-	}));
+ 	//  app.useGlobalPipes(new ValidationPipe({
+	// 	whitelist: true,
+	// 	forbidNonWhitelisted: true,
+	// 	forbidUnknownValues: true,
+	// 	transform: true,
+	// 	transformOptions: { enableImplicitConversion: true },
+	// 	stopAtFirstError: true,
+	// }));
 
 	app.setGlobalPrefix('api')
     const config = new DocumentBuilder()
@@ -42,6 +43,7 @@ async function bootstrap() {
 		explorer: true,
 		customCss: theme.getBuffer('dark'),
 	}
+	patchNestjsSwagger()
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document, options);
 
@@ -50,7 +52,6 @@ async function bootstrap() {
 
 	const { httpAdapter } = app.get(HttpAdapterHost);
 	app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
-
 
     await app.listen(3000);
 }

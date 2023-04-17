@@ -1,13 +1,13 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChanType, PermissionList, Prisma, RoleApplyingType } from '@prisma/client';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ChanType, EventType, PermissionList, Prisma, RoleApplyingType } from '@prisma/client';
 import { compareSync, hash } from 'bcrypt';
 import { PrismaService } from 'nestjs-prisma';
-import { CreateChanDTO } from './dto/createChan.dto';
+import { CreateChanDTO, CreateChanSchema } from './dto/createChan.dto';
 import { AppService } from 'src/app.service';
-import { EventType } from '@prisma/client';
 import { CreateChanMessageDTO } from './dto/createChanMessage.dto';
 import { PermissionsService } from './permissions/permissions.service';
 import { EventTypeList, SseService } from 'src/sse/sse.service';
+import { UpdateChanDTO } from './dto/updateChan.dto';
 
 @Injectable()
 export class ChansService
@@ -135,20 +135,22 @@ export class ChansService
 					users: { connect: { name: username } },
 					roles:
 					{
-						create:
-						[
-							
-							{
-								name: 'DEFAULT',
-								permissions: this.defaultPermissions,
-								roleApplyOn: RoleApplyingType.NONE
-							},
-							{
-								name: 'ADMIN',
-								permissions: this.adminPermissions,
-								roleApplyOn: RoleApplyingType.ROLES,
-							},
-						]
+						createMany:
+						{
+							data:
+							[
+								{
+									name: 'DEFAULT',
+									permissions: this.defaultPermissions,
+									roleApplyOn: RoleApplyingType.NONE,
+								},
+								{
+									name: 'ADMIN',
+									permissions: this.adminPermissions,
+									roleApplyOn: RoleApplyingType.ROLES,
+								}
+							]
+						},
 					},
 				},
 				select: this.chansSelect})
@@ -157,6 +159,7 @@ export class ChansService
 				{
 					roles: { connect: { chanId_name: { chanId: res.id, name: 'DEFAULT' } } }
 				}})
+			res.roles.find(el => el.name === 'ADMIN')?.roles.push({ name: "DEFAULT" })
 			return res
 		}
 		catch
@@ -190,8 +193,9 @@ export class ChansService
 			throw new ForbiddenException("you don't have right to destroy this chan")
 		
 		/* Update Invitations Dms Events */
+		const invitations = toCheck.invitations.filter(el => el.discussionEventId != null)
 		await this.prisma.discussionEvent.updateMany({
-			where: { id: { in: toCheck.invitations.map(el => el.discussionEventId) } },
+			where: { id: { in: invitations.map(el => el.discussionEventId) } },
 			data:
 			{
 				eventType: EventType.CHAN_DELETED_INVITATION
@@ -213,6 +217,8 @@ export class ChansService
 			await Promise.all(newEvents.map(async ev =>
 			{
 				const { directMessage, ...event } = ev
+				if (!directMessage)
+					return
 				return this.sseService.pushEventMultipleUser([directMessage.requestingUserName, directMessage.requestedUserName],
 					{
 						type: EventTypeList.DM_NEW_EVENT,
@@ -288,10 +294,10 @@ export class ChansService
 				{
 					connect: usersAt.map(el => { return { name: el } })
 				},
-				related: relatedId &&
+				related: (relatedId) ?
 				{
 					connect: { id: relatedId }
-				},
+				}: undefined,
 				discussionElement:
 				{
 					create:
@@ -327,17 +333,12 @@ export class ChansService
 			select:
 			{
 				ownerName: true,
-				elements: relatedId &&
+				elements: !!relatedId &&
 				{
 					where: { id: relatedId },
 					select: { id: true },
 				},
-				users: usersAt &&
-				{
-					where: { name: { in: usersAt } },
-					take: usersAt.length,
-					select: { name: true },
-				},
+				users: { select: { name: true } },
 				roles:
 				{
 					where: this.permissionsService.getRolesDoesUserHasRighTo(username, username, PermissionList.SEND_MESSAGE),
@@ -355,7 +356,7 @@ export class ChansService
 			throw new NotFoundException(`chan with id ${chanId} not found`)
 		if (relatedId && !toCheck.elements.length)
 			throw new ForbiddenException(`msg with id ${relatedId} not found`)
-		if (usersAt && toCheck.users.length != usersAt.length)
+		if (usersAt && usersAt.every(userAt => !!toCheck.users.find(el => el.name === userAt)))
 			throw new ForbiddenException(`some users at not found`)
 		if (!toCheck.roles.length && toCheck.ownerName !== username)
 			throw new ForbiddenException(`you don't have right to send msg`)
@@ -365,16 +366,7 @@ export class ChansService
 				throw new ForbiddenException(`you are muted`)
 		}
 		const res = await this.createChanMessage(username, chanId, content, relatedId, usersAt)
-		const toNotify = (await this.prisma.chan.findUnique({ where: { id: chanId },
-			select:
-			{
-				users:
-				{
-					where: { name: { not: username } },
-					select: { name: true },
-				}
-			}})).users
-		await this.notifyChanMessage(toNotify, chanId, res)
+		await this.notifyChanMessage(toCheck.users, chanId, res)
 		return res
 	}
 
@@ -390,10 +382,10 @@ export class ChansService
 			{
 				elements:
 				{
-					cursor: (start !== undefined) ? { id: start } : undefined,
+					cursor: (start) ? { id: start } : undefined,
 					orderBy: { id: 'desc' },
 					take: nMessages,
-					skip: (start !== undefined) ? 1 : undefined,
+					skip: Number(!!start),
 					select: this.discussionElementsSelect,
 				}
 			}})
@@ -497,7 +489,7 @@ export class ChansService
 			data:
 			{
 				eventType: eventType,
-				concernedUserRelation: concerned && { connect: { name: concerned } },
+				concernedUserRelation: (concerned) ? { connect: { name: concerned } }: undefined,
 				discussionElement:
 				{
 					create:
@@ -521,7 +513,7 @@ export class ChansService
 				data: { chanId: chanId, event: event }
 			})
 	}
-	
+
 	async notifyChanMessage(users: { name: string }[], chanId: number, message: Prisma.PromiseReturnType<typeof this.createChanMessage>)
 	{
 		return this.sseService.pushEventMultipleUser(users.map(el => el.name),
@@ -582,14 +574,16 @@ export class ChansService
 						friendShip: { select: { directMessage: { select: { id: true } } } }
 					}
 				}
-			}})).incomingChanInvitation
+			}}))?.incomingChanInvitation
 
+		if (!invitations)
+			throw new InternalServerErrorException(`your account has been permanently deleted, please logout`)
 		// Delete all Invitations
 		await this.prisma.chanInvitation.deleteMany({ where: { id: { in: invitations.map(el => el.id) } } })
 
 		// Update all invitations events in dms
 		await this.prisma.discussionEvent.updateMany({
-			where: { id: { in: invitations.map(el => el.discussionEvent.id) } },
+			where: { id: { in: invitations.filter(el => !!el.discussionEvent).map(el => el.discussionEvent.id) } },
 			data:
 			{
 				eventType: EventType.ACCEPTED_CHAN_INVITATION,
@@ -614,6 +608,8 @@ export class ChansService
 		await Promise.all(newEvents.map(async ev =>
 			{
 				const { directMessage, ...event } = ev
+				if (!directMessage)
+					return
 				return this.sseService.pushEventMultipleUser([directMessage.requestingUserName, directMessage.requestedUserName],
 					{
 						type: EventTypeList.DM_NEW_EVENT,
@@ -687,6 +683,39 @@ export class ChansService
 			const { password, _count, ...trimmedEl } = el
 			return { hasPassword, nUsers: _count.users,...trimmedEl }
 		})
+	}
+
+	// TODO: test updateChan (untested)
+	async updateChan(username: string, chanId: number, dto: UpdateChanDTO)
+	{
+		const res = await this.prisma.chan.findUnique({ where: { id: chanId },
+			select:
+			{
+				roles:
+				{
+					where: this.permissionsService.getRolesDoesUserHasRighTo(username, username, PermissionList.EDIT),
+					select: { name: true },
+					take: 1
+				},
+				type: true,
+				title: true,
+				password: true
+			}})
+		if (!res)
+			throw new NotFoundException(`chan with id ${chanId} not found`)
+		if (!res.roles.length)
+			throw new ForbiddenException(`you don't have right to edit chan with id ${chanId}`)
+		if (res.type !== dto.type)
+		{
+			const error = CreateChanSchema.safeParse({ title: res.title, password: res.password, ...dto })
+			if (!error.success)
+			{
+				console.log(error.error)
+				throw new ForbiddenException(`request don't work with already existent data : ${error.error}`)
+			}
+		}
+		// TODO: notify all members of the chan by sse
+		return this.prisma.chan.update({ where: { id: chanId }, data: { ...dto } })
 	}
 
 }

@@ -27,7 +27,7 @@ export class SseService
 
 	sendObservable(username: string)
 	{
-		return this.eventSource.get(username).asObservable()
+		return this.eventSource.get(username)?.asObservable()
 	}
 
 	deleteSubject(username: string)

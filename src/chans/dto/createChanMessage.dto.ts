@@ -1,37 +1,14 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
-import { ArrayUnique, IsArray, IsNotEmpty, IsOptional, IsString } from "class-validator"
-import { IsId } from "src/decorator/isId.decorator"
-import { Username } from "src/user/decorator/username.decorator"
+import { createZodDto } from "@anatine/zod-nestjs"
+import { id } from "src/zod/id.zod"
+import { usernameSet } from "src/zod/username.zod"
+import { z } from "zod"
 
-export class CreateChanMessageDTO
-{
-	@ApiProperty({
-		example: "my super message"
-	})
-	@IsNotEmpty()
-	@IsString()
-	content: string
+const CreateChanMessageSchema =
+z.object
+({
+	content: z.string().nonempty(),
+	relatedId: id.optional(),
+	usersAt: usernameSet.optional()
+}).strict()
 
-	@ApiPropertyOptional({
-		type: 'integer',
-		minimum: 1
-	})
-	@IsOptional()
-	@IsId()
-	relatedId?: number
-
-	@ApiPropertyOptional({
-		type: 'array',
-		items:
-		{
-			type: 'string'
-			// need to describe Username constraintes here
-		},
-		uniqueItems: true
-	})
-	@Username({ each: true })
-	@ArrayUnique()
-	@IsOptional()
-	@IsArray()
-	usersAt?: string[]
-}
+export class CreateChanMessageDTO extends createZodDto(CreateChanMessageSchema) {}

@@ -1,5 +1,6 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError, PrismaClientValidationError } from '@prisma/client/runtime';
 import { PrismaService } from 'nestjs-prisma';
 import { EventTypeList, SseService } from 'src/sse/sse.service';
 
@@ -60,6 +61,8 @@ export class FriendsService
 						select: { id: true }
 					}
 				}})
+			if (!directMessage)
+				throw new InternalServerErrorException(`your account has been deleted, please logout`)
 			const newFriendShip = await this.prisma.friendShip.create({
 				data:
 				{
@@ -69,7 +72,7 @@ export class FriendsService
 					{
 						connect:
 						{
-							id: directMessage.directMessage[0]?.id || directMessage.directMessageOf[0]?.id,
+							id: directMessage.directMessage[0].id || directMessage.directMessageOf[0].id,
 						}
 					}: undefined
 				},
@@ -83,11 +86,13 @@ export class FriendsService
 		}
 		catch (e)
 		{
-			console.log(e)
-			if (e.code === 'P2025')
-				throw new ForbiddenException(`invitation with id ${id} not found`)
-			if (e.code === 'P2002')
-				throw new ConflictException(`friendship already exist`) // should never happen
+			if (e instanceof PrismaClientKnownRequestError)
+			{
+				if (e.code === 'P2025')
+					throw new ForbiddenException(`invitation with id ${id} not found`)
+				if (e.code === 'P2002')
+					throw new ConflictException(`friendship already exist`)
+			}
 		}
 	}
 
@@ -102,7 +107,7 @@ export class FriendsService
 					requestedUserName: true,
 					requestingUserName: true,
 				}})
-			await this.sseService.pushEvent((username === requestedUserName) && requestingUserName || requestedUserName,
+			await this.sseService.pushEvent((username === requestedUserName) ? requestingUserName : requestedUserName,
 				{
 					type: EventTypeList.DELETED_FRIEND,
 					data: { deletedFriendId: id }

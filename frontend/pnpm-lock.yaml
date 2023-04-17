@@ -1,5 +1,10 @@
 lockfileVersion: '6.0'
 
+patchedDependencies:
+  http-proxy@1.18.1:
+    hash: aq3thkjkntv4znsfw6nkinp4fi
+    path: patches/http-proxy@1.18.1.patch
+
 dependencies:
   '@sveltejs/adapter-static':
     specifier: ^2.0.2
@@ -50,7 +55,7 @@ devDependencies:
     version: 4.0.0(eslint@8.38.0)(svelte@3.58.0)
   http-proxy:
     specifier: ^1.18.1
-    version: 1.18.1
+    version: 1.18.1(patch_hash=aq3thkjkntv4znsfw6nkinp4fi)
   postcss:
     specifier: ^8.4.22
     version: 8.4.22
@@ -1299,7 +1304,7 @@ packages:
     dependencies:
       function-bind: 1.1.1
 
-  /http-proxy@1.18.1:
+  /http-proxy@1.18.1(patch_hash=aq3thkjkntv4znsfw6nkinp4fi):
     resolution: {integrity: sha512-7mz/721AbnJwIVbnaSv1Cz3Am0ZLT/UBwkC92VlxhXv/k/BBQfM2fXElQNC27BVGr0uwUpplYPQM9LnaBMR5NQ==}
     engines: {node: '>=8.0.0'}
     dependencies:
@@ -1309,6 +1314,7 @@ packages:
     transitivePeerDependencies:
       - debug
     dev: true
+    patched: true
 
   /ignore@5.2.4:
     resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}

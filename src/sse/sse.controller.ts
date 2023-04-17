@@ -15,15 +15,10 @@ export class SseController
 	@Sse('/')
 	sse(@Request()req: any): Observable<MessageEvent>
 	{
-		if (this.sseService.eventSource.get(req.user.username))
-		{
-			console.log(`error: /sse already opened for ${req.user.username}`)
-			throw new ForbiddenException(`sse already opened`)
-		}
 		console.log("open /sse for", req.user.username)
-		this.sseService.addSubject(req.user.username)
-		const res =  this.sseService.sendObservable(req.user.username)
-			?.pipe(finalize(() => this.sseService.deleteSubject(req.user.username)))
+		const res = this.sseService.addSubject(req.user.username)?.subject
+			.asObservable()
+			.pipe(finalize(() => this.sseService.deleteSubject(req.user.username)))
 		if (!res)
 			throw new InternalServerErrorException(`failed to open sse`)
 		return res

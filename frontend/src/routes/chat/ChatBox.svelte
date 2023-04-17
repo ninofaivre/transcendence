@@ -10,9 +10,9 @@
 	async function sendMessage() {
 		disabled = true
 
-		fetchPostJSON("/chat/createMessage", {
-			discussionId,
+		fetchPostJSON(`/api/chans/${discussionId}/messages`, {
 			content: new_message,
+			relatedId: discussionId,
 		})
 			.then(() => {
 				new_message = ""

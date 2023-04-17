@@ -18,12 +18,11 @@
 	const reactivity = 10
 	let load_error: boolean
 	const switchMessages = async (_discussionId: typeof discussionId) => {
-		const api: string = "/api/chans/" + discussionId + "/messages?"
+		const api: string = `/api/chans/${discussionId}/messages`
 		load_error = false
 		let fetched_messages
 		try {
-			// http://localhost:3000/api/chans/1/messages?nMessages=2
-			const response = await fetchGet(api + "nMessages=" + initial_load)
+			const response = await fetchGet(api, { nMessages: initial_load })
 			fetched_messages = await response.json()
 		} catch (err: any) {
 			load_error = true
@@ -36,20 +35,15 @@
 
 	let loading_greediness = 2
 	function infiniteHandler(e: InfiniteEvent) {
-		const api: string = "/api/chans/" + discussionId + "/messages?"
+		const api: string = `/api/chans/${discussionId}/messages`
 		const {
 			detail: { loaded, complete },
 		} = e
 		if (displayed_messages) {
-			fetchGet(
-				api +
-					"start=" +
-					// displayed_messages.length + // Tell me how many you've got to API
-					displayed_messages[0].id + // Tell API what's the id of the oldest message you've got
-					"&" +
-					"nMessages=" +
-					loading_greediness,
-			)
+			fetchGet(api, {
+				start: displayed_messages[0].id,
+				nMessages: loading_greediness,
+			})
 				.then((response) => response.json())
 				.then((fetched_messages) => {
 					if (fetched_messages.length > 0) {
@@ -57,7 +51,6 @@
 						loaded()
 					} else {
 						complete()
-						;("")
 					}
 				})
 		}

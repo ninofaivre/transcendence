@@ -21,14 +21,22 @@ export function deleteCookie(cname: string) {
 		document.cookie = cname + "=" + ";path=/" + ";expires=Thu, 01 Jan 1970 00:00:01 GMT"
 }
 
-export async function fetchGet(apiEndPoint: string) {
-	const response = await fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
+export async function fetchGet(apiEndPoint: string, urlArgs?: object) {
+	let params = ""
+	if (urlArgs) {
+		params =
+			"?" +
+			Object.entries(urlArgs)
+				.map(([k, v]) => `${k}=${v}`)
+				.join("&")
+	}
+	const response = await fetch(PUBLIC_BACKEND_URL + apiEndPoint + params, {
 		// mode: "cors",
 		credentials: "include",
 	})
 	if (response.status == 401) {
 		console.log(
-			`GET request to ${PUBLIC_BACKEND_URL + apiEndPoint} returned 401`,
+			`GET request to ${PUBLIC_BACKEND_URL + apiEndPoint + params} returned 401`,
 			"Logging out...",
 			logged_in.set(false),
 		)
@@ -36,12 +44,19 @@ export async function fetchGet(apiEndPoint: string) {
 	return response
 }
 
-export async function fetchPostJSON(apiEndPoint: string, jsBody: Object) {
+export async function fetchPostJSON(apiEndPoint: string, jsBody: object, urlArgs?: object) {
+	let params = ""
+	if (urlArgs)
+		params =
+			"?" +
+			Object.entries(urlArgs)
+				.map(([k, v]) => `${k}=${v}`)
+				.join("&")
 	let body = JSON.stringify(jsBody)
 	let headers = {
 		"Content-Type": "application/json",
 	}
-	const response = await fetch(PUBLIC_BACKEND_URL + apiEndPoint, {
+	const response = await fetch(PUBLIC_BACKEND_URL + apiEndPoint + params, {
 		// mode: "cors",
 		credentials: "include",
 		method: "POST",

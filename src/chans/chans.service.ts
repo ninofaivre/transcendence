@@ -715,7 +715,7 @@ export class ChansService
 			}
 		}
 		// TODO: notify all members of the chan by sse
-		return this.prisma.chan.update({ where: { id: chanId }, data: { ...dto } })
+		return this.prisma.chan.update({ where: { id: chanId }, data: { ...dto }, select: this.chansSelect })
 	}
 
 }

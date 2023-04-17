@@ -73,7 +73,7 @@ export class ChansController
 	@Patch('/:chanId')
 	async updateChan(@Request()req: any, @Body()dto: UpdateChanDTO, @Param()pathDTO: any)
 	{ 
-		return this.chansService.updateChan(req.user.username, pathDTO.chanId, dto)
+		return this.chansService.formatChan(await this.chansService.updateChan(req.user.username, pathDTO.chanId, dto))
 	}
 
 	@UseGuards(JwtAuthGuard)

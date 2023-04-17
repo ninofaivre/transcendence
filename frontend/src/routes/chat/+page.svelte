@@ -15,7 +15,7 @@
 
 	export let data: PageData
 
-	// export const sse = new EventSource("http:localhost:3000/api/sse", { withCredentials: true })
+	// const sse = new EventSource("http:localhost:3000/api/sse", { withCredentials: true })
 	const sse = new EventSource(PUBLIC_BACKEND_URL + "/api/sse")
 
 	let discussions: DiscussionType[]

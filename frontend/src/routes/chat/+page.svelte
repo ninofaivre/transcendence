@@ -12,11 +12,10 @@
 	/* stores */
 	import { my_name } from "$lib/stores"
 	import { onDestroy } from "svelte"
+	/* sse */
+	import { sse } from "$lib/sse"
 
 	export let data: PageData
-
-	// const sse = new EventSource("http:localhost:3000/api/sse", { withCredentials: true })
-	const sse = new EventSource(PUBLIC_BACKEND_URL + "/api/sse")
 
 	let discussions: DiscussionType[]
 	$: discussions = Object.values(data.discussions)

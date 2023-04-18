@@ -79,8 +79,8 @@
 				</div>
 			</InfiniteLoading>
 			{#each displayed_messages as message}
-				<ChatBubble from_me={message.from === my_name} from={message.from}>
-					{`${message.id}: ${message.content}`}
+				<ChatBubble from_me={message.author === my_name} from={message.author}>
+					{`${message.id}: ${message.message.content}`}
 				</ChatBubble>
 			{/each}
 		{/if}

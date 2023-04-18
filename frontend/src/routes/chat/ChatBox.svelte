@@ -12,7 +12,8 @@
 
 		fetchPostJSON(`/api/chans/${discussionId}/messages`, {
 			content: new_message,
-			relatedId: discussionId,
+			// relatedId: discussionId,
+			// usersAt: ["bob", "john"],
 		})
 			.then(() => {
 				new_message = ""

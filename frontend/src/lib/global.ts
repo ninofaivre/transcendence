@@ -74,6 +74,7 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: object, urlArgs
 }
 
 export async function login(username: string, password: string) {
+	logout()
 	const response = fetchPostJSON("/api/auth/login", {
 		username,
 		password,
@@ -93,6 +94,6 @@ export async function logout() {
 		.catch(() => deleteCookie("access_token"))
 		.finally(() => {
 			console.log("Logging out...")
-			logged_in.set(false) // Why the fuck does that not trigger redirection ?
+			logged_in.set(false)
 		})
 }

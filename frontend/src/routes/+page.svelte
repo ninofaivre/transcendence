@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { type ToastSettings, toastStore } from "@skeletonlabs/skeleton"
-	import { getCookie, fetchPostJSON, login } from "$lib/global"
+	import { getCookie, fetchPostJSON, login, logout } from "$lib/global"
 
 	let username = ""
 	let password = ""
@@ -23,6 +23,7 @@
 		if (e.submitter) {
 			if (e.submitter.id === "login") {
 				console.log(`${username} is logging in...`)
+				logout()
 				if (!(await login(username, password)).ok) {
 					console.log("Log-in failed")
 					toastStore.trigger(login_failed_toast)

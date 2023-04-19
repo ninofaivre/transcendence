@@ -15,7 +15,7 @@
 	}
 </script>
 
-{#each discussions as d (d.id)}
+{#each discussions as d}
 	{#if d.id != currentDiscussionId}
 		<div
 			class="p-4 font-bold"

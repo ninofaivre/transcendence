@@ -8,9 +8,11 @@
 	import ChatBubble from "./ChatBubble.svelte"
 	import { fetchGet } from "$lib/global"
 	import { my_name } from "$lib/stores"
+	import { onMount } from "svelte"
 
 	export let currentDiscussionID: number // To detect change of current conversation
-	$: switchMessages(currentDiscussionID)
+
+	$: switchMessages(currentDiscussionID) // this must run only when currentDiscussionID is init
 
 	let displayed_messages: Message[] // Exported so that incoming messages can be added
 	const initial_load = 10

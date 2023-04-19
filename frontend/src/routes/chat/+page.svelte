@@ -10,9 +10,7 @@
 	import DiscussionList from "./DiscussionList.svelte"
 	import ChatBox from "./ChatBox.svelte"
 	/* stores */
-	import { my_name } from "$lib/stores"
 	import { onMount } from "svelte"
-	import { writable } from "svelte/store"
 
 	console.log("TEST")
 
@@ -33,15 +31,10 @@
 	// Get our discussions
 	export let data: PageData
 	let discussions: Map<number, DiscussionType>
-	// Does this need to be in onMount or not ? Does it makes sense to run before component is mounted
-	$: {
-		discussions = new Map(
-			data.discussions.map((element: DiscussionType) => [element.id, element]),
-		)
-		console.log("Loaded discussions: ", discussions)
-	}
+	discussions = new Map(data.discussions.map((element: DiscussionType) => [element.id, element]))
+	console.log("Got discussions into discussions Map: ", discussions)
 
-	let currentDiscussionID: number
+	let currentDiscussionID: number = discussions.entries().next().value[0]
 </script>
 
 {#if discussions.size}

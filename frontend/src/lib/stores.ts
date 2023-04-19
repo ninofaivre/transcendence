@@ -1,6 +1,7 @@
-import { writable, derived } from "svelte/store"
+import { derived } from "svelte/store"
 import { fetchGet } from "$lib/global"
 import { localStorageStore } from "@skeletonlabs/skeleton"
+import { PUBLIC_BACKEND_URL } from "$env/static/public"
 
 export const logged_in = localStorageStore("logged", false)
 
@@ -21,3 +22,9 @@ export const my_name = derived(
 	},
 	"Anonymous",
 )
+
+// export const sse = derived(logged_in, ($logged_in, set) => {
+// 	if ($logged_in === true) {
+// 		set(new EventSource(PUBLIC_BACKEND_URL + "/api/sse"))
+// 	} else set($sse.close())
+// })

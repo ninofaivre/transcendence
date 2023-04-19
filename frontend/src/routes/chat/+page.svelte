@@ -11,9 +11,39 @@
 	import ChatBox from "./ChatBox.svelte"
 	/* stores */
 	import { my_name } from "$lib/stores"
-	import { onDestroy } from "svelte"
-	/* sse */
-	import { sse } from "$lib/sse"
+	import { onDestroy, onMount } from "svelte"
+
+	let sse: EventSource
+	onMount(() => {
+		console.log("Opening sse...")
+		sse = new EventSource(PUBLIC_BACKEND_URL + "/api/sse")
+		sse.onmessage = ({ data }) => {
+			console.log("Oh oh, received a new message !")
+			const parsedData = JSON.parse(data)
+			const new_discussions = parsedData.test.discussions
+			const new_messages = parsedData.test.messages
+			if (!new_discussions?.length && !new_messages?.length) return
+			if (new_discussions?.length) {
+				console.log("A new discussion was created")
+				for (let d of new_discussions) {
+					discussions = [...discussions, d]
+					all_messages[d.discussionId - 1] = []
+				}
+			}
+			if (new_messages?.length) {
+				console.log("Got a new message !", new_messages)
+				for (let msg of new_messages) {
+					let i = msg.discussionId - 1
+					all_messages[i] = [...all_messages[i], msg]
+				}
+			}
+		}
+		// return sse.close
+		return () => {
+			console.log("Closing sse...")
+			sse.close
+		}
+	})
 
 	export let data: PageData
 
@@ -23,33 +53,6 @@
 	let idx = 0
 	$: discussionId = idx + 1
 	let all_messages: Message[][] = []
-
-	onDestroy(() => {
-		console.log("Clossing sse...")
-		sse.close()
-	})
-
-	sse.onmessage = ({ data }) => {
-		console.log("Oh oh, received a new message !")
-		const parsedData = JSON.parse(data)
-		const new_discussions = parsedData.test.discussions
-		const new_messages = parsedData.test.messages
-		if (!new_discussions?.length && !new_messages?.length) return
-		if (new_discussions?.length) {
-			console.log("A new discussion was created")
-			for (let d of new_discussions) {
-				discussions = [...discussions, d]
-				all_messages[d.discussionId - 1] = []
-			}
-		}
-		if (new_messages?.length) {
-			console.log("Got a new message !", new_messages)
-			for (let msg of new_messages) {
-				let i = msg.discussionId - 1
-				all_messages[i] = [...all_messages[i], msg]
-			}
-		}
-	}
 </script>
 
 {#if discussions.length}

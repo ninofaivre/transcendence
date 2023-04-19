@@ -7,18 +7,17 @@
 	import InfiniteLoading from "svelte-infinite-loading"
 	import ChatBubble from "./ChatBubble.svelte"
 	import { fetchGet } from "$lib/global"
-	import { onMount } from "svelte"
+	import { my_name } from "$lib/stores"
 
-	export let my_name: string
-	export let displayed_messages: Message[] // Exported so that incoming messages can be added
-	export let discussionId: number // To detect change of current conversation
-	$: switchMessages(discussionId)
+	export let currentDiscussionID: number // To detect change of current conversation
+	$: switchMessages(currentDiscussionID)
 
+	let displayed_messages: Message[] // Exported so that incoming messages can be added
 	const initial_load = 10
 	const reactivity = 10
 	let load_error: boolean
-	const switchMessages = async (_discussionId: typeof discussionId) => {
-		const api: string = `/api/chans/${discussionId}/messages`
+	const switchMessages = async (_currentDiscussionID: typeof currentDiscussionID) => {
+		const api: string = `/api/chans/${currentDiscussionID}/messages`
 		load_error = false
 		let fetched_messages
 		try {
@@ -30,12 +29,12 @@
 			console.error("Could not fetch conversation:", err.message)
 			return
 		}
-		if (_discussionId === discussionId) displayed_messages = fetched_messages
+		if (_currentDiscussionID === currentDiscussionID) displayed_messages = fetched_messages
 	}
 
 	let loading_greediness = 2
 	function infiniteHandler(e: InfiniteEvent) {
-		const api: string = `/api/chans/${discussionId}/messages`
+		const api: string = `/api/chans/${currentDiscussionID}/messages`
 		const {
 			detail: { loaded, complete },
 		} = e
@@ -56,8 +55,8 @@
 		}
 	}
 
+	// Can't remember what this is for
 	let message_container: HTMLDivElement
-	onMount(() => {})
 </script>
 
 <!-- The normal flexbox inside a reverse flexbox is a trick to scroll to the bottom when the element loads -->
@@ -67,7 +66,7 @@
 			<p class="text-center font-semibold">This conversation has not started yet</p>
 		{:else if load_error}
 			<p class="text-center font-semibold">
-				We encountered an error trying to fetch this conversation's messages. Please try
+				We encountered an error trying to retrieve this conversation's messages. Please try
 				again later
 			</p>
 		{:else}
@@ -79,7 +78,7 @@
 				</div>
 			</InfiniteLoading>
 			{#each displayed_messages as message}
-				<ChatBubble from_me={message.author === my_name} from={message.author}>
+				<ChatBubble from_me={message.author === $my_name} from={message.author}>
 					{`${message.id}: ${message.message.content}`}
 				</ChatBubble>
 			{/each}

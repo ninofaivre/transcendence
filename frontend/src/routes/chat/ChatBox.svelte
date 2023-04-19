@@ -3,20 +3,20 @@
 
 	export let placeholder = "Message"
 
-	export let discussionId: number
-	let new_message: string
+	export let currentDiscussionID: number
+	let value: string
 	let disabled = false
 
 	async function sendMessage() {
 		disabled = true
 
-		fetchPostJSON(`/api/chans/${discussionId}/messages`, {
-			content: new_message,
-			// relatedId: discussionId,
+		fetchPostJSON(`/api/chans/${currentDiscussionID}/messages`, {
+			content: value,
+			// relatedId: currentDiscussionID,
 			// usersAt: ["bob", "john"],
 		})
 			.then(() => {
-				new_message = ""
+				value = ""
 			})
 			.catch((err: any) => {
 				console.error("Could not send message because: ", err.message, err)
@@ -38,7 +38,7 @@
 	<label for="textarea-input" hidden class="label"> Type your message here </label>
 	<textarea
 		id="textarea-input"
-		bind:value={new_message}
+		bind:value
 		on:keypress={handleKeypress}
 		{disabled}
 		{placeholder}

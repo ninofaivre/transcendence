@@ -1,14 +1,27 @@
 <script lang="ts">
 	import type { Discussion } from "$lib/types"
 
-	export let curr_disc_idx = 0
+	export let currentDiscussionId: number
 
 	export let discussions: Discussion[]
+
+	async function keypressHandler(e: KeyboardEvent) {
+		switch (e.code) {
+			case "ArrowDown":
+				console.log("Down arrow was pressed")
+			case "ArrowUp":
+				console.log("Up arrow was pressed")
+		}
+	}
 </script>
 
 {#each discussions as d (d.id)}
-	{#if d.id - 1 != curr_disc_idx}
-		<div class="p-4 font-bold" on:click={() => (curr_disc_idx = d.id - 1)}>
+	{#if d.id != currentDiscussionId}
+		<div
+			class="p-4 font-bold"
+			on:click={() => (currentDiscussionId = d.id)}
+			on:keypress={keypressHandler}
+		>
 			{d.title || d.users}
 		</div>
 	{:else}

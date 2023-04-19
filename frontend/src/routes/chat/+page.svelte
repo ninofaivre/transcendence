@@ -11,51 +11,40 @@
 	import ChatBox from "./ChatBox.svelte"
 	/* stores */
 	import { my_name } from "$lib/stores"
-	import { onDestroy, onMount } from "svelte"
+	import { onMount } from "svelte"
+	import { writable } from "svelte/store"
 
+	console.log("TEST")
+
+	// SSE handling
 	let sse: EventSource
 	onMount(() => {
 		console.log("Opening sse...")
 		sse = new EventSource(PUBLIC_BACKEND_URL + "/api/sse")
-		sse.onmessage = ({ data }) => {
-			console.log("Oh oh, received a new message !")
-			const parsedData = JSON.parse(data)
-			const new_discussions = parsedData.test.discussions
-			const new_messages = parsedData.test.messages
-			if (!new_discussions?.length && !new_messages?.length) return
-			if (new_discussions?.length) {
-				console.log("A new discussion was created")
-				for (let d of new_discussions) {
-					discussions = [...discussions, d]
-					all_messages[d.discussionId - 1] = []
-				}
-			}
-			if (new_messages?.length) {
-				console.log("Got a new message !", new_messages)
-				for (let msg of new_messages) {
-					let i = msg.discussionId - 1
-					all_messages[i] = [...all_messages[i], msg]
-				}
-			}
+		sse.onmessage = (e: any) => {
+			console.log("Message: ", e)
 		}
-		// return sse.close
 		return () => {
 			console.log("Closing sse...")
 			sse.close
 		}
 	})
 
+	// Get our discussions
 	export let data: PageData
+	let discussions: Map<number, DiscussionType>
+	// Does this need to be in onMount or not ? Does it makes sense to run before component is mounted
+	$: {
+		discussions = new Map(
+			data.discussions.map((element: DiscussionType) => [element.id, element]),
+		)
+		console.log("Loaded discussions: ", discussions)
+	}
 
-	let discussions: DiscussionType[]
-	$: discussions = Object.values(data.discussions)
-
-	let idx = 0
-	$: discussionId = idx + 1
-	let all_messages: Message[][] = []
+	let currentDiscussionID: number
 </script>
 
-{#if discussions.length}
+{#if discussions.size}
 	<!-- Horizontal grid -->
 	<div class="grid grid-cols-[auto_1fr]" id="wrapper">
 		<!-- Vertical grid 1-->
@@ -64,22 +53,18 @@
 				<CreateDiscussion />
 			</section>
 			<section class="overflow-y-auto">
-				<DiscussionList {discussions} bind:curr_disc_idx={idx} />
+				<DiscussionList discussions={data.discussions} bind:currentDiscussionID />
 			</section>
 		</div>
 
 		<!-- Vertical grid 2-->
 		<div class="both grid grid-rows-[1fr_auto]" id="messages">
 			<!-- Messages -->
-			<DiscussionDisplay
-				bind:displayed_messages={all_messages[idx]}
-				{discussionId}
-				my_name={$my_name}
-			/>
+			<DiscussionDisplay {currentDiscussionID} />
 
 			<!-- Input box -->
 			<section class="border-t border-black p-4">
-				<ChatBox {discussionId} />
+				<ChatBox {currentDiscussionID} />
 			</section>
 		</div>
 	</div>

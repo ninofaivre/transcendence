@@ -36,10 +36,11 @@ export async function fetchGet(apiEndPoint: string, urlArgs?: object) {
 	})
 	if (response.status == 401) {
 		console.log(
-			`GET request to ${PUBLIC_BACKEND_URL + apiEndPoint + params} returned 401`,
-			"Logging out...",
-			logged_in.set(false),
+			`GET request to ${
+				PUBLIC_BACKEND_URL + apiEndPoint + params
+			} returned 401 although we are logged in ! : Logging us out...`,
 		)
+		logged_in.set(false)
 	}
 	return response
 }

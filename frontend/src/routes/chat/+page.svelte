@@ -25,10 +25,12 @@
 	let all_messages: Message[][] = []
 
 	onDestroy(() => {
+		console.log("Clossing sse...")
 		sse.close()
 	})
 
 	sse.onmessage = ({ data }) => {
+		console.log("Oh oh, received a new message !")
 		const parsedData = JSON.parse(data)
 		const new_discussions = parsedData.test.discussions
 		const new_messages = parsedData.test.messages

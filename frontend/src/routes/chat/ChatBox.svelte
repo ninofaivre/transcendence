@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { fetchPostJSON } from "$lib/global"
 
-	export let placeholder = "Message"
+	export let currentDiscussionId: number
 
-	export let currentDiscussionID: number
+	let placeholder = "Message"
 	let value: string
 	let disabled = false
 
 	async function sendMessage() {
 		disabled = true
 
-		fetchPostJSON(`/api/chans/${currentDiscussionID}/messages`, {
+		fetchPostJSON(`/api/chans/${currentDiscussionId}/messages`, {
 			content: value,
-			// relatedId: currentDiscussionID,
+			// relatedId: currentDiscussionId,
 			// usersAt: ["bob", "john"],
 		})
 			.then(() => {

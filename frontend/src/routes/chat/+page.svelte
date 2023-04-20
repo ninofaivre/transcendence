@@ -3,7 +3,6 @@
 	/* types */
 	import type { Discussion as DiscussionType } from "$lib/types" // app.d.ts
 	import type { PageData } from "./$types" // Generated type file
-	import type { Message } from "$lib/types"
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"
 	import CreateDiscussion from "./CreateDiscussion.svelte"
@@ -12,29 +11,29 @@
 	/* stores */
 	import { onMount } from "svelte"
 
-	console.log("TEST")
-
 	// SSE handling
 	let sse: EventSource
 	onMount(() => {
-		console.log("Opening sse...")
+		console.log("/chat/page.svelte", "Opening sse...")
 		sse = new EventSource(PUBLIC_BACKEND_URL + "/api/sse")
 		sse.onmessage = (e: any) => {
-			console.log("Message: ", e)
+			console.log("/chat/page/svelte", "Message: ", e)
 		}
 		return () => {
-			console.log("Closing sse...")
+			console.log("/chat/page.svelte", "Closing sse...")
 			sse.close
 		}
 	})
 
 	// Get our discussions
 	export let data: PageData
+
 	let discussions: Map<number, DiscussionType>
 	discussions = new Map(data.discussions.map((element: DiscussionType) => [element.id, element]))
-	console.log("Got discussions into discussions Map: ", discussions)
+	console.log("/chat/page.svelte", "Got discussions into discussions Map: ", discussions)
 
-	let currentDiscussionID: number = discussions.entries().next().value[0]
+	let currentDiscussionId: number = discussions.entries().next().value[0]
+	console.log("/chat/page.svelte", "Current discussion id is :", currentDiscussionId)
 </script>
 
 {#if discussions.size}
@@ -45,19 +44,22 @@
 			<section class="p-4">
 				<CreateDiscussion />
 			</section>
+			<section class="text-red-800">
+				{currentDiscussionId}
+			</section>
 			<section class="overflow-y-auto">
-				<DiscussionList discussions={data.discussions} bind:currentDiscussionID />
+				<DiscussionList discussions={data.discussions} bind:currentDiscussionId />
 			</section>
 		</div>
 
 		<!-- Vertical grid 2-->
 		<div class="both grid grid-rows-[1fr_auto]" id="messages">
 			<!-- Messages -->
-			<DiscussionDisplay {currentDiscussionID} />
+			<DiscussionDisplay {currentDiscussionId} />
 
 			<!-- Input box -->
 			<section class="border-t border-black p-4">
-				<ChatBox {currentDiscussionID} />
+				<ChatBox {currentDiscussionId} />
 			</section>
 		</div>
 	</div>

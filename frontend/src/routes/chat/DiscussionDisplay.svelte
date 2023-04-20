@@ -10,16 +10,19 @@
 	import { my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 
-	export let currentDiscussionID: number // To detect change of current conversation
+	export let currentDiscussionId: number // To detect change of current conversation
+	console.log("DiscussionDisplay", "Current discussion ID", currentDiscussionId)
 
-	$: switchMessages(currentDiscussionID) // this must run only when currentDiscussionID is init
+	$: {
+		switchMessages(currentDiscussionId)
+	}
 
-	let displayed_messages: Message[] // Exported so that incoming messages can be added
+	let displayed_messages: Message[]
 	const initial_load = 10
 	const reactivity = 10
 	let load_error: boolean
-	const switchMessages = async (_currentDiscussionID: typeof currentDiscussionID) => {
-		const api: string = `/api/chans/${currentDiscussionID}/messages`
+	async function switchMessages(_currentDiscussionId: typeof currentDiscussionId) {
+		const api: string = `/api/chans/${currentDiscussionId}/messages`
 		load_error = false
 		let fetched_messages
 		try {
@@ -27,16 +30,16 @@
 			fetched_messages = await response.json()
 		} catch (err: any) {
 			load_error = true
-			console.log(fetched_messages)
-			console.error("Could not fetch conversation:", err.message)
+			console.log("DiscussionDisplay", fetched_messages)
+			console.error("DiscussionDisplay", "Could not fetch conversation:", err.message)
 			return
 		}
-		if (_currentDiscussionID === currentDiscussionID) displayed_messages = fetched_messages
+		if (_currentDiscussionId === currentDiscussionId) displayed_messages = fetched_messages
 	}
 
 	let loading_greediness = 2
 	function infiniteHandler(e: InfiniteEvent) {
-		const api: string = `/api/chans/${currentDiscussionID}/messages`
+		const api: string = `/api/chans/${currentDiscussionId}/messages`
 		const {
 			detail: { loaded, complete },
 		} = e

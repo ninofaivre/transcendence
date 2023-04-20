@@ -15,7 +15,7 @@
 	let displayed_messages: Message[]
 
 	const initial_load = 10
-	const reactivity = 10
+	const reactivity = 1
 	let load_error: boolean
 	async function switchMessages(_currentDiscussionId: typeof currentDiscussionId) {
 		const api: string = `/api/chans/${currentDiscussionId}/messages`
@@ -33,7 +33,7 @@
 		if (_currentDiscussionId === currentDiscussionId) displayed_messages = fetched_messages
 	}
 
-	let loading_greediness = 2
+	const loading_greediness = 10
 	function infiniteHandler(e: InfiniteEvent) {
 		const api: string = `/api/chans/${currentDiscussionId}/messages`
 		const {
@@ -56,31 +56,52 @@
 		}
 	}
 
-	// Can't remember what this is for
-	let message_container: HTMLDivElement
-
 	$: {
 		switchMessages(currentDiscussionId)
 	}
+
+	function handleNewMessage(_new_message: typeof new_message) {
+		if (displayed_messages && _new_message) {
+			let [msg, msg_promise] = _new_message
+			// Does this preserve ordering ?
+			displayed_messages.push({
+				id: 0,
+				message: { content: msg },
+				author: $my_name,
+				creationDate: new Date(),
+			})
+			msg_promise
+				.then((r: Response) => r.json())
+				.catch((err: any) => {
+					if (err?.status)
+						console.error(
+							"The message you sent was not accepted by the server: ",
+							err.message,
+						)
+					else
+						console.error(
+							"The message you sent was acknowledged by the server but an error happened when parsing the confirmation. Please refresh the page: ",
+							err.message,
+						)
+				})
+				.then((m: Message) => {
+					console.log("Should replace message with correct one")
+					// let last_elt_index =
+					// 	displayed_messages.length > 0 ? displayed_messages.length - 1 : 0
+					// displayed_messages[last_elt_index] = m
+				})
+		}
+	}
+
 	$: {
 		new_message = new_message
-		if (displayed_messages && new_message)
-			// Needed ?
-			displayed_messages = [
-				...displayed_messages,
-				{
-					id: 0, // Not sure about that
-					message: { content: new_message[0] },
-					author: $my_name,
-					creationDate: new Date(),
-				},
-			]
+		handleNewMessage(new_message)
 	}
 </script>
 
 <!-- The normal flexbox inside a reverse flexbox is a trick to scroll to the bottom when the element loads -->
 <div class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
-	<div class="flex flex-col" bind:this={message_container}>
+	<div class="flex flex-col">
 		{#if !displayed_messages?.length}
 			<p class="text-center font-semibold">This conversation has not started yet</p>
 		{:else if load_error}

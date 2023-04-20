@@ -2,7 +2,8 @@
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	/* types */
 	import type { Discussion as DiscussionType } from "$lib/types" // app.d.ts
-	import type { PageData } from "./$types" // Generated type file
+	import type { PageData } from "./$types"
+	import type { Message } from "$lib/types"
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"
 	import CreateDiscussion from "./CreateDiscussion.svelte"
@@ -10,6 +11,14 @@
 	import ChatBox from "./ChatBox.svelte"
 	/* stores */
 	import { onMount } from "svelte"
+	/*utils*/
+
+	let new_message: string
+	function messageSentHandler(e: CustomEvent<string>) {
+		// new_message.message.content = e.detail
+		console.log("You sent a message", e.detail)
+		new_message = e.detail
+	}
 
 	// SSE handling
 	let sse: EventSource
@@ -55,11 +64,11 @@
 		<!-- Vertical grid 2-->
 		<div class="both grid grid-rows-[1fr_auto]" id="messages">
 			<!-- Messages -->
-			<DiscussionDisplay {currentDiscussionId} />
+			<DiscussionDisplay {new_message} {currentDiscussionId} />
 
 			<!-- Input box -->
 			<section class="border-t border-black p-4">
-				<ChatBox {currentDiscussionId} />
+				<ChatBox on:message_sent={messageSentHandler} {currentDiscussionId} />
 			</section>
 		</div>
 	</div>

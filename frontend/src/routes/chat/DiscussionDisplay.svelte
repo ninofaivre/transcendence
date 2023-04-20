@@ -8,16 +8,12 @@
 	import ChatBubble from "./ChatBubble.svelte"
 	import { fetchGet } from "$lib/global"
 	import { my_name } from "$lib/stores"
-	import { onMount } from "svelte"
 
 	export let currentDiscussionId: number // To detect change of current conversation
-	console.log("DiscussionDisplay", "Current discussion ID", currentDiscussionId)
-
-	$: {
-		switchMessages(currentDiscussionId)
-	}
+	export let new_message: string
 
 	let displayed_messages: Message[]
+
 	const initial_load = 10
 	const reactivity = 10
 	let load_error: boolean
@@ -62,6 +58,24 @@
 
 	// Can't remember what this is for
 	let message_container: HTMLDivElement
+
+	$: {
+		switchMessages(currentDiscussionId)
+	}
+	$: {
+		new_message = new_message
+		if (displayed_messages && new_message)
+			// Needed ?
+			displayed_messages = [
+				...displayed_messages,
+				{
+					id: 0, // Not sure about that
+					message: { content: new_message },
+					author: $my_name,
+					creationDate: new Date(),
+				},
+			]
+	}
 </script>
 
 <!-- The normal flexbox inside a reverse flexbox is a trick to scroll to the bottom when the element loads -->

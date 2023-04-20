@@ -1,18 +1,22 @@
 <script lang="ts">
 	import { fetchPostJSON } from "$lib/global"
+	import { createEventDispatcher } from "svelte"
 
 	export let currentDiscussionId: number
 
+	const dispatch = createEventDispatcher()
 	let placeholder = "Message"
 	let value: string
 	let disabled = false
 
 	async function sendMessage() {
-		disabled = true
+		// disabled = true // Preventing sending two unsent messages ?
+
+		dispatch("message_sent", value)
 
 		fetchPostJSON(`/api/chans/${currentDiscussionId}/messages`, {
 			content: value,
-			// relatedId: currentDiscussionId,
+			// relatedId: ?,
 			// usersAt: ["bob", "john"],
 		})
 			.then(() => {
@@ -25,7 +29,6 @@
 		disabled = false
 	}
 
-	// Do I really need this to handle Enter ?
 	async function handleKeypress(event: KeyboardEvent) {
 		switch (event.key) {
 			case "Enter":

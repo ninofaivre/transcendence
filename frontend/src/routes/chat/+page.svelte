@@ -13,10 +13,9 @@
 	import { onMount } from "svelte"
 	/*utils*/
 
-	let new_message: string
-	function messageSentHandler(e: CustomEvent<string>) {
-		// new_message.message.content = e.detail
-		console.log("You sent a message", e.detail)
+	let new_message: [string, Promise<Response>]
+	function messageSentHandler(e: CustomEvent<typeof new_message>) {
+		console.log("You sent a message:", e.detail[0])
 		new_message = e.detail
 	}
 

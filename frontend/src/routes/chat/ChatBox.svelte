@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fetchPostJSON } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
+	import type { Message } from "$lib/types"
 
 	export let currentDiscussionId: number
 
@@ -11,21 +12,21 @@
 
 	async function sendMessage() {
 		// disabled = true // Preventing sending two unsent messages ?
-
-		dispatch("message_sent", value)
-
-		fetchPostJSON(`/api/chans/${currentDiscussionId}/messages`, {
-			content: value,
-			// relatedId: ?,
-			// usersAt: ["bob", "john"],
-		})
-			.then(() => {
-				value = ""
-			})
-			.catch((err: any) => {
-				console.error("Could not send message because: ", err.message, err)
-			})
-
+		dispatch("message_sent", [
+			value,
+			fetchPostJSON(`/api/chans/${currentDiscussionId}/messages`, {
+				content: value,
+				// relatedId: ?,
+				// usersAt: ["bob", "john"],
+			}),
+		])
+		value = ""
+		// .then(() => {
+		// 	value = ""
+		// })
+		// .catch((err: any) => {
+		// 	console.error("Could not send message because: ", err.message, err)
+		// })
 		disabled = false
 	}
 

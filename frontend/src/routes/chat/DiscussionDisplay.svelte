@@ -10,7 +10,7 @@
 	import { my_name } from "$lib/stores"
 
 	export let currentDiscussionId: number // To detect change of current conversation
-	export let new_message: string
+	export let new_message: [string, Promise<Response>]
 
 	let displayed_messages: Message[]
 
@@ -70,7 +70,7 @@
 				...displayed_messages,
 				{
 					id: 0, // Not sure about that
-					message: { content: new_message },
+					message: { content: new_message[0] },
 					author: $my_name,
 					creationDate: new Date(),
 				},

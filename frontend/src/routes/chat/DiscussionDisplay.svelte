@@ -97,7 +97,7 @@
 	}
 
 	$: {
-		new_message = new_message
+		// new_message = new_message
 		handleNewMessage(new_message)
 	}
 </script>
@@ -109,8 +109,8 @@
 			<p class="text-center font-semibold">This conversation has not started yet</p>
 		{:else if load_error}
 			<p class="text-center font-semibold">
-				We encountered an error trying to retrieve this conversation's messages. Please try
-				again later
+				We encountered an error trying to retrieve this conversation's messages. Please
+				check again your internet connection and refresh the page
 			</p>
 		{:else}
 			<InfiniteLoading on:infinite={infiniteHandler} direction="top" distance={reactivity}>

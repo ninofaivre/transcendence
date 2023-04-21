@@ -84,14 +84,14 @@
 
 <style lang="postcss">
 	#wrapper {
-		height: calc(100vh - 74px);
+		height: calc(100vh - 78px);
 	}
 
 	#messages {
-		height: calc(100vh - 74px);
+		height: calc(100vh - 78px);
 	}
 
 	#convo {
-		height: calc(100vh - 74px);
+		height: calc(100vh - 78px);
 	}
 </style>

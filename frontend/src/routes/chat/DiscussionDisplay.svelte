@@ -89,9 +89,9 @@
 				})
 				.then((m: Message) => {
 					console.log("Should replace message with correct one")
-					// let last_elt_index =
-					// 	displayed_messages.length > 0 ? displayed_messages.length - 1 : 0
-					// displayed_messages[last_elt_index] = m
+					let last_elt_index =
+						displayed_messages.length > 0 ? displayed_messages.length - 1 : 0
+					displayed_messages[last_elt_index] = m
 				})
 		}
 	}

@@ -12,10 +12,9 @@
 	export let currentDiscussionId: number // To detect change of current conversation
 	export let new_message: [string, Promise<Response>]
 
-	let displayed_messages: Message[]
+	let displayed_messages: Message[] = []
 
 	const initial_load = 10
-	const reactivity = 1
 	let load_error: boolean
 	async function switchMessages(_currentDiscussionId: typeof currentDiscussionId) {
 		const api: string = `/api/chans/${currentDiscussionId}/messages`
@@ -33,27 +32,26 @@
 		if (_currentDiscussionId === currentDiscussionId) displayed_messages = fetched_messages
 	}
 
+	const reactivity = 1
 	const loading_greediness = 10
 	function infiniteHandler(e: InfiniteEvent) {
 		const api: string = `/api/chans/${currentDiscussionId}/messages`
 		const {
 			detail: { loaded, complete },
 		} = e
-		if (displayed_messages) {
-			fetchGet(api, {
-				start: displayed_messages[0].id,
-				nMessages: loading_greediness,
+		fetchGet(api, {
+			start: displayed_messages[0].id,
+			nMessages: loading_greediness,
+		})
+			.then((response) => response.json())
+			.then((fetched_messages) => {
+				if (fetched_messages.length > 0) {
+					displayed_messages = [...fetched_messages, ...displayed_messages]
+					loaded()
+				} else {
+					complete()
+				}
 			})
-				.then((response) => response.json())
-				.then((fetched_messages) => {
-					if (fetched_messages.length > 0) {
-						displayed_messages = [...fetched_messages, ...displayed_messages]
-						loaded()
-					} else {
-						complete()
-					}
-				})
-		}
 	}
 
 	$: {
@@ -61,7 +59,7 @@
 	}
 
 	function handleNewMessage(_new_message: typeof new_message) {
-		if (displayed_messages && _new_message) {
+		if (_new_message) {
 			let [msg, msg_promise] = _new_message
 			// Does this preserve ordering ?
 			displayed_messages = [
@@ -97,7 +95,6 @@
 	}
 
 	$: {
-		// new_message = new_message
 		handleNewMessage(new_message)
 	}
 </script>

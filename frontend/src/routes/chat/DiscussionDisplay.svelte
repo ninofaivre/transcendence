@@ -64,12 +64,15 @@
 		if (displayed_messages && _new_message) {
 			let [msg, msg_promise] = _new_message
 			// Does this preserve ordering ?
-			displayed_messages.push({
-				id: 0,
-				message: { content: msg },
-				author: $my_name,
-				creationDate: new Date(),
-			})
+			displayed_messages = [
+				...displayed_messages,
+				{
+					id: 0,
+					message: { content: msg },
+					author: $my_name,
+					creationDate: new Date(),
+				},
+			]
 			msg_promise
 				.then((r: Response) => r.json())
 				.catch((err: any) => {

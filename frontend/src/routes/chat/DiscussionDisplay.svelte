@@ -2,61 +2,23 @@
 	// DiscussionDisplay.svelte
 
 	import type { Message } from "$lib/types"
-	import type { InfiniteEvent } from "svelte-infinite-loading/types/index"
 
-	import InfiniteLoading from "svelte-infinite-loading"
 	import ChatBubble from "./ChatBubble.svelte"
 	import { fetchGet } from "$lib/global"
 	import { my_name } from "$lib/stores"
+	import { onMount } from "svelte"
 
 	export let currentDiscussionId: number // To detect change of current conversation
 	export let new_message: [string, Promise<Response>]
 
 	let displayed_messages: Message[] = []
-
-	const initial_load = 10
+	const initial_load = 20
 	let load_error: boolean
-	async function switchMessages(_currentDiscussionId: typeof currentDiscussionId) {
-		const api: string = `/api/chans/${currentDiscussionId}/messages`
-		load_error = false
-		let fetched_messages
-		try {
-			const response = await fetchGet(api, { nMessages: initial_load })
-			fetched_messages = await response.json()
-		} catch (err: any) {
-			load_error = true
-			console.log("DiscussionDisplay", fetched_messages)
-			console.error("DiscussionDisplay", "Could not fetch conversation:", err.message)
-			return
-		}
-		if (_currentDiscussionId === currentDiscussionId) displayed_messages = fetched_messages
-	}
-
-	const reactivity = 1
+	let root: HTMLDivElement
+	let observer: IntersectionObserver
+	const reactivity = 0
 	const loading_greediness = 10
-	function infiniteHandler(e: InfiniteEvent) {
-		const api: string = `/api/chans/${currentDiscussionId}/messages`
-		const {
-			detail: { loaded, complete },
-		} = e
-		fetchGet(api, {
-			start: displayed_messages[0].id,
-			nMessages: loading_greediness,
-		})
-			.then((response) => response.json())
-			.then((fetched_messages) => {
-				if (fetched_messages.length > 0) {
-					displayed_messages = [...fetched_messages, ...displayed_messages]
-					loaded()
-				} else {
-					complete()
-				}
-			})
-	}
-
-	$: {
-		switchMessages(currentDiscussionId)
-	}
+	let canary: HTMLDivElement
 
 	function handleNewMessage(_new_message: typeof new_message) {
 		if (_new_message) {
@@ -94,34 +56,84 @@
 		}
 	}
 
+	async function switchMessages(_currentDiscussionId: typeof currentDiscussionId) {
+		console.log("switchMessages was called ")
+		const api: string = `/api/chans/${currentDiscussionId}/messages`
+		load_error = false
+		let fetched_messages
+		try {
+			const response = await fetchGet(api, { nMessages: initial_load })
+			fetched_messages = await response.json()
+		} catch (err: any) {
+			load_error = true
+			console.log("DiscussionDisplay", fetched_messages)
+			console.error("DiscussionDisplay", "Could not fetch conversation:", err.message)
+			return
+		}
+		if (_currentDiscussionId === currentDiscussionId) displayed_messages = fetched_messages
+	}
+
+	function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
+		console.log("intersectionHandler has been called", entry)
+		let oldest_id = canary?.nextElementSibling?.getAttribute("id")
+		if (oldest_id && entry.isIntersecting) {
+			const api: string = `/api/chans/${currentDiscussionId}/messages`
+			fetchGet(api, {
+				// start: displayed_messages[0].id,
+				start: oldest_id,
+				nMessages: loading_greediness,
+			})
+				.then((response) => response.json())
+				.then((fetched_messages) => {
+					if (fetched_messages.length > 0) {
+						displayed_messages = [...fetched_messages, ...displayed_messages]
+					} else {
+						observer.unobserve(canary)
+					}
+				})
+		}
+	}
+
+	onMount(() => {
+		observer = new IntersectionObserver(intersectionHandler, {
+			// root,
+			rootMargin: `${reactivity}px 0px 0px 0px`,
+		})
+		observer.observe(canary)
+	})
+
 	$: {
 		handleNewMessage(new_message)
+	}
+
+	$: {
+		switchMessages(currentDiscussionId)
 	}
 </script>
 
 <!-- The normal flexbox inside a reverse flexbox is a trick to scroll to the bottom when the element loads -->
 <div class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
-	<div class="flex flex-col">
-		{#if !displayed_messages?.length}
-			<p class="text-center font-semibold">This conversation has not started yet</p>
-		{:else if load_error}
-			<p class="text-center font-semibold">
-				We encountered an error trying to retrieve this conversation's messages. Please
-				check again your internet connection and refresh the page
-			</p>
+	<div class="flex flex-col" bind:this={root}>
+		<div bind:this={canary}>
+			-----------------------------------------------------------------------
+		</div>
+		{#each displayed_messages as message}
+			<ChatBubble
+				id={message.id.toString()}
+				from_me={message.author === $my_name}
+				from={message.author}
+			>
+				{`${message.id}: ${message.message.content}`}
+			</ChatBubble>
 		{:else}
-			<InfiniteLoading on:infinite={infiniteHandler} direction="top" distance={reactivity}>
-				<!-- <div slot="noResults"></div> -->
-				<!-- <div slot="noMore"></div> -->
-				<div slot="error">
-					Ooops, something went wrong when trying to fecth previous messages
-				</div>
-			</InfiniteLoading>
-			{#each displayed_messages as message}
-				<ChatBubble from_me={message.author === $my_name} from={message.author}>
-					{`${message.id}: ${message.message.content}`}
-				</ChatBubble>
-			{/each}
-		{/if}
+			<!-- {#if load_error} -->
+			<!-- 	<p class="font-semibold text-center"> -->
+			<!-- 		We encountered an error trying to retrieve this conversation's messages. Please -->
+			<!-- 		check again your internet connection and refresh the page -->
+			<!-- 	</p> -->
+			<!-- {:else} -->
+			<p class="font-semibold text-center">This conversation has not started yet</p>
+			<!-- {/if} -->
+		{/each}
 	</div>
 </div>

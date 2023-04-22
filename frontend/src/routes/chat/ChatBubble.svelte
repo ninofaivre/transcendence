@@ -1,12 +1,17 @@
-<script>
+<script lang="ts">
 	export let from = ""
 	export let from_me = false
 	export let from_me_bg = "lightblue"
 	export let from_them_bg = "lightgrey"
 	export let margin = "15px"
+	export let id: string
 </script>
 
-<div class="message-row from-me-row" style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}>
+<div
+	{id}
+	class="message-row from-me-row"
+	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
+>
 	<div class="message-spacer" />
 	<div
 		class="message-bubble text-black"

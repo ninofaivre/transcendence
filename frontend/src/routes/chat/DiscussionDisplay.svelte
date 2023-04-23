@@ -59,19 +59,22 @@
 
 	async function switchMessages(_currentDiscussionId: typeof currentDiscussionId) {
 		console.log("switchMessages was called ")
-		const api: string = `/api/chans/${currentDiscussionId}/messages`
-		load_error = false
-		let fetched_messages
-		try {
-			const response = await fetchGet(api, { nMessages: initial_load })
-			fetched_messages = await response.json()
-		} catch (err: any) {
-			load_error = true
-			console.log("DiscussionDisplay", fetched_messages)
-			console.error("DiscussionDisplay", "Could not fetch conversation:", err.message)
-			return
+		if (_currentDiscussionId === currentDiscussionId) {
+			const api: string = `/api/chans/${currentDiscussionId}/messages`
+			load_error = false
+			let fetched_messages
+			try {
+				const response = await fetchGet(api, { nMessages: initial_load })
+				fetched_messages = await response.json()
+			} catch (err: any) {
+				load_error = true
+				console.log("DiscussionDisplay", fetched_messages)
+				console.error("DiscussionDisplay", "Could not fetch conversation:", err.message)
+				return
+			}
+			displayed_messages = fetched_messages
+			observer.observe(canary)
 		}
-		if (_currentDiscussionId === currentDiscussionId) displayed_messages = fetched_messages
 	}
 
 	function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {

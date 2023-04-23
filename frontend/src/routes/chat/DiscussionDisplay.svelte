@@ -16,7 +16,8 @@
 	let load_error: boolean
 	let root: HTMLDivElement
 	let observer: IntersectionObserver
-	const reactivity = 0
+	const threshold = 0.5
+	const reactivity = 500
 	const loading_greediness = 10
 	let canary: HTMLDivElement
 
@@ -79,7 +80,6 @@
 		if (oldest_id && entry.isIntersecting) {
 			const api: string = `/api/chans/${currentDiscussionId}/messages`
 			fetchGet(api, {
-				// start: displayed_messages[0].id,
 				start: oldest_id,
 				nMessages: loading_greediness,
 			})
@@ -87,6 +87,7 @@
 				.then((fetched_messages) => {
 					if (fetched_messages.length > 0) {
 						displayed_messages = [...fetched_messages, ...displayed_messages]
+						root.children.item(1)?.scrollIntoView()
 					} else {
 						observer.unobserve(canary)
 					}
@@ -97,7 +98,8 @@
 	onMount(() => {
 		observer = new IntersectionObserver(intersectionHandler, {
 			// root,
-			rootMargin: `${reactivity}px 0px 0px 0px`,
+			threshold,
+			rootMargin: `${reactivity}px`,
 		})
 		observer.observe(canary)
 	})
@@ -109,13 +111,18 @@
 	$: {
 		switchMessages(currentDiscussionId)
 	}
+
+	// $: {
+	// 	displayed_messages = displayed_messages
+	// 	root.children.item(1)?.scrollIntoView()
+	// }
 </script>
 
 <!-- The normal flexbox inside a reverse flexbox is a trick to scroll to the bottom when the element loads -->
 <div class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
 	<div class="flex flex-col" bind:this={root}>
 		<div bind:this={canary}>
-			-----------------------------------------------------------------------
+			------------------------------------------------------------------
 		</div>
 		{#each displayed_messages as message}
 			<ChatBubble

@@ -29,22 +29,18 @@
 		}
 		return () => {
 			console.log("/chat/page.svelte", "Closing sse...")
-			sse.close
+			sse.close()
 		}
 	})
 
 	// Get our discussions
 	export let data: PageData
 
-	let discussions: Map<number, DiscussionType>
-	discussions = new Map(data.discussions.map((element: DiscussionType) => [element.id, element]))
-	console.log("/chat/page.svelte", "Got discussions into discussions Map: ", discussions)
-
-	let currentDiscussionId: number = discussions.entries().next().value[0]
+	let currentDiscussionId: number = data.discussions[0].id
 	console.log("/chat/page.svelte", "Current discussion id is :", currentDiscussionId)
 </script>
 
-{#if discussions.size}
+{#if data.discussions.length}
 	<!-- Horizontal grid -->
 	<div class="grid grid-cols-[auto_1fr]" id="wrapper">
 		<!-- Vertical grid 1-->

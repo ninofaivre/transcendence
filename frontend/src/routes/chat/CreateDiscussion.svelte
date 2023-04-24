@@ -3,6 +3,7 @@
 
 	import { Autocomplete, InputChip, toastStore } from "@skeletonlabs/skeleton"
 	import { fetchPostJSON } from "$lib/global"
+	import { invalidate } from "$app/navigation"
 
 	let show_discussion_creation_form = false
 	let minlength = 3
@@ -25,7 +26,7 @@
 			toastStore.trigger({
 				message: `Error: ${res.statusText}\nCould not create new discussion because ${body.message}`,
 			})
-		}
+		} else invalidate(":discussions")
 	}
 
 	function validation(_username: string): boolean {

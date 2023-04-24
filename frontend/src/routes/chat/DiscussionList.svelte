@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidate } from "$app/navigation"
 	import type { Discussion } from "$lib/types"
 	import { onMount } from "svelte"
 
@@ -21,12 +22,14 @@
 		eventSource.addEventListener("CHAN_NEW_EVENT", ({ data }: MessageEvent) => {
 			const parsedData = JSON.parse(data)
 			console.log("Server message: New room created", parsedData)
+			invalidate(":discussions")
 		})
 
-		// Add listener for discussion creation
+		// Add listener for discussion deletion
 		eventSource.addEventListener("CHAN_DELETED", ({ data }: MessageEvent) => {
 			const parsedData = JSON.parse(data)
 			console.log("Server message: A room was deleted", parsedData)
+			invalidate(":discussions")
 		})
 	})
 </script>

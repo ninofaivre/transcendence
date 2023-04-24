@@ -1,16 +1,14 @@
 <script lang="ts">
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	/* types */
-	import type { Discussion as DiscussionType } from "$lib/types" // app.d.ts
 	import type { PageData } from "./$types"
-	import type { Message } from "$lib/types"
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"
 	import CreateDiscussion from "./CreateDiscussion.svelte"
 	import DiscussionList from "./DiscussionList.svelte"
 	import ChatBox from "./ChatBox.svelte"
 	/* stores */
-	import { onMount } from "svelte"
+	import { onDestroy, onMount } from "svelte"
 	/*utils*/
 
 	let new_message: [string, Promise<Response>]
@@ -20,17 +18,11 @@
 	}
 
 	// SSE handling
-	let sse: EventSource
-	onMount(() => {
-		console.log("/chat/page.svelte", "Opening sse...")
-		sse = new EventSource(PUBLIC_BACKEND_URL + "/api/sse")
-		sse.onmessage = (e: any) => {
-			console.log("/chat/page/svelte", "Message: ", e)
-		}
-		return () => {
-			console.log("/chat/page.svelte", "Closing sse...")
-			sse.close()
-		}
+	console.log("/chat/page.svelte", "Opening sse...")
+	let eventSource = new EventSource(PUBLIC_BACKEND_URL + "/api/sse")
+	onDestroy(() => {
+		console.log("/chat/page.svelte", "Closing sse...")
+		eventSource.close()
 	})
 
 	// Get our discussions
@@ -52,14 +44,18 @@
 				{currentDiscussionId}
 			</section>
 			<section class="overflow-y-auto">
-				<DiscussionList discussions={data.discussions} bind:currentDiscussionId />
+				<DiscussionList
+					{eventSource}
+					discussions={data.discussions}
+					bind:currentDiscussionId
+				/>
 			</section>
 		</div>
 
 		<!-- Vertical grid 2-->
 		<div class="both grid grid-rows-[1fr_auto]" id="messages">
 			<!-- Messages -->
-			<DiscussionDisplay {new_message} {currentDiscussionId} />
+			<DiscussionDisplay {eventSource} {new_message} {currentDiscussionId} />
 
 			<!-- Input box -->
 			<section class="border-t border-black p-4">

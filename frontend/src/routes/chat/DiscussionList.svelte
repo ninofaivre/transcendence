@@ -1,10 +1,12 @@
 <script lang="ts">
 	import type { Discussion } from "$lib/types"
+	import { onMount } from "svelte"
 
+	export let eventSource: EventSource
 	export let currentDiscussionId: number
-
 	export let discussions: Discussion[]
 
+	// This does not work
 	async function keypressHandler(e: KeyboardEvent) {
 		switch (e.code) {
 			case "ArrowDown":
@@ -13,6 +15,20 @@
 				console.log("Up arrow was pressed")
 		}
 	}
+
+	onMount(() => {
+		// Add listener for discussion creation
+		eventSource.addEventListener("CHAN_NEW_EVENT", ({ data }: MessageEvent) => {
+			const parsedData = JSON.parse(data)
+			console.log("Server message: New room created", parsedData)
+		})
+
+		// Add listener for discussion creation
+		eventSource.addEventListener("CHAN_DELETED", ({ data }: MessageEvent) => {
+			const parsedData = JSON.parse(data)
+			console.log("Server message: A room was deleted", parsedData)
+		})
+	})
 </script>
 
 {#each discussions as d}

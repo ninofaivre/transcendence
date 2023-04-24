@@ -10,6 +10,7 @@
 
 	export let currentDiscussionId: number // To detect change of current conversation
 	export let new_message: [string, Promise<Response>]
+	export let eventSource: EventSource
 
 	let displayed_messages: Message[] = []
 	const initial_load = 20
@@ -98,6 +99,12 @@
 	}
 
 	onMount(() => {
+		//Set up event listener for new messages
+		eventSource.addEventListener("CHAN_NEW_MESSAGE", ({ data }: MessageEvent) => {
+			const parsedData = JSON.parse(data)
+			console.log("Server message received: A new chan message was sent", parsedData)
+		})
+		//Set up observer
 		observer = new IntersectionObserver(intersectionHandler, {
 			threshold,
 			rootMargin: `${reactivity}px`,

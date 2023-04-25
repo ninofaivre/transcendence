@@ -1,6 +1,6 @@
 <script lang="ts">
 	// The ordering of these imports is critical to your app working properly
-	import "@skeletonlabs/skeleton/themes/theme-seafoam.css"
+	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
 	// If you have source.organizeImports set to true in VSCode, then it will auto change this ordering
 	import "@skeletonlabs/skeleton/styles/all.css"
 	// Most of your app wide CSS should be put in this file
@@ -45,8 +45,15 @@
 				</strong>
 			</svelte:fragment>
 			{#if $logged_in}
-				<a class="btn text-lg font-semibold" href="/chat"> Chat </a>
-				<a class="btn text-lg font-semibold" href="/pong"> Pong </a>
+				<a class="btn variant-filled-success mx-4 text-2xl font-semibold" href="/pong">
+					🏓
+				</a>
+				<a class="btn variant-filled-success mx-4 text-2xl font-semibold" href="/chat">
+					💬
+				</a>
+				<a class="btn variant-filled-success mx-4 text-2xl font-semibold" href="/dms">
+					✉️
+				</a>
 			{/if}
 			<svelte:fragment slot="trail">
 				{#if $logged_in}

@@ -2,15 +2,15 @@ import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Request, Sse, 
 import { ApiBearerAuth, ApiParam, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { finalize, Observable } from 'rxjs';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { OneUsernameDTO } from 'src/user/dto/oneUsername.dto';
+// import { OneUsernameDTO } from 'src/user/dto/oneUsername.dto';
 import { ChatService } from './chat.service';
 import { DiscussionsService } from './discussions.service';
-import { CreateDiscussionDTO } from './dto/createDiscussion.dto';
-import { CreateMessageDTO } from './dto/createMessage.dto';
-import { DiscussionIdPathDTO } from './dto/discussionId.path.dto';
-import { GetDiscussionsQueryDTO } from './dto/getDiscussions.query.dto';
-import { GetnMessagesQueryDTO } from './dto/getnMessages.query.dto';
-import { KickUserFromDiscussionPathDTO } from './dto/kickUserFromDiscussion.path.dto';
+// import { CreateDiscussionDTO } from './dto/createDiscussion.dto';
+// import { CreateMessageDTO } from './dto/createMessage.dto';
+// import { DiscussionIdPathDTO } from './dto/discussionId.path.dto';
+// import { GetDiscussionsQueryDTO } from './dto/getDiscussions.query.dto';
+// import { GetnMessagesQueryDTO } from './dto/getnMessages.query.dto';
+// import { KickUserFromDiscussionPathDTO } from './dto/kickUserFromDiscussion.path.dto';
 import { MessagesService } from './messages.service';
 
 @ApiTags('chat')

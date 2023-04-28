@@ -1,11 +1,11 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { EventType, PermissionList, Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { AppService } from 'src/app.service';
 import { PermissionsService } from 'src/chans/permissions/permissions.service';
 import { EventTypeList, SseService } from 'src/sse/sse.service';
-import { ChanInvitationType } from './dto/getChanInvitations.path.dto';
-import { InvitationPathType } from './types/invitationPath.type';
+import { InvitationFilter } from './zod/invitationFilter.zod';
+import { zInvitationFilterType } from 'contract/zod/inv.zod';
 
 @Injectable()
 export class InvitationsService
@@ -32,16 +32,29 @@ export class InvitationsService
 		friendShipId: true
 	})
 
-	async getFriendInvitations(username: string, filter?: InvitationPathType)
+	async getAllFriendInvitations(username: string)
 	{
 		const res = await this.prisma.user.findUnique({ where: { name: username },
 			select:
 			{
-				incomingFriendInvitation: (!filter || filter == 'INCOMING') && { select: this.friendInvitationSelect },
-				outcomingFriendInvitation: (!filter || filter == 'OUTCOMING') && { select: this.friendInvitationSelect },
+				incomingFriendInvitation: { select: this.friendInvitationSelect },
+				outcomingFriendInvitation: { select: this.friendInvitationSelect },
 			}})
-		if (!filter)
-			return { incoming: res.incomingFriendInvitation, outcoming: res.outcomingFriendInvitation }
+		if (!res)
+			throw new InternalServerErrorException(`your account has beed deleted, please logout`)
+		return { incoming: res.incomingFriendInvitation, outcoming: res.outcomingFriendInvitation }
+	}
+
+	async getFriendInvitationsByType(username: string, filter: zInvitationFilterType)
+	{
+		const res = await this.prisma.user.findUnique({ where: { name: username },
+			select:
+			{
+				incomingFriendInvitation: (filter == 'INCOMING') && { select: this.friendInvitationSelect },
+				outcomingFriendInvitation: (filter == 'OUTCOMING') && { select: this.friendInvitationSelect },
+			}})
+		if (!res)
+			throw new InternalServerErrorException(`your account has beed deleted, please logout`)
 		return res.incomingFriendInvitation || res.outcomingFriendInvitation
 	}
 
@@ -58,6 +71,8 @@ export class InvitationsService
 				blockedByUser: { where: { blockingUserName: invitedUsername }, select: { id: true } },
 				incomingFriendInvitation: { where: { invitingUserName: invitedUsername }, select: { id: true } },
 			}})
+		if (!toCheck)
+			throw new InternalServerErrorException(`your account has been deleted, please logout`)
 		if (toCheck.friend.length || toCheck.friendOf.length)
 			throw new ForbiddenException(`you are already friend with ${invitedUsername}`)
 		if (toCheck.blockedUser.length)
@@ -84,7 +99,7 @@ export class InvitationsService
 		}
 	}
 
-	async deleteFriendInvitation(username: string, type: InvitationPathType, id: number)
+	async deleteFriendInvitation(username: string, type: InvitationFilter, id: number)
 	{
 		try
 		{
@@ -112,20 +127,34 @@ export class InvitationsService
 		}
 	}
 
-	async getChanInvitations(username: string, chanInvitationType?: ChanInvitationType)
+	async getAllChanInvitations(username: string)
 	{
 		const res = await this.prisma.user.findUnique({ where: { name: username },
 			select:
 			{
-				incomingChanInvitation: (chanInvitationType !== 'OUTCOMING') && { select: this.chanInvitationsSelect },
-				outcomingChanInvitation: (chanInvitationType !== 'INCOMING') && { select: this.chanInvitationsSelect },
+				incomingChanInvitation: { select: this.chanInvitationsSelect },
+				outcomingChanInvitation: { select: this.chanInvitationsSelect },
 			}})
-		if (!chanInvitationType)
-			return { incoming: res.incomingChanInvitation, outcoming: res.outcomingChanInvitation }
+		if (!res)
+			throw new InternalServerErrorException(`your account has been deleted, please logout`)
+		return { incoming: res.incomingChanInvitation, outcoming: res.outcomingChanInvitation }
+	}
+
+	async getChanInvitationsByType(username: string, chanInvitationType: InvitationFilter)
+	{
+		const res = await this.prisma.user.findUnique({ where: { name: username },
+			select:
+			{
+				incomingChanInvitation: (chanInvitationType === 'INCOMING') && { select: this.chanInvitationsSelect },
+				outcomingChanInvitation: (chanInvitationType === 'OUTCOMING') && { select: this.chanInvitationsSelect },
+			}})
+		if (!res)
+			throw new InternalServerErrorException(`your account has been deleted, please logout`)
 		return res.incomingChanInvitation || res.outcomingChanInvitation
 	}
 
-	async createChanInvitation(invitingUsername: string, invitedUsername: string, chanId: number)
+	// TODO: need to test a bit this 200 lines function lol
+	async createChanInvitation(invitingUsername: string, invitedUsernames: string[], chanId: number)
 	{
 		const toCheck = await this.prisma.user.findUnique({
 			where: { name: invitingUsername },
@@ -134,73 +163,138 @@ export class InvitationsService
 				chans:
 				{
 					where: { id: chanId },
-					select: { id: true }
+					select:
+					{
+						roles:
+						{
+							where: this.permissionsService.getRolesDoesUserHasRighTo(invitingUsername, invitingUsername, PermissionList.INVITE),
+							select: { id: true },
+							take: 1
+						},
+						title: true
+					}
 				},
 				friend:
 				{
-					where: { requestedUserName: invitedUsername },
-					select: { id: true, directMessage: { select: { id: true } } },
+					where: { requestedUserName: { in: invitedUsernames } },
+					select: { id: true, requestedUserName: true, directMessage: { select: { id: true } } },
 				},
 				friendOf:
 				{
-					where: { requestingUserName: invitedUsername },
-					select: { id: true, directMessage: { select: { id: true } } },
+					where: { requestingUserName: { in: invitedUsernames } },
+					select: { id: true, requestingUserName: true, directMessage: { select: { id: true } } },
+				},
+				outcomingChanInvitation:
+				{
+					where: { requestedUserName: { in: invitedUsernames } },
+					select: { id: true }
 				}
 			}})
-		const isInvitedUserAlreadyInChan = !!(await this.prisma.user.findUnique({ where: { name: invitedUsername },
-			select: { chans: { where: { id: chanId }, select: { id: true } } } })).chans.length
-		if (isInvitedUserAlreadyInChan)
-			throw new ForbiddenException(`${invitedUsername} is already in chan with id ${chanId}`)
+		if (!toCheck)
+			throw new InternalServerErrorException(`your account has been deleted, please logout`)
 		if (!toCheck.chans.length)
-			throw new NotFoundException(`chan with id ${chanId} not found`)
-		if (!toCheck.friend.length && !toCheck.friendOf.length)
-			throw new ForbiddenException(`${invitedUsername} is not in your friendList`)
-		if (!await this.permissionsService.doesUserHasRightTo(invitingUsername, invitingUsername, PermissionList.INVITE, chanId))
+			throw new ForbiddenException(`chan with id ${chanId} doesn't exist or your are not a member of it`)
+		if (!toCheck.chans[0].roles.length)
 			throw new ForbiddenException(`you don't have right to invite in this chan`)
-		let newDirectMessageId
-		if (!toCheck.friend[0]?.directMessage?.id && !toCheck.friendOf[0]?.directMessage?.id)
-		{
-			const res = await this.prisma.directMessage.create({
-			data:
-			{
-				friendShipId: toCheck.friend[0]?.id || toCheck.friendOf[0]?.id,
-				requestingUserName: invitingUsername,
-				requestedUserName: invitedUsername 
-			},
-			select: this.appService.directMessageSelect})
-			await this.sseService.pushEventMultipleUser([invitingUsername, invitedUsername], { type: EventTypeList.NEW_DM, data: res })
-			newDirectMessageId = res.id
-		}
-		const res = await this.prisma.chanInvitation.create({
-			data:
-			{
-				chan: { connect: { id: chanId } },
-				friendShip: { connect: { id: toCheck.friend[0]?.id || toCheck.friendOf[0]?.id } },
-				requestingUser: { connect: { name: invitingUsername } },
-				requestedUser: { connect: { name: invitedUsername } },
-				discussionEvent:
-				{
-					create:
+		const friends: ({ id: number, otherUserName: string, directMessage: { id: number } | null })[] =
+			Array.prototype.concat
+			(
+				toCheck.friend.map(el =>
 					{
-						concernedUserRelation: { connect: { name: invitedUsername } },
-						eventType: EventType.PENDING_CHAN_INVITATION,
-						chanInvitationRelated: { connect: { id: chanId } },
-						discussionElement:
+						const { requestedUserName, ...rest } = el
+						return { otherUserName: requestedUserName, ...rest }
+					}),
+				toCheck.friendOf.map(el =>
+					{
+						const { requestingUserName, ...rest } = el
+						return { otherUserName: requestingUserName, ...rest }
+					})
+			)
+		if (friends.length < invitedUsernames.length)
+			throw new ForbiddenException(`one of the users in ${invitedUsernames.toString} is not in your friendList`)
+		const areInvitedUsersAlreadyInChan = (await this.prisma.chan.findUnique({
+			where: { id: chanId },
+			select:
+			{
+				users:
+				{
+					where: { name: { in: invitedUsernames } },
+					select: { name: true },
+					take: 1
+				}
+			}
+		}))?.users.length
+		if (areInvitedUsersAlreadyInChan)
+			throw new ForbiddenException(`one of the users in ${invitedUsernames.toString} is already in chan with id ${chanId}`)
+		if (toCheck.outcomingChanInvitation.length)
+			throw new ConflictException(`one of the users in ${invitedUsernames.toString} has already an invitation from you for the chan with id ${chanId}`)
+		const friendShipsNeedingNewDms = friends
+			.filter(el => !el.directMessage)
+			.map(el =>
+				{
+					return { friendShipId: el.id,
+						requestingUserName: invitingUsername,
+						requestedUserName: el.otherUserName }
+				})
+		await this.prisma.directMessage.createMany({ data: friendShipsNeedingNewDms })
+		const newDms = await this.prisma.directMessage.findMany({
+			where: { friendShipId: { in: friendShipsNeedingNewDms.map(el => el.friendShipId) } },
+			select:
+			{
+				friendShip: { select: { requestingUserName: true, requestedUserName: true } },
+				...this.appService.directMessageSelect
+			}})
+		await Promise.all(newDms.map(async el =>
+			{
+				if (!el.friendShip)
+					return
+				const { friendShip: { requestedUserName, requestingUserName }, ...dm } = el
+				return this.sseService.pushEventMultipleUser([requestedUserName, requestingUserName],
+					{
+						type: EventTypeList.NEW_DM,
+						data: dm
+					})
+			}))
+		newDms.map(dm =>
+		{
+			const found = friends .find(el => el.otherUserName === dm.requestedUserName)
+			if (!found)
+				return
+			found.directMessage = { id: dm.id }
+		})
+		await this.prisma.chanInvitation.createMany({
+			data: await Promise.all(friends.map(async (el) =>
+				{return {
+					chanId: chanId,
+					chanTitle: toCheck.chans[0].title || "",
+					friendShipId: el.id,
+					requestingUserName: invitingUsername,
+					requestedUserName: el.otherUserName,
+					discussionEventId: (await this.prisma.discussionEvent.create({
+						data:
 						{
-							create:
+							concernedUserRelation: { connect: { name: el.otherUserName } },
+							eventType: EventType.PENDING_CHAN_INVITATION,
+							chanInvitationRelated: { connect: { id: chanId } },
+							discussionElement:
 							{
-								authorRelation: { connect: { name: invitingUsername } },
-								directMessage:
+								create:
 								{
-									connect:
+									authorRelation: { connect: { name: invitingUsername } },
+									directMessage:
 									{
-										id: toCheck.friend[0]?.directMessage?.id || toCheck.friendOf[0]?.directMessage?.id || newDirectMessageId,
+										connect: { id: el.directMessage?.id }
 									}
 								}
 							}
-						}
-					}
-				}
+					}})).id
+			}}))})
+		const res = await this.prisma.chanInvitation.findMany({
+			where:
+			{
+				chanId: chanId,
+				friendShipId: { in: friends.map(el => el.id) },
+				requestingUserName: invitingUsername,
 			},
 			select:
 			{
@@ -215,32 +309,36 @@ export class InvitationsService
 						}
 					}
 				}
-			}})
-		const { discussionEvent, ...chanInvitation } = res
-		const directMessageId = discussionEvent.discussionElement.directMessageId
-		delete discussionEvent.discussionElement.directMessageId
-		await this.sseService.pushEvent(invitedUsername,
+			} })
+		return await Promise.all(res.map(async el =>
 			{
-				type: EventTypeList.CHAN_NEW_INVITATION,
-				data: { chanInvitation }
-			})
-		await this.sseService.pushEventMultipleUser([invitedUsername, invitingUsername],
-			{
-				type: EventTypeList.DM_NEW_EVENT,
-				data:
-				{
-					directMessageId: directMessageId,
-					event: discussionEvent.discussionElement
-				}
-			})
-		return chanInvitation
+				const { discussionEvent: { discussionElement: { directMessageId, ...discussionElement } }, ...chanInvitation } = el
+				const invitedUsername = discussionElement.event?.concernedUser
+				if (!invitedUsername)
+					return chanInvitation
+				await this.sseService.pushEvent(invitedUsername,
+					{
+						type: EventTypeList.CHAN_NEW_INVITATION,
+						data: { chanInvitation }
+					})
+				await this.sseService.pushEventMultipleUser([invitedUsername, invitingUsername],
+					{
+						type: EventTypeList.DM_NEW_EVENT,
+						data:
+						{
+							directMessageId: directMessageId,
+							event: discussionElement
+						}
+					})
+				return chanInvitation
+			}))
 	}
 
-	async deleteChanInvitation(username: string, invitationId: number, chanInvitationType: ChanInvitationType)
+	async deleteChanInvitation(username: string, invitationId: number, chanInvitationType: InvitationFilter)
 	{
 		try
 		{
-			const { requestingUserName, requestedUserName, discussionEvent: { id: discussionEventId } } =
+			const { requestingUserName, requestedUserName, discussionEvent } =
 				await this.prisma.chanInvitation.delete({ where:
 					{
 						id: invitationId,
@@ -253,15 +351,22 @@ export class InvitationsService
 						requestingUserName: chanInvitationType === 'INCOMING',
 						requestedUserName: chanInvitationType === 'OUTCOMING',
 					}})
+			if (!discussionEvent)
+				throw new InternalServerErrorException("something went bad lol")
 			const res = await this.prisma.discussionEvent.update({
-				where: { id: discussionEventId },
+				where: { id: discussionEvent.id },
 				data:
 				{
 					eventType: (chanInvitationType === 'INCOMING') ? EventType.REFUSED_CHAN_INVITATION : EventType.CANCELED_CHAN_INVITATION
 				},
-				select: { discussionElement: { select: { directMessageId: true ,...this.appService.discussionElementsSelect } } }})
-			const directMessageId: number = res.discussionElement.directMessageId
-			delete res.discussionElement.directMessageId
+				select:
+				{
+					discussionElement:
+					{
+						select: { directMessageId: true ,...this.appService.discussionElementsSelect }
+					}
+				}})
+			const { discussionElement: { directMessageId, ...discussionElement } } = res
 			const ev1 = this.sseService.pushEvent(requestedUserName || requestingUserName,
 				{
 					type: (chanInvitationType === 'INCOMING') ? EventTypeList.CHAN_INVITATION_REFUSED : EventTypeList.FRIEND_INVITATION_CANCELED,
@@ -274,7 +379,7 @@ export class InvitationsService
 					{
 						directMessageId: directMessageId,
 						chanInvitationId: invitationId,
-						event: res.discussionElement
+						event: discussionElement
 					}
 				})
 			await Promise.all([ev1, ev2])

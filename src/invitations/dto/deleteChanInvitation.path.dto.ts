@@ -1,16 +1,13 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum } from "class-validator";
-import { IsId } from "src/decorator/isId.decorator";
-import { ChanInvitationType } from "./getChanInvitations.path.dto";
+import { z } from "zod";
+import { id } from "src/zod/id.zod";
+import { createZodDto } from "@anatine/zod-nestjs";
+import { InvitationFilter } from "../zod/invitationFilter.zod";
 
-export class DeleteChanInvitationsPathDTO
-{
-	@ApiProperty({
-		enum: ChanInvitationType
-	})
-	@IsEnum(ChanInvitationType)
-	chanInvitationType: ChanInvitationType
+const DeleteChanInvitationsPathSchema =
+z.object
+({
+	chanInvitationType: InvitationFilter,
+	chanInvitationId: id
+}).strict()
 
-	@IsId()
-	chanInvitationId: number
-}
+export class DeleteChanInvitationsPathDTO extends createZodDto(DeleteChanInvitationsPathSchema) {}

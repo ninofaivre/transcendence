@@ -1,7 +1,11 @@
-import { IsId } from "src/decorator/isId.decorator";
+import { createZodDto } from "@anatine/zod-nestjs";
+import { id } from "src/zod/id.zod";
+import { z } from "zod";
 
-export class DeleteFriendPathDTO
-{
-	@IsId()
-	friendShipId: number
-}
+const DeleteFriendPathSchema =
+z.object
+({
+	friendShipId: id
+}).strict()
+
+export class DeleteFriendPathDTO extends createZodDto(DeleteFriendPathSchema) {}

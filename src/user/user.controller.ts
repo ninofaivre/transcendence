@@ -2,35 +2,43 @@ import { Body, Get, Post, UseGuards, ValidationPipe, Sse, MessageEvent, Delete, 
 import { Controller, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { UserService } from './user.service'
-import { CreateUserDTO } from './dto/createUser.dto'
-import { Observable, interval, map, finalize } from 'rxjs'
-import { OneUsernameDTO } from './dto/oneUsername.dto';
-import { ApiParam, ApiResponseProperty, ApiTags } from '@nestjs/swagger';
-import { GetBlockedListQueryDTO } from './dto/getBlockedList.query.dto';
-import { Username } from './decorator/username.decorator';
+import { ApiBody, ApiParam, ApiProperty, ApiResponseProperty, ApiTags } from '@nestjs/swagger';
 import { ChatService } from 'src/chat/chat.service';
-import { DiscussionIdPathDTO } from 'src/chat/dto/discussionId.path.dto';
+import { CreateUserDTO } from './dto/createUser.dto';
+import { CreateChanDTO } from './dto/test.dto';
+import { NestControllerInterface, NestRequestShapes, TsRest, TsRestRequest, nestControllerContract } from '@ts-rest/nest';
+import contract from 'contract/contract';
 
-@ApiTags('user')
-@Controller('user')
-export class UserController
+const c = nestControllerContract(contract.users)
+type RequestShapes = NestRequestShapes<typeof c>
+
+@Controller()
+export class UserController implements NestControllerInterface<typeof c>
 {
+
 	constructor(private userService: UserService,
 			    private chatService: ChatService) {}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/myName')
-	async myName(@Request() req: any)
+	@TsRest(c.getMe)
+	async getMe(@Request() req: any)
 	{
-		return { data : req.user.username }
+		const body = { name: req.user.username }
+		return { status: 200 as const, body: body }
 	}
 
-	@Post('/sign-up')
-	async createUser(@Body(ValidationPipe)user: CreateUserDTO)
+	@TsRest(c.signUp)
+	async signUp(@TsRestRequest(){ body: requestBody }: RequestShapes['signUp'])
 	{
-		return this.userService.createUser(user)
+		const responseBody = await this.userService.createUser(requestBody)
+		return { status: 201 as const, body: responseBody }
 	}
 
+	// @Post('/test')
+	// async test(@Body()test: CreateChanDTO)
+	// {
+	// 	console.log(test)
+	// }
 
 	// @UseGuards(JwtAuthGuard)
 	// @Get('/blockedUsers')

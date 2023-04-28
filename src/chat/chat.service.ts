@@ -4,9 +4,8 @@ import { hash } from 'bcrypt';
 import { ChanType, PermissionList, RoleApplyingType } from '@prisma/client'
 import { Subject } from 'rxjs';
 import { PrismaService } from 'nestjs-prisma';
-import { Username } from 'src/user/decorator/username.decorator';
-import { CreateDiscussionDTO, CreatePrivateChanDTO, CreatePublicChanDTO } from './dto/createDiscussion.dto';
-import { discussionEnumType } from './dto/getDiscussions.query.dto';
+// import { CreateDiscussionDTO, CreatePrivateChanDTO, CreatePublicChanDTO } from './dto/createDiscussion.dto';
+// import { discussionEnumType } from './dto/getDiscussions.query.dto';
 
 @Injectable()
 export class ChatService {

@@ -12,14 +12,14 @@ export class FriendsService
 			   	private readonly sseService: SseService) {}
 
 
-	private friendShipSelect: Prisma.FriendShipSelect =
-	{
-		id: true,
-		creationDate: true,
-		requestingUserName: true,
-		requestedUserName: true,
-		directMessage: { select: { id: true } },
-	}
+	private friendShipSelect = Prisma.validator<Prisma.FriendShipSelect>()
+		({
+			id: true,
+			creationDate: true,
+			requestingUserName: true,
+			requestedUserName: true,
+			directMessage: { select: { id: true } },
+		})
 
 
 	async getFriends(username: string)
@@ -38,8 +38,8 @@ export class FriendsService
 
 	async acceptInvitation(username: string, id: number)
 	{
-		try
-		{
+		// try
+		// {
 			const { invitingUserName } = await this.prisma.friendInvitation.delete({
 				where:
 				{
@@ -82,18 +82,18 @@ export class FriendsService
 					type: EventTypeList.NEW_FRIEND,
 					data: { deletedFriendInvitationId: id, friend: newFriendShip }
 				})
-			return newFriendShip
-		}
-		catch (e)
-		{
-			if (e instanceof PrismaClientKnownRequestError)
-			{
-				if (e.code === 'P2025')
-					throw new ForbiddenException(`invitation with id ${id} not found`)
-				if (e.code === 'P2002')
-					throw new ConflictException(`friendship already exist`)
-			}
-		}
+			return { status: 201 as const, body: newFriendShip }
+		// }
+		// catch (e)
+		// {
+		// 	if (e instanceof PrismaClientKnownRequestError)
+		// 	{
+		// 		if (e.code === 'P2025')
+		// 			return { status: 403 as const, body: `invitation with id ${id} not found` }
+		// 		if (e.code === 'P2002')
+		// 			return { status: 409 as const, body: `friendship already exist` }
+		// 	}
+		// }
 	}
 
 	async deleteFriend(username: string, id: number)

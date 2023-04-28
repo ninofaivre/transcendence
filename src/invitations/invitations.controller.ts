@@ -1,77 +1,81 @@
-import { Body, Controller, Delete, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { CreateChanInvitationDTO } from './dto/createChanInvitation.dto';
-import { DeleteChanInvitationsPathDTO } from './dto/deleteChanInvitation.path.dto';
-import { DeleteFriendInvitationPathDTO } from './dto/deleteFriendInvitation.path.dto';
-import { GetChanInvitationsPathDTO } from './dto/getChanInvitations.path.dto';
-import { GetFriendInvitationsPathDTO } from './dto/getFriendInvitations.path.dto';
 import { InvitationsService } from './invitations.service';
-import { OneUsernameDTO } from 'src/dto/oneUsername.dto';
-import { InvitationFilter } from './zod/invitationFilter.zod';
+import { NestControllerInterface, NestRequestShapes, TsRest, TsRestRequest, nestControllerContract } from '@ts-rest/nest';
+import contract from 'contract/contract';
 
-@ApiTags('invitations', 'me')
-@Controller('invitations')
-export class InvitationsController
+const c = nestControllerContract(contract.invitations)
+type RequestShapes = NestRequestShapes<typeof c>
+
+@Controller()
+export class InvitationsController implements NestControllerInterface<typeof c>
 {
 
 	constructor(private readonly invitationsService: InvitationsService) {}
 
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/friend')
+	@TsRest(c.getFriendInvitations)
 	async getFriendInvitations(@Request()req: any)
 	{
-		return this.invitationsService.getFriendInvitations(req.user.username)
+		const body = await this.invitationsService.getAllFriendInvitations(req.user.username)
+		return { status: 200 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/friend/:type')
-	async getFriendInvitationsByType(@Request()req: any, @Param()pathDTO: GetFriendInvitationsPathDTO)
+	@TsRest(c.getFriendInvitationsByType)
+	async getFriendInvitationsByType(@Request()req: any, @TsRestRequest(){ params: { type } }: RequestShapes['getFriendInvitationsByType'])
 	{
-		return this.invitationsService.getFriendInvitations(req.user.username, pathDTO.type)
+		const body = await this.invitationsService.getFriendInvitationsByType(req.user.username, type)
+		return { status: 200 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post(`/friend/${InvitationFilter.enum.OUTCOMING}`)
-	async createFriendInvitation(@Request()req: any, @Body()dto: OneUsernameDTO)
+	@TsRest(c.createFriendInvitation)
+	async createFriendInvitation(@Request()req: any, @TsRestRequest(){ body: { username } }: RequestShapes['createFriendInvitation'])
 	{
-		return this.invitationsService.createFriendInvitation(req.user.username, dto.username)
+		const body = await this.invitationsService.createFriendInvitation(req.user.username, username)
+		return { status: 201 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete('/friend/:type/:id')
-	async deleteFriendInvitation(@Request()req: any, @Param()pathDTO: DeleteFriendInvitationPathDTO)
+	@TsRest(c.deleteFriendInvitation)
+	async deleteFriendInvitation(@Request()req: any, @TsRestRequest(){ params: { id, type } } :RequestShapes['deleteFriendInvitation'])
 	{
-		return this.invitationsService.deleteFriendInvitation(req.user.username, pathDTO.type, pathDTO.id)
+		await this.invitationsService.deleteFriendInvitation(req.user.username, type, id)
+		return { status: 202 as const, body: null }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/chan')
+	@TsRest(c.getChanInvitations)
 	async getChanInvitations(@Request()req: any)
 	{
-		return this.invitationsService.getChanInvitations(req.user.username)
+		const body = await this.invitationsService.getAllChanInvitations(req.user.username)
+		return { status: 200 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/chan/:type')
-	async getChanInvitationsByType(@Request()req: any, @Param()pathDTO: GetChanInvitationsPathDTO)
+	@TsRest(c.getFriendInvitationsByType)
+	async getChanInvitationsByType(@Request()req: any, @TsRestRequest(){ params: { type } }: RequestShapes['getChanInvitationsByType'])
 	{
-		return this.invitationsService.getChanInvitations(req.user.username, pathDTO.type)
+		const body = await this.invitationsService.getChanInvitationsByType(req.user.username, type)
+		return { status: 200 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post(`/chan/${InvitationFilter.enum.OUTCOMING}`)
-	async createChanInvitation(@Request()req: any, @Body()dto: CreateChanInvitationDTO)
+	@TsRest(c.createChanInvitation)
+	async createChanInvitation(@Request()req: any, @TsRestRequest(){ body: { usernames, chanId } }: RequestShapes['createChanInvitation'])
 	{
-		return this.invitationsService.createChanInvitation(req.user.username, dto.usernames, dto.chanId)
+		const body = await this.invitationsService.createChanInvitation(req.user.username, [...usernames], chanId)
+		return { status: 201 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete('/chan/:chanInvitationType/:chanInvitationId')
-	async deleteChanInvitation(@Request()req: any, @Param()pathDTO: DeleteChanInvitationsPathDTO)
+	@TsRest(c.deleteChanInvitation)
+	async deleteChanInvitation(@Request()req: any, @TsRestRequest(){ params: { id, type } }: RequestShapes['deleteChanInvitation'])
 	{
-		return this.invitationsService.deleteChanInvitation(req.user.username, pathDTO.chanInvitationId, pathDTO.chanInvitationType) 
+		await this.invitationsService.deleteChanInvitation(req.user.username, id, type) 
+		return { status: 202 as const, body: null }
 	}
 
 }

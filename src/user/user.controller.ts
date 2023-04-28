@@ -6,26 +6,32 @@ import { ApiBody, ApiParam, ApiProperty, ApiResponseProperty, ApiTags } from '@n
 import { ChatService } from 'src/chat/chat.service';
 import { CreateUserDTO } from './dto/createUser.dto';
 import { CreateChanDTO } from './dto/test.dto';
+import { NestControllerInterface, NestRequestShapes, TsRest, TsRestRequest, nestControllerContract } from '@ts-rest/nest';
+import contract from 'contract/contract';
 
-@ApiTags('user')
-@Controller('user')
-export class UserController
+const c = nestControllerContract(contract.users)
+type RequestShapes = NestRequestShapes<typeof c>
+
+@Controller()
+export class UserController implements NestControllerInterface<typeof c>
 {
+
 	constructor(private userService: UserService,
 			    private chatService: ChatService) {}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/myName')
-	async myName(@Request() req: any)
+	@TsRest(c.getMe)
+	async getMe(@Request() req: any)
 	{
-		return { data : req.user.username }
+		const body = { name: req.user.username }
+		return { status: 200 as const, body: body }
 	}
 
-	@Post('/sign-up')
-	async createUser(@Body()user: CreateUserDTO)
+	@TsRest(c.signUp)
+	async signUp(@TsRestRequest(){ body: requestBody }: RequestShapes['signUp'])
 	{
-		console.log(user)
-			return this.userService.createUser(user)
+		const responseBody = await this.userService.createUser(requestBody)
+		return { status: 201 as const, body: responseBody }
 	}
 
 	// @Post('/test')

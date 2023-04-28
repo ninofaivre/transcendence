@@ -36,29 +36,29 @@ z.discriminatedUnion("type",
 	// {
 	// 	"this example works": "nicely"
 	// },
-	examples:
-	[
-		{
-			PRIVATE:
-			{
-				"doesn't work": "jklcjk",
-				value:
-				{
-					"doesn't work": "jklcjk"
-				}
-			}
-		},
-		{
-			PUBLIC:
-			{
-				"doesn't work": "jklcjk",
-				value:
-				{
-					"doesn't work": "jklcjk"
-				}
-			}
-		}
-	]
+	// examples:
+	// [
+	// 	{
+	// 		PRIVATE:
+	// 		{
+	// 			"doesn't work": "jklcjk",
+	// 			value:
+	// 			{
+	// 				"doesn't work": "jklcjk"
+	// 			}
+	// 		}
+	// 	},
+	// 	{
+	// 		PUBLIC:
+	// 		{
+	// 			"doesn't work": "jklcjk",
+	// 			value:
+	// 			{
+	// 				"doesn't work": "jklcjk"
+	// 			}
+	// 		}
+	// 	}
+	// ]
 })
 
 export class CreateChanDTO extends createZodDto(CreateChanSchema) {}

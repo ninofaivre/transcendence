@@ -15,7 +15,7 @@ export class AppService
 	public discussionMessagesSelect = Prisma.validator<Prisma.DiscussionMessageSelect>()
 	({
 		content: true,
-		relatedId: true,
+		relatedTo: true,
 	})
 
 	public discussionElementsSelect = Prisma.validator<Prisma.DiscussionElementSelect>()

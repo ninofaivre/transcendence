@@ -5,6 +5,7 @@ import { AppService } from 'src/app.service';
 import { PermissionsService } from 'src/chans/permissions/permissions.service';
 import { EventTypeList, SseService } from 'src/sse/sse.service';
 import { InvitationFilter } from './zod/invitationFilter.zod';
+import { zInvitationFilterType } from 'contract/zod/inv.zod';
 
 @Injectable()
 export class InvitationsService
@@ -31,18 +32,29 @@ export class InvitationsService
 		friendShipId: true
 	})
 
-	async getFriendInvitations(username: string, filter?: InvitationFilter)
+	async getAllFriendInvitations(username: string)
 	{
 		const res = await this.prisma.user.findUnique({ where: { name: username },
 			select:
 			{
-				incomingFriendInvitation: (!filter || filter == 'INCOMING') && { select: this.friendInvitationSelect },
-				outcomingFriendInvitation: (!filter || filter == 'OUTCOMING') && { select: this.friendInvitationSelect },
+				incomingFriendInvitation: { select: this.friendInvitationSelect },
+				outcomingFriendInvitation: { select: this.friendInvitationSelect },
 			}})
 		if (!res)
 			throw new InternalServerErrorException(`your account has beed deleted, please logout`)
-		if (!filter)
-			return { incoming: res.incomingFriendInvitation, outcoming: res.outcomingFriendInvitation }
+		return { incoming: res.incomingFriendInvitation, outcoming: res.outcomingFriendInvitation }
+	}
+
+	async getFriendInvitationsByType(username: string, filter: zInvitationFilterType)
+	{
+		const res = await this.prisma.user.findUnique({ where: { name: username },
+			select:
+			{
+				incomingFriendInvitation: (filter == 'INCOMING') && { select: this.friendInvitationSelect },
+				outcomingFriendInvitation: (filter == 'OUTCOMING') && { select: this.friendInvitationSelect },
+			}})
+		if (!res)
+			throw new InternalServerErrorException(`your account has beed deleted, please logout`)
 		return res.incomingFriendInvitation || res.outcomingFriendInvitation
 	}
 
@@ -115,18 +127,29 @@ export class InvitationsService
 		}
 	}
 
-	async getChanInvitations(username: string, chanInvitationType?: InvitationFilter)
+	async getAllChanInvitations(username: string)
 	{
 		const res = await this.prisma.user.findUnique({ where: { name: username },
 			select:
 			{
-				incomingChanInvitation: (chanInvitationType !== 'OUTCOMING') && { select: this.chanInvitationsSelect },
-				outcomingChanInvitation: (chanInvitationType !== 'INCOMING') && { select: this.chanInvitationsSelect },
+				incomingChanInvitation: { select: this.chanInvitationsSelect },
+				outcomingChanInvitation: { select: this.chanInvitationsSelect },
 			}})
 		if (!res)
 			throw new InternalServerErrorException(`your account has been deleted, please logout`)
-		if (!chanInvitationType)
-			return { incoming: res.incomingChanInvitation, outcoming: res.outcomingChanInvitation }
+		return { incoming: res.incomingChanInvitation, outcoming: res.outcomingChanInvitation }
+	}
+
+	async getChanInvitationsByType(username: string, chanInvitationType: InvitationFilter)
+	{
+		const res = await this.prisma.user.findUnique({ where: { name: username },
+			select:
+			{
+				incomingChanInvitation: (chanInvitationType === 'INCOMING') && { select: this.chanInvitationsSelect },
+				outcomingChanInvitation: (chanInvitationType === 'OUTCOMING') && { select: this.chanInvitationsSelect },
+			}})
+		if (!res)
+			throw new InternalServerErrorException(`your account has been deleted, please logout`)
 		return res.incomingChanInvitation || res.outcomingChanInvitation
 	}
 
@@ -289,12 +312,10 @@ export class InvitationsService
 			} })
 		return await Promise.all(res.map(async el =>
 			{
-				if (!el.discussionEvent?.discussionElement)
-					return
 				const { discussionEvent: { discussionElement: { directMessageId, ...discussionElement } }, ...chanInvitation } = el
 				const invitedUsername = discussionElement.event?.concernedUser
 				if (!invitedUsername)
-					return
+					return chanInvitation
 				await this.sseService.pushEvent(invitedUsername,
 					{
 						type: EventTypeList.CHAN_NEW_INVITATION,

@@ -274,8 +274,8 @@ model DiscussionMessage {
 
   relatedUsers        User[]
   relatedRoles        Role[]
-  related             DiscussionElement? @relation(name: "related", fields: [relatedId], references: [id])
-  relatedId           Int?
+  related             DiscussionElement? @relation(name: "related", fields: [relatedTo], references: [id])
+  relatedTo           Int?
   discussionElement   DiscussionElement  @relation(name: "ownship", fields: [discussionElementId], references: [id], onDelete: Cascade)
   discussionElementId Int                @unique
 }

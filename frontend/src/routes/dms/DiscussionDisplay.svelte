@@ -1,5 +1,6 @@
 <script lang="ts">
 	// DiscussionDisplay.svelte
+	console.log("Before mounting DiscussionDisplay")
 
 	import type { Message } from "$lib/types"
 
@@ -99,6 +100,7 @@
 	}
 
 	onMount(() => {
+		console.log("Mounting DiscussionDisplay")
 		//Set up event listener for new messages
 		eventSource.addEventListener("CHAN_NEW_MESSAGE", ({ data }: MessageEvent) => {
 			const parsedData = JSON.parse(data)

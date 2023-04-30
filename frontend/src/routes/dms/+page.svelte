@@ -1,4 +1,6 @@
 <script lang="ts">
+	console.log("Before Mouting dms/page")
+
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	/* types */
 	import type { PageData } from "./$types"
@@ -17,11 +19,18 @@
 		new_message = e.detail
 	}
 
-	// SSE handling
-	console.log("/chat/page.svelte", "Opening sse...")
-	let eventSource = new EventSource(PUBLIC_BACKEND_URL + "/api/sse")
+	let eventSource: EventSource
+	onMount(() => {
+		// SSE handling
+		console.log("Mounting /dms/page.svelte", "Opening sse...")
+		eventSource = new EventSource(PUBLIC_BACKEND_URL + "/api/sse")
+		// eventSource.addEventListener("DM_NEW_MESSAGE", ({data}) => {
+		//    const new_message = JSON.parse(data)
+		//  })
+		// eventSource.addEventListener("DM_NEW_MESSAGE", () => {})
+	})
 	onDestroy(() => {
-		console.log("/chat/page.svelte", "Closing sse...")
+		console.log("/dms/page.svelte", "Closing sse...")
 		eventSource.close()
 	})
 
@@ -29,7 +38,6 @@
 	export let data: PageData
 
 	let currentDiscussionId: number = data.discussions[0].id
-	console.log("/chat/page.svelte", "Current discussion id is :", currentDiscussionId)
 </script>
 
 {#if data.discussions.length}

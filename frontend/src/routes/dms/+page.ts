@@ -3,7 +3,7 @@ import { fetchGet } from "$lib/global"
 import type { LoadEvent } from "@sveltejs/kit"
 
 export const load = async ({ depends }: LoadEvent) => {
-	const api_get_discussions = "/api/chans/me"
+	const api_get_discussions = "/api/dms/me"
 	try {
 		const res1 = await fetchGet(api_get_discussions)
 		const discussions = await res1.json()

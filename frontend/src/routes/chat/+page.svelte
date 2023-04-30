@@ -1,4 +1,5 @@
 <script lang="ts">
+	console.log("Init ch")
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	/* types */
 	import type { PageData } from "./$types"

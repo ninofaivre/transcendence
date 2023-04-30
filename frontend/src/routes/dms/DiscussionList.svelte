@@ -1,4 +1,6 @@
 <script lang="ts">
+	console.log("Before mounting DiscussionList")
+
 	import { invalidate } from "$app/navigation"
 	import type { Discussion } from "$lib/types"
 	import { onMount } from "svelte"
@@ -18,6 +20,7 @@
 	}
 
 	onMount(() => {
+		console.log("Mounting DiscussionList")
 		// Add listener for discussion creation
 		eventSource.addEventListener("CHAN_NEW_EVENT", ({ data }: MessageEvent) => {
 			const parsedData = JSON.parse(data)

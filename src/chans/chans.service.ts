@@ -14,13 +14,17 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 const c = nestControllerContract(contract.chans)
 type RequestShapes = NestRequestShapes<typeof c>
 
+// type checkReturn = { ok: true } | { ok: false, error: { status: number, body: { message: string } } }
+
 @Injectable()
 export class ChansService {
 
 	constructor(private readonly prisma: PrismaService,
-		private readonly permissionsService: PermissionsService,
-		private readonly appService: AppService,
-		private readonly sseService: SseService) { }
+				private readonly permissionsService: PermissionsService,
+				private readonly appService: AppService,
+				private readonly sseService: SseService)
+	{
+	}
 
 	private usersSelect = Prisma.validator<Prisma.UserSelect>()
 		({
@@ -86,6 +90,58 @@ export class ChansService {
 			'BAN',
 			'MUTE'
 		]
+
+	private static testOwner(args: { username: string }, acc: any, not: boolean): boolean 
+	{
+		if ((acc.ownerName === args.username) === not)
+			return true
+		return false
+	}
+
+	private static testUsers(args: { usernames: string[] }, acc: any, not: boolean): boolean
+	{
+		if (not && acc.users?.length)
+			return true
+		else if (acc.users?.length !== args.usernames.length)
+			return true
+		return false
+	}
+
+	private static readonly testTable =
+	{
+		owner: { check: ChansService.testOwner, sel: { ownerName: true } },
+		users: { check: ChansService.testUsers, sel: (args: Parameters<typeof ChansService.testUsers>[0]) => ({ users: { where: { name: { in: args.usernames } } } }) },
+	}
+	
+	// TODO: need to remove as any in check and sel call for args because it can break if for one key check and sel take differents args
+	private async testfunc(chanId: number, username: string, tests: Partial<{ [ Property in keyof typeof ChansService.testTable ]: Parameters<typeof ChansService.testTable[Property]['check']>[0] & { not?: undefined } | { not: Parameters<typeof ChansService.testTable[Property]['check']>[0] } }>): Promise<boolean>
+	{
+		let sel: Prisma.ChanSelect = {}
+
+		for (const [key, values] of Object.entries(tests))
+		{
+			const tmp = ChansService.testTable[key as keyof typeof ChansService.testTable].sel
+			sel = { ...sel, ...((typeof tmp === 'function') ? tmp((values.not || values) as any) : tmp) }
+		}
+
+		const res = await this.prisma.chan.findUnique({ where: { id: chanId, users: { some: { name: username } } }, select: sel })
+
+		if (!res)
+			return true
+
+		for (const [key, values] of Object.entries(tests))
+		{
+			let not = false
+			let args = values.not || values;
+			if (values.not)
+				not = true
+			const tmp = ChansService.testTable[key as keyof typeof ChansService.testTable].check
+			if (!tmp(args as any, res, not))
+				return true
+		}
+
+		return false
+	}
 
 	private namesArrayToStringArray(users: { name: string }[]) {
 		return users.map(el => el.name)
@@ -244,18 +300,20 @@ export class ChansService {
 	}
 
 	async leaveChan(username: string, id: number) {
-		const toCheck = await this.prisma.chan.findUnique({
-			where:
-			{
-				id: id,
-				users: { some: { name: username } }
-			},
-			select: { ownerName: true }
-		})
-		if (!toCheck)
-			throw new NotFoundException(`chan with id ${id} not found`)
-		if (toCheck.ownerName === username) // the owner need to transfer the ownership before leaving or deleting the chan
-			throw new ForbiddenException(`owner can't leave a chan`)
+		// const toCheck = await this.prisma.chan.findUnique({
+		// 	where:
+		// 	{
+		// 		id: id,
+		// 		users: { some: { name: username } }
+		// 	},
+		// 	select: { ownerName: true }
+		// })
+		// if (!toCheck)
+		// 	throw new NotFoundException(`chan with id ${id} not found`)
+		// if (toCheck.ownerName === username) // the owner need to transfer the ownership before leaving or deleting the chan
+		// 	throw new ForbiddenException(`owner can't leave a chan`)
+		if (!await this.testfunc(id, username, { owner: { not: { username: username } } }))
+			throw new ForbiddenException('')
 		const toNotify = (await this.prisma.chan.update({
 			where: { id: id },
 			data:

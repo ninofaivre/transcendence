@@ -10,6 +10,7 @@ import contract from 'contract/contract';
 import { zCreatePrivateChan, zCreatePublicChan } from 'contract/zod/chan.zod';
 import { z } from 'zod';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import { Action, CaslAbilityFactory } from 'src/casl/casl-ability.factory/casl-ability.factory';
 
 const c = nestControllerContract(contract.chans)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -22,46 +23,47 @@ export class ChansService {
 	constructor(private readonly prisma: PrismaService,
 				private readonly permissionsService: PermissionsService,
 				private readonly appService: AppService,
-				private readonly sseService: SseService)
+				private readonly sseService: SseService,
+			    private readonly caslFact: CaslAbilityFactory)
 	{
 	}
 
-	private usersSelect = Prisma.validator<Prisma.UserSelect>()
+	public static usersSelect = Prisma.validator<Prisma.UserSelect>()
 		({
 			name: true,
 		})
 
-	private rolesSelect = Prisma.validator<Prisma.RoleSelect>()
+	public static rolesSelect = Prisma.validator<Prisma.RoleSelect>()
 		({
 			permissions: true,
 			roleApplyOn: true,
 			roles: { select: { name: true } },
 			name: true,
-			users: { select: this.usersSelect },
+			users: { select: ChansService.usersSelect },
 		})
 
-	private rolesGetPayload = Prisma.validator<Prisma.RoleArgs>()
+	public static rolesGetPayload = Prisma.validator<Prisma.RoleArgs>()
 		({
-			select: this.rolesSelect
+			select: ChansService.rolesSelect
 		})
 
-	private chansSelect = Prisma.validator<Prisma.ChanSelect>()
+	public static chansSelect = Prisma.validator<Prisma.ChanSelect>()
 		({
 			id: true,
 			title: true,
 			type: true,
 			ownerName: true,
-			users: { select: this.usersSelect },
-			roles: { select: this.rolesSelect },
+			users: { select: ChansService.usersSelect },
+			roles: { select: ChansService.rolesSelect },
 		})
 
-	private discussionEventsSelect = Prisma.validator<Prisma.DiscussionEventSelect>()
+	public static discussionEventsSelect = Prisma.validator<Prisma.DiscussionEventSelect>()
 		({
 			eventType: true,
 			concernedUser: true,
 		})
 
-	private discussionMessagesSelect = Prisma.validator<Prisma.DiscussionMessageSelect>()
+	public static discussionMessagesSelect = Prisma.validator<Prisma.DiscussionMessageSelect>()
 		({
 			content: true,
 			relatedTo: true,
@@ -69,11 +71,11 @@ export class ChansService {
 			relatedRoles: { select: { name: true } },
 		})
 
-	private discussionElementsSelect = Prisma.validator<Prisma.DiscussionElementSelect>()
+	public static discussionElementsSelect = Prisma.validator<Prisma.DiscussionElementSelect>()
 		({
 			id: true,
-			event: { select: this.discussionEventsSelect },
-			message: { select: this.discussionMessagesSelect },
+			event: { select: ChansService.discussionEventsSelect },
+			message: { select: ChansService.discussionMessagesSelect },
 			author: true,
 			creationDate: true
 		})
@@ -147,7 +149,7 @@ export class ChansService {
 		return users.map(el => el.name)
 	}
 
-	private formatRole(role: Prisma.RoleGetPayload<typeof this.rolesGetPayload>) {
+	private formatRole(role: Prisma.RoleGetPayload<typeof ChansService.rolesGetPayload>) {
 		const { roles, users, ...rest } = role
 		return {
 			roles: this.namesArrayToStringArray(roles),
@@ -172,7 +174,7 @@ export class ChansService {
 			{
 				users: { some: { name: username } }
 			},
-			select: this.chansSelect,
+			select: ChansService.chansSelect,
 			orderBy: { type: 'desc' }
 		})
 	}
@@ -207,7 +209,7 @@ export class ChansService {
 						},
 					},
 				},
-				select: this.chansSelect
+				select: ChansService.chansSelect
 			})
 			await this.prisma.role.update({
 				where: { chanId_name: { chanId: res.id, name: 'ADMIN' } },
@@ -293,7 +295,7 @@ export class ChansService {
 			where: { id: id },
 			select:
 			{
-				users: { select: this.usersSelect }
+				users: { select: ChansService.usersSelect }
 			}
 		})).users
 		toNotify.forEach(el => this.sseService.pushEvent(el.name, { type: EventTypeList.CHAN_DELETED, data: { chanId: id } }))
@@ -342,7 +344,7 @@ export class ChansService {
 					}
 				}
 			},
-			select: { discussionElement: { select: this.discussionElementsSelect } }
+			select: { discussionElement: { select: ChansService.discussionElementsSelect } }
 		})).discussionElement
 		toNotify.forEach(el => this.sseService.pushEvent(el.name, { type: EventTypeList.CHAN_NEW_EVENT, data: { chanId: id, event: res } }))
 	}
@@ -381,7 +383,7 @@ export class ChansService {
 			},
 			select:
 			{
-				discussionElement: { select: this.discussionElementsSelect }
+				discussionElement: { select: ChansService.discussionElementsSelect }
 			}
 		})).discussionElement
 	}
@@ -442,6 +444,15 @@ export class ChansService {
 		return res
 	}
 
+	async getChanMessageById(id: number)
+	{
+		return this.prisma.discussionElement.findUnique
+		({
+			where: { id: id },
+			select: ChansService.discussionElementsSelect
+		})
+	}
+
 	async getChanMessages(username: string, chanId: number, nMessages: number, start?: number) {
 		const res = await this.prisma.chan.findUnique({
 			where:
@@ -457,7 +468,7 @@ export class ChansService {
 					orderBy: { id: 'desc' },
 					take: nMessages,
 					skip: Number(!!start),
-					select: this.discussionElementsSelect,
+					select: ChansService.discussionElementsSelect,
 				}
 			}
 		})
@@ -467,52 +478,54 @@ export class ChansService {
 	}
 
 	async deleteChanMessage(username: string, chanId: number, msgId: number) {
-		const toCheck = await this.prisma.chan.findUnique({
-			where:
-			{
-				id: chanId,
-				users: { some: { name: username } }
-			},
-			select:
-			{
-				elements:
-				{
-					where:
-					{
-						id: msgId,
-						message: { discussionElementId: msgId }
-					},
-					select:
-					{
-						message: { select: { id: true } },
-						author: true
-					},
-					take: 1
-				},
-				users:
-				{
-					where: { name: { not: username } },
-					select: { name: true }
-				}
-			}
-		})
-		if (!toCheck)
-			throw new NotFoundException(`chan with id ${chanId} not found`)
-		if (!toCheck.elements.length)
-			throw new NotFoundException(`msg with id ${msgId} not found in chan with id ${chanId}`)
-		const author = toCheck.elements[0].author
-		if (!(await this.permissionsService.doesUserHasRightTo(username, author, PermissionList.DELETE_MESSAGE, chanId)))
-			throw new ForbiddenException(`you don't have the right to do delete this msg`)
-		const res = await this.prisma.discussionElement.update({
-			where: { id: msgId },
-			data:
-			{
-				message: { delete: {} },
-				event: { create: { eventType: EventType.MESSAGE_DELETED } },
-			},
-			select: this.discussionElementsSelect
-		})
-		await this.notifyChanEvent(toCheck.users, chanId, res)
+		const ability = this.caslFact.createAbility({ name: username })
+		console.log('CAN :', ability.can(Action.Delete, 'Message'))
+		// const toCheck = await this.prisma.chan.findUnique({
+		// 	where:
+		// 	{
+		// 		id: chanId,
+		// 		users: { some: { name: username } }
+		// 	},
+		// 	select:
+		// 	{
+		// 		elements:
+		// 		{
+		// 			where:
+		// 			{
+		// 				id: msgId,
+		// 				message: { discussionElementId: msgId }
+		// 			},
+		// 			select:
+		// 			{
+		// 				message: { select: { id: true } },
+		// 				author: true
+		// 			},
+		// 			take: 1
+		// 		},
+		// 		users:
+		// 		{
+		// 			where: { name: { not: username } },
+		// 			select: { name: true }
+		// 		}
+		// 	}
+		// })
+		// if (!toCheck)
+		// 	throw new NotFoundException(`chan with id ${chanId} not found`)
+		// if (!toCheck.elements.length)
+		// 	throw new NotFoundException(`msg with id ${msgId} not found in chan with id ${chanId}`)
+		// const author = toCheck.elements[0].author
+		// if (!(await this.permissionsService.doesUserHasRightTo(username, author, PermissionList.DELETE_MESSAGE, chanId)))
+		// 	throw new ForbiddenException(`you don't have the right to do delete this msg`)
+		// const res = await this.prisma.discussionElement.update({
+		// 	where: { id: msgId },
+		// 	data:
+		// 	{
+		// 		message: { delete: {} },
+		// 		event: { create: { eventType: EventType.MESSAGE_DELETED } },
+		// 	},
+		// 	select: ChansService.discussionElementsSelect
+		// })
+		// await this.notifyChanEvent(toCheck.users, chanId, res)
 	}
 
 	async kickUserFromChan(username: string, toKick: string, chanId: number) {
@@ -576,7 +589,7 @@ export class ChansService {
 			},
 			select:
 			{
-				discussionElement: { select: this.discussionElementsSelect }
+				discussionElement: { select: ChansService.discussionElementsSelect }
 			}
 		})).discussionElement
 	}
@@ -601,7 +614,7 @@ export class ChansService {
 		const res = await this.prisma.chan.update({
 			where: { id: chanId },
 			data: { users: { connect: { name: username } } },
-			select: this.chansSelect
+			select: ChansService.chansSelect
 		})
 		if (res.roles.some(el => el.name === 'DEFAULT')) {
 			await this.prisma.role.update({
@@ -805,7 +818,7 @@ export class ChansService {
 		// TODO:
 		// * notify all members of the chan by sse
 		// * handle title unique constraint faillure
-		return this.prisma.chan.update({ where: { id: chanId }, data: { ...Object.fromEntries(tmp), ...dto }, select: this.chansSelect })
+		return this.prisma.chan.update({ where: { id: chanId }, data: { ...Object.fromEntries(tmp), ...dto }, select: ChansService.chansSelect })
 	}
 
 }

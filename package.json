@@ -23,6 +23,8 @@
     "@anatine/zod-nestjs": "^1.9.2",
     "@anatine/zod-openapi": "^1.12.1",
     "@asteasolutions/zod-to-openapi": "^4.6.0",
+    "@casl/ability": "^6.5.0",
+    "@casl/prisma": "^1.4.0",
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "@nestjs/common": "^9.4.0",
     "@nestjs/config": "^2.3.1",

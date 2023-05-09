@@ -15,11 +15,15 @@ import { FriendsModule } from './friends/friends.module';
 import { SseModule } from './sse/sse.module';
 import { APP_PIPE } from '@nestjs/core'
 import { ZodValidationPipe } from '@anatine/zod-nestjs'
+// import { CaslModule } from 'nest-casl'
+import { Roles } from './app.roles'
+import { CaslModule } from './casl/casl.module';
 
 @Module({
 	imports:
 	[
-		PrismaModule.forRootAsync({
+		PrismaModule.forRootAsync
+		({
 			imports: [ ConfigModule ],
 			inject: [ ConfigService ],
 			isGlobal: true,
@@ -43,8 +47,12 @@ import { ZodValidationPipe } from '@anatine/zod-nestjs'
 				}
 			}),
 		}),
-		ServeStaticModule.forRoot(
-		{
+		CaslModule/* .forRoot<Roles> */,
+		// ({
+		// 	superuserRole: Roles.admin
+		// }),
+		ServeStaticModule.forRoot
+		({
 			 rootPath: join(__dirname, '..', 'frontend/build'),
 			//rootPath: join(__dirname, '..', 'client/build'),
 			exclude: ['/api*'],
@@ -56,7 +64,8 @@ import { ZodValidationPipe } from '@anatine/zod-nestjs'
 		InvitationsModule,
 		DmsModule,
 		FriendsModule,
-		SseModule
+		SseModule,
+		CaslModule
 	],
 	controllers: [AppController],
 	providers:

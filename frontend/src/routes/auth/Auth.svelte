@@ -1,53 +1,42 @@
 <script lang="ts">
 	import { type ToastSettings, toastStore } from "@skeletonlabs/skeleton"
-	import { getCookie, fetchPostJSON } from "$lib/global"
-
-	export let logged_in = false
-
-	if (getCookie("access_token")) logged_in = true
+	import { fetchPostJSON, login, logout } from "$lib/global"
 
 	let username = ""
 	let password = ""
 
-	async function login() {
-		return fetchPostJSON("/api/auth/login", {
-			username,
-			password
-		})
-	}
-
 	async function signup() {
 		return fetchPostJSON("/api/user/sign-up", {
 			name: username,
-			password
+			password,
 		})
 	}
 
 	const signup_failed_toast: ToastSettings = {
-		message: "Signup failed"
+		message: "Signup failed",
 	}
 	const login_failed_toast: ToastSettings = {
-		message: "Log in failed"
+		message: "Log in failed",
 	}
 
 	async function formSubmit(e: SubmitEvent) {
 		if (e.submitter) {
 			if (e.submitter.id === "login") {
 				console.log(`${username} is logging in...`)
-				if (!(await login()).ok) {
+				logout()
+				if (!(await login(username, password)).ok) {
 					console.log("Log-in failed")
 					toastStore.trigger(login_failed_toast)
-					return
-				} else logged_in = true
+				}
 			} else if (e.submitter.id === "signup") {
 				if (!(await signup()).ok) {
 					toastStore.trigger(signup_failed_toast)
 					console.log("Sign-up failed")
-					return
-				}
-				console.log(`Signing up ${username}...`)
+				} else console.log(`Signing up ${username}...`)
 			} else
-				throw new Error(`Trying to submit data from unknown submitter with id=${e.submitter.id}`)
+				throw new Error(
+					`Trying to submit data from unknown submitter with id=${e.submitter.id}`,
+				)
 		}
 	}
 </script>
@@ -62,8 +51,12 @@
 					Password
 					<input bind:value={password} type="password" required class="input" />
 				</label>
-				<button id="login" type="submit" class="btn variant-filled-success"> Log in </button>
-				<button id="signup" type="submit" class="btn variant-filled-primary"> Sign up </button>
+				<button id="login" type="submit" class="btn variant-filled-success">
+					Log in
+				</button>
+				<button id="signup" type="submit" class="btn variant-filled-primary">
+					Sign up
+				</button>
 			</label>
 		</form>
 	</div>

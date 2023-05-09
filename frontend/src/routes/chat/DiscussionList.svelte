@@ -1,9 +1,7 @@
 <script lang="ts">
-	import { invalidate } from "$app/navigation"
 	import type { Discussion } from "$lib/types"
-	import { onMount } from "svelte"
+	import { onMount, getContext } from "svelte"
 
-	export let eventSource: EventSource
 	export let currentDiscussionId: number
 	export let discussions: Discussion[]
 
@@ -17,21 +15,31 @@
 		}
 	}
 
-	onMount(() => {
-		// Add listener for discussion creation
-		eventSource.addEventListener("CHAN_NEW_EVENT", ({ data }: MessageEvent) => {
+	// Add listener for discussion creation
+	getContext<EventSource>("eventSource").addEventListener(
+		"CHAN_NEW_EVENT",
+		({ data }: MessageEvent) => {
 			const parsedData = JSON.parse(data)
 			console.log("Server message: New room created", parsedData)
-			invalidate(":discussions")
-		})
+		},
+	)
 
-		// Add listener for discussion deletion
-		eventSource.addEventListener("CHAN_DELETED", ({ data }: MessageEvent) => {
+	getContext<EventSource>("eventSource").addEventListener(
+		"CHAN_NEW_MESSAGE",
+		({ data }: MessageEvent) => {
+			const parsedData = JSON.parse(data)
+			console.log("Server message: New message in for room", parsedData)
+		},
+	)
+
+	// Add listener for discussion deletion
+	getContext<EventSource>("eventSource").addEventListener(
+		"CHAN_DELETED",
+		({ data }: MessageEvent) => {
 			const parsedData = JSON.parse(data)
 			console.log("Server message: A room was deleted", parsedData)
-			invalidate(":discussions")
-		})
-	})
+		},
+	)
 </script>
 
 {#each discussions as d}

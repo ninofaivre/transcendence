@@ -1,7 +1,10 @@
-import { derived } from "svelte/store"
+import { derived, writable } from "svelte/store"
 import { fetchGet } from "$lib/global"
 import { localStorageStore } from "@skeletonlabs/skeleton"
-import { PUBLIC_BACKEND_URL } from "$env/static/public"
+// import { PUBLIC_BACKEND_URL } from "$env/static/public"
+import { browser } from "$app/environment"
+import type { Writable } from "svelte/store"
+import type { Discussion } from "./types"
 
 export const logged_in = localStorageStore("logged", false)
 
@@ -23,8 +26,65 @@ export const my_name = derived(
 	"Anonymous",
 )
 
-// export const sse = derived(logged_in, ($logged_in, set) => {
-// 	if ($logged_in === true) {
-// 		set(new EventSource(PUBLIC_BACKEND_URL + "/api/sse"))
-// 	} else set($sse.close())
-// })
+// type SseDataType = {
+// 	dm_messages: string[]
+// 	room_messages: string[]
+// 	dm_list: Discussion[]
+// 	room_list: Discussion[]
+// }
+// export const create_sse_store = function () {
+// 	let eventSource: EventSource
+
+// 	const { subscribe, update }: Writable<SseDataType> = writable(
+// 		{
+// 			dm_list: [],
+// 			dm_messages: [],
+// 			room_messages: [],
+// 			room_list: [],
+// 		},
+// 		() => {
+// 			if (browser) init()
+// 			return () => {
+// 				eventSource?.close()
+// 				console.log("Closing Eventsource...")
+// 			}
+// 		},
+// 	)
+
+// 	function init() {
+// 		eventSource = new EventSource("/api/sse")
+
+// 		eventSource.addEventListener("CHAN_NEW_MESSAGE", ({ data }) => {
+// 			add_new_room_message(JSON.parse(data))
+// 		})
+// 		eventSource.addEventListener("DM_NEW_MESSAGE", ({ data }) => {
+// 			add_new_dm_message(JSON.parse(data))
+// 		})
+// 	}
+
+// 	function add_new_room_message(new_message: string) {
+// 		update((value) => {
+// 			return { ...value, room_messages: [...value.room_messages, new_message] }
+// 		})
+// 	}
+
+// 	function add_new_room(new_room: Discussion) {
+// 		update((value) => {
+// 			return { ...value, room_list: [...value.room_list, new_room] }
+// 		})
+// 	}
+
+// 	function add_new_dm_message(new_message: string) {
+// 		update((value) => {
+// 			return { ...value, dm_messages: [...value.dm_messages, new_message] }
+// 		})
+// 	}
+
+// 	function add_new_dm(new_dm: Discussion) {
+// 		update((value) => {
+// 			return { ...value, dm_list: [...value.dm_list, new_dm] }
+// 		})
+// 	}
+
+// 	return { subscribe, update, add_new_room, add_new_room_message, add_new_dm, add_new_dm_message }
+// }

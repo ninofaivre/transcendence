@@ -67,7 +67,7 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: object, urlArgs
 	if (response.status == 401) {
 		console.log(
 			`POST request to ${PUBLIC_BACKEND_URL + apiEndPoint} returned 401`,
-			"Logging out...",
+			"Logging out after unauthorized request...",
 			logged_in.set(false),
 		)
 	}
@@ -75,7 +75,7 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: object, urlArgs
 }
 
 export async function login(username: string, password: string) {
-	logout()
+	await logout()
 	const response = fetchPostJSON("/api/auth/login", {
 		username,
 		password,
@@ -85,7 +85,6 @@ export async function login(username: string, password: string) {
 		logged_in.set(true)
 	} else {
 		console.log("Login UNsuccessful", "Setting logged in as false")
-		logged_in.set(false)
 	}
 	return response
 }

@@ -7,6 +7,7 @@
 	import { fetchGet } from "$lib/global"
 	import { my_name } from "$lib/stores"
 	import { onMount } from "svelte"
+	import { getContext } from "svelte"
 
 	export let currentDiscussionId: number // To detect change of current conversation
 	export let new_message: [string, Promise<Response>]
@@ -98,12 +99,16 @@
 		}
 	}
 
-	onMount(() => {
-		//Set up event listener for new messages
-		eventSource.addEventListener("CHAN_NEW_MESSAGE", ({ data }: MessageEvent) => {
+	//Set up event listener for new messages
+	getContext<EventSource>("eventSource").addEventListener(
+		"CHAN_NEW_MESSAGE",
+		({ data }: MessageEvent) => {
 			const parsedData = JSON.parse(data)
 			console.log("Server message received: A new chan message was sent", parsedData)
-		})
+		},
+	)
+
+	onMount(() => {
 		//Set up observer
 		observer = new IntersectionObserver(intersectionHandler, {
 			threshold,
@@ -119,6 +124,8 @@
 	$: {
 		switchMessages(currentDiscussionId)
 	}
+
+	// if (eventSource) console.log("eventSource:", eventSource)
 </script>
 
 <!-- The normal flexbox inside a reverse flexbox is a trick to scroll to the bottom when the element loads -->

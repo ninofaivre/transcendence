@@ -1,33 +1,38 @@
 <script lang="ts">
-	// The ordering of these imports is critical to your app working properly
 	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
+	// The ordering of these imports is critical to your app working properly
 	// If you have source.organizeImports set to true in VSCode, then it will auto change this ordering
 	import "@skeletonlabs/skeleton/styles/all.css"
 	// Most of your app wide CSS should be put in this file
 	import "../app.postcss"
 
-	import type { BeforeNavigate } from "@sveltejs/kit"
-
 	import { AppShell, AppBar, LightSwitch, Toast } from "@skeletonlabs/skeleton"
-	import { logout, getCookie } from "$lib/global"
+	import { logout } from "$lib/global"
 	import { logged_in, my_name } from "$lib/stores"
-	import { onDestroy, onMount } from "svelte"
-	import { beforeNavigate, goto } from "$app/navigation"
+	import { setContext, getContext, hasContext, onMount } from "svelte"
+	import { goto } from "$app/navigation"
 
 	function setup_logout(node: HTMLButtonElement) {
 		node.addEventListener("click", () => logout())
 	}
 
-	if ($logged_in == true) {
-		console.log("We found our cookie. You are now logged in")
-	}
-
-	// The check to set the store to true is done is the layout load function
-	// but the redirection needs to happen when the component is initialized
 	$: {
-		if ($logged_in == false) {
-			console.log("You are NOT logged in, redirecting to home page...")
-			goto("/")
+		if ($logged_in == true) {
+			console.log("We found our cookie. You are now logged in. Creating an event source...")
+			setContext("eventSource", new EventSource("/api/sse"))
+			goto("/chat")
+		} else if ($logged_in == false) {
+			console.log("You are NOT logged in, redirecting to auth page...")
+			// Does the sse_store loose all subscribers ?
+			if (hasContext("eventSource")) {
+				console.log("Closing event source")
+				getContext<EventSource>("eventSource").close()
+				console.log(
+					"Is event source closed ?:",
+					getContext<EventSource>("eventSource").readyState == 2 ? "Yes" : "No",
+				)
+			}
+			goto("/auth")
 		}
 	}
 

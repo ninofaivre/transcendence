@@ -42,7 +42,7 @@ export enum ChanAction
 	Kick = 'kick'
 }
 
-export type ChanUser = { name: string, roles: { users: { name: string }[], permissions: PermissionList[], roleApplyOn: RoleApplyingType, roles: { users: { name: string }[] }[] }[] }
+export type ChanUser = { name: string, rolesSym: { users: { name: string }[], permissions: PermissionList[], roleApplyOn: RoleApplyingType, roles: { users: { name: string }[] }[] }[] }
 
 export type AppAbility = PureAbility<
 [
@@ -102,7 +102,7 @@ export class CaslAbilityFactory
 			can(Action.Update, 'Message', { author: user.name })
 		}
 		cannot(Action.Update, 'Message', { author: { not: user.name } }).because("you can't update message than you don't own")
-		can(ChanAction.Kick, 'ChanUser', {} })
+		can(ChanAction.Kick, 'ChanUser', { rolesSym: { permissions: { has: PermissionList.KICK }, users: { some: { name: user.name } } } })
 		
 		// can(ChanAction.Kick, '')
 

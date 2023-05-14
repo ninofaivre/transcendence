@@ -41,7 +41,7 @@ import { CaslModule } from './casl/casl.module';
 					[
 						{
 							emit: 'event',
-							level: 'query',
+							level: 'error',
 						}
 					],
 				}
@@ -53,8 +53,7 @@ import { CaslModule } from './casl/casl.module';
 		// }),
 		ServeStaticModule.forRoot
 		({
-			 rootPath: join(__dirname, '..', 'frontend/build'),
-			//rootPath: join(__dirname, '..', 'client/build'),
+			rootPath: join('./frontend/build'),
 			exclude: ['/api*'],
 		}),
 		AuthModule,

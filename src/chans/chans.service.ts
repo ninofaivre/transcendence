@@ -8,9 +8,8 @@ import { EventTypeList, SseService } from 'src/sse/sse.service';
 import { NestRequestShapes, nestControllerContract } from '@ts-rest/nest';
 import contract from 'contract/contract';
 import { zCreatePrivateChan, zCreatePublicChan } from 'contract/zod/chan.zod';
-import { z } from 'zod';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { Action, CaslAbilityFactory } from 'src/casl/casl-ability.factory/casl-ability.factory';
+import { subject } from '@casl/ability';
 
 const c = nestControllerContract(contract.chans)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -411,7 +410,7 @@ export class ChansService {
 					where: { id: relatedTo },
 					select: { id: true },
 				},
-				users: { where: { name: { in: [...usersAt!] } }, select: { name: true } },
+				users: usersAt && { where: { name: { in: [...usersAt!] } }, select: { name: true } },
 				roles:
 				{
 					where: this.permissionsService.getRolesDoesUserHasRighTo(username, username, PermissionList.SEND_MESSAGE),
@@ -439,7 +438,7 @@ export class ChansService {
 			if (!(await this.removeMutedIfUntilDateReached(toCheck.mutedUsers[0])))
 				throw new ForbiddenException(`you are muted`)
 		}
-		const res = await this.createChanMessage(username, chanId, content, relatedTo, [...usersAt!])
+		const res = await this.createChanMessage(username, chanId, content, relatedTo, usersAt && [...usersAt!] || [])
 		await this.notifyChanMessage(toCheck.users, chanId, res)
 		return res
 	}
@@ -478,8 +477,12 @@ export class ChansService {
 	}
 
 	async deleteChanMessage(username: string, chanId: number, msgId: number) {
-		const ability = this.caslFact.createAbility({ name: username })
-		console.log('CAN :', ability.can(Action.Delete, 'Message'))
+		// const ability = this.caslFact.createAbility({ name: username })
+		// const res = await this.prisma.discussionElement.findUnique({ where: { id: msgId }, include: { event: true, message: true } })
+		// if (res)
+		// {
+		// 	console.log('CAN :', ability.can(Action.Delete, subject('Message', res)))
+		// }
 		// const toCheck = await this.prisma.chan.findUnique({
 		// 	where:
 		// 	{

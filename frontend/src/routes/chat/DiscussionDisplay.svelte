@@ -18,7 +18,7 @@
 	let observer: IntersectionObserver
 	const threshold = 0.5
 	const reactivity = 500
-	const loading_greediness = 10
+	const loading_greediness = 12
 	let canary: HTMLDivElement
 	let _init: boolean = true
 
@@ -80,12 +80,14 @@
 	}
 
 	function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
+		if (_init) return
 		console.log("intersectionHandler has been called", entry)
 		const oldest_message = canary.nextElementSibling
-		if (oldest_message && entry.isIntersecting) {
+		const start = oldest_message?.getAttribute("id")
+		if (start && entry.isIntersecting) {
 			const api: string = `/api/chans/${currentDiscussionId}/messages`
 			fetchGet(api, {
-				start: oldest_message.getAttribute("id"),
+				start,
 				nMessages: loading_greediness,
 			})
 				.then((response) => response.json())
@@ -106,7 +108,8 @@
 		displayed_messages = [...displayed_messages, parsedData]
 	}
 
-	// This should be ok since this is route is only accessible to logged_in user
+	// This should be ok since this is route is only accessible to logged_in user but
+	// since the event source remains undefined until success is confirmed it needs to be reactive
 	$: $sse_store?.addEventListener("CHAN_NEW_MESSAGE", addNewMessageFromEventSource)
 
 	$: {
@@ -117,21 +120,22 @@
 		switchMessages(currentDiscussionId)
 	}
 
-	//
-	_init = false
 	onMount(() => {
 		//Set up observer
 		observer = new IntersectionObserver(intersectionHandler, {
 			threshold,
 			rootMargin: `${reactivity}px`,
 		})
+		// This causes a call to intersectionHandler to fetch messages even though oldest_message.getAttribute("id") returns nothing
 		observer.observe(canary)
 	})
+
+	_init = false
 </script>
 
 <!-- The normal flexbox inside a reverse flexbox is a trick to scroll to the bottom when the element loads -->
 <div class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
-	<div class="flex flex-col">
+	<div class="flex flex-col scroll-smooth">
 		<div bind:this={canary} />
 		{#each displayed_messages as message}
 			<ChatBubble

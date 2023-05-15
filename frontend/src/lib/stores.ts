@@ -34,7 +34,7 @@ export const sse_store = derived(logged_in, ($logged_in) => {
 			eventSource = new_es
 		}
 		new_es.onerror = function (evt) {
-			console.log("Error while openning new sse connection: ", evt)
+			console.log("Error while openning new sse connection: Probably already in use")
 		}
 	} else {
 		console.log("Closing eventSource...")

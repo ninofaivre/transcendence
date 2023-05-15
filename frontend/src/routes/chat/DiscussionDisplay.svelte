@@ -7,11 +7,10 @@
 	import { fetchGet } from "$lib/global"
 	import { my_name } from "$lib/stores"
 	import { onMount } from "svelte"
-	import { getContext } from "svelte"
+	import { sse_store } from "$lib/stores"
 
 	export let currentDiscussionId: number // To detect change of current conversation
 	export let new_message: [string, Promise<Response>]
-	export let eventSource: EventSource
 
 	let displayed_messages: Message[] = []
 	const initial_load = 20
@@ -21,11 +20,12 @@
 	const reactivity = 500
 	const loading_greediness = 10
 	let canary: HTMLDivElement
+	let _init: boolean = true
 
-	function handleNewMessage(_new_message: typeof new_message) {
+	function handleOwnMessage(_new_message: typeof new_message) {
+		if (_init) return
 		if (_new_message) {
 			let [msg, msg_promise] = _new_message
-			// Does this preserve ordering ?
 			displayed_messages = [
 				...displayed_messages,
 				{
@@ -59,6 +59,7 @@
 	}
 
 	async function switchMessages(_currentDiscussionId: typeof currentDiscussionId) {
+		if (_init) return
 		console.log("switchMessages was called ")
 		if (_currentDiscussionId === currentDiscussionId) {
 			const api: string = `/api/chans/${currentDiscussionId}/messages`
@@ -99,15 +100,25 @@
 		}
 	}
 
-	//Set up event listener for new messages
-	getContext<EventSource>("eventSource").addEventListener(
-		"CHAN_NEW_MESSAGE",
-		({ data }: MessageEvent) => {
-			const parsedData = JSON.parse(data)
-			console.log("Server message received: A new chan message was sent", parsedData)
-		},
-	)
+	function addNewMessageFromEventSource({ data }: MessageEvent) {
+		const parsedData = JSON.parse(data)
+		console.log("Message received from server:", parsedData)
+		displayed_messages = [...displayed_messages, parsedData]
+	}
 
+	// This should be ok since this is route is only accessible to logged_in user
+	$: $sse_store?.addEventListener("CHAN_NEW_MESSAGE", addNewMessageFromEventSource)
+
+	$: {
+		handleOwnMessage(new_message)
+	}
+
+	$: {
+		switchMessages(currentDiscussionId)
+	}
+
+	//
+	_init = false
 	onMount(() => {
 		//Set up observer
 		observer = new IntersectionObserver(intersectionHandler, {
@@ -116,16 +127,6 @@
 		})
 		observer.observe(canary)
 	})
-
-	$: {
-		handleNewMessage(new_message)
-	}
-
-	$: {
-		switchMessages(currentDiscussionId)
-	}
-
-	// if (eventSource) console.log("eventSource:", eventSource)
 </script>
 
 <!-- The normal flexbox inside a reverse flexbox is a trick to scroll to the bottom when the element loads -->

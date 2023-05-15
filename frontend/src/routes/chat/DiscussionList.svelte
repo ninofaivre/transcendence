@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Discussion } from "$lib/types"
-	import { onMount, getContext } from "svelte"
+	import { sse_store } from "$lib/stores"
 
 	export let currentDiscussionId: number
 	export let discussions: Discussion[]
@@ -15,31 +15,23 @@
 		}
 	}
 
-	// Add listener for discussion creation
-	getContext<EventSource>("eventSource").addEventListener(
-		"CHAN_NEW_EVENT",
-		({ data }: MessageEvent) => {
-			const parsedData = JSON.parse(data)
+	// This should be ok as this route is only accessible to logged in users
+	$: {
+		$sse_store?.addEventListener("CHAN_NEW_EVENT", ({ data }: MessageEvent) => {
+			const parsedData: Discussion = JSON.parse(data)
 			console.log("Server message: New room created", parsedData)
-		},
-	)
+		})
 
-	getContext<EventSource>("eventSource").addEventListener(
-		"CHAN_NEW_MESSAGE",
-		({ data }: MessageEvent) => {
+		$sse_store?.addEventListener("CHAN_NEW_MESSAGE", ({ data }: MessageEvent) => {
 			const parsedData = JSON.parse(data)
 			console.log("Server message: New message in for room", parsedData)
-		},
-	)
+		})
 
-	// Add listener for discussion deletion
-	getContext<EventSource>("eventSource").addEventListener(
-		"CHAN_DELETED",
-		({ data }: MessageEvent) => {
+		$sse_store?.addEventListener("CHAN_DELETED", ({ data }: MessageEvent) => {
 			const parsedData = JSON.parse(data)
 			console.log("Server message: A room was deleted", parsedData)
-		},
-	)
+		})
+	}
 </script>
 
 {#each discussions as d}

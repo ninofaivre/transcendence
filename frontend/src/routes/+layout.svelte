@@ -9,7 +9,7 @@
 	import { AppShell, AppBar, LightSwitch, Toast } from "@skeletonlabs/skeleton"
 	import { logout } from "$lib/global"
 	import { logged_in, my_name } from "$lib/stores"
-	import { setContext, getContext, hasContext, onMount } from "svelte"
+	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
 
 	function setup_logout(node: HTMLButtonElement) {
@@ -18,20 +18,8 @@
 
 	$: {
 		if ($logged_in == true) {
-			console.log("We found our cookie. You are now logged in. Creating an event source...")
-			setContext("eventSource", new EventSource("/api/sse"))
 			goto("/chat")
 		} else if ($logged_in == false) {
-			console.log("You are NOT logged in, redirecting to auth page...")
-			// Does the sse_store loose all subscribers ?
-			if (hasContext("eventSource")) {
-				console.log("Closing event source")
-				getContext<EventSource>("eventSource").close()
-				console.log(
-					"Is event source closed ?:",
-					getContext<EventSource>("eventSource").readyState == 2 ? "Yes" : "No",
-				)
-			}
 			goto("/auth")
 		}
 	}

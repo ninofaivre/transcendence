@@ -1,10 +1,9 @@
 import { derived, writable } from "svelte/store"
+
 import { fetchGet } from "$lib/global"
 import { localStorageStore } from "@skeletonlabs/skeleton"
-// import { PUBLIC_BACKEND_URL } from "$env/static/public"
-import { browser } from "$app/environment"
-import type { Writable } from "svelte/store"
-import type { Discussion } from "./types"
+
+console.log("The stores module is being executed...")
 
 export const logged_in = localStorageStore("logged", false)
 
@@ -25,6 +24,24 @@ export const my_name = derived(
 	},
 	"Anonymous",
 )
+
+let eventSource: EventSource | undefined
+export const sse_store = derived(logged_in, ($logged_in) => {
+	if ($logged_in === true) {
+		let new_es = new EventSource("/api/sse")
+		new_es.onopen = function (_evt) {
+			console.log("Successfully established sse connection")
+			eventSource = new_es
+		}
+		new_es.onerror = function (evt) {
+			console.log("Error while openning new sse connection: ", evt)
+		}
+	} else {
+		console.log("Closing eventSource...")
+		eventSource?.close()
+	}
+	return eventSource
+})
 
 // type SseDataType = {
 // 	dm_messages: string[]

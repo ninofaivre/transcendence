@@ -7,7 +7,6 @@
 	import DiscussionList from "./DiscussionList.svelte"
 	import ChatBox from "./ChatBox.svelte"
 	/*utils*/
-	import { hasContext, getContext, onMount } from "svelte"
 
 	let new_message: [string, Promise<Response>]
 	function messageSentHandler(e: CustomEvent<typeof new_message>) {
@@ -20,7 +19,6 @@
 
 	let currentDiscussionId: number = data.discussions[0].id
 	console.log("/chat/page.svelte", "Current discussion id is :", currentDiscussionId)
-	console.log("Current event source is :", getContext<EventSource>("eventSource"))
 </script>
 
 {#if data.discussions.length}
@@ -42,11 +40,7 @@
 		<!-- Vertical grid 2-->
 		<div class="both grid grid-rows-[1fr_auto]" id="messages">
 			<!-- Messages -->
-			<DiscussionDisplay
-				eventSource={getContext("eventSource")}
-				{new_message}
-				{currentDiscussionId}
-			/>
+			<DiscussionDisplay {new_message} {currentDiscussionId} />
 
 			<!-- Input box -->
 			<section class="border-t border-black p-4">

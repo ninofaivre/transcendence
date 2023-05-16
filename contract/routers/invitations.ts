@@ -2,6 +2,7 @@ import { initContract } from "@ts-rest/core";
 import { zChanInvitationId, zFriendInvitationId, zInvitationFilter } from "contract/zod/inv.zod";
 import { zUserName } from "contract/zod/user.zod";
 import { z } from "zod";
+import { unique } from "contract/zod/global.zod";
 
 const c = initContract()
 
@@ -113,7 +114,7 @@ export const invitationsContract = c.router
 		path: `${subpath}/chan/${zInvitationFilter.enum.OUTCOMING}`,
 		body: z.strictObject
 		({
-			usernames: z.array(zUserName).refine(array => new Set(array).size === array.length, { message: "array elements must be unique" }),
+			usernames: unique(z.array(zUserName)),
 			chanId: zChanId
 		}),
 		responses:

@@ -410,7 +410,7 @@ export class ChansService {
 					where: { id: relatedTo },
 					select: { id: true },
 				},
-				users: usersAt && { where: { name: { in: [...usersAt!] } }, select: { name: true } },
+				users: usersAt && { where: { name: { in: usersAt } }, select: { name: true } },
 				roles:
 				{
 					where: this.permissionsService.getRolesDoesUserHasRighTo(username, username, PermissionList.SEND_MESSAGE),
@@ -429,7 +429,7 @@ export class ChansService {
 			throw new NotFoundException(`chan with id ${chanId} not found`)
 		if (relatedTo && !toCheck.elements.length)
 			throw new ForbiddenException(`msg with id ${relatedTo} not found`)
-		if (usersAt && usersAt.size === toCheck.users.length)
+		if (usersAt && usersAt.length === toCheck.users.length)
 			throw new ForbiddenException(`some users at not found`)
 		if (!toCheck.roles.length && toCheck.ownerName !== username)
 			throw new ForbiddenException(`you don't have right to send msg`)

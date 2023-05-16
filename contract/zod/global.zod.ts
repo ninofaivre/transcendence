@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { ZodAny, ZodArray, ZodTypeAny, z } from "zod"
 import { zUserName } from "./user.zod"
 import { zRoleName } from "./chan.zod"
 import { EventType } from "@prisma/client"
@@ -28,3 +28,7 @@ export const zDiscussionElementReturn = z.object
 	message: zMessageReturn.nullable()
 })
 
+export function unique<T extends z.ZodTypeAny>(arg: ZodArray<T, any>)
+{
+	return arg.refine(array => new Set(array).size === array.length, { message: "array elements must be unique" })
+}

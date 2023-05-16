@@ -5,6 +5,7 @@ import { zChanId, zChanPassword, zChanTitle, zCreatePrivateChan, zCreatePublicCh
 import { zDiscussionElementReturn, zMessageId } from "contract/zod/global.zod"
 import { zUserName } from "contract/zod/user.zod"
 import { z } from "zod"
+import { unique } from "contract/zod/global.zod"
 
 const c = initContract()
 
@@ -186,8 +187,8 @@ export const chansContract = c.router
 		({
 			content: z.string().nonempty().max(5000),
 			relatedTo: z.number().positive().int().optional().describe("id of the related msg/event"),
-			usersAt: z.set(zUserName).nonempty().optional(),
-			rolesAt: z.set(zRoleName).nonempty().optional()
+			usersAt: unique(z.array(zUserName).nonempty()).optional(),
+			rolesAt: unique(z.array(zRoleName).nonempty()).optional()
 		}),
 		responses:
 		{

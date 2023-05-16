@@ -171,7 +171,8 @@ export class InvitationsService
 							select: { id: true },
 							take: 1
 						},
-						title: true
+						title: true,
+						ownerName: true
 					}
 				},
 				friend:
@@ -194,7 +195,7 @@ export class InvitationsService
 			throw new InternalServerErrorException(`your account has been deleted, please logout`)
 		if (!toCheck.chans.length)
 			throw new ForbiddenException(`chan with id ${chanId} doesn't exist or your are not a member of it`)
-		if (!toCheck.chans[0].roles.length)
+		if (!toCheck.chans[0].roles.length && toCheck.chans[0].ownerName !== invitingUsername)
 			throw new ForbiddenException(`you don't have right to invite in this chan`)
 		const friends: ({ id: number, otherUserName: string, directMessage: { id: number } | null })[] =
 			Array.prototype.concat

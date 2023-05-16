@@ -4,7 +4,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { MessageEvent } from '@nestjs/common';
 import { SseService } from './sse.service';
 
-@Controller('sse')
+@Controller('/api/sse')
 export class SseController
 {
 
@@ -15,9 +15,8 @@ export class SseController
 	@Sse('/')
 	sse(@Request()req: any): Observable<MessageEvent>
 	{
-		console.log("open /sse for", req.user.username)
-		const res = this.sseService.addSubject(req.user.username)?.subject
-			.asObservable()
+		const res = this.sseService.addSubject(req.user.username)
+			?.asObservable()
 			.pipe(finalize(() => this.sseService.deleteSubject(req.user.username)))
 		if (!res)
 			throw new InternalServerErrorException(`failed to open sse`)

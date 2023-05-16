@@ -66,7 +66,7 @@ export class InvitationsController implements NestControllerInterface<typeof c>
 	@TsRest(c.createChanInvitation)
 	async createChanInvitation(@Request()req: any, @TsRestRequest(){ body: { usernames, chanId } }: RequestShapes['createChanInvitation'])
 	{
-		const body = await this.invitationsService.createChanInvitation(req.user.username, [...usernames], chanId)
+		const body = await this.invitationsService.createChanInvitation(req.user.username, usernames, chanId)
 		return { status: 201 as const, body: body }
 	}
 

@@ -5,14 +5,17 @@ import { MessageEvent } from '@nestjs/common';
 @Injectable()
 export class SseService
 {
-	eventSource = new Map<String, { subject: Subject<MessageEvent>, observersCount: number}>()
+	eventSource = new Map<String, Subject<MessageEvent>>()
 
 	addSubject(username: string)
 	{
-		const tmp = this.eventSource.get(username)
+		let tmp = this.eventSource.get(username)
 		if (!tmp)
-			return this.eventSource.set(username, { subject: new Subject<MessageEvent>(), observersCount: 0}).get(username)
-		tmp.observersCount++
+		{
+			console.log(`creating subject for ${username}`)
+			tmp = this.eventSource.set(username, new Subject<MessageEvent>()).get(username)
+		}
+		console.log(`open SSE for ${username}`)
 		return tmp
 	}
 
@@ -20,7 +23,7 @@ export class SseService
 	{
 		console.log("push Event to", username, "event:", event)
 		console.log(`this.eventSource.get(${username})`, this.eventSource.get(username))
-		this.eventSource.get(username)?.subject.next(event as MessageEvent)
+		this.eventSource.get(username)?.next(event as MessageEvent)
 	}
 
 	async pushEventMultipleUser(usernames: string[], event: MessageEvent)
@@ -33,11 +36,12 @@ export class SseService
 		const tmp = this.eventSource.get(username)
 		if (!tmp)
 			return
-		tmp.observersCount--
-		if (tmp.observersCount > 0)
-			return
-		console.log("close /sse for", username)
-		this.eventSource.delete(username)
+		console.log("close SSE for", username)
+		if (!tmp.observed)
+		{
+			this.eventSource.delete(username)
+			console.log(`deleting subject for ${username}`)
+		}
 	}
 }
 

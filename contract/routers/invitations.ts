@@ -113,7 +113,7 @@ export const invitationsContract = c.router
 		path: `${subpath}/chan/${zInvitationFilter.enum.OUTCOMING}`,
 		body: z.strictObject
 		({
-			usernames: z.set(zUserName),
+			usernames: z.array(zUserName).refine(array => new Set(array).size === array.length, { message: "array elements must be unique" }),
 			chanId: zChanId
 		}),
 		responses:

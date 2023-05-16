@@ -8,7 +8,7 @@ import { EventTypeList, SseService } from 'src/sse/sse.service';
 import { NestRequestShapes, nestControllerContract } from '@ts-rest/nest';
 import contract from 'contract/contract';
 import { zCreatePrivateChan, zCreatePublicChan } from 'contract/zod/chan.zod';
-import { Action, CaslAbilityFactory } from 'src/casl/casl-ability.factory/casl-ability.factory';
+import { Action, CaslAbilityFactory, ChanAction, chanSelect } from 'src/casl/casl-ability.factory/casl-ability.factory';
 import { subject } from '@casl/ability';
 
 const c = nestControllerContract(contract.chans)
@@ -532,47 +532,60 @@ export class ChansService {
 	}
 
 	async kickUserFromChan(username: string, toKick: string, chanId: number) {
-		const toCheck = await this.prisma.chan.findUnique({
-			where:
-			{
-				id: chanId,
-				users: { some: { name: username } }
-			},
-			select:
-			{
-				users: { where: { name: toKick }, select: { name: true }, take: 1 },
-				roles:
-				{
-					where: this.permissionsService.getRolesDoesUserHasRighTo(username, toKick, PermissionList.KICK),
-					select: { id: true },
-					take: 1
-				},
-				ownerName: true
-			}
+		const user = await this.prisma.user.findUnique({
+			where: { name: username },
+			select: { name: true, roles: { where: { chanId: chanId }, select: { rolesSym: { select: { users: { select: { name: true } }, permissions: true, roleApplyOn: true, roles: { select: { users: { select: { name: true } } } } } } } } }
 		})
-		if (!toCheck)
-			throw new NotFoundException(`chan with id ${chanId} not found`)
-		if (!toCheck.users.length)
-			throw new NotFoundException(`user ${toKick} doesn't exist in chan with id ${chanId}`)
-		if (!toCheck.roles.length || toCheck.ownerName === toKick)
-			throw new ForbiddenException(`you don't have right to kick ${toKick}`)
-		const toNotify = (await this.prisma.chan.update({
-			where: { id: chanId },
-			data:
-			{
-				users: { disconnect: { name: toKick } }
-			},
-			select:
-			{
-				users:
-				{
-					where: { name: { not: username } },
-					select: { name: true },
-				}
-			}
-		})).users
-		toNotify.push({ name: toKick })
-		await this.notifyChanEvent(toNotify, chanId, await this.createChanEvent(username, chanId, EventType.AUTHOR_KICKED_CONCERNED, toKick))
+		const toKickUser = await this.prisma.user.findUnique({
+			where: { name: toKick },
+			select: { name: true, roles: { where: { chanId: chanId }, select: { rolesSym: { select: { users: { select: { name: true } }, permissions: true, roleApplyOn: true, roles: { select: { users: { select: { name: true } } } } } } } } }
+		})
+		const chan = await this.prisma.chan.findUnique({ where: { id: chanId }, ...chanSelect })
+		if (!user || !toKickUser || !chan)
+			return
+		const ability = this.caslFact.createAbilityForUserInChan(user, chan)
+		console.log(ability.can(ChanAction.Kick, subject('ChanUser', toKickUser)))
+		// const toCheck = await this.prisma.chan.findUnique({
+		// 	where:
+		// 	{
+		// 		id: chanId,
+		// 		users: { some: { name: username } }
+		// 	},
+		// 	select:
+		// 	{
+		// 		users: { where: { name: toKick }, select: { name: true }, take: 1 },
+		// 		roles:
+		// 		{
+		// 			where: this.permissionsService.getRolesDoesUserHasRighTo(username, toKick, PermissionList.KICK),
+		// 			select: { id: true },
+		// 			take: 1
+		// 		},
+		// 		ownerName: true
+		// 	}
+		// })
+		// if (!toCheck)
+		// 	throw new NotFoundException(`chan with id ${chanId} not found`)
+		// if (!toCheck.users.length)
+		// 	throw new NotFoundException(`user ${toKick} doesn't exist in chan with id ${chanId}`)
+		// if (!toCheck.roles.length || toCheck.ownerName === toKick)
+		// 	throw new ForbiddenException(`you don't have right to kick ${toKick}`)
+		// const toNotify = (await this.prisma.chan.update({
+		// 	where: { id: chanId },
+		// 	data:
+		// 	{
+		// 		users: { disconnect: { name: toKick } }
+		// 	},
+		// 	select:
+		// 	{
+		// 		users:
+		// 		{
+		// 			where: { name: { not: username } },
+		// 			select: { name: true },
+		// 		}
+		// 	}
+		// })).users
+		// toNotify.push({ name: toKick })
+		// await this.notifyChanEvent(toNotify, chanId, await this.createChanEvent(username, chanId, EventType.AUTHOR_KICKED_CONCERNED, toKick))
 	}
 
 	async createChanEvent(author: string, chanId: number, eventType: EventType, concerned?: string) {

@@ -13,20 +13,6 @@ export const chanSelect = Prisma.validator<Prisma.ChanArgs>()
 	} satisfies Prisma.ChanSelect
 })
 
-// export const chanUserSelect = Prisma.validator<Prisma.UserArgs>()
-// ({
-// 	select:
-// 	{
-// 		name: true,
-// 		roles: { where: { chanId: 999, users: { some: { name: "nino" } } }, select: { permissions: true, roleApplyOn: true, roles: { select: { users: { select: { name: true } } } }, users: { select: { name: true } } } }
-// 	} satisfies Prisma.UserSelect
-// })
-//
-// function genChanUserSelect(username: string, chanId: number): {}
-// {
-// 	return {}
-// }
-
 export enum Action
 {
 	Manage = 'manage',
@@ -42,7 +28,7 @@ export enum ChanAction
 	Kick = 'kick'
 }
 
-export type ChanUser = { name: string, rolesSym: { users: { name: string }[], permissions: PermissionList[], roleApplyOn: RoleApplyingType, roles: { users: { name: string }[] }[] }[] }
+export type ChanUser = { name: string, roles: { rolesSym: { users: { name: string }[], permissions: PermissionList[], roleApplyOn: RoleApplyingType, roles: { users: { name: string }[] }[] }[] }[] }
 
 export type AppAbility = PureAbility<
 [
@@ -85,7 +71,10 @@ export class CaslAbilityFactory
 		}
 
 		if (user.name === chan.ownerName)
+		{
 			can([ Action.Create, Action.Delete ], 'Message')
+			can(ChanAction.Kick, 'ChanUser')
+		}
 
 		cannot(ChanAction.Leave, 'Chan', { ownerName: user.name }).because("Owner can't leave a chan. He need to either transfer owner ship or delete the chan")
 		can(ChanAction.Leave, 'Chan', { ownerName: { not: user.name } })
@@ -102,7 +91,8 @@ export class CaslAbilityFactory
 			can(Action.Update, 'Message', { author: user.name })
 		}
 		cannot(Action.Update, 'Message', { author: { not: user.name } }).because("you can't update message than you don't own")
-		can(ChanAction.Kick, 'ChanUser', { rolesSym: { permissions: { has: PermissionList.KICK }, users: { some: { name: user.name } } } })
+		// can(ChanAction.Kick, 'ChanUser', { rolesSym: { some: { permissions: { has: PermissionList.KICK }, users: { some: { name: user.name } } } } })
+		// can(ChanAction.Kick, 'ChanUser', )
 		
 		// can(ChanAction.Kick, '')
 

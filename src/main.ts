@@ -6,6 +6,7 @@ import { SwaggerTheme } from 'swagger-themes';
 import { PrismaClientExceptionFilter, PrismaService } from 'nestjs-prisma';
 import { patchNestjsSwagger } from '@anatine/zod-nestjs';
 import { generateOpenApi } from '@ts-rest/open-api'
+import * as fs from  'fs'
 import contract from 'contract/contract'
 
 async function bootstrap() {

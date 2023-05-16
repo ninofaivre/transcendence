@@ -50,6 +50,7 @@
     "cookie-parser": "^1.4.6",
     "cookie-signature": "^1.2.1",
     "eventsource": "^2.0.2",
+    "fs": "0.0.1-security",
     "install": "^0.13.0",
     "jsonwebtoken": "^9.0.0",
     "nestjs-prisma": "^0.20.0",

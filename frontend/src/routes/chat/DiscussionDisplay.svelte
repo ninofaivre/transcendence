@@ -127,7 +127,8 @@
 			rootMargin: `${reactivity}px`,
 		})
 		// This causes a call to intersectionHandler to fetch messages even though oldest_message.getAttribute("id") returns nothing
-		observer.observe(canary)
+		// Also this is not necessary because switchMessages handles observing
+		// observer.observe(canary)
 	})
 
 	_init = false

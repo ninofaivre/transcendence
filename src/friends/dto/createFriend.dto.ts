@@ -1,7 +1,11 @@
-import { IsId } from "src/decorator/isId.decorator";
+import { createZodDto } from "@anatine/zod-nestjs";
+import { id } from "src/zod/id.zod";
+import { z } from "zod";
 
-export class CreateFriendDTO
-{
-	@IsId()
-	invitationId: number
-}
+const CreateFriendSchema =
+z.object
+({
+	invitationId: id
+}).strict()
+
+export class CreateFriendDTO extends createZodDto(CreateFriendSchema) {}

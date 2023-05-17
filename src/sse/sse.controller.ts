@@ -1,10 +1,10 @@
-import { Controller, ForbiddenException, Get, Request, Sse, UseGuards } from '@nestjs/common';
+import { Controller, ForbiddenException, Get, InternalServerErrorException, Request, Sse, UseGuards } from '@nestjs/common';
 import { finalize, Observable } from 'rxjs';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { MessageEvent } from '@nestjs/common';
 import { SseService } from './sse.service';
 
-@Controller('sse')
+@Controller('/api/sse')
 export class SseController
 {
 
@@ -15,15 +15,11 @@ export class SseController
 	@Sse('/')
 	sse(@Request()req: any): Observable<MessageEvent>
 	{
-		if (this.sseService.eventSource.get(req.user.username))
-		{
-			console.log(`error: /sse already opened for ${req.user.username}`)
-			throw new ForbiddenException(`sse already opened`)
-		}
-		console.log("open /sse for", req.user.username)
-		this.sseService.addSubject(req.user.username)
-		const res =  this.sseService.sendObservable(req.user.username)
+		const res = this.sseService.addSubject(req.user.username)
+			?.asObservable()
 			.pipe(finalize(() => this.sseService.deleteSubject(req.user.username)))
+		if (!res)
+			throw new InternalServerErrorException(`failed to open sse`)
 		return res
 	}
 

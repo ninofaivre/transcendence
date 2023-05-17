@@ -13,11 +13,17 @@ import { InvitationsModule } from './invitations/invitations.module';
 import { DmsModule } from './dms/dms.module';
 import { FriendsModule } from './friends/friends.module';
 import { SseModule } from './sse/sse.module';
+import { APP_PIPE } from '@nestjs/core'
+import { ZodValidationPipe } from '@anatine/zod-nestjs'
+// import { CaslModule } from 'nest-casl'
+import { Roles } from './app.roles'
+import { CaslModule } from './casl/casl.module';
 
 @Module({
 	imports:
 	[
-		PrismaModule.forRootAsync({
+		PrismaModule.forRootAsync
+		({
 			imports: [ ConfigModule ],
 			inject: [ ConfigService ],
 			isGlobal: true,
@@ -35,16 +41,19 @@ import { SseModule } from './sse/sse.module';
 					[
 						{
 							emit: 'event',
-							level: 'query',
+							level: 'error',
 						}
 					],
 				}
 			}),
 		}),
-		ServeStaticModule.forRoot(
-		{
-			 rootPath: join(__dirname, '..', 'frontend/build'),
-			//rootPath: join(__dirname, '..', 'client/build'),
+		CaslModule/* .forRoot<Roles> */,
+		// ({
+		// 	superuserRole: Roles.admin
+		// }),
+		ServeStaticModule.forRoot
+		({
+			rootPath: join('./frontend/build'),
 			exclude: ['/api*'],
 		}),
 		AuthModule,
@@ -54,10 +63,18 @@ import { SseModule } from './sse/sse.module';
 		InvitationsModule,
 		DmsModule,
 		FriendsModule,
-		SseModule
+		SseModule,
+		CaslModule
 	],
 	controllers: [AppController],
-	providers: [AppService],
+	providers:
+	[
+		AppService,
+		{
+		  provide: APP_PIPE,
+		  useClass: ZodValidationPipe,
+		},
+	],
 	exports: [AppService]
 })
 export class AppModule {}

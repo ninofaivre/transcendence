@@ -1,11 +1,13 @@
-import { IsId } from "src/decorator/isId.decorator";
-import { Username } from "src/user/decorator/username.decorator";
+import { createZodDto } from "@anatine/zod-nestjs";
+import { id } from "src/zod/id.zod";
+import { username } from "src/zod/username.zod";
+import { z } from "zod";
 
-export class KickUserFromChanPathDTO
-{
-	@Username()
-	username: string
+const KickUserFromChanPathSchema =
+z.object
+({
+	username: username,
+	chanId: id
+})
 
-	@IsId()
-	chanId: number
-}
+export class KickUserFromChanPathDTO extends createZodDto(KickUserFromChanPathSchema) {}

@@ -1,10 +1,7 @@
-import { BadRequestException, Body, Controller, Delete, Get, NotImplementedException, Param, Patch, Post, Query, Req, Request, UseGuards, ValidationPipe } from '@nestjs/common';
-import { ApiBody, ApiExtraModels, ApiTags, getSchemaPath } from '@nestjs/swagger';
-import { plainToClass, plainToInstance, Transform, Type } from 'class-transformer';
-import { validate, validateSync } from 'class-validator';
+import { Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, NotImplementedException, Param, Patch, Post, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { ApiOkResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ChansService } from './chans.service';
-import { CreateChanDTO, CreatePrivateChanDTO, CreatePublicChanDTO } from './dto/createChan.dto';
 import { CreateChanMessageDTO } from './dto/createChanMessage.dto';
 import { CreateChanMessagePathDTO } from './dto/createChanMessage.path.dto';
 import { DeleteChanPathDTO } from './dto/deleteChan.path.dto';
@@ -14,153 +11,116 @@ import { GetChanMessagesQueryDTO } from './dto/getChanMessages.query.dto';
 import { JoinChanByIdDTO, JoinChanByInvitationDTO } from './dto/joinChan.dto';
 import { KickUserFromChanPathDTO } from './dto/kickUserFromChan.path.dto';
 import { SearchChansQueryDTO } from './dto/searchChans.query.dto';
+import { LeaveChanPathDTO } from './dto/leaveChan.path.dto';
+import contract from 'contract/contract';
+import { nestControllerContract, NestControllerInterface, NestRequestShapes, NestResponseShapes, TsRest, TsRestRequest, } from '@ts-rest/nest';
+import { zCreatePublicChan } from 'contract/zod/chan.zod';
 
-@ApiTags('chans')
-@Controller('chans')
-export class ChansController
+const c = nestControllerContract(contract.chans)
+type RequestShapes = NestRequestShapes<typeof c>
+
+@Controller()
+export class ChansController implements NestControllerInterface<typeof c>
 {
 
 	constructor(private readonly chansService: ChansService) {}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/')
-	async searchChans(@Request()req: any, @Query()queryDTO: SearchChansQueryDTO)
+	@TsRest(c.searchChans)
+	async searchChans(@TsRestRequest(){ query: { titleContains, nResult } }: RequestShapes['searchChans'])
 	{
-		return this.chansService.searchChans(queryDTO.titleContains, queryDTO.nResult)
+		const body = this.chansService.searchChans(titleContains, nResult)
+		return { status: 200 as const, body: await body }
 	}
 
-	@ApiTags('me')
 	@UseGuards(JwtAuthGuard)
-	@Get('/me')
-	async getUserChans(@Request()req: any)
+	@TsRest(c.getMyChans)
+	async getMyChans(@Req()req: any)
 	{
-		return (await this.chansService.getUserChans(req.user.username))
+		const body = (await this.chansService.getUserChans(req.user.username))
 			.map(el => this.chansService.formatChan(el))
+		return { status: 200 as const, body: body }
 	}
 
-	@ApiTags('me')
 	@UseGuards(JwtAuthGuard)
-	@Delete('/me/:id')
-	async leaveChan(@Request()req: any, @Param()dto: DeleteChanPathDTO)
+	@TsRest(c.leaveChan)
+	async leaveChan(@Req()req: any, @TsRestRequest(){ params: { chanId } }: RequestShapes['leaveChan'])
 	{
-		return this.chansService.leaveChan(req.user.username, dto.id)
+		await this.chansService.leaveChan(req.user.username, chanId)
+		return { status: 200 as const, body: null }
 	}
 
-	@ApiTags('me')
 	@UseGuards(JwtAuthGuard)
-	@Post('/me/JoinByInvitation')
-	async joinChanByInvitation(@Req()req: any, @Body()dto: JoinChanByInvitationDTO)
+	@TsRest(c.joinChanByInvitation)
+	async joinChanByInvitation(@Req()req: any, @TsRestRequest(){ body: { invitationId } }: RequestShapes['joinChanByInvitation'] )
 	{
-		return this.chansService.formatChan(await this.chansService.joinChanByInvitation(req.user.username, dto.chanInvitationId))
+		const body = this.chansService.formatChan(await this.chansService.joinChanByInvitation(req.user.username, invitationId))
+		return { status: 200 as const, body: body }
 	}
 
-	@ApiTags('me')
 	@UseGuards(JwtAuthGuard)
-	@Post('/me/JoinById')
-	async joinChanById(@Req()req: any, @Body()dto: JoinChanByIdDTO)
+	@TsRest(c.joinChanById)
+	async joinChanById(@Req()req: any, @TsRestRequest(){ body: { chanId, password } }: RequestShapes['joinChanById'])
 	{
-		return this.chansService.formatChan(await this.chansService.joinChanByid(req.user.username, dto.chanId, dto.password))
+		const body = this.chansService.formatChan(await this.chansService.joinChanByid(req.user.username, chanId, password))
+		return { status: 200 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('/')
-	@ApiExtraModels(CreatePublicChanDTO, CreatePrivateChanDTO)
-	@ApiBody({
-		schema:
-		{
-			discriminator:
-			{
-				propertyName: 'type',
-				mapping:
-				{
-					PRIVATE: getSchemaPath(CreatePrivateChanDTO),
-					PUBLIC: getSchemaPath(CreatePublicChanDTO)
-				}
-			},
-			oneOf:
-			[
-				{ $ref: getSchemaPath(CreatePublicChanDTO) },
-				{ $ref: getSchemaPath(CreatePrivateChanDTO) },
-			],
-		},
-		examples: // it's fucking dumb
-		{
-			PUBLIC:
-			{
-				value:
-				{
-					type: "PUBLIC",
-					title: "MySuperPublicChanTitle",
-					password: "MySuperPassword",
-				}
-			},
-			PRIVATE:
-			{
-				value:
-				{
-					type: "PRIVATE",
-					title: "MySuperPrivateChanTitle",
-				}
-			}
-		}
-	})
-	async createChan(@Request()req: any, @Body({
-		transform: async (value: CreateChanDTO) =>
-		{
-			const errors = await validate(plainToClass((value.type === 'PUBLIC') ? CreatePublicChanDTO : CreatePrivateChanDTO, value),
-				{
-					whitelist: true,
-					forbidNonWhitelisted: true,
-					forbidUnknownValues: true,
-					stopAtFirstError: true
-				})
-			if (errors.length)
-				throw (new ValidationPipe().createExceptionFactory())(errors)
-			return value
-		}
-	})dto: CreateChanDTO)
+	@TsRest(c.createChan)
+	async createChan(@Req()req: any, @TsRestRequest(){ body: requestBody }: RequestShapes['createChan'])
 	{
-		return this.chansService.formatChan(await this.chansService.createChan(req.user.username, dto))
+		const responseBody = this.chansService.formatChan(await this.chansService.createChan(req.user.username, requestBody))
+		return { status: 201 as const, body: responseBody }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Patch('/:chanId')
-	async updateChan(@Request()req: any)
+	@TsRest(c.updateChan)
+	async updateChan(@Req()req: any, @TsRestRequest(){ params: { chanId }, body: requestBody }: RequestShapes['updateChan'])
 	{ 
+		const responseBody = this.chansService.formatChan(await this.chansService.updateChan(req.user.username, chanId, requestBody))
+		return { status: 204 as const, body: responseBody }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete(':id')
-	async deleteChan(@Request()req: any, @Param()pathDTO: DeleteChanPathDTO)
+	@TsRest(c.deleteChan)
+	async deleteChan(@Req()req: any, @TsRestRequest(){ params: { chanId } }: RequestShapes['deleteChan'])
 	{
-		return this.chansService.deleteChan(req.user.username, pathDTO.id)
+		await this.chansService.deleteChan(req.user.username, chanId)
+		return { status: 202 as const, body: null }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post(':chanId/messages')
-	async createChanMessage(@Request()req: any, @Param()pathDTO: CreateChanMessagePathDTO, @Body()dto: CreateChanMessageDTO)
+	@TsRest(c.createChanMessage)
+	async createChanMessage(@Req()req: any, @TsRestRequest(){ params: { chanId }, body: requestBody }: RequestShapes['createChanMessage'])
 	{
-		return this.chansService.createChanMessageIfRightTo(req.user.username, pathDTO.chanId, dto)
+		const responseBody = await this.chansService.createChanMessageIfRightTo(req.user.username, chanId, requestBody)
+		if (!responseBody.message)
+			throw new InternalServerErrorException('')
+		return { status: 201 as const, body: await this.chansService.formatChanMessage(responseBody) }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Get(':chanId/messages')
-	async getChanMessages(@Request()req: any, @Param()pathDTO: GetChanMessagesPathDTO, @Query()queryDTO: GetChanMessagesQueryDTO)
+	@TsRest(c.getChanMessages)
+	async getChanMessages(@Req()req: any, @TsRestRequest(){ params: { chanId }, query: { nMessages, cursor } }: RequestShapes['getChanMessages'])
 	{
-		return this.chansService.getChanMessages(req.user.username, pathDTO.chanId, queryDTO.nMessages, queryDTO.start)
+		const body = await this.chansService.getChanMessages(req.user.username, chanId, nMessages, cursor)
+		return { status: 200 as const, body: await Promise.all(body.map(el => this.chansService.formatChanMessage(el))) }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete(':chanId/messages/:msgId')
-	async deleteChanMessage(@Request()req: any, @Param()pathDTO: DeleteChanMessagePathDTO)
+	@TsRest(c.deleteChanMessage)
+	async deleteChanMessage(@Req()req: any, @TsRestRequest(){ params: { chanId, messageId } }: RequestShapes['deleteChanMessage'])
 	{
-		return this.chansService.deleteChanMessage(req.user.username, pathDTO.chanId, pathDTO.msgId)
+		const body = await this.chansService.deleteChanMessage(req.user.username, chanId, messageId)
+		return { status: 202 as const, body: null }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete(':chanId/users/:username')
-	async kickUserFromChan(@Request()req: any, @Param()pathDTO: KickUserFromChanPathDTO)
+	@TsRest(c.kickUserFromChan)
+	async kickUserFromChan(@Req()req: any, @TsRestRequest(){ params: { chanId, username } }: RequestShapes['kickUserFromChan'])
 	{
-		return this.chansService.kickUserFromChan(req.user.username, pathDTO.username, pathDTO.chanId) 
+		const body = this.chansService.kickUserFromChan(req.user.username, username, chanId) 
+		return { status: 202 as const, body: null }
 	}
 }

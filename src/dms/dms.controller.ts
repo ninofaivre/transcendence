@@ -1,57 +1,56 @@
-import { Body, Controller, Delete, Get, NotImplementedException, Param, Post, Query, Request, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { OneUsernameDTO } from 'src/user/dto/oneUsername.dto';
 import { DmsService } from './dms.service';
-import { CreateDmMessageDTO } from './dto/createDmMessage.dto';
-import { CreateDmMessagePathDTO } from './dto/createDmMessage.path.dto';
-import { DeleteDmPathDTO } from './dto/deleteDm.path.dto';
-import { DeleteDmMessagePathDTO } from './dto/deleteDmMessage.path.dto';
-import { GetDmMessagesPathDTO } from './dto/getDmMessages.path.dto';
-import { GetDmMessagesQueryDTO } from './dto/getDmMessages.query.dto';
-import { JoinDmDTO } from './dto/joinDm.dto';
-import { LeaveDmPathDTO } from './dto/leaveDm.path.dto';
+import { NestRequestShapes, TsRest, TsRestRequest, nestControllerContract } from '@ts-rest/nest';
+import contract from 'contract/contract';
 
-@ApiTags('dms')
-@Controller('dms')
+const c = nestControllerContract(contract.dms)
+type RequestShapes = NestRequestShapes<typeof c>
+
+@Controller()
 export class DmsController
 {
+
 	constructor(private readonly dmsService: DmsService) {}
 
 
-	@ApiTags('me')
 	@UseGuards(JwtAuthGuard)
-	@Get('/me')
+	@TsRest(c.getDms)
 	async getDms(@Request()req: any)
 	{
-		return this.dmsService.getDms(req.user.username)
+		const body = this.dmsService.getDms(req.user.username)
+		return { status: 200 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('/')
-	async createDm(@Request()req: any, @Body()dto: OneUsernameDTO)
+	@TsRest(c.createDm)
+	async createDm(@Request()req: any, @TsRestRequest(){ body: { username } }: RequestShapes['createDm'])
 	{
-		return this.dmsService.createDm(req.user.username, dto.username)
+		const body = this.dmsService.createDm(req.user.username, username)
+		return { status: 201 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/:dmId/messages')
-	async getDmMessages(@Request()req: any, @Param()pathDTO: GetDmMessagesPathDTO, @Query()queryDTO: GetDmMessagesQueryDTO)
+	@TsRest(c.getDmMessages)
+	async getDmMessages(@Request()req: any, @TsRestRequest(){ params: { dmId }, query: { cursor, nMessages } }: RequestShapes['getDmMessages'])
 	{
-		return this.dmsService.getDmMessages(req.user.username, pathDTO.dmId, queryDTO.nMessages, queryDTO.start)
+		const body = this.dmsService.getDmMessages(req.user.username, dmId, nMessages, cursor)
+		return { status: 200 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('/:dmId/messages')
-	async createDmMessage(@Request()req: any, @Param()pathDTO: CreateDmMessagePathDTO, @Body()messageDTO: CreateDmMessageDTO)
+	@TsRest(c.createDmMessage)
+	async createDmMessage(@Request()req: any, @TsRestRequest(){ params: { dmId }, body: { content, relatedTo } }: RequestShapes['createDmMessage'])
 	{
-		return this.dmsService.createDmMessage(req.user.username, pathDTO.dmId, messageDTO.content, messageDTO.relatedId)
+		const body = this.dmsService.createDmMessage(req.user.username, dmId, content, relatedTo)
+		return { status: 201 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete('/:dmId/messages/:msgId')
-	async deleteDmMessage(@Request()req: any, @Param()pathDTO: DeleteDmMessagePathDTO)
+	@TsRest(c.deleteDmMessage)
+	async deleteDmMessage(@Request()req: any, @TsRestRequest(){ params: { dmId, messageId } }: RequestShapes['deleteDmMessage'])
 	{
-		this.dmsService.deleteDmMessage(req.user.username, pathDTO.dmId, pathDTO.msgId)
+		await this.dmsService.deleteDmMessage(req.user.username, dmId, messageId)
+		return { status: 202 as const, body: null }
 	}
 }

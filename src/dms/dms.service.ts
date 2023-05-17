@@ -78,6 +78,8 @@ export class DmsService
 					take: 1,
 				}
 			}})
+		if (!toCheck)
+			throw new ForbiddenException(`your account has beed deleted, you should logout`)
 		if (!toCheck.friend.length && !toCheck.friendOf.length)
 			throw new ForbiddenException(`${friendUsername} is not in your friendList !`)
 		if (toCheck.friend[0]?.directMessage || toCheck.friendOf[0]?.directMessage)
@@ -135,9 +137,9 @@ export class DmsService
 				],
 				friendShip: { is: {} },
 			},
-			select: (relatedId !== undefined) ?
+			select:
 			{
-				elements:
+				elements: (relatedId !== undefined) &&
 				{
 					where: { id: relatedId },
 					select: { id: true },
@@ -145,7 +147,7 @@ export class DmsService
 				},
 				requestingUserName: true,
 				requestedUserName: true
-			} : undefined})
+			}})
 		if (!toCheck)
 			throw new NotFoundException(`directMessage with id ${dmId} not found`)
 		if (relatedId !== undefined && !toCheck.elements?.length)
@@ -185,7 +187,7 @@ export class DmsService
 		}
 		return res
 	}
-	
+
 	async deleteDmMessage(username: string, dmId: number, msgId: number)
 	{
 		const toCheck = await this.prisma.directMessage.findUnique({
@@ -216,7 +218,7 @@ export class DmsService
 			}})
 		if (!toCheck)
 			throw new NotFoundException(`directMessage with id ${dmId} not found`)
-		if (!toCheck.elements.length)
+		if (!toCheck.elements.length || !toCheck.elements[0].message)
 			throw new NotFoundException(`message with id ${msgId} not found`)
 		const trueMsgId: number = toCheck.elements[0].message.id
 		const res = await this.prisma.discussionElement.update({ where: { id: msgId },

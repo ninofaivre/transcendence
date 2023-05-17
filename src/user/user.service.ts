@@ -65,9 +65,9 @@ export class UserService
 	// 	await Promise.all([updatePromise, addEventPromise])
 	// }
 
-	async getUserByName(name: string, include?: Prisma.UserInclude)
+	async getUserByName(name: string, select: Prisma.UserSelect = { name: true, password: true })
 	{
-		return this.prisma.user.findUnique({ where: { name: name }, include: include })
+		return this.prisma.user.findUnique({ where: { name: name }, select: select })
 	}
 
 	async createUser(user: CreateUserDTO)

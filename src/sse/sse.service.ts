@@ -9,8 +9,14 @@ export class SseService
 
 	addSubject(username: string)
 	{
-		if (!this.eventSource.get(username))
-			this.eventSource.set(username, new Subject<MessageEvent>())
+		let tmp = this.eventSource.get(username)
+		if (!tmp)
+		{
+			console.log(`creating subject for ${username}`)
+			tmp = this.eventSource.set(username, new Subject<MessageEvent>()).get(username)
+		}
+		console.log(`open SSE for ${username}`)
+		return tmp
 	}
 
 	async pushEvent(username: string, event: MessageEvent)
@@ -25,15 +31,17 @@ export class SseService
 		return Promise.all(usernames.map(async el => this.pushEvent(el, event)))
 	}
 
-	sendObservable(username: string)
-	{
-		return this.eventSource.get(username).asObservable()
-	}
-
 	deleteSubject(username: string)
 	{
-		console.log("close /sse for", username)
-		this.eventSource.delete(username)
+		const tmp = this.eventSource.get(username)
+		if (!tmp)
+			return
+		console.log("close SSE for", username)
+		if (!tmp.observed)
+		{
+			this.eventSource.delete(username)
+			console.log(`deleting subject for ${username}`)
+		}
 	}
 }
 

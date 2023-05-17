@@ -1,36 +1,41 @@
 import { Body, Controller, Delete, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreateFriendDTO } from './dto/createFriend.dto';
 import { DeleteFriendPathDTO } from './dto/deleteFriend.path.dto';
 import { FriendsService } from './friends.service';
+import { NestControllerInterface, NestRequestShapes, TsRest, TsRestRequest, nestControllerContract } from '@ts-rest/nest';
+import contract from 'contract/contract';
 
-@ApiTags('friends', 'me')
-@Controller('friends')
-export class FriendsController
+const c = nestControllerContract(contract.friends)
+type RequestShapes = NestRequestShapes<typeof c>
+
+@Controller()
+export class FriendsController implements NestControllerInterface<typeof c>
 {
 
 	constructor(private readonly friendsService: FriendsService) {}
 
 
 	@UseGuards(JwtAuthGuard)
-	@Get('/')
+	@TsRest(c.getFriends)
 	async getFriends(@Request()req: any)
 	{
-		return this.friendsService.getFriends(req.user.username)
+		const body = await this.friendsService.getFriends(req.user.username)
+		return { status: 200 as const, body: body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('/')
-	async createFriend(@Request()req: any, @Body()dto: CreateFriendDTO)
+	@TsRest(c.acceptFriendInvitation)
+	async acceptFriendInvitation(@Request()req: any, @TsRestRequest(){ body: { invitationId } }: RequestShapes['acceptFriendInvitation'])
 	{
-		return this.friendsService.acceptInvitation(req.user.username, dto.invitationId)
+		return this.friendsService.acceptInvitation(req.user.username, invitationId)
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Delete('/:friendShipId')
-	async deleteFriend(@Request()req: any, @Param()pathDTO: DeleteFriendPathDTO)
+	@TsRest(c.deleteFriend)
+	async deleteFriend(@Request()req: any, @TsRestRequest(){ params: { friendShipId } }: RequestShapes['deleteFriend'])
 	{
-		return this.friendsService.deleteFriend(req.user.username, pathDTO.friendShipId)
+		await this.friendsService.deleteFriend(req.user.username, friendShipId)
+		return { status: 202 as const, body: null }
 	}
 }

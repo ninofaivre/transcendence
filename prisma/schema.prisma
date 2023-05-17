@@ -14,9 +14,7 @@ datasource db {
 enum PermissionList {
   SEND_MESSAGE
   DELETE_MESSAGE
-  EDIT_TITLE
-  EDIT_PASSWORD
-  EDIT_VISIBILITY
+  EDIT
   INVITE
   KICK
   BAN
@@ -81,7 +79,7 @@ model ChanInvitation {
   requestedUser	User @relation(name: "incomingChanInvitation", fields: [requestedUserName], references: [name])
   requestedUserName	String
 
-  @@unique([chanId, friendShipId])
+  @@unique([chanId, friendShipId, requestingUserName])
 }
 
 // TODO: let one of the users disconnect without deleting FriendShip to display removed friend notification to the other
@@ -276,8 +274,8 @@ model DiscussionMessage {
 
   relatedUsers        User[]
   relatedRoles        Role[]
-  related             DiscussionElement? @relation(name: "related", fields: [relatedId], references: [id])
-  relatedId           Int?
+  related             DiscussionElement? @relation(name: "related", fields: [relatedTo], references: [id])
+  relatedTo           Int?
   discussionElement   DiscussionElement  @relation(name: "ownship", fields: [discussionElementId], references: [id], onDelete: Cascade)
   discussionElementId Int                @unique
 }

@@ -1,5 +1,6 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError, PrismaClientValidationError } from '@prisma/client/runtime';
 import { PrismaService } from 'nestjs-prisma';
 import { EventTypeList, SseService } from 'src/sse/sse.service';
 
@@ -11,14 +12,14 @@ export class FriendsService
 			   	private readonly sseService: SseService) {}
 
 
-	private friendShipSelect: Prisma.FriendShipSelect =
-	{
-		id: true,
-		creationDate: true,
-		requestingUserName: true,
-		requestedUserName: true,
-		directMessage: { select: { id: true } },
-	}
+	private friendShipSelect = Prisma.validator<Prisma.FriendShipSelect>()
+		({
+			id: true,
+			creationDate: true,
+			requestingUserName: true,
+			requestedUserName: true,
+			directMessage: { select: { id: true } },
+		})
 
 
 	async getFriends(username: string)
@@ -37,8 +38,8 @@ export class FriendsService
 
 	async acceptInvitation(username: string, id: number)
 	{
-		try
-		{
+		// try
+		// {
 			const { invitingUserName } = await this.prisma.friendInvitation.delete({
 				where:
 				{
@@ -60,6 +61,8 @@ export class FriendsService
 						select: { id: true }
 					}
 				}})
+			if (!directMessage)
+				throw new InternalServerErrorException(`your account has been deleted, please logout`)
 			const newFriendShip = await this.prisma.friendShip.create({
 				data:
 				{
@@ -69,7 +72,7 @@ export class FriendsService
 					{
 						connect:
 						{
-							id: directMessage.directMessage[0]?.id || directMessage.directMessageOf[0]?.id,
+							id: directMessage.directMessage[0].id || directMessage.directMessageOf[0].id,
 						}
 					}: undefined
 				},
@@ -79,16 +82,18 @@ export class FriendsService
 					type: EventTypeList.NEW_FRIEND,
 					data: { deletedFriendInvitationId: id, friend: newFriendShip }
 				})
-			return newFriendShip
-		}
-		catch (e)
-		{
-			console.log(e)
-			if (e.code === 'P2025')
-				throw new ForbiddenException(`invitation with id ${id} not found`)
-			if (e.code === 'P2002')
-				throw new ConflictException(`friendship already exist`) // should never happen
-		}
+			return { status: 201 as const, body: newFriendShip }
+		// }
+		// catch (e)
+		// {
+		// 	if (e instanceof PrismaClientKnownRequestError)
+		// 	{
+		// 		if (e.code === 'P2025')
+		// 			return { status: 403 as const, body: `invitation with id ${id} not found` }
+		// 		if (e.code === 'P2002')
+		// 			return { status: 409 as const, body: `friendship already exist` }
+		// 	}
+		// }
 	}
 
 	async deleteFriend(username: string, id: number)
@@ -102,7 +107,7 @@ export class FriendsService
 					requestedUserName: true,
 					requestingUserName: true,
 				}})
-			await this.sseService.pushEvent((username === requestedUserName) && requestingUserName || requestedUserName,
+			await this.sseService.pushEvent((username === requestedUserName) ? requestingUserName : requestedUserName,
 				{
 					type: EventTypeList.DELETED_FRIEND,
 					data: { deletedFriendId: id }

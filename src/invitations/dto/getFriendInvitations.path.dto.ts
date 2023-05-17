@@ -1,12 +1,11 @@
-import { ApiProperty } from "@nestjs/swagger"
-import { IsEnum } from "class-validator"
-import { InvitationPathType } from "../types/invitationPath.type"
+import { createZodDto } from "@anatine/zod-nestjs"
+import { z } from "zod"
+import { InvitationFilter } from "../zod/invitationFilter.zod"
 
-export class GetFriendInvitationsPathDTO
-{
-	@ApiProperty({
-		enum: InvitationPathType,
-	})
-	@IsEnum(InvitationPathType)
-	type: InvitationPathType
-}
+const GetFriendInvitationsPathSchema =
+z.object
+({
+	type: InvitationFilter
+})
+
+export class GetFriendInvitationsPathDTO extends createZodDto(GetFriendInvitationsPathSchema) {}

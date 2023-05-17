@@ -7,4 +7,4 @@ fi
 
 pnpm exec prisma studio &
 
-nest start $@
+nest start "$@"

@@ -1,26 +1,11 @@
-export interface Discussion {
-	id: number
-	users: string[]
-	title: string
-}
+import type { ClientInferResponseBody } from "@ts-rest/core"
 
-// export		interface Message
-// {https://stackoverflow.com/questions/52703321/make-some-properties-optional-in-a-typescript-type?answertab=scoredesc#tab-top
-//     id: number
-//     content: string
-//     from: string
-//     discussionId: number
-// }
+import type { chansContract } from "$contracts/chans"
+import type { dmsContract } from "$contracts/dms"
+import type { friendsContract } from "$contracts/friends"
+import type { usersContract } from "$contracts/users"
 
-export interface Message {
-	id: number
-	event?: {}
-	message: {
-		content: string
-		relatedId?: number | null
-		relatedUsers?: string[]
-		relatedRoles?: string[]
-	}
-	author: string
-	creationDate: Date
-}
+export type Discussion = ClientInferResponseBody<typeof chansContract.getMyChans, 200>
+export type Chan = Discussion
+export type ChanMessage = ClientInferResponseBody<typeof chansContract.getChanMessages, 200>
+export type DirectMessage = ClientInferResponseBody<typeof dmsContract.getDms, 200>

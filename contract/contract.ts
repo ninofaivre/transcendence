@@ -9,26 +9,14 @@ const c = initContract()
 
 function prefix<T extends AppRouter>(contract: T, pre: string)
 {
-	if (!pre.length)
+	pre = pre.replace(/^\//, '').replace(/\/$/, '')
+	if (pre === "")
 		return contract
 	for (const k in contract)
 	{
 		let v = contract[k]
-		if (isAppRoute(v)) // dirty append
-		{
-			if (!pre.startsWith('/'))
-				pre = '/' + pre
-			if (!v.path.length)
-			{
-				v.path = pre
-				continue;
-			}
-			if (v.path.startsWith('/') && pre.endsWith('/'))
-				v.path = v.path.substring(1)
-			else if (!v.path.startsWith('/') && !pre.endsWith('/'))
-				v.path = '/' + v.path
-			v.path = pre + v.path
-		}
+		if (isAppRoute(v))
+			v.path = `/${pre}/${v.path.replace(/^\//, '')}`
 		else
 			prefix(v, pre)
 	}

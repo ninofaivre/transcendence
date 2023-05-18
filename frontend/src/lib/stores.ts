@@ -11,7 +11,7 @@ export const my_name = derived(
 	logged_in,
 	($logged_in, set) => {
 		if ($logged_in === true) {
-			fetchGet("/api/user/myName")
+			fetchGet("/api/users/me")
 				.then((r) => r.json())
 				.then(({ data: name }) => {
 					console.log("Welcome back, " + name)

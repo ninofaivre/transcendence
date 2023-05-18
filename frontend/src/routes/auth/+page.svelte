@@ -6,24 +6,13 @@
 	let username = ""
 	let password = ""
 
-	// async function signup() {
-	// 	return fetchPostJSON("/api/users", {
-	// 		name: username,
-	// 		password,
-	// 	})
-	// }
-
-	// Overengineered signup function
 	const signup = async () => {
-		const name = username
-		const { status, body } = (await usersClient.signUp({
+		return usersClient.signUp({
 			body: {
-				name,
+				name: username,
 				password,
 			},
-		})) as { status: number; body: { message?: string } }
-		if (status === 201) console.log("Registered user ", name)
-		else console.log("Signup issue:", status, body?.message)
+		})
 	}
 
 	const signup_failed_toast: ToastSettings = {
@@ -36,16 +25,19 @@
 	async function formSubmit(e: SubmitEvent) {
 		if (e.submitter) {
 			if (e.submitter.id === "login") {
-				console.log(`${username} is logging in...`)
 				if (!(await login(username, password)).ok) {
 					console.log("Log-in failed")
 					toastStore.trigger(login_failed_toast)
 				}
 			} else if (e.submitter.id === "signup") {
-				if (!(await signup()).ok) {
+				const { status, body } = await signup()
+				if (status > 400) {
 					toastStore.trigger(signup_failed_toast)
-					console.log("Sign-up failed")
-				} else console.log(`Signing up ${username}...`)
+					console.log(
+						`Sign-up failed with code ${status}: `,
+						(body as { message?: string })?.message,
+					)
+				} else console.log(`Signed up ${username}...`)
 			} else
 				throw new Error(
 					`Trying to submit data from unknown submitter with id=${e.submitter.id}`,

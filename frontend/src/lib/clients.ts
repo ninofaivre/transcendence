@@ -4,32 +4,29 @@ import { initClient } from "@ts-rest/core"
 
 import { PUBLIC_BACKEND_URL as baseUrl } from "$env/static/public"
 
-import { chansContract } from "$contracts/chans"
-export const chansClient = initClient(chansContract, {
+import contract from "$contract"
+
+export const chansClient = initClient(contract.chans, {
 	baseUrl,
 	baseHeaders: {},
 })
 
-import { dmsContract } from "$contracts/dms"
-export const dmsClient = initClient(dmsContract, {
+export const dmsClient = initClient(contract.dms, {
 	baseUrl,
 	baseHeaders: {},
 })
 
-import { invitationsContract } from "$contracts/invitations"
-export const invitationsClient = initClient(invitationsContract, {
+export const invitationsClient = initClient(contract.invitations, {
 	baseUrl,
 	baseHeaders: {},
 })
 
-import { friendsContract } from "$contracts/friends"
-export const friendsClient = initClient(friendsContract, {
+export const friendsClient = initClient(contract.friends, {
 	baseUrl,
 	baseHeaders: {},
 })
 
-import { usersContract } from "$contracts/users"
-export const usersClient = initClient(usersContract, {
+export const usersClient = initClient(contract.users, {
 	baseUrl,
 	baseHeaders: {},
 })

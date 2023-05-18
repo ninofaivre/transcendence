@@ -1,4 +1,4 @@
-import { AppRoute, AppRouter, initContract, isAppRoute } from "@ts-rest/core"
+import { AppRouter, initContract, isAppRoute } from "@ts-rest/core"
 import { chansContract } from "./routers/chans"
 import { invitationsContract } from "./routers/invitations"
 import { dmsContract } from "./routers/dms"
@@ -7,18 +7,17 @@ import { usersContract } from "./routers/users"
 
 const c = initContract()
 
-function prefix(contract: AppRouter, pre: string): AppRouter
+function prefix<T extends AppRouter>(contract: T, pre: string)
 {
 	if (!pre.length)
-		return contract
-	if (isAppRoute(contract))
 		return contract
 	for (const k in contract)
 	{
 		let v = contract[k]
-		if (isAppRoute(v))
+		if (isAppRoute(v)) // dirty append
 		{
-			pre = (pre.startsWith('/') ? '' : '/') + pre
+			if (!pre.startsWith('/'))
+				pre = '/' + pre
 			if (!v.path.length)
 			{
 				v.path = pre
@@ -36,21 +35,13 @@ function prefix(contract: AppRouter, pre: string): AppRouter
 	return contract
 }
 
-// prefix(chansContract, '/chans')
-prefix(invitationsContract, '/invitations')
-prefix(dmsContract, '/dms')
-prefix(friendsContract, '/friends')
-prefix(usersContract, '/users')
-
-const contract = c.router
+const contract = prefix(c.router
 ({
 	chans: prefix(chansContract, '/chans'),
-	invitations: invitationsContract,
-	dms: dmsContract,
-	friends: friendsContract,
-	users: usersContract
-})
-
-// prefix(contract, '/api')
+	invitations: prefix(invitationsContract, '/invitations'),
+	dms: prefix(dmsContract, '/dms'),
+	friends: prefix(friendsContract, '/friends'),
+	users: prefix(usersContract, '/users')
+}), '/api')
 
 export default contract

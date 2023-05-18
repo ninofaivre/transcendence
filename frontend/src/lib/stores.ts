@@ -1,7 +1,7 @@
-import { derived, writable } from "svelte/store"
+import { derived } from "svelte/store"
 
-import { fetchGet } from "$lib/global"
 import { localStorageStore } from "@skeletonlabs/skeleton"
+import { usersClient } from "$lib/clients"
 
 console.log("The stores module is being executed...")
 
@@ -10,17 +10,18 @@ export const logged_in = localStorageStore("logged", false)
 export const my_name = derived(
 	logged_in,
 	($logged_in, set) => {
-		if ($logged_in === true) {
-			fetchGet("/api/users/me")
-				.then((r) => r.json())
-				.then(({ data: name }) => {
-					console.log("Welcome back, " + name)
-					set(name)
-				})
-				.catch((err: any) => {
-					console.error("Failed to fetch user's name", err)
-				})
-		} else set("Anonymous")
+		async function getter(logged: typeof $logged_in) {
+			if (logged === true) {
+				const { body, status } = await usersClient.getMe()
+				if (status == 200) return body.name
+			}
+		}
+
+		Promise.resolve(getter($logged_in)).then((name) => {
+			if (name) {
+				set(name)
+			} else set("Error")
+		})
 	},
 	"Anonymous",
 )

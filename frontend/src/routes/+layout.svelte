@@ -11,6 +11,7 @@
 	import { logged_in, my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
+	import { usersClient } from "$lib/clients"
 
 	function setup_logout(node: HTMLButtonElement) {
 		node.addEventListener("click", () => logout())

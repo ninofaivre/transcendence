@@ -7,9 +7,6 @@ import { z } from "zod";
 
 const c = initContract()
 
-const subpath = '/api/dms'
-
-
 const zDmReturn = z.object
 ({
 	id: zDmId,
@@ -27,7 +24,7 @@ export const dmsContract = c.router
 	getDms:
 	{
 		method: 'GET',
-		path: `${subpath}/`,
+		path: '/',
 		responses:
 		{
 			200: z.object
@@ -40,7 +37,7 @@ export const dmsContract = c.router
 	createDm:
 	{
 		method: 'POST',
-		path: `${subpath}/`,
+		path: '/',
 		body: z.strictObject
 		({
 			username: zUserName
@@ -53,7 +50,7 @@ export const dmsContract = c.router
 	getDmMessages:
 	{
 		method: 'GET',
-		path: `${subpath}/:dmId/messages`,
+		path: '/:dmId/messages',
 		pathParams: z.strictObject
 		({
 			dmId: zDmId
@@ -71,7 +68,7 @@ export const dmsContract = c.router
 	createDmMessage:
 	{
 		method: 'POST',
-		path: `${subpath}/:dmId/messages`,
+		path: '/:dmId/messages',
 		pathParams: z.strictObject
 		({
 			dmId: zDmId
@@ -89,7 +86,7 @@ export const dmsContract = c.router
 	deleteDmMessage:
 	{
 		method: 'DELETE',
-		path: `${subpath}/:dmId/messages/:messageId`,
+		path: '/:dmId/messages/:messageId',
 		pathParams: z.strictObject
 		({
 			dmId: zDmId,

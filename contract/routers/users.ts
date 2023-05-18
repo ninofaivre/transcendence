@@ -4,14 +4,12 @@ import { z } from "zod";
 
 const c = initContract()
 
-const subpath = '/api/users'
-
 export const usersContract = c.router
 ({
 	getMe:
 	{
 		method: 'GET',
-		path: `${subpath}/me`,
+		path: '/me',
 		responses:
 		{
 			200: z.object
@@ -23,7 +21,7 @@ export const usersContract = c.router
 	signUp:
 	{
 		method: 'POST',
-		path: `${subpath}`,
+		path: '/',
 		body: z.strictObject
 		({
 			name: zUserName,

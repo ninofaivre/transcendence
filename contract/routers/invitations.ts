@@ -6,8 +6,6 @@ import { unique } from "contract/zod/global.zod";
 
 const c = initContract()
 
-const subpath = '/api/invitations'
-
 const zChanId = z.coerce.number().positive().int()
 const zFriendShipId = z.coerce.number().positive().int()
 
@@ -31,7 +29,7 @@ export const invitationsContract = c.router
 	getFriendInvitations:
 	{
 		method: 'GET',
-		path: `${subpath}/friend`,
+		path: '/friend',
 		responses:
 		{
 			200: z.object
@@ -44,7 +42,7 @@ export const invitationsContract = c.router
 	getFriendInvitationsByType:
 	{
 		method: 'GET',
-		path: `${subpath}/friend/:type`,
+		path: '/friend/:type',
 		pathParams: z.strictObject
 		({
 			type: zInvitationFilter
@@ -57,7 +55,7 @@ export const invitationsContract = c.router
 	createFriendInvitation:
 	{
 		method: 'POST',
-		path: `${subpath}/friend/${zInvitationFilter.enum.OUTCOMING}`,
+		path: '/friend/${zInvitationFilter.enum.OUTCOMING}',
 		body: z.strictObject
 		({
 			username: zUserName
@@ -70,7 +68,7 @@ export const invitationsContract = c.router
 	deleteFriendInvitation:
 	{
 		method: 'DELETE',
-		path: `${subpath}/friend/:type/:id`,
+		path: '/friend/:type/:id',
 		pathParams: z.strictObject
 		({
 			id: zFriendInvitationId,
@@ -85,7 +83,7 @@ export const invitationsContract = c.router
 	getChanInvitations:
 	{
 		method: 'GET',
-		path: `${subpath}/chan`,
+		path: '/chan',
 		responses:
 		{
 			200: z.object
@@ -98,7 +96,7 @@ export const invitationsContract = c.router
 	getChanInvitationsByType:
 	{
 		method: 'GET',
-		path: `${subpath}/chan/:type`,
+		path: '/chan/:type',
 		pathParams: z.strictObject
 		({
 			type: zInvitationFilter
@@ -111,7 +109,7 @@ export const invitationsContract = c.router
 	createChanInvitation:
 	{
 		method: 'POST',
-		path: `${subpath}/chan/${zInvitationFilter.enum.OUTCOMING}`,
+		path: '/chan/${zInvitationFilter.enum.OUTCOMING}',
 		body: z.strictObject
 		({
 			usernames: unique(z.array(zUserName)),
@@ -125,7 +123,7 @@ export const invitationsContract = c.router
 	deleteChanInvitation:
 	{
 		method: 'DELETE',
-		path: `${subpath}/chan/:type/:id`,
+		path: '/chan/:type/:id',
 		pathParams: z.strictObject
 		({
 			type: zInvitationFilter,

@@ -6,8 +6,6 @@ import { z } from "zod";
 
 const c = initContract()
 
-const subpath = '/api/friends'
-
 const zFriendShipId = z.coerce.number().positive().int()
 
 const zFriendShip = z.object
@@ -24,7 +22,7 @@ export const friendsContract = c.router
 	getFriends:
 	{
 		method: 'GET',
-		path: `${subpath}/`,
+		path: '/',
 		responses:
 		{
 			200: z.array(zFriendShip)
@@ -33,7 +31,7 @@ export const friendsContract = c.router
 	acceptFriendInvitation:
 	{
 		method: 'POST',
-		path: `${subpath}/`,
+		path: '/',
 		body: z.strictObject
 		({
 			invitationId: zFriendInvitationId
@@ -46,7 +44,7 @@ export const friendsContract = c.router
 	deleteFriend:
 	{
 		method: 'DELETE',
-		path: `${subpath}/:friendShipId`,
+		path: '/:friendShipId',
 		pathParams: z.strictObject
 		({
 			friendShipId: zFriendShipId

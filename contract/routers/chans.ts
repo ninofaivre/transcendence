@@ -9,8 +9,6 @@ import { unique } from "contract/zod/global.zod"
 
 const c = initContract()
 
-const subpath = '/api/chans'
-
 const zRoleReturn = z.object
 ({
 	users: z.array(zUserName),
@@ -35,7 +33,7 @@ export const chansContract = c.router
 	searchChans:
 	{
 		method: 'GET',
-		path: `${subpath}/`,
+		path: '/',
 		summary: 'search for a chan',
 		description: 'only chan with type PUBLIC are searchable',
 		query: z.strictObject
@@ -57,7 +55,7 @@ export const chansContract = c.router
 	getMyChans:
 	{
 		method: 'GET',
-		path: `${subpath}/me`,
+		path: '/me',
 		responses:
 		{
 			200: z.array(zChanReturn)
@@ -66,7 +64,7 @@ export const chansContract = c.router
 	leaveChan:
 	{
 		method: 'DELETE',
-		path: `${subpath}/me/:chanId`,
+		path: '/me/:chanId',
 		summary: 'leave a chan',
 		pathParams: z.strictObject
 		({
@@ -81,7 +79,7 @@ export const chansContract = c.router
 	joinChanByInvitation:
 	{
 		method: 'POST',
-		path: `${subpath}/me/joinByInvitation`,
+		path: '/me/joinByInvitation',
 		body: z.strictObject
 		({
 			invitationId: z.number().positive().int()
@@ -94,7 +92,7 @@ export const chansContract = c.router
 	joinChanById:
 	{
 		method: 'POST',
-		path: `${subpath}/me/joinById`,
+		path: '/me/joinById',
 		body: z.strictObject
 		({
 			chanId: zChanId,
@@ -108,7 +106,7 @@ export const chansContract = c.router
 	createChan:
 	{
 		method: 'POST',
-		path: `${subpath}/`,
+		path: '/',
 		summary: 'create a chan',
 		body: z.discriminatedUnion("type",
 		[
@@ -129,7 +127,7 @@ export const chansContract = c.router
 	updateChan:
 	{
 		method: 'PATCH',
-		path: `${subpath}/:chanId`,
+		path: '/:chanId',
 		pathParams: z.strictObject
 		({
 			chanId: zChanId
@@ -162,7 +160,7 @@ export const chansContract = c.router
 	deleteChan:
 	{
 		method: 'DELETE',
-		path: `${subpath}/:chanId`,
+		path: '/:chanId',
 		summary: 'delete a chan',
 		pathParams: z.strictObject
 		({ 
@@ -177,7 +175,7 @@ export const chansContract = c.router
 	createChanMessage:
 	{
 		method: 'POST',
-		path: `${subpath}/:chanId/messages`,
+		path: '/:chanId/messages',
 		summary: 'post a message to a chan',
 		pathParams: z.strictObject
 		({
@@ -198,7 +196,7 @@ export const chansContract = c.router
 	getChanMessages:
 	{
 		method: 'GET',
-		path: `${subpath}/:chanId/messages`,
+		path: '/:chanId/messages',
 		summary: 'get messages by cursor in chan',
 		pathParams: z.strictObject
 		({
@@ -217,7 +215,7 @@ export const chansContract = c.router
 	deleteChanMessage:
 	{
 		method: 'DELETE',
-		path: `${subpath}/:chanId/messages/:messageId`,
+		path: '/:chanId/messages/:messageId',
 		pathParams: z.strictObject
 		({
 			chanId: zChanId,
@@ -232,7 +230,7 @@ export const chansContract = c.router
 	kickUserFromChan:
 	{
 		method: 'DELETE',
-		path: `${subpath}/:chanId/:username`,
+		path: '/:chanId/:username',
 		pathParams: z.strictObject
 		({
 			chanId: zChanId,

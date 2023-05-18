@@ -30,5 +30,5 @@ export const zDiscussionElementReturn = z.object
 
 export function unique<T extends z.ZodTypeAny>(arg: ZodArray<T, any>)
 {
-	return arg.refine(array => new Set(array).size === array.length, { message: "array elements must be unique" })
+	return arg.transform(array => [...new Set(array)])
 }

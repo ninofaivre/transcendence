@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, NotImplementedException, Param, Patch, Post, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, ForbiddenException, Get, InternalServerErrorException, NotFoundException, NotImplementedException, Param, Patch, Post, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiOkResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ChansService } from './chans.service';
@@ -15,6 +15,7 @@ import { LeaveChanPathDTO } from './dto/leaveChan.path.dto';
 import contract from 'contract/contract';
 import { nestControllerContract, NestControllerInterface, NestRequestShapes, NestResponseShapes, TsRest, TsRestRequest, } from '@ts-rest/nest';
 import { zCreatePublicChan } from 'contract/zod/chan.zod';
+import { ChanAction } from 'src/casl/casl-ability.factory/casl-ability.factory';
 
 const c = nestControllerContract(contract.chans)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -120,7 +121,7 @@ export class ChansController implements NestControllerInterface<typeof c>
 	@TsRest(c.kickUserFromChan)
 	async kickUserFromChan(@Req()req: any, @TsRestRequest(){ params: { chanId, username } }: RequestShapes['kickUserFromChan'])
 	{
-		const body = this.chansService.kickUserFromChan(req.user.username, username, chanId) 
+		const body = await this.chansService.kickUserFromChan(req.user.username, username, chanId) 
 		return { status: 202 as const, body: null }
 	}
 }

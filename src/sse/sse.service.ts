@@ -5,7 +5,8 @@ import { MessageEvent } from '@nestjs/common';
 @Injectable()
 export class SseService
 {
-	eventSource = new Map<String, Subject<MessageEvent>>()
+
+	eventSource = new Map<string, Subject<MessageEvent>>()
 
 	addSubject(username: string)
 	{

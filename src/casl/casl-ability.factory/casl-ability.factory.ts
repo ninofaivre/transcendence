@@ -1,8 +1,9 @@
 import { AbilityBuilder, ForbiddenError, PureAbility, subject } from '@casl/ability';
 import { createPrismaAbility, PrismaQuery, Subjects } from '@casl/prisma';
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, forwardRef, Inject } from '@nestjs/common';
 import { User, DiscussionElement, Chan, Prisma, PermissionList, RoleApplyingType } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
+import { ChansService } from '../../chans/chans.service'
 
 export const chanSelect = Prisma.validator<Prisma.ChanArgs>()
 ({
@@ -10,7 +11,15 @@ export const chanSelect = Prisma.validator<Prisma.ChanArgs>()
 	{
 		ownerName: true,
 		users: { select: { name: true } },
-		mutedUsers: { select: { mutedUserName: true } }
+		mutedUsers:
+		{
+			select:
+			{
+				mutedUserName: true,
+				untilDate: true,
+				id: true
+			}
+		}
 	} satisfies Prisma.ChanSelect
 })
 
@@ -69,7 +78,9 @@ export type AppAbility = PureAbility<
 export class CaslAbilityFactory
 {
 
-	constructor(private prisma: PrismaService) {}
+	constructor(private readonly prisma: PrismaService,
+				@Inject(forwardRef(() => ChansService))
+				private chansService: ChansService) {}
 
 	public async getChan(chanId: number)
 	{
@@ -132,7 +143,7 @@ export class CaslAbilityFactory
 		return (user.roles.some(el => el.permissions.some(p => p === perm)))
 	}
 
-	createAbilityForUserInChan(user: ChanUser, chan: Prisma.ChanGetPayload<typeof chanSelect>)
+	async createAbilityForUserInChan(user: ChanUser, chan: Prisma.ChanGetPayload<typeof chanSelect>)
 	{
 		const { can, cannot, build } = new AbilityBuilder<AppAbility>(createPrismaAbility);
 
@@ -149,7 +160,8 @@ export class CaslAbilityFactory
 			can(Action.Create, 'Message')
 		can(Action.Update, 'Message', { author: user.name })
 		cannot(Action.Update, 'Message', { author: { not: user.name } }).because("you can't update other's message")
-		if (chan.mutedUsers.some(el => el.mutedUserName === user.name))
+		// TODO: Test than removeMutedIfUntilDateReached server reboot guards works
+		if (chan.mutedUsers.some(el => el.mutedUserName === user.name) && !(await this.chansService.removeMutedIfUntilDateReached(chan.mutedUsers.find(el => el.mutedUserName === user.name))))
 		{
 			cannot(Action.Create, 'Message').because('you are muted')
 			cannot(Action.Update, 'Message', { author: user.name }).because('you are muted')

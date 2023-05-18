@@ -1,4 +1,4 @@
-import { AppRouter, initContract, isAppRoute } from "@ts-rest/core"
+import { AppRoute, AppRouter, initContract, isAppRoute } from "@ts-rest/core"
 import { chansContract } from "./routers/chans"
 import { invitationsContract } from "./routers/invitations"
 import { dmsContract } from "./routers/dms"
@@ -10,6 +10,8 @@ const c = initContract()
 function prefix(contract: AppRouter, pre: string): AppRouter
 {
 	if (!pre.length)
+		return contract
+	if (isAppRoute(contract))
 		return contract
 	for (const k in contract)
 	{
@@ -34,7 +36,7 @@ function prefix(contract: AppRouter, pre: string): AppRouter
 	return contract
 }
 
-prefix(chansContract, '/chans')
+// prefix(chansContract, '/chans')
 prefix(invitationsContract, '/invitations')
 prefix(dmsContract, '/dms')
 prefix(friendsContract, '/friends')
@@ -42,13 +44,13 @@ prefix(usersContract, '/users')
 
 const contract = c.router
 ({
-	chans: chansContract,
+	chans: prefix(chansContract, '/chans'),
 	invitations: invitationsContract,
 	dms: dmsContract,
 	friends: friendsContract,
 	users: usersContract
 })
 
-prefix(contract, '/api')
+// prefix(contract, '/api')
 
 export default contract

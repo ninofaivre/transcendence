@@ -175,10 +175,10 @@ export class ChansService {
 	}
 
 	async deleteChan(username: string, id: number) {
-		// await this.checkAbilities(username, id,
-		// 	[
-		// 		{ action: Action.Delete, subject: subject('Chan', await this.caslFact.getChan(id)) }
-		// 	])
+		await this.checkAbilities(username, id,
+			[
+				{ action: Action.Delete, subject: subject('Chan', await this.caslFact.getChan(id)) }
+			])
 		// /* Update Invitations Dms Events */
 		// const invitations = toCheck.invitations.filter(el => el.discussionEventId != null)
 		// await this.prisma.discussionEvent.updateMany({
@@ -283,59 +283,50 @@ export class ChansService {
 		})).discussionElement
 	}
 
-	async removeMutedIfUntilDateReached(state: any) {
+	// TODO: type state
+	public async removeMutedIfUntilDateReached(state: any) {
 		if (!state.untilDate || new Date() < state.untilDate)
 			return false
 		await this.prisma.mutedUserChan.delete({ where: { id: state.id }, select: { id: true } })
 		return true
 	}
 
-	async createChanMessageIfRightTo(username: string, chanId: number, dto: RequestShapes['createChanMessage']['body']) {
-		const { relatedTo, content, usersAt } = dto
-		const toCheck = await this.prisma.chan.findUnique({
-			where:
-			{
-				id: chanId,
-				users: { some: { name: username } },
-			},
+	async getnUsersFromArrayInChan(usernames: string[], chanId: number)
+	{
+		const chan = await this.prisma.chan.findUnique({ where: { id: chanId },
 			select:
 			{
-				ownerName: true,
+				users: { where: { name: { in: usernames } }, select: { name: true } }
+			}
+		})
+		if (!chan)
+			return -1
+		return chan.users.length
+	}
+
+	async createChanMessageIfRightTo(username: string, chanId: number, dto: RequestShapes['createChanMessage']['body']) {
+		const { relatedTo, content, usersAt } = dto
+		await this.checkAbilities(username, chanId,
+			[
+				{ action: Action.Create, subject: 'Message' }
+			])
+		const toCheck = await this.prisma.chan.findUnique({
+			where: { id: chanId },
+			select:
+			{
 				elements: !!relatedTo &&
 				{
 					where: { id: relatedTo },
 					select: { id: true },
 				},
-				users: usersAt && { where: { name: { in: usersAt } }, select: { name: true } },
-				roles:
-				{
-					where: this.permissionsService.getRolesDoesUserHasRighTo(username, username, PermissionList.SEND_MESSAGE),
-					take: 1,
-					select: { id: true },
-				},
-				mutedUsers:
-				{
-					where: { mutedUserName: username },
-					take: 1,
-					select: { mutedUserName: true, untilDate: true, id: true },
-				}
 			}
 		})
-		if (!toCheck)
-			throw new NotFoundException(`chan with id ${chanId} not found`)
-		if (relatedTo && !toCheck.elements.length)
+		if (relatedTo && !toCheck?.elements.length)
 			throw new ForbiddenException(`msg with id ${relatedTo} not found`)
-		if (usersAt && usersAt.length === toCheck.users.length)
+		if (usersAt && await this.getnUsersFromArrayInChan(usersAt, chanId) === usersAt.length)
 			throw new ForbiddenException(`some users at not found`)
-		if (!toCheck.roles.length && toCheck.ownerName !== username)
-			throw new ForbiddenException(`you don't have right to send msg`)
-		if (toCheck.mutedUsers.length) // TODO: need to perform a check because unMute will probably be handled with a set timeOut but need to check if serv has been restarded before all setTimeOut completed
-		{
-			if (!(await this.removeMutedIfUntilDateReached(toCheck.mutedUsers[0])))
-				throw new ForbiddenException(`you are muted`)
-		}
-		const res = await this.createChanMessage(username, chanId, content, relatedTo, usersAt && [...usersAt!] || [])
-		await this.notifyChanMessage(toCheck.users, chanId, res)
+		const res = await this.createChanMessage(username, chanId, content, relatedTo, usersAt || [])
+		await this.notifyChanMessageToChanUsers(chanId, res)
 		return res
 	}
 
@@ -435,7 +426,7 @@ export class ChansService {
 		const chan = await this.caslFact.getChan(chanId)
 		if (!chan)
 			throw new NotFoundException(`chan with id ${chanId} not found`)
-		const ability = this.caslFact.createAbilityForUserInChan(user, chan)
+		const ability = await this.caslFact.createAbilityForUserInChan(user, chan)
 
 		try
 		{
@@ -491,16 +482,17 @@ export class ChansService {
 		})).discussionElement
 	}
 
-	async notifyChanEventToChanUsers(chanId: number, event: Prisma.PromiseReturnType<typeof this.createChanEvent>)
+	async notifyChanUsers(chanId: number, toNotify: any)
 	{
 		const res = await this.prisma.chan.findUnique({ where: { id: chanId }, select: { users: { select: { name: true } } } })
 		if (!res)
 			return
-		return this.sseService.pushEventMultipleUser(res.users.map(el => el.name),
-			{
-				type: EventTypeList.CHAN_NEW_EVENT,
-				data: { chanId: chanId, event: event }
-			})
+		return this.sseService.pushEventMultipleUser(res.users.map(el => el.name), toNotify)
+	}
+
+	async notifyChanEventToChanUsers(chanId: number, event: Prisma.PromiseReturnType<typeof this.createChanEvent>)
+	{
+		return this.notifyChanUsers(chanId, { type: EventTypeList.CHAN_NEW_EVENT, data: { chanId: chanId, event: event } })
 	}
 
 	async notifyChanEventToUser(username: string, chanId: number, event: Prisma.PromiseReturnType<typeof this.createChanEvent>)
@@ -512,8 +504,9 @@ export class ChansService {
 			})
 	}
 
-	async notifyChanMessage(users: { name: string }[], chanId: number, message: Prisma.PromiseReturnType<typeof this.createChanMessage>) {
-		return this.sseService.pushEventMultipleUser(users.map(el => el.name),
+	async notifyChanMessageToChanUsers(chanId: number, message: Prisma.PromiseReturnType<typeof this.createChanMessage>)
+	{
+		return this.notifyChanUsers(chanId,
 			{
 				type: EventTypeList.CHAN_NEW_MESSAGE,
 				data: { chanId: chanId, message: message }

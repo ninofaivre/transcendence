@@ -1,18 +1,18 @@
 import { PUBLIC_BACKEND_URL } from "$env/static/public"
 import { fetchGet } from "$lib/global"
 import type { LoadEvent } from "@sveltejs/kit"
+import { chansClient } from "$lib/clients"
 
 export const load = async ({ depends }: LoadEvent) => {
-	const api_get_discussions = "/api/chans/me"
 	try {
-		const res1 = await fetchGet(api_get_discussions)
-		const discussions = await res1.json()
-		console.log("Loaded", PUBLIC_BACKEND_URL + api_get_discussions, discussions)
+		const { status, body } = await chansClient.getMyChans()
+		console.log("load: ", status, body)
 
 		depends(":discussions")
 		return {
-			discussions,
+			discussions: body,
 		}
+		// return new Promise(() => body)
 	} catch (e: any) {
 		console.error("Failed to load data:", e)
 	}

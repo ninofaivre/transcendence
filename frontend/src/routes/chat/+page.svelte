@@ -17,7 +17,7 @@
 	// Get our discussions
 	export let data: PageData
 
-	let currentDiscussionId: number = data.discussions[0].id
+	let currentDiscussionId: number = data.discussions[0]?.id
 	console.log("/chat/page.svelte", "Current discussion id is :", currentDiscussionId)
 </script>
 

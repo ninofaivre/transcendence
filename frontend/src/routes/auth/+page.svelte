@@ -1,15 +1,29 @@
 <script lang="ts">
 	import { type ToastSettings, toastStore } from "@skeletonlabs/skeleton"
 	import { fetchPostJSON, login, logout } from "$lib/global"
+	import { usersClient } from "$lib/clients"
 
 	let username = ""
 	let password = ""
 
-	async function signup() {
-		return fetchPostJSON("/api/user/sign-up", {
-			name: username,
-			password,
-		})
+	// async function signup() {
+	// 	return fetchPostJSON("/api/users", {
+	// 		name: username,
+	// 		password,
+	// 	})
+	// }
+
+	// Overengineered signup function
+	const signup = async () => {
+		const name = username
+		const { status, body } = (await usersClient.signUp({
+			body: {
+				name,
+				password,
+			},
+		})) as { status: number; body: { message?: string } }
+		if (status === 201) console.log("Registered user ", name)
+		else console.log("Signup issue:", status, body?.message)
 	}
 
 	const signup_failed_toast: ToastSettings = {

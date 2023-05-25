@@ -4,6 +4,8 @@ import { compare } from 'bcrypt'
 import { JwtService } from '@nestjs/jwt'
 import { Roles } from 'src/app.roles';
 
+export type EnrichedRequest = Request & { user: { username: string } }
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -12,7 +14,7 @@ export class AuthService {
     ) { }
 
     async validateUser(username: string, pass: string) {
-        const dbUser = await this.usersService.getUserByName(username)
+        const dbUser = await this.usersService.getUserByName(username, { name: true, password: true })
         if (dbUser && dbUser.password && dbUser.name && await compare(pass, dbUser.password)) {
             const { password, ...result } = dbUser
             return { ...result, id: username, roles: [Roles.customer] }

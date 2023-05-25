@@ -65,14 +65,22 @@ export class UserService
 	// 	await Promise.all([updatePromise, addEventPromise])
 	// }
 
-	async getUserByName(name: string, select: Prisma.UserSelect = { name: true, password: true })
+	async getUserByName(name: string, select: Prisma.UserSelect)
 	{
 		return this.prisma.user.findUnique({ where: { name: name }, select: select })
 	}
 
+	public async getUserByNameOrThrow<T extends Prisma.UserSelect>(username: string, select: Prisma.SelectSubset<T, Prisma.UserSelect>)
+	{
+		const user = await this.prisma.user.findUnique({ where: { name: username }, select: select })
+		if (!user)
+			throw new NotFoundException(`user with name ${username} does not exist`)
+		return user
+	}
+
 	async createUser(user: CreateUserDTO)
 	{
-		if (await this.getUserByName(user.name))
+		if (await this.getUserByName(user.name, { name: true }))
 			throw new ConflictException("user already exist")
 		user.password = await hash(user.password, 10)
 		const { password, ...result } = await this.prisma.user.create({ data: user })

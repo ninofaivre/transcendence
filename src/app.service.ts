@@ -4,40 +4,24 @@ import { Prisma } from '@prisma/client';
 @Injectable()
 export class AppService
 {
-	public discussionEventsSelect = Prisma.validator<Prisma.DiscussionEventSelect>()
+	public chanDiscussionEventsSelect = Prisma.validator<Prisma.ChanDiscussionEventSelect>()
 	({
 		eventType: true,
 		concernedUser: true,
-		ChanInvitation: { select: { id: true } },
-		chanInvitationRelatedTitle: true
-	})
+	} satisfies Prisma.ChanDiscussionEventSelect)
 
-	public discussionMessagesSelect = Prisma.validator<Prisma.DiscussionMessageSelect>()
+	public chanDiscussionMessagesSelect = Prisma.validator<Prisma.ChanDiscussionMessageSelect>()
 	({
 		content: true,
 		relatedTo: true,
-	})
+	} satisfies Prisma.ChanDiscussionMessageSelect)
 
-	public discussionElementsSelect = Prisma.validator<Prisma.DiscussionElementSelect>()
+	public chanDiscussionElementsSelect = Prisma.validator<Prisma.ChanDiscussionElementSelect>()
 	({
 		id: true,
-		event: { select: this.discussionEventsSelect },
-		message: { select: this.discussionMessagesSelect },
+		event: { select: this.chanDiscussionEventsSelect },
+		message: { select: this.chanDiscussionMessagesSelect },
 		author: true,
 		creationDate: true
-	})
-
-	public directMessageSelect = Prisma.validator<Prisma.DirectMessageSelect>()
-	({
-		id: true,
-		friendShipId: true,
-
-		requestedUserName: true,
-		requestedUserStatus: true,
-		requestedUserStatusMutedUntil: true,
-
-		requestingUserName: true,
-		requestingUserStatus: true,
-		requestingUserStatusMutedUntil: true
 	})
 }

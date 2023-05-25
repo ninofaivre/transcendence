@@ -1,52 +1,75 @@
 import { initContract } from "@ts-rest/core";
-import { zChanInvitationId, zFriendInvitationId, zInvitationFilter } from "contract/zod/inv.zod";
+import { zInvitationFilter } from "contract/zod/inv.zod";
 import { zUserName } from "contract/zod/user.zod";
 import { z } from "zod";
 import { unique } from "contract/zod/global.zod";
+import { ChanInvitationStatus, FriendInvitationStatus } from "@prisma/client";
+import { prefix } from "contract/lib/prefix";
+import { DmEvent } from "./dms";
 
 const c = initContract()
 
-const zChanId = z.coerce.number().positive().int()
-const zFriendShipId = z.coerce.number().positive().int()
-
-const zFriendInvitationReturn = z.object
+const zFriendInvitationReturn = z.strictObject
 ({
-	id: zFriendInvitationId,
+	id: z.string().uuid(),
 	creationDate: z.date(),
 	invitingUserName: zUserName,
-	invitedUserName: zUserName
+	invitedUserName: zUserName,
+	status: z.nativeEnum(FriendInvitationStatus)
 })
 
-const zChanInvitationReturn = z.object
+const zChanInvitationReturn = z.strictObject
 ({
-	id: zChanInvitationId,
-	chanId: zChanId,
-	friendShipId: zFriendShipId
+	id: z.string().uuid(),
+	chanId: z.string().uuid(),
+	friendShipId: z.string().uuid(),
+	status: z.nativeEnum(ChanInvitationStatus)
 })
 
-export const invitationsContract = c.router
-({
+const friendInvitationsContract = c.router
+({		
 	getFriendInvitations:
 	{
 		method: 'GET',
-		path: '/friend',
+		path: '/',
+		query: z.strictObject
+		({
+			status: unique(z.array(z.nativeEnum(FriendInvitationStatus))).default(["PENDING"]),
+		}),
 		responses:
 		{
-			200: z.object
+			200: z.strictObject
 			({
 				incoming: z.array(zFriendInvitationReturn),
 				outcoming: z.array(zFriendInvitationReturn)
 			})
 		}
 	},
+	getFriendInvitationById:
+	{
+		method: 'GET',
+		path: '/:id',
+		pathParams: z.strictObject
+		({
+			id: z.string().uuid()
+		}),
+		responses:
+		{
+			200: zFriendInvitationReturn
+		}
+	},
 	getFriendInvitationsByType:
 	{
 		method: 'GET',
-		path: '/friend/:type',
+		path: '/:type',
+		query: z.strictObject
+		({
+			status: unique(z.array(z.nativeEnum(FriendInvitationStatus))).default(["PENDING"]),
+		}),
 		pathParams: z.strictObject
 		({
 			type: zInvitationFilter
-		}) ,
+		}),
 		responses:
 		{
 			200: z.array(zFriendInvitationReturn)
@@ -55,84 +78,138 @@ export const invitationsContract = c.router
 	createFriendInvitation:
 	{
 		method: 'POST',
-		path: '/friend/${zInvitationFilter.enum.OUTCOMING}',
+		path: `/${zInvitationFilter.enum.OUTCOMING}`,
 		body: z.strictObject
 		({
-			username: zUserName
+			invitedUserName: zUserName
 		}),
 		responses:
 		{
 			201: zFriendInvitationReturn
 		}
 	},
-	deleteFriendInvitation:
+	updateIncomingFriendInvitation:
 	{
-		method: 'DELETE',
-		path: '/friend/:type/:id',
+		method: 'PATCH',
+		path: `/${zInvitationFilter.enum.INCOMING}/:id`,
 		pathParams: z.strictObject
 		({
-			id: zFriendInvitationId,
-			type: zInvitationFilter
+			id: z.string().uuid()
 		}),
-		body: c.body<null>(),
-		responses:
-		{
-			202: c.response<null>()
-		}
-	},
-	getChanInvitations:
-	{
-		method: 'GET',
-		path: '/chan',
-		responses:
-		{
-			200: z.object
-			({
-				incoming: z.array(zChanInvitationReturn),
-				outcoming: z.array(zChanInvitationReturn)
-			})
-		}
-	},
-	getChanInvitationsByType:
-	{
-		method: 'GET',
-		path: '/chan/:type',
-		pathParams: z.strictObject
-		({
-			type: zInvitationFilter
-		}),
-		responses:
-		{
-			200: z.array(zChanInvitationReturn)
-		}
-	},
-	createChanInvitation:
-	{
-		method: 'POST',
-		path: '/chan/${zInvitationFilter.enum.OUTCOMING}',
 		body: z.strictObject
 		({
-			usernames: unique(z.array(zUserName)),
-			chanId: zChanId
+			status: z.enum([FriendInvitationStatus.ACCEPTED, FriendInvitationStatus.REFUSED])
 		}),
 		responses:
 		{
-			201: z.array(zChanInvitationReturn)
+			200: zFriendInvitationReturn
 		}
 	},
-	deleteChanInvitation:
+	updateOutcomingFriendInvitation:
 	{
-		method: 'DELETE',
-		path: '/chan/:type/:id',
+		method: 'PATCH',
+		path: `/${zInvitationFilter.enum.OUTCOMING}/:id`,
 		pathParams: z.strictObject
 		({
-			type: zInvitationFilter,
-			id: zChanId
+			id: z.string().uuid()
 		}),
-		body: c.body<null>(),
+		body: z.strictObject
+		({
+			status: z.enum([FriendInvitationStatus.CANCELED])
+		}),
 		responses:
 		{
-			202: c.response<null>()
+			200: zFriendInvitationReturn
 		}
 	}
+	// deletePendingFriendInvitationById:
+	// {
+	// 	method: 'DELETE',
+	// 	path: `/friend/${FriendInvitationStatus.PENDING}/:type/:id`,
+	// 	pathParams: z.strictObject
+	// 	({
+	// 		id: zFriendInvitationId,
+	// 		type: zInvitationFilter
+	// 	}),
+	// 	body: c.body<null>(),
+	// 	responses:
+	// 	{
+	// 		202: c.response<null>()
+	// 	}
+	// },
+
 })
+
+const chanInvitationsContract = c.router
+({
+	// getPendingChanInvitations:
+	// {
+	// 	method: 'GET',
+	// 	path: `/chan/${ChanInvitationStatus.PENDING}`,
+	// 	responses:
+	// 	{
+	// 		200: z.object
+	// 		({
+	// 			incoming: z.array(zChanInvitationReturn),
+	// 			outcoming: z.array(zChanInvitationReturn)
+	// 		})
+	// 	}
+	// },
+	// getPendingChanInvitationsByType:
+	// {
+	// 	method: 'GET',
+	// 	path: `/chan/${ChanInvitationStatus.PENDING}/:type`,
+	// 	pathParams: z.strictObject
+	// 	({
+	// 		type: zInvitationFilter
+	// 	}),
+	// 	responses:
+	// 	{
+	// 		200: z.array(zChanInvitationReturn)
+	// 	}
+	// },
+	// createChanInvitation:
+	// {
+	// 	method: 'POST',
+	// 	path: `/chan/${ChanInvitationStatus.PENDING}/${zInvitationFilter.enum.OUTCOMING}`,
+	// 	body: z.strictObject
+	// 	({
+	// 		usernames: unique(z.array(zUserName)),
+	// 		chanId: zChanId
+	// 	}),
+	// 	responses:
+	// 	{
+	// 		201: z.array(zChanInvitationReturn)
+	// 	}
+	// },
+	// deletePendingChanInvitationById:
+	// {
+	// 	method: 'DELETE',
+	// 	path: `/chan/${ChanInvitationStatus.PENDING}/:type/:id`,
+	// 	pathParams: z.strictObject
+	// 	({
+	// 		type: zInvitationFilter,
+	// 		id: zChanId
+	// 	}),
+	// 	body: c.body<null>(),
+	// 	responses:
+	// 	{
+	// 		202: c.response<null>()
+	// 	}
+	// }
+
+})
+
+export const invitationsContract = c.router
+({
+	friend: prefix(friendInvitationsContract, "friend"),
+	chan: prefix(chanInvitationsContract, "chan")
+})
+
+type FriendInvitationEvent =
+{ type: 'CREATED_FRIEND_INVITATION' | 'UPDATED_FRIEND_INVITATION', data: z.infer<typeof zFriendInvitationReturn> }
+
+type ChanInvitationEvent =
+{}
+
+export type InvitationEvent = FriendInvitationEvent/*  | ChanInvitationEvent */

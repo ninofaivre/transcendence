@@ -7,6 +7,7 @@ import { SseModule } from 'src/sse/sse.module';
 @Module({
 	imports: [SseModule],
 	providers: [DmsService, AppService],
-	controllers: [DmsController]
+	controllers: [DmsController],
+	exports: [DmsService]
 })
 export class DmsModule {}

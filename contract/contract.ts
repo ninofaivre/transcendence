@@ -1,27 +1,12 @@
-import { AppRouter, initContract, isAppRoute } from "@ts-rest/core"
+import { initContract } from "@ts-rest/core"
 import { chansContract } from "./routers/chans"
-import { invitationsContract } from "./routers/invitations"
-import { dmsContract } from "./routers/dms"
-import { friendsContract } from "./routers/friends"
+import { InvitationEvent, invitationsContract } from "./routers/invitations"
+import { DmEvent, dmsContract } from "./routers/dms"
+import { FriendEvent, friendsContract } from "./routers/friends"
 import { usersContract } from "./routers/users"
+import { prefix } from "./lib/prefix"
 
 const c = initContract()
-
-function prefix<T extends AppRouter>(contract: T, pre: string)
-{
-	pre = pre.replace(/^\//, '').replace(/\/$/, '')
-	if (pre === "")
-		return contract
-	for (const k in contract)
-	{
-		let v = contract[k]
-		if (isAppRoute(v))
-			v.path = `/${pre}/${v.path.replace(/^\//, '')}`
-		else
-			prefix(v, pre)
-	}
-	return contract
-}
 
 const contract = prefix(c.router
 ({
@@ -33,3 +18,7 @@ const contract = prefix(c.router
 }), '/api')
 
 export default contract
+
+// find a way to ensure in the contract than the type SseEvent implement MessageEvent
+// right now backend will fail to build if it doesn't but the error in not located in the contract
+export type SseEvent = InvitationEvent | DmEvent | FriendEvent

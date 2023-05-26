@@ -19,6 +19,7 @@ import { ZodValidationPipe } from '@anatine/zod-nestjs'
 import { Roles } from './app.roles'
 import { CaslModule } from './casl/casl.module';
 
+
 @Module({
 	imports:
 	[
@@ -53,7 +54,7 @@ import { CaslModule } from './casl/casl.module';
 		// }),
 		ServeStaticModule.forRoot
 		({
-			rootPath: join('./frontend/build'),
+			rootPath: join(__dirname, '../../frontend/build'),
 			exclude: ['/api*'],
 		}),
 		AuthModule,

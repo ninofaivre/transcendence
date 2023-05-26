@@ -35,7 +35,6 @@ async function bootstrap() {
 		customCss: theme.getBuffer('dark'),
 	}
 	const document = overrideTsRestGeneratedTags(generateOpenApi(contract, config, { setOperationId: true, jsonQuery: true }))
-	console.log(document.paths['/api/invitations/friend/'])
     SwaggerModule.setup('api', app, document, options);
 	const prismaService: PrismaService = app.get(PrismaService);
 	prismaService.$on("query", (event) => {
@@ -60,13 +59,17 @@ function overrideTsRestGeneratedTags(document: OpenAPIObject)
 		{
 			if (!subpath['tags'])
 				continue;
-			const tags = subpath.tags as string[]
-			if (tags.length < 2)
+			const oldTags = subpath.tags as string[]
+			if (oldTags.length < 2)
 				continue ;
 			let res = ''
-			for (const tag of tags)
+			let newTags: string[] = []
+			for (const tag of oldTags)
+			{
 				res = join(res, tag)
-			subpath.tags = [ tags[0], res ]
+				newTags.push(res)
+			}
+			subpath.tags = newTags
 		}
 	}
 	return document

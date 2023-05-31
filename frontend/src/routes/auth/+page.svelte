@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { type ToastSettings, toastStore } from "@skeletonlabs/skeleton"
-	import { fetchPostJSON, login, logout } from "$lib/global"
+	import { login } from "$lib/global"
 	import { usersClient } from "$lib/clients"
 
 	let username = ""

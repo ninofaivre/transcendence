@@ -1,18 +1,18 @@
 <script lang="ts">
 	// DiscussionDisplay.svelte
 
-	import type { Message } from "$lib/types"
+	import type { ChanMessage, ChanMessages } from "$types"
 
 	import ChatBubble from "./ChatBubble.svelte"
-	import { fetchGet } from "$lib/global"
 	import { my_name } from "$lib/stores"
 	import { onMount } from "svelte"
-	import { sse_store } from "$lib/stores"
+	import { sse_store } from "$stores"
+	import { chansClient } from "$clients"
 
 	export let currentDiscussionId: number // To detect change of current conversation
 	export let new_message: [string, Promise<Response>]
 
-	let displayed_messages: Message[] = []
+	let displayed_messages: ChanMessages = []
 	const initial_load = 20
 	let load_error: boolean
 	let observer: IntersectionObserver
@@ -30,13 +30,21 @@
 				...displayed_messages,
 				{
 					id: 0,
-					message: { content: msg },
+					message: { content: msg, relatedTo: null, relatedRoles: [], relatedUsers: [] },
 					author: $my_name,
 					creationDate: new Date(),
+					event: null,
 				},
 			]
 			msg_promise
-				.then((r: Response) => r.json())
+				.then(({ status, body }) => {
+					console.log(status, body)
+					let last_elt_index =
+						displayed_messages.length > 0 ? displayed_messages.length - 1 : 0
+					if (status == 200 && body) {
+						displayed_messages[last_elt_index] = body as unknown as ChanMessage
+					}
+				})
 				.catch((err: any) => {
 					if (err?.status)
 						console.error(
@@ -49,12 +57,6 @@
 							err.message,
 						)
 				})
-				.then((m: Message) => {
-					console.log("Should replace message with correct one")
-					let last_elt_index =
-						displayed_messages.length > 0 ? displayed_messages.length - 1 : 0
-					displayed_messages[last_elt_index] = m
-				})
 		}
 	}
 
@@ -62,43 +64,40 @@
 		if (_init) return
 		console.log("switchMessages was called ")
 		if (_currentDiscussionId === currentDiscussionId) {
-			const api: string = `/api/chans/${currentDiscussionId}/messages`
 			load_error = false
-			let fetched_messages
-			try {
-				const response = await fetchGet(api, { nMessages: initial_load })
-				fetched_messages = await response.json()
-			} catch (err: any) {
-				load_error = true
-				console.log("DiscussionDisplay", fetched_messages)
-				console.error("DiscussionDisplay", "Could not fetch conversation:", err.message)
-				return
-			}
-			displayed_messages = fetched_messages
-			observer.observe(canary)
+			const { body, status } = await chansClient.getChanMessages({
+				params: { chanId: currentDiscussionId.toString() },
+				query: {
+					nMessages: initial_load,
+				},
+			})
+			if (status === 200) {
+				displayed_messages = body
+				observer.observe(canary)
+			} else console.error("Could not fetch conversation with id:", _currentDiscussionId)
 		}
 	}
 
-	function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
+	async function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
 		if (_init) return
 		console.log("intersectionHandler has been called", entry)
 		const oldest_message = canary.nextElementSibling
 		const start = oldest_message?.getAttribute("id")
 		if (start && entry.isIntersecting) {
-			const api: string = `/api/chans/${currentDiscussionId}/messages`
-			fetchGet(api, {
-				start,
-				nMessages: loading_greediness,
+			const { status, body } = await chansClient.getChanMessages({
+				params: { chanId: currentDiscussionId.toString() },
+				query: { nMessages: loading_greediness, cursor: parseInt(start) },
 			})
-				.then((response) => response.json())
-				.then((fetched_messages) => {
-					if (fetched_messages.length > 0) {
-						displayed_messages = [...fetched_messages, ...displayed_messages]
-						canary.nextElementSibling?.scrollIntoView()
-					} else {
-						observer.unobserve(canary)
-					}
-				})
+			if (status == 200) {
+				if (body.length > 0) {
+					displayed_messages = [...body, ...displayed_messages]
+					canary.nextElementSibling?.scrollIntoView()
+				} else {
+					observer.unobserve(canary)
+				}
+			} else {
+				console.error("Couldn't load previous messages. Request returned:", status)
+			}
 		}
 	}
 
@@ -144,7 +143,12 @@
 				from_me={message.author === $my_name}
 				from={message.author}
 			>
-				{`${message.id}: ${message.message.content}`}
+				{@const data = message.message?.content}
+				{#if data}
+					{`${message.id}: ${data}`}
+				{:else}
+					{`${message.id}: ${message.event}`}
+				{/if}
 			</ChatBubble>
 		{:else}
 			<!-- {#if load_error} -->

@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { fetchPostJSON } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
-	import type { Message } from "$lib/types"
+	import { chansClient } from "$lib/clients"
 
 	export let currentDiscussionId: number
 
@@ -14,19 +13,16 @@
 		// disabled = true // Preventing sending two unsent messages ?
 		dispatch("message_sent", [
 			value,
-			fetchPostJSON(`/api/chans/${currentDiscussionId}/messages`, {
-				content: value,
-				// relatedId: ?,
-				// usersAt: ["bob", "john"],
+			chansClient.createChanMessage({
+				params: {
+					chanId: currentDiscussionId.toString(),
+				},
+				body: {
+					content: value,
+				},
 			}),
 		])
 		value = ""
-		// .then(() => {
-		// 	value = ""
-		// })
-		// .catch((err: any) => {
-		// 	console.error("Could not send message because: ", err.message, err)
-		// })
 		disabled = false
 	}
 

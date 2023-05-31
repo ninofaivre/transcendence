@@ -15,9 +15,9 @@ const config = {
 		}),
 		alias: {
 			$contract: "../contract/contract",
-			$contracts: "../contract/routers/",
-			$types: "lib/types",
-			$stores: "lib/stores",
+			$types: "src/lib/types",
+			$stores: "src/lib/stores",
+			$clients: "src/lib/clients",
 		},
 	},
 }

@@ -1,5 +1,4 @@
 import { PUBLIC_BACKEND_URL } from "$env/static/public"
-import { fetchGet } from "$lib/global"
 import type { LoadEvent } from "@sveltejs/kit"
 import { chansClient } from "$lib/clients"
 

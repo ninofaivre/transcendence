@@ -1,13 +1,17 @@
 <script lang="ts">
 	/* types */
 	import type { PageData } from "./$types"
+	import type { ServerInferResponses, ClientInferResponses } from "@ts-rest/core"
+
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"
 	import CreateDiscussion from "./CreateDiscussion.svelte"
 	import DiscussionList from "./DiscussionList.svelte"
 	import ChatBox from "./ChatBox.svelte"
 	/*utils*/
+	import type contract from "$contract"
 
+	// let new_message: [string, Promise<ClientInferResponses<typeof contract.chans.createChan>>]
 	let new_message: [string, Promise<Response>]
 	function messageSentHandler(e: CustomEvent<typeof new_message>) {
 		console.log("You sent a message:", e.detail[0])

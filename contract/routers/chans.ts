@@ -1,5 +1,5 @@
 import { extendApi } from "@anatine/zod-openapi"
-import { ChanType, PermissionList, RoleApplyingType } from "@prisma/client"
+import { ClassicChanEventType, ChanType, PermissionList, RoleApplyingType } from "@prisma/client"
 import { initContract } from "@ts-rest/core"
 import { zChanId, zChanPassword, zChanTitle, zCreatePrivateChan, zCreatePublicChan, zRoleName } from "contract/zod/chan.zod"
 // import { zDiscussionElementReturn, zMessageId } from "contract/zod/global.zod"
@@ -23,10 +23,61 @@ const zChanReturn = z.object
 	title: zChanTitle.nullable(),
 	type: z.nativeEnum(ChanType),
 	ownerName: z.string(),
-	id: zChanId,
-	users: z.array(z.string()).min(1),
+	id: z.string().uuid(),
+	users: z.array(zUserName).min(1),
 	roles: z.array(zRoleReturn),
 })
+
+const zChanDiscussionMessageReturn = z.strictObject
+({
+	content: z.string(),
+	relatedTo: z.string().uuid().nullable(),
+	relatedUsers: z.array(zUserName),
+	relatedRoles: z.array(z.string())
+})
+
+const zChanDiscussionBaseEvent = z.strictObject
+({
+	concernedUserName: zUserName.nullable()
+})
+
+export const zChanDiscussionEventReturn = z.union
+([
+	zChanDiscussionBaseEvent.extend
+	({
+		eventType: z.nativeEnum(ClassicChanEventType),
+	}),
+	zChanDiscussionBaseEvent.extend
+	({
+		eventType: z.literal("CHANGED_TITLE"),
+		oldTitle: z.string(),
+		newTitle: z.string()
+	})
+])
+
+const zChanDiscussionBaseElement = z.strictObject
+({
+	id: z.string().uuid(),
+	authorName: zUserName,
+	creationDate: z.date(),
+})
+
+// shitty work around for prisma lack of union (not event in the road map)
+// just that fact alone is enough for me to never use prisma again after
+// this projet :(
+export const zChanDiscussionElementReturn = z.discriminatedUnion("type",
+[
+	zChanDiscussionBaseElement.extend	
+	({
+		type: z.literal('message'),
+		message: zChanDiscussionMessageReturn
+	}),
+	zChanDiscussionBaseElement.extend	
+	({
+		type: z.literal('event'),
+		event: zChanDiscussionEventReturn
+	})
+])
 
 export const chansContract = c.router
 ({
@@ -243,3 +294,13 @@ export const chansContract = c.router
 	// 	}
 	// }
 })
+
+export type ChanEvent =
+{
+	type: 'UPDATED_CHAN' | 'CREATED_CHAN',
+	data: z.infer<typeof zChanReturn>
+} |
+{
+	type: 'CREATED_CHAN_EVENT' | 'CREATED_CHAN_MESSAGE',
+	data: z.infer<typeof zChanDiscussionElementReturn>
+}

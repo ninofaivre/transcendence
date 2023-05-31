@@ -1,7 +1,7 @@
 import { AbilityBuilder, ForbiddenError, PureAbility, subject } from '@casl/ability';
 import { createPrismaAbility, PrismaQuery, Subjects } from '@casl/prisma';
 import { ForbiddenException, Injectable, NotFoundException, forwardRef, Inject } from '@nestjs/common';
-import { User, ChanDiscussionElement, Chan, Prisma, PermissionList, RoleApplyingType, FriendInvitation, FriendInvitationStatus } from '@prisma/client';
+import { User, ChanDiscussionElement, Chan, Prisma, PermissionList, RoleApplyingType, FriendInvitation, FriendInvitationStatus, ChanInvitation, ChanInvitationStatus } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { ChansService } from '../../chans/chans.service'
 import { UserService } from 'src/user/user.service';
@@ -56,8 +56,11 @@ const userSelect = Prisma.validator<Prisma.UserArgs>()
 		name: true,
 		friend: { select: { requestedUser: true } },
 		friendOf: { select: { requestingUser: true } },
+		blockedUser: { select: { blockedUserName: true } },
+		blockedByUser: { select: { blockingUserName: true } },
 		outcomingFriendInvitation: { where: { status: FriendInvitationStatus.PENDING }, select: { invitedUserName: true } },
-		incomingFriendInvitation: { where: { status: FriendInvitationStatus.PENDING }, select: { invitingUserName: true } }
+		incomingFriendInvitation: { where: { status: FriendInvitationStatus.PENDING }, select: { invitingUserName: true } },
+		outcomingChanInvitation: { where: { status: ChanInvitationStatus.PENDING }, select: { invitedUserName: true } },
 	} satisfies Prisma.UserSelect
 })
 
@@ -87,7 +90,7 @@ export enum InvitationAction
 type ChanUser = Prisma.UserGetPayload<typeof chanUserSelect>
 type UserSubject = Prisma.UserGetPayload<typeof userSelect>
 
-type ChanSubjects = Subjects<{ Message: ChanDiscussionElement, Chan: Prisma.ChanGetPayload<typeof chanSelect>, ChanUser: ChanUser }> | 'all'
+type ChanSubjects = Subjects<{ Message: ChanDiscussionElement, Chan: Prisma.ChanGetPayload<typeof chanSelect>, ChanUser: ChanUser, ChanInvitation: ChanInvitation }> | 'all'
 
 type ChanAppAbility = PureAbility<
 [
@@ -95,7 +98,7 @@ type ChanAppAbility = PureAbility<
 	ChanSubjects
 ], PrismaQuery>;
 
-type subjects = Subjects<{ User: UserSubject, FriendInvitation: FriendInvitation }>
+type subjects = Subjects<{ User: UserSubject, FriendInvitation: FriendInvitation, ChanInvitation: ChanInvitation }>
 
 type AppAbility = PureAbility<
 [
@@ -194,24 +197,41 @@ export class CaslAbilityFactory
 	private async createAbilityForUser(user: UserSubject)
 	{
 		const friends = Array.prototype.concat(user.friend.map(el => el.requestedUser), user.friendOf.map(el => el.requestingUser))
+		const blockedUsers = user.blockedUser.map(el => el.blockedUserName)
+		const blockedByUsers = user.blockedByUser.map(el => el.blockingUserName)
 		const pendingOutcomingFriendInvitations = user.outcomingFriendInvitation.map(el => el.invitedUserName)
 		const pendingIncomingFriendInvitations = user.incomingFriendInvitation.map(el => el.invitingUserName)
+		const pendingOutcomingChanInvitations = user.outcomingChanInvitation.map(el => el.invitedUserName)
+
 		const { can, cannot, build } = new AbilityBuilder<AppAbility>(createPrismaAbility);
 
+		/* FRIEND_INVITATION */
 		can(Action.Create, 'FriendInvitation')
 		cannot(Action.Create, 'FriendInvitation', { invitedUserName: { in: pendingIncomingFriendInvitations } }).because("already invited by user")
 		cannot(Action.Create, 'FriendInvitation', { invitedUserName: { in: pendingOutcomingFriendInvitations } }).because("already invited user")
 		cannot(Action.Create, 'FriendInvitation', { invitedUserName: { in: friends } }).because("already friend with user")
 		cannot(Action.Create, 'FriendInvitation', { invitedUserName: user.name }).because("self invitation")
+		cannot(Action.Create, 'FriendInvitation', { invitedUserName: { in: blockedUsers } }).because("blocked user")
+		cannot(Action.Create, 'FriendInvitation', { invitedUserName: { in: blockedByUsers } }).because("blocked by user")
 
 		can(Action.Update, 'FriendInvitation', { status: FriendInvitationStatus.PENDING })
 		cannot(Action.Update, 'FriendInvitation', { status: { not: FriendInvitationStatus.PENDING } }).because("not a PENDING invitation")
+		/* FRIEND_INVITATION */
+
+		/* CHAN_INVITATION */
+		can(Action.Create, 'ChanInvitation')
+		cannot(Action.Create, 'ChanInvitation', { invitedUserName: { notIn: friends } }).because("not friend user")
+		cannot(Action.Create, 'ChanInvitation', { invitedUserName: { in: pendingOutcomingChanInvitations } }).because("already invited user")
+
+		can(Action.Update, 'ChanInvitation', { status: ChanInvitationStatus.PENDING })
+		cannot(Action.Update, 'ChanInvitation', { status: { not: ChanInvitationStatus.PENDING } }).because("not a PENDING invitation")
+		/* CHAN_INVITATION */
 
 		return build()
 	}
 
 	// TODO: change any type for subject
-	async checkAbilitiesForChan(username: string, chanId: string, rules: { action: Action | ChanAction, subject: any }[])
+	async checkAbilitiesForUserInChan(username: string, chanId: string, rules: { action: Action | ChanAction, subject: any }[])
 	{
 		const user = await this.getChanUser(chanId, username)
 		const chan = await this.getChan(chanId, username)
@@ -237,6 +257,9 @@ export class CaslAbilityFactory
 
 	private async createAbilityForUserInChan(user: ChanUser, chan: Prisma.ChanGetPayload<typeof chanSelect>)
 	{
+
+		const chanUsers = chan.users.map(el => el.name)
+
 		const { can, cannot, build } = new AbilityBuilder<ChanAppAbility>(createPrismaAbility);
 
 		/* ALL */
@@ -270,6 +293,15 @@ export class CaslAbilityFactory
 
 		if (this.doesChanUserHasPerm(user, PermissionList.DESTROY))
 			can(Action.Delete, 'Chan')
+
+		/* CHAN_INVITATION */
+		can(Action.Create, 'ChanInvitation')
+		if (!this.doesChanUserHasPerm(user, PermissionList.INVITE) && chan.ownerName !== user.name)
+			cannot(Action.Create, 'ChanInvitation').because("user doesn't has INVITE permissions in chan")
+		// cannot(Action.Create, 'ChanInvitation', { invitedUserName: { in: bannedUsers } }).because("banned user")
+		cannot(Action.Create, 'ChanInvitation', { invitedUserName: { in: chanUsers } }).because("already in chan user")
+		/* CHAN_INVITATION */
+
 
 		/* OWNER */
 

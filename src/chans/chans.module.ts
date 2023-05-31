@@ -5,11 +5,12 @@ import { AppService } from 'src/app.service';
 import { PermissionsService } from './permissions/permissions.service';
 import { SseModule } from 'src/sse/sse.module';
 import { CaslModule } from 'src/casl/casl.module';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
-  providers: [ChansService, AppService, PermissionsService],
+  imports: [SseModule, CaslModule, UserModule],
   controllers: [ChansController],
-  imports: [SseModule, CaslModule],
+  providers: [ChansService, AppService, PermissionsService],
   exports: [PermissionsService, ChansService]
 })
 export class ChansModule {}

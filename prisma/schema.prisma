@@ -53,7 +53,7 @@ enum FriendInvitationStatus {
 	ACCEPTED
 	REFUSED
 	CANCELED
-	DELETED_USER
+	BLOCKED_USER
 }
 
 model FriendInvitation {
@@ -76,22 +76,27 @@ enum ChanInvitationStatus {
 	REFUSED
 	CANCELED
 	DELETED_CHAN
+	BLOCKED_USER
+	BANNED_FROM_CHAN
 }
 
 model ChanInvitation {
   id String @id @default(uuid())
 
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
   chan              Chan            @relation(fields: [chanId, chanTitle], references: [id, title], onDelete: Cascade)
   chanId           String 
   chanTitle			String
-  friendShip        FriendShip      @relation(fields: [friendShipId], references: [id])
-  friendShipId      String
-  discussionEvent   DmDiscussionEvent @relation(fields: [discussionEventId], references: [id])
+
+  discussionEvent   ChanInvitationDmDiscussionEvent @relation(fields: [discussionEventId], references: [id])
   discussionEventId String @unique
-  requestingUser	User @relation(name: "outcomingChanInvitation", fields: [requestingUserName], references: [name])
-  requestingUserName	String
-  requestedUser	User @relation(name: "incomingChanInvitation", fields: [requestedUserName], references: [name])
-  requestedUserName	String
+
+  invitingUser	User @relation(name: "outcomingChanInvitation", fields: [invitingUserName], references: [name])
+  invitingUserName	String
+  invitedUser	User @relation(name: "incomingChanInvitation", fields: [invitedUserName], references: [name])
+  invitedUserName	String
 
   status ChanInvitationStatus @default(PENDING)
 }
@@ -110,8 +115,6 @@ model FriendShip {
   requestedUserName  String
 
   directMessage DirectMessage?
-
-  chanInvitations ChanInvitation[]
 
   @@unique([requestingUserName, requestedUserName])
 }
@@ -199,9 +202,15 @@ enum DirectMessageStatus {
 model DmDiscussionElement {
   id String @id @default(uuid())
 
-  message   DmDiscussionMessage?  @relation(name: "ownship")
+  // CUSTOM MIGRATION ==> message | event
+  // ==>	{ message: null, event: Event } |
+  //		{ message: Message, event: null }
+  message   DmDiscussionMessage?  @relation(name: "message", fields: [messageId], references: [id])
+  messageId String? @unique
+  event     DmDiscussionEvent? @relation(fields: [eventId], references: [id])
+  eventId	String? @unique
+
   relatedOf DmDiscussionMessage[] @relation(name: "related")
-  event     DmDiscussionEvent?
 
   authorRelation User   @relation(fields: [author], references: [name], onDelete: Cascade)
   author         String
@@ -221,25 +230,43 @@ model DmDiscussionMessage {
   relatedUsers        User[]
   related             DmDiscussionElement? @relation(name: "related", fields: [relatedTo], references: [id])
   relatedTo           String?
-  discussionElement   DmDiscussionElement  @relation(name: "ownship", fields: [discussionElementId], references: [id], onDelete: Cascade)
-  discussionElementId String                @unique
+  discussionElement   DmDiscussionElement?  @relation(name: "message")
 }
 
 model DmDiscussionEvent {
   id String @id @default(uuid())
 
-  eventType DmEventType
+  // CUSTOM MIGRATION ==> classicEvent | chanInvitationEvent
+  // ==>	{ classicEvent: null, chanInvitationEvent: ChanInvitationEvent } |
+  //		{ classicEvent: ClassicEvent, chanInvitationEvent: null }
+  classicDmDiscussionEvent ClassicDmDiscussionEvent? @relation(fields: [classicDmDiscussionEventId], references: [id])
+  classicDmDiscussionEventId String? @unique
+  chanInvitationDmDiscussionEvent ChanInvitationDmDiscussionEvent? @relation(fields: [chanInvitationDmDiscussionEventId], references: [id])
+  chanInvitationDmDiscussionEventId String? @unique
 
-  discussionElement   DmDiscussionElement @relation(fields: [discussionElementId], references: [id], onDelete: Cascade)
-  discussionElementId String               @unique
-  chanInvitation      ChanInvitation?
+  discussionElement   DmDiscussionElement?
 }
 
-enum DmEventType {
+model ChanInvitationDmDiscussionEvent {
+	id String @id @default(uuid())
+
+	chanInvitation	ChanInvitation?
+
+	dmDiscussionEvent DmDiscussionEvent?
+}
+
+model ClassicDmDiscussionEvent {
+  id String @id @default(uuid())
+
+  eventType ClassicDmEventType
+
+  dmDiscussionEvent DmDiscussionEvent?
+}
+
+enum ClassicDmEventType {
   CREATED_FRIENDSHIP
   DELETED_FRIENDSHIP
   DELETED_MESSAGE
-  CHAN_INVITATION
 }
 
 
@@ -293,13 +320,18 @@ enum ChanType {
 model ChanDiscussionElement {
   id String @id @default(uuid())
 
-  message   ChanDiscussionMessage?  @relation(name: "ownship")
-  event     ChanDiscussionEvent?
+  // CUSTOM MIGRATION ==> message | event
+  // ==>	{ message: null, event: Event } |
+  //		{ message: Message, event: null }
+  message   ChanDiscussionMessage?  @relation(name: "message", fields: [messageId], references: [id])
+  messageId String? @unique
+  event     ChanDiscussionEvent? @relation(fields: [eventId], references: [id])
+  eventId 	String? @unique
 
   relatedOf ChanDiscussionMessage[] @relation(name: "related") // other side
 
-  authorRelation User   @relation(fields: [author], references: [name], onDelete: Cascade)
-  author         String
+  author User   @relation(fields: [authorName], references: [name], onDelete: Cascade)
+  authorName         String
 
   creationDate     DateTime  @default(now())
   modificationDate DateTime? @updatedAt
@@ -319,23 +351,44 @@ model ChanDiscussionMessage {
   relatedRoles        Role[]
   related             ChanDiscussionElement? @relation(name: "related", fields: [relatedTo], references: [id])
   relatedTo           String?
-  discussionElement   ChanDiscussionElement  @relation(name: "ownship", fields: [discussionElementId], references: [id], onDelete: Cascade)
-  discussionElementId String                @unique
+  discussionElement   ChanDiscussionElement? @relation(name: "message")
 }
 
 model ChanDiscussionEvent {
   id String @id @default(uuid())
 
-  eventType ChanEventType
+  concernedUser				User?   @relation(fields: [concernedUserName], references: [name])
+  concernedUserName         String?
 
-  concernedUserRelation User?   @relation(fields: [concernedUser], references: [name])
-  concernedUser         String?
+  // CUSTOM MIGRATION ==> classicEvent | changedTitleEvent
+  // ==>	{ classicEvent: null, changedTitleEvent: ChangedTitleEvent } |
+  //		{ classicEvent: ClassicEvent, changedTitleEvent: null }
+  classicChanDiscussionEvent ClassicChanDiscussionEvent? @relation(fields: [classicChanDiscussionEventId], references: [id])
+  classicChanDiscussionEventId	String? @unique
+  changedTitleChanDiscussionEvent ChangedTitleChanDiscussionEvent? @relation(fields: [changedTitleChanDiscussionEventId], references: [id])
+  changedTitleChanDiscussionEventId String? @unique
 
-  discussionElement   ChanDiscussionElement @relation(fields: [discussionElementId], references: [id], onDelete: Cascade)
-  discussionElementId String               @unique
+  discussionElement   ChanDiscussionElement?
 }
 
-enum ChanEventType {
+model ChangedTitleChanDiscussionEvent {
+	id String @id @default(uuid())
+
+	oldTitle String
+	newTitle String
+
+	chanDiscussionEvent ChanDiscussionEvent?
+}
+
+model ClassicChanDiscussionEvent {
+	id String @id @default(uuid())
+
+	eventType ClassicChanEventType
+
+	chanDiscussionEvent ChanDiscussionEvent?
+}
+
+enum ClassicChanEventType {
   AUTHOR_LEAVED
   AUTHOR_KICKED_CONCERNED
   AUTHOR_JOINED

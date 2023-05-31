@@ -1,9 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ChanInvitationsService } from './chan-invitations.service';
 import { ChanInvitationsController } from './chan-invitations.controller';
+import { UserModule } from 'src/user/user.module';
+import { SseModule } from 'src/sse/sse.module';
+import { CaslModule } from 'src/casl/casl.module';
+import { DmsModule } from 'src/dms/dms.module';
+import { ChansModule } from 'src/chans/chans.module';
 
-@Module({
-  providers: [ChanInvitationsService],
-  controllers: [ChanInvitationsController]
+@Module
+({
+	imports: [UserModule, SseModule, CaslModule, DmsModule, ChansModule],
+	providers: [ChanInvitationsService],
+	controllers: [ChanInvitationsController]
 })
 export class ChanInvitationsModule {}

@@ -44,31 +44,16 @@ export class FriendsService
 
 	public async createFriend(requestingUserName: string, requestedUserName: string)
 	{
-		let directMessageId = (await this.prisma.directMessage.findFirst({
-			where:
-			{
-				OR:
-				[
-					{
-						requestingUserName: requestingUserName,
-						requestedUserName: requestedUserName
-					},
-					{
-						requestedUserName: requestingUserName,
-						requestingUserName: requestedUserName
-					}
-				]
-			},
-			select: { id: true } }))?.id
+		let directMessageId = (await this.dmsService.findDmBetweenUsers(requestingUserName, requestedUserName, { id: true } ))?.id
 		let newFriendShip = this.formatFriendShip(await this.prisma.friendShip.create({
 			data:
 			{
 				requestingUserName: requestingUserName,
 				requestedUserName: requestedUserName,
-				...(directMessageId) ?
+				...((directMessageId) ?
 				{
 					directMessage: { connect: { id: directMessageId } }
-				} : {}
+				} : {})
 			},
 			select: this.friendShipSelect }))
 		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_FRIENDSHIP', data: newFriendShip })

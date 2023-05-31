@@ -23,24 +23,24 @@ export class FriendInvitationsService
 			    private readonly sse: SseService,
 			    private readonly friendService: FriendsService) {}
 
-	private friendInvitationSelect = Prisma.validator<Prisma.FriendInvitationSelect>()
-	({
+	private friendInvitationSelect =
+	{
 		id: true,
 		creationDate: true,
 		invitingUserName: true,
 		invitedUserName: true,
 		status: true,
 
-	} satisfies Prisma.FriendInvitationSelect)
+	} satisfies Prisma.FriendInvitationSelect
 
-	private getFriendInvitationArgViaUser(status: FriendInvitationStatus[]): Prisma.FriendInvitationFindManyArgs
+	private getFriendInvitationArgViaUser(status: FriendInvitationStatus[])
 	{
-		const arg: Prisma.FriendInvitationFindManyArgs =
+		const arg =
 		{
 			where: { status: { in: status } },
 			select: this.friendInvitationSelect,
 			orderBy: { creationDate: 'asc' }
-		}
+		} satisfies Prisma.FriendInvitationFindManyArgs
 		return arg
 	}
 
@@ -56,12 +56,17 @@ export class FriendInvitationsService
 
 	async getFriendInvitationsByType(username: string, type: zInvitationFilterType, status: FriendInvitationStatus[])
 	{
-		const res = await this.userService.getUserByNameOrThrow(username,
+		if (type === 'INCOMING')
+		{
+			return (await this.userService.getUserByNameOrThrow(username,
+				{
+					incomingFriendInvitation: this.getFriendInvitationArgViaUser(status),
+				})).incomingFriendInvitation
+		}
+		return (await this.userService.getUserByNameOrThrow(username,
 			{
-				incomingFriendInvitation: type === 'INCOMING' && this.getFriendInvitationArgViaUser(status),
-				outcomingFriendInvitation: type === 'OUTCOMING' && this.getFriendInvitationArgViaUser(status),
-			})
-		return res.outcomingFriendInvitation || res.incomingFriendInvitation
+				outcomingFriendInvitation: this.getFriendInvitationArgViaUser(status),
+			})).outcomingFriendInvitation
 	}
 
 	private async getFriendInvitationOrThrow<T extends Prisma.FriendInvitationSelect>(username: string, id: string, type: 'INCOMING' | 'OUTCOMING' | 'ANY', select: Prisma.SelectSubset<T, Prisma.FriendInvitationSelect>)
@@ -90,8 +95,11 @@ export class FriendInvitationsService
 
 	async createFriendInvitation(invitingUserName: string, invitedUserName: string)
 	{
-		await Promise.all([this.casl.checkAbilitiesForUser(invitingUserName, [{ action: Action.Create, subject: subject('FriendInvitation', { invitedUserName: invitedUserName }) }]),
-		await this.userService.getUserByNameOrThrow(invitedUserName, { name: true })])
+		await Promise.all
+		([
+			this.userService.getUserByNameOrThrow(invitedUserName, { name: true }),
+			this.casl.checkAbilitiesForUser(invitingUserName, [{ action: Action.Create, subject: subject('FriendInvitation', { invitedUserName: invitedUserName }) }]),
+		])
 		return this.prisma.friendInvitation.create({
 			data:
 			{

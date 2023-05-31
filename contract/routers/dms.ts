@@ -25,20 +25,42 @@ const zDmDiscussionMessageReturn = z.strictObject
 	relatedTo: z.string().uuid().nullable()
 })
 
-const zDmDiscussionEventReturn = z.strictObject
-({
-	eventType: z.nativeEnum(DmEventType),
-	chanInvitationId: z.string().uuid().optional()
-})
+// unused right now but probably usefull in the future
+const zDmDiscussionBaseEvent = z.strictObject({})
 
-const zDmDiscussionElementReturn = z.strictObject
+export const zDmDiscussionEventReturn = z.union
+([
+	zDmDiscussionBaseEvent.extend
+	({
+		eventType: z.nativeEnum(DmEventType),
+	}),
+	zDmDiscussionBaseEvent.extend
+	({
+		eventType: z.literal("CHAN_INVITATION"),
+		chanInvitationId: z.string().uuid()
+	})
+])
+
+const zDmDiscussionBaseElement = z.strictObject
 ({
 	id: z.string().uuid(),
 	author: zUserName,
 	creationDate: z.date(),
-	message: zDmDiscussionMessageReturn.nullable(),
-	event: zDmDiscussionEventReturn.nullable()
 })
+
+export const zDmDiscussionElementReturn = z.discriminatedUnion("type",
+[
+	zDmDiscussionBaseElement.extend
+	({
+		type: z.literal('message'),
+		message: zDmDiscussionMessageReturn
+	}),
+	zDmDiscussionBaseElement.extend
+	({
+		type: z.literal('event'),
+		event: zDmDiscussionEventReturn
+	})
+])
 
 export const dmsContract = c.router
 ({
@@ -123,4 +145,7 @@ export const dmsContract = c.router
 
 export type DmEvent =
 { type: 'CREATED_DM', data: z.infer<typeof zDmReturn> } |
-{ type: 'CREATED_DM_EVENT' | 'CREATED_DM_MESSAGE', data: z.infer<typeof zDmDiscussionElementReturn> }
+{
+	type: 'CREATED_DM_EVENT' | 'CREATED_DM_MESSAGE',
+	data: z.infer<typeof zDmDiscussionElementReturn>
+}

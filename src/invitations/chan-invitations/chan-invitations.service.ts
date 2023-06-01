@@ -1,8 +1,9 @@
 import { subject } from '@casl/ability';
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, ChanInvitationStatus, DmEventType } from '@prisma/client';
+import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Prisma, ChanInvitationStatus, ChanInvitationDmDiscussionEvent } from '@prisma/client';
 import { NestRequestShapes, nestControllerContract } from '@ts-rest/nest';
 import contract from 'contract/contract';
+import { zChanInvitationReturn } from 'contract/routers/invitations';
 import { zInvitationFilterType } from 'contract/zod/inv.zod';
 import { PrismaService } from 'nestjs-prisma';
 import { Action, CaslAbilityFactory } from 'src/casl/casl-ability.factory/casl-ability.factory';
@@ -10,6 +11,7 @@ import { ChansService } from 'src/chans/chans.service';
 import { DmsService } from 'src/dms/dms.service';
 import { SseService } from 'src/sse/sse.service';
 import { UserService } from 'src/user/user.service';
+import { z } from 'zod';
 
 const c = nestControllerContract(contract.invitations.chan)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -37,8 +39,20 @@ export class ChanInvitationsService
 		{
 			select:
 			{
-				discussionElementId: true,
-				discussionElement: { select: { directMessageId: true } }
+				dmDiscussionEvent:
+				{
+					select:
+					{
+						discussionElement:
+						{
+							select:
+							{
+								id: true,
+								directMessageId: true
+							}
+						}
+					}
+				},
 			}
 		},
 	} satisfies Prisma.ChanInvitationSelect
@@ -60,11 +74,14 @@ export class ChanInvitationsService
 	}
 
 	formatChanInvitation(chanInvitation: Prisma.ChanInvitationGetPayload<typeof this.chanInvitationGetPayload>)
+	: z.infer<typeof zChanInvitationReturn>
 	{
 		const { discussionEvent, ...rest } = chanInvitation
 
-		const dmId = discussionEvent.discussionElement.directMessageId
-		const eventId = discussionEvent.discussionElementId
+		const dmId = discussionEvent.dmDiscussionEvent?.discussionElement?.directMessageId
+		const eventId = discussionEvent.dmDiscussionEvent?.discussionElement?.id
+		if (!dmId || !eventId)
+			throw new InternalServerErrorException('a chan invitation failed to be linked to an event')
 
 		const formattedChanInvitation =
 		{
@@ -141,20 +158,23 @@ export class ChanInvitationsService
 		const directMessageId = (await this.dmsService.findDmBetweenUsers(invitedUserName, invitingUserName, { id: true }))?.id
 		if (!directMessageId)
 			throw new ForbiddenException("no dm with user")
-		const dmEvent = await this.dmsService.createDmEvent(directMessageId, DmEventType.CHAN_INVITATION, invitingUserName)
-		const chanInv = this.formatChanInvitation(await this.prisma.chanInvitation.create({
-			data:
-			{
-				chan: { connect: { id: chanId } },
-				discussionEvent: { connect: { id: dmEvent.id } },
-				invitingUser: { connect: { name: invitingUserName } },
-				invitedUser: { connect: { name: invitedUserName } },
-			},
-			select: this.chanInvitationSelect }))
-		await this.sse.pushEvent(invitedUserName, { type: 'CREATED_CHAN_INVITATION', data: chanInv })
-		// to notify the dmEvent after the invitation (probably easier to render the event in this order for the front)
-		setTimeout(this.sse.pushEventMultipleUser, 0, [invitingUserName, invitedUserName], { type: 'CREATED_DM_EVENT', data: dmEvent })
-		return chanInv
+		return this.prisma.$transaction(async (tx) =>
+		{
+			const dmEventId = await this.dmsService.createChanInvitationDmEvent(directMessageId, invitingUserName, tx)
+			const chanInv = this.formatChanInvitation(await tx.chanInvitation.create({
+				data:
+				{
+					chan: { connect: { id: chanId } },
+					discussionEvent: { connect: { id: dmEventId } },
+					invitingUser: { connect: { name: invitingUserName } },
+					invitedUser: { connect: { name: invitedUserName } },
+				},
+				select: this.chanInvitationSelect }))
+			// to notify the dmEvent after the invitation (probably easier to render the event in this order for the front)
+			const dmEvent = await this.dmsService.findOneDmElement(chanInv.eventId, tx)
+			setTimeout(this.sse.pushEventMultipleUser.bind(this.sse), 0, [invitingUserName, invitedUserName], { type: 'CREATED_DM_EVENT', data: dmEvent })
+			return chanInv
+		})
 	}
 
 	private async acceptAllChanInvitations(username: string, chanId: string, exceptionInvitationId?: string)

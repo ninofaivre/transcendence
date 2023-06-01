@@ -21,14 +21,14 @@ export class SseService
 		return tmp
 	}
 
-	async pushEvent(username: string, event: SseEvent)
+	public async pushEvent(username: string, event: SseEvent)
 	{
-		console.log("push Event to", username, "event:", event)
-		console.log(`this.eventSource.get(${username})`, this.eventSource.get(username))
+		// console.log("push Event to", username, "event:", event)
+		// console.log(`this.eventSource.get(${username})`, this.eventSource.get(username))
 		this.eventSource.get(username)?.next(event)
 	}
 
-	async pushEventMultipleUser(usernames: string[], event: SseEvent)
+	public async pushEventMultipleUser(usernames: string[], event: SseEvent)
 	{
 		return Promise.all(usernames.map(async el => this.pushEvent(el, event)))
 	}

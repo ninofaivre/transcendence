@@ -606,7 +606,7 @@ export class ChansService {
 		return this.sse.pushEventMultipleUser(this.namesArrayToStringArray(userNames), toNotify)
 	}
 	
-	public async createAndNotifyClassicEvent(author: string, concerned: string | null, chanId: string, event: ClassicChanEventType)
+	public async createAndNotifyClassicChanEvent(author: string, concerned: string | null, chanId: string, event: ClassicChanEventType)
 	{
 		const newEvent = (await this.prisma.chanDiscussionEvent.create({
 			data:

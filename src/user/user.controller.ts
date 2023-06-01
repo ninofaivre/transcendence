@@ -3,9 +3,6 @@ import { Controller, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { UserService } from './user.service'
 import { ApiBody, ApiParam, ApiProperty, ApiResponseProperty, ApiTags } from '@nestjs/swagger';
-import { ChatService } from 'src/chat/chat.service';
-import { CreateUserDTO } from './dto/createUser.dto';
-import { CreateChanDTO } from './dto/test.dto';
 import { NestControllerInterface, NestRequestShapes, TsRest, TsRestRequest, nestControllerContract } from '@ts-rest/nest';
 import contract from 'contract/contract';
 
@@ -16,8 +13,7 @@ type RequestShapes = NestRequestShapes<typeof c>
 export class UserController implements NestControllerInterface<typeof c>
 {
 
-	constructor(private userService: UserService,
-			    private chatService: ChatService) {}
+	constructor(private userService: UserService) {}
 
 	@UseGuards(JwtAuthGuard)
 	@TsRest(c.getMe)

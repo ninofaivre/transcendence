@@ -1,4 +1,4 @@
-import { DirectMessageStatus, DmEventType } from "@prisma/client";
+import { DirectMessageStatus, ClassicDmEventType } from "@prisma/client";
 import { initContract } from "@ts-rest/core";
 // import { zDiscussionElementReturn, zMessageId } from "contract/zod/global.zod";
 import { zUserName } from "contract/zod/user.zod";
@@ -32,7 +32,7 @@ export const zDmDiscussionEventReturn = z.union
 ([
 	zDmDiscussionBaseEvent.extend
 	({
-		eventType: z.nativeEnum(DmEventType),
+		eventType: z.nativeEnum(ClassicDmEventType),
 	}),
 	zDmDiscussionBaseEvent.extend
 	({

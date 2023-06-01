@@ -5,7 +5,6 @@ import { ServeStaticModule } from '@nestjs/serve-static'
 import { AuthModule } from './auth/auth.module'
 import { join } from 'path'
 import { TestWebsocketModule } from './test-websocket/test-websocket.module';
-import { ChatModule } from './chat/chat.module';
 import { loggingMiddleware, PrismaModule } from 'nestjs-prisma'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { ChansModule } from './chans/chans.module';
@@ -59,7 +58,6 @@ import { CaslModule } from './casl/casl.module';
 		}),
 		AuthModule,
 		TestWebsocketModule,
-		ChatModule,
 		ChansModule,
 		InvitationsModule,
 		DmsModule,

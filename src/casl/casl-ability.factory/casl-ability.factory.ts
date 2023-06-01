@@ -54,8 +54,8 @@ const userSelect = Prisma.validator<Prisma.UserArgs>()
 	select:
 	{
 		name: true,
-		friend: { select: { requestedUser: true } },
-		friendOf: { select: { requestingUser: true } },
+		friend: { select: { requestedUserName: true } },
+		friendOf: { select: { requestingUserName: true } },
 		blockedUser: { select: { blockedUserName: true } },
 		blockedByUser: { select: { blockingUserName: true } },
 		outcomingFriendInvitation: { where: { status: FriendInvitationStatus.PENDING }, select: { invitedUserName: true } },
@@ -196,7 +196,7 @@ export class CaslAbilityFactory
 
 	private async createAbilityForUser(user: UserSubject)
 	{
-		const friends = Array.prototype.concat(user.friend.map(el => el.requestedUser), user.friendOf.map(el => el.requestingUser))
+		const friends = Array.prototype.concat(user.friend.map(el => el.requestedUserName), user.friendOf.map(el => el.requestingUserName))
 		const blockedUsers = user.blockedUser.map(el => el.blockedUserName)
 		const blockedByUsers = user.blockedByUser.map(el => el.blockingUserName)
 		const pendingOutcomingFriendInvitations = user.outcomingFriendInvitation.map(el => el.invitedUserName)

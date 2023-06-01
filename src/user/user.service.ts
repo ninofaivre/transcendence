@@ -1,11 +1,14 @@
-import { CreateUserDTO } from './dto/createUser.dto'
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { MessageEvent, NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common'
 import { hash } from 'bcrypt'
 import { Prisma, User } from '@prisma/client';
-import { filterType as blockedFilterType } from './dto/getBlockedList.query.dto';
 import { concat, Subject } from 'rxjs';
+import { NestRequestShapes, nestControllerContract } from '@ts-rest/nest';
+import contract from 'contract/contract';
+
+const c = nestControllerContract(contract.users)
+type RequestShapes = NestRequestShapes<typeof c>
 
 @Injectable()
 export class UserService
@@ -78,7 +81,7 @@ export class UserService
 		return user
 	}
 
-	async createUser(user: CreateUserDTO)
+	async createUser(user: RequestShapes['signUp']['body'])
 	{
 		if (await this.getUserByName(user.name, { name: true }))
 			throw new ConflictException("user already exist")

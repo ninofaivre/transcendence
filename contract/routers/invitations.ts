@@ -10,7 +10,7 @@ import { zChanTitle } from "contract/zod/chan.zod";
 
 const c = initContract()
 
-const zFriendInvitationReturn = z.strictObject
+export const zFriendInvitationReturn = z.strictObject
 ({
 	id: z.string().uuid(),
 	creationDate: z.date(),
@@ -19,7 +19,7 @@ const zFriendInvitationReturn = z.strictObject
 	status: z.nativeEnum(FriendInvitationStatus)
 })
 
-const zChanInvitationReturn = z.strictObject
+export const zChanInvitationReturn = z.strictObject
 ({
 	id: z.string().uuid(),
 	chanId: z.string().uuid().nullable(),

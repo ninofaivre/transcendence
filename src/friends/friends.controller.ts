@@ -1,7 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { CreateFriendDTO } from './dto/createFriend.dto';
-import { DeleteFriendPathDTO } from './dto/deleteFriend.path.dto';
 import { FriendsService } from './friends.service';
 import { NestControllerInterface, NestRequestShapes, TsRest, TsRestRequest, nestControllerContract } from '@ts-rest/nest';
 import contract from 'contract/contract';

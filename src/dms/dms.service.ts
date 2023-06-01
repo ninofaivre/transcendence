@@ -1,11 +1,11 @@
 import { ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { ClassicDmEventType, Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { AppService } from 'src/app.service';
-import {  } from '@prisma/client';
 import { EventTypeList, SseService } from 'src/sse/sse.service';
 import { z } from 'zod';
 import { zDmDiscussionElementReturn, zDmDiscussionEventReturn } from 'contract/routers/dms';
+import { Tx } from 'src/types';
 
 
 @Injectable()
@@ -116,34 +116,61 @@ export class DmsService
 			select: select })
 	}
 
-	public async createDmEvent(dmId: string, event: DmEventType, author: string)
+	private getDmDiscussionEventCreateArgs<T extends Prisma.DmDiscussionEventSelect>(dmId: string, author: string, select: Prisma.Subset<T, Prisma.DmDiscussionEventSelect>)
 	{
-		return this.formatDmElement((await this.prisma.dmDiscussionEvent.create({
+		const args =
+		{
 			data:
 			{
-				eventType: event,
 				discussionElement:
 				{
 					create:
 					{
 						authorRelation:
 						{
-							connect:
-							{
-								name: author
-							}
+							connect: { name: author }
 						},
 						directMessage:
 						{
-							connect:
-							{
-								id: dmId
-							}
+							connect: { id: dmId }
 						}
 					}
 				}
 			},
-			select: { discussionElement: { select: this.dmDiscussionElementSelect } } })).discussionElement)
+			select: select 
+		} satisfies Prisma.DmDiscussionEventCreateArgs
+		return args
+	}
+
+	public async createClassicDmEvent(dmId: string, eventType: ClassicDmEventType, author: string)
+	{
+		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId, author, { discussionElement: { select: this.dmDiscussionElementSelect } })
+		const createArgs = { ...rest, data: { classicDmDiscussionEvent: { create: { eventType: eventType } }, ...data } } satisfies Prisma.DmDiscussionEventCreateArgs
+		const newEvent = (await this.prisma.dmDiscussionEvent.create(createArgs)).discussionElement
+		if (!newEvent?.event?.classicDmDiscussionEvent)
+			throw new InternalServerErrorException('a discussion event has failed to be created')
+		const event = { ...newEvent.event, classicDmDiscussionEvent: newEvent.event.classicDmDiscussionEvent }
+		return { ...newEvent, event }
+	}
+
+	public async createChanInvitationDmEvent(dmId: string, author: string, prismaInstance: Tx = this.prisma)
+	{
+		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId, author, { chanInvitationDmDiscussionEvent: { select: { id: true } } })
+		const createArgs = { ...rest, data: { chanInvitationDmDiscussionEvent: { create: {} }, ...data } } satisfies Prisma.DmDiscussionEventCreateArgs
+		const id = (await prismaInstance.dmDiscussionEvent.create(createArgs)).chanInvitationDmDiscussionEvent?.id
+		if (!id)
+			throw new InternalServerErrorException('a discussion event has failed to be created')
+		return id 
+	}
+
+	public async findOneDmElement(dmElementId: string, prismaInstance: Tx = this.prisma)
+	{
+		const dmDiscussionElement = await prismaInstance.dmDiscussionElement.findUnique({
+			where: { id: dmElementId },
+			select: this.dmDiscussionElementSelect })
+		if (!dmDiscussionElement)
+			throw new NotFoundException(`not found DmDiscussionElement ${dmElementId}`)
+		return this.formatDmElement(dmDiscussionElement)
 	}
 
 	public async createDm(requestingUserName: string, requestedUserName: string, friendShipId: string)
@@ -157,7 +184,7 @@ export class DmsService
 				},
 				select: this.directMessageSelect })
 		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_DM', data: newDm })
-		const newEvent = await this.createDmEvent(newDm.id, DmEventType.CREATED_FRIENDSHIP, requestedUserName)
+		const newEvent = this.formatDmElement(await this.createClassicDmEvent(newDm.id, ClassicDmEventType.CREATED_FRIENDSHIP, requestedUserName))
 		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_DM_EVENT', data: newEvent })
 		return newDm.id
 	}

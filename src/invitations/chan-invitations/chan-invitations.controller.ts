@@ -11,6 +11,7 @@ const c = nestControllerContract(contract.invitations.chan)
 type RequestShapes = NestRequestShapes<typeof c>
 
 @Controller()
+@TsRest({ jsonQuery: true })
 export class ChanInvitationsController implements NestControllerInterface<typeof c>
 {
 

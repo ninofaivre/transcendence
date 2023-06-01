@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { ChanInvitationStatus, DmEventType, FriendInvitationStatus, PermissionList, Prisma } from '@prisma/client';
+import { ChanInvitationStatus, FriendInvitationStatus, PermissionList, Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { AppService } from 'src/app.service';
 import { PermissionsService } from 'src/chans/permissions/permissions.service';

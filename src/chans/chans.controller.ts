@@ -2,16 +2,6 @@ import { Body, Controller, Delete, ForbiddenException, Get, InternalServerErrorE
 import { ApiOkResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ChansService } from './chans.service';
-import { CreateChanMessageDTO } from './dto/createChanMessage.dto';
-import { CreateChanMessagePathDTO } from './dto/createChanMessage.path.dto';
-import { DeleteChanPathDTO } from './dto/deleteChan.path.dto';
-import { DeleteChanMessagePathDTO } from './dto/deleteChanMessage.path.dto';
-import { GetChanMessagesPathDTO } from './dto/getChanMessages.path.dto';
-import { GetChanMessagesQueryDTO } from './dto/getChanMessages.query.dto';
-import { JoinChanByIdDTO, JoinChanByInvitationDTO } from './dto/joinChan.dto';
-import { KickUserFromChanPathDTO } from './dto/kickUserFromChan.path.dto';
-import { SearchChansQueryDTO } from './dto/searchChans.query.dto';
-import { LeaveChanPathDTO } from './dto/leaveChan.path.dto';
 import contract from 'contract/contract';
 import { nestControllerContract, NestControllerInterface, NestRequestShapes, NestResponseShapes, TsRest, TsRestRequest, } from '@ts-rest/nest';
 import { zCreatePublicChan } from 'contract/zod/chan.zod';

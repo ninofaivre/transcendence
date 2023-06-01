@@ -37,7 +37,6 @@
 				},
 			]
 			msg_promise.then(({ status, body }) => {
-				console.log(status, body)
 				let last_elt_index =
 					displayed_messages.length > 0 ? displayed_messages.length - 1 : 0
 				if (status == 201 && body) {

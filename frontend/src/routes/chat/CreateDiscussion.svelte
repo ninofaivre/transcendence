@@ -2,8 +2,8 @@
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
 
 	import { Autocomplete, InputChip, toastStore } from "@skeletonlabs/skeleton"
-	import { fetchPostJSON } from "$lib/global"
 	import { invalidate } from "$app/navigation"
+	import { chansClient } from "$clients"
 
 	let show_discussion_creation_form = false
 	let minlength = 3
@@ -13,20 +13,23 @@
 	async function handleDiscussionCreation() {
 		show_discussion_creation_form = false
 
+		let priv: boolean = false
 		let formdata = new FormData(form) // `form` is bound to the form node
-		console.log(formdata)
-		console.log(formdata.getAll("users"))
-		let res = await fetchPostJSON("/api/chans", {
-			type: "PRIVATE",
-			title: formdata.get("title"),
-			// users: formdata.getAll("users"),
+		const title: string = formdata.get("title") as string
+		const type = priv ? "PRIVATE" : "PUBLIC"
+		const { status, body } = await chansClient.createChan({
+			body: { type, title },
 		})
-		if (!res.ok) {
-			let body = await res.json()
+		if (status > 299) {
 			toastStore.trigger({
-				message: `Error: ${res.statusText}\nCould not create new discussion because ${body.message}`,
+				message: `Could not create new discussion channel. Server returned code ${status}\n with message \"${
+					(body as any)?.message
+				}\"`,
 			})
-		} else invalidate(":discussions")
+		} else {
+			console.log("Server returned:", status)
+			invalidate(":discussions")
+		}
 	}
 
 	function validation(_username: string): boolean {

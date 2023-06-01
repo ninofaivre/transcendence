@@ -64,7 +64,7 @@
 			if (status === 200) {
 				displayed_messages = body
 				observer.observe(canary)
-			} else console.error("Could not fetch conversation with id:", _currentDiscussionId)
+			} else console.error("Could not get conversation with id:", _currentDiscussionId)
 		}
 	}
 

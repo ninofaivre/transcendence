@@ -9,11 +9,11 @@
 	let minlength = 3
 	let maxlength = 100
 
+	let priv: boolean = false
 	let form: HTMLFormElement
 	async function handleDiscussionCreation() {
 		show_discussion_creation_form = false
 
-		let priv: boolean = false
 		let formdata = new FormData(form) // `form` is bound to the form node
 		const title: string = formdata.get("title") as string
 		const type = priv ? "PRIVATE" : "PUBLIC"
@@ -64,11 +64,22 @@
 		on:submit|preventDefault|stopPropagation={handleDiscussionCreation}
 		class=""
 	>
-		<label class="label">
-			Choose a name for the conversation
-			<input type="text" name="title" {minlength} {maxlength} class="input" />
+		<label for="title" class="label">
+			Choose a name for the room {priv ? "if you care" : ""}
 		</label>
-		<InputChip bind:input bind:value name="users" {validation} />
+		<input
+			type="text"
+			name="title"
+			id="title"
+			{minlength}
+			{maxlength}
+			class="input"
+			required={!priv}
+		/>
+		<label for="priv" class="label">Make private</label>
+		<input id="priv" type="checkbox" bind:checked={priv} />
+		<label for="invites" class="label">Send invites</label>
+		<InputChip bind:input bind:value name="users" id="invites" {validation} />
 		<Autocomplete
 			bind:input
 			blacklist={value}

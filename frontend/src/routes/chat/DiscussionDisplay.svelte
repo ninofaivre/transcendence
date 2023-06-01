@@ -36,27 +36,18 @@
 					event: null,
 				},
 			]
-			msg_promise
-				.then(({ status, body }) => {
-					console.log(status, body)
-					let last_elt_index =
-						displayed_messages.length > 0 ? displayed_messages.length - 1 : 0
-					if (status == 200 && body) {
-						displayed_messages[last_elt_index] = body as unknown as ChanMessage
-					}
-				})
-				.catch((err: any) => {
-					if (err?.status)
-						console.error(
-							"The message you sent was not accepted by the server: ",
-							err.message,
-						)
-					else
-						console.error(
-							"The message you sent was acknowledged by the server but an error happened when parsing the confirmation. Please refresh the page: ",
-							err.message,
-						)
-				})
+			msg_promise.then(({ status, body }) => {
+				console.log(status, body)
+				let last_elt_index =
+					displayed_messages.length > 0 ? displayed_messages.length - 1 : 0
+				if (status == 201 && body) {
+					displayed_messages[last_elt_index] = body as unknown as ChanMessage
+				} else
+					console.error(
+						"The message sent was received by the server but has not been created. Server responder with:",
+						status,
+					)
+			})
 		}
 	}
 

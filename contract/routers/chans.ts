@@ -302,5 +302,5 @@ export type ChanEvent =
 } |
 {
 	type: 'CREATED_CHAN_EVENT' | 'CREATED_CHAN_MESSAGE',
-	data: z.infer<typeof zChanDiscussionElementReturn>
+	data: { id: string, element: z.infer<typeof zChanDiscussionElementReturn> }
 }

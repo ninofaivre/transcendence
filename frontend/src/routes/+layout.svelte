@@ -18,9 +18,12 @@
 	}
 
 	$: {
-		if ($logged_in == true) {
-			goto("/chat")
-		} else if ($logged_in == false) {
+		// if ($logged_in == true) {
+		// 	goto("/chat")
+		// } else if ($logged_in == false) {
+		// 	goto("/auth")
+		// }
+		if ($logged_in == false) {
 			goto("/auth")
 		}
 	}
@@ -39,13 +42,13 @@
 				</strong>
 			</svelte:fragment>
 			{#if $logged_in}
-				<a class="btn variant-filled-success mx-4 text-2xl font-semibold" href="/pong">
+				<a class="variant-filled-success btn mx-4 text-2xl font-semibold" href="/pong">
 					🏓
 				</a>
-				<a class="btn variant-filled-success mx-4 text-2xl font-semibold" href="/chat">
+				<a class="variant-filled-success btn mx-4 text-2xl font-semibold" href="/chat">
 					💬
 				</a>
-				<a class="btn variant-filled-success mx-4 text-2xl font-semibold" href="/dms">
+				<a class="variant-filled-success btn mx-4 text-2xl font-semibold" href="/dms">
 					✉️
 				</a>
 			{/if}

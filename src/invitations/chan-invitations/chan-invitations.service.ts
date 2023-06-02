@@ -1,6 +1,6 @@
 import { subject } from '@casl/ability';
 import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { Prisma, ChanInvitationStatus, ChanInvitationDmDiscussionEvent } from '@prisma/client';
+import { Prisma, ChanInvitationStatus, ChanInvitationDmDiscussionEvent, ClassicChanEventType } from '@prisma/client';
 import { NestRequestShapes, nestControllerContract } from '@ts-rest/nest';
 import contract from 'contract/contract';
 import { zChanInvitationReturn } from 'contract/routers/invitations';
@@ -158,32 +158,38 @@ export class ChanInvitationsService
 		const directMessageId = (await this.dmsService.findDmBetweenUsers(invitedUserName, invitingUserName, { id: true }))?.id
 		if (!directMessageId)
 			throw new ForbiddenException("no dm with user")
-		return this.prisma.$transaction(async (tx) =>
-		{
-			const dmEventId = await this.dmsService.createChanInvitationDmEvent(directMessageId, invitingUserName, tx)
-			const chanInv = this.formatChanInvitation(await tx.chanInvitation.create({
-				data:
-				{
-					chan: { connect: { id: chanId } },
-					discussionEvent: { connect: { id: dmEventId } },
-					invitingUser: { connect: { name: invitingUserName } },
-					invitedUser: { connect: { name: invitedUserName } },
-				},
-				select: this.chanInvitationSelect }))
-			// to notify the dmEvent after the invitation (probably easier to render the event in this order for the front)
-			const dmEvent = await this.dmsService.findOneDmElement(chanInv.eventId, tx)
-			setTimeout(this.sse.pushEventMultipleUser.bind(this.sse), 0, [invitingUserName, invitedUserName], { type: 'CREATED_DM_EVENT', data: dmEvent })
-			return chanInv
-		})
+		const { chanInv, dmEvent } = await this.prisma.$transaction(async (tx) =>
+			{
+				const dmEventId = await this.dmsService.createChanInvitationDmEvent(directMessageId, invitingUserName, tx)
+				const chanInv = this.formatChanInvitation(await tx.chanInvitation.create({
+					data:
+					{
+						chan: { connect: { id: chanId } },
+						discussionEvent: { connect: { id: dmEventId } },
+						invitingUser: { connect: { name: invitingUserName } },
+						invitedUser: { connect: { name: invitedUserName } },
+					},
+					select: this.chanInvitationSelect }))
+				const dmEvent = await this.dmsService.findOneDmElement(chanInv.eventId, tx)
+				return { chanInv, dmEvent }
+			})
+		// to notify the dmEvent after the invitation (probably easier to render the event in this order for the front)
+		setTimeout(this.sse.pushEventMultipleUser.bind(this.sse), 0, [invitingUserName, invitedUserName], { type: 'CREATED_DM_EVENT', data: dmEvent })
+		return chanInv
 	}
 
-	private async acceptAllChanInvitations(username: string, chanId: string, exceptionInvitationId?: string)
+	private async acceptAllChanInvitations(username: string, chanId: string, exceptionInvitationId: string)
 	{
 		const invs = (await this.usersService.getUserByNameOrThrow(username,
 			{
 				incomingChanInvitation:
 				{
-					where: { status: ChanInvitationStatus.PENDING, chanId: chanId },
+					where:
+					{
+						status: ChanInvitationStatus.PENDING,
+						chanId: chanId,
+						id: { not: exceptionInvitationId }
+					},
 					select: { id: true }
 				}
 			})).incomingChanInvitation.map(el => el.id)
@@ -197,10 +203,7 @@ export class ChanInvitationsService
 			select: this.chanInvitationSelect }))
 		return Promise.all(res.map(async el =>
 			{ 
-				const usersToNotify = [el.invitingUserName]
-				if (exceptionInvitationId && el.id !== exceptionInvitationId)
-					usersToNotify.push(el.invitedUserName)
-				return this.sse.pushEventMultipleUser(usersToNotify, { type: 'UPDATED_CHAN_INVITATION', data: el })
+				return this.sse.pushEventMultipleUser([el.invitingUserName, el.invitedUserName], { type: 'UPDATED_CHAN_INVITATION', data: el })
 			}))
 	}
 
@@ -212,9 +215,14 @@ export class ChanInvitationsService
 		{
 			const newChan = await this.chansService.pushUserToChan(username, chanInvitation.chanId)
 			await this.acceptAllChanInvitations(username, chanInvitation.chanId, id)
-			await this.sse.pushEvent(username, { type: 'CREATED_CHAN', data: newChan })
-			await this.sse.pushEventMultipleUser(newChan.users.filter(el => el !== username), { type: 'UPDATED_CHAN', data: newChan })
-			// await this.chansService.welcomeUser(username, chanId)
+
+			await Promise.all
+			([
+				this.sse.pushEvent(username, { type: 'CREATED_CHAN', data: newChan }),
+				this.sse.pushEventMultipleUser(newChan.users.filter(el => el !== username), { type: 'UPDATED_CHAN', data: newChan })
+			])
+
+			await this.chansService.createAndNotifyClassicChanEvent(username, null, chanInvitation.chanId, ClassicChanEventType.AUTHOR_JOINED)
 		}
 		return this.formatChanInvitation(await this.prisma.chanInvitation.update({
 			where: { id: id },

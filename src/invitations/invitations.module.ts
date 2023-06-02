@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { InvitationsService } from './invitations.service';
 import { AppService } from 'src/app.service';
 import { ChansModule } from 'src/chans/chans.module';
 import { SseModule } from 'src/sse/sse.module';
@@ -10,6 +9,6 @@ import { CaslModule } from 'src/casl/casl.module';
 
 @Module({
   imports: [ChansModule, SseModule, ChanInvitationsModule, FriendInvitationsModule, UserModule, CaslModule],
-  providers: [InvitationsService, AppService],
+  providers: [AppService],
 })
 export class InvitationsModule {}

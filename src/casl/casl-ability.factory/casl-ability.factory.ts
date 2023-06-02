@@ -56,6 +56,7 @@ const userSelect = Prisma.validator<Prisma.UserArgs>()
 		name: true,
 		friend: { select: { requestedUserName: true } },
 		friendOf: { select: { requestingUserName: true } },
+		// directMessage: { where: { requestedUserStatus }, select: {} }
 		blockedUser: { select: { blockedUserName: true } },
 		blockedByUser: { select: { blockingUserName: true } },
 		outcomingFriendInvitation: { where: { status: FriendInvitationStatus.PENDING }, select: { invitedUserName: true } },
@@ -209,8 +210,8 @@ export class CaslAbilityFactory
 		can(Action.Create, 'FriendInvitation')
 		cannot(Action.Create, 'FriendInvitation', { invitedUserName: { in: pendingIncomingFriendInvitations } }).because("already invited by user")
 		cannot(Action.Create, 'FriendInvitation', { invitedUserName: { in: pendingOutcomingFriendInvitations } }).because("already invited user")
-		cannot(Action.Create, 'FriendInvitation', { invitedUserName: { in: friends } }).because("already friend with user")
 		cannot(Action.Create, 'FriendInvitation', { invitedUserName: user.name }).because("self invitation")
+		cannot(Action.Create, 'FriendInvitation', { invitedUserName: { in: friends } }).because("already friend with user")
 		cannot(Action.Create, 'FriendInvitation', { invitedUserName: { in: blockedUsers } }).because("blocked user")
 		cannot(Action.Create, 'FriendInvitation', { invitedUserName: { in: blockedByUsers } }).because("blocked by user")
 
@@ -220,6 +221,7 @@ export class CaslAbilityFactory
 
 		/* CHAN_INVITATION */
 		can(Action.Create, 'ChanInvitation')
+		cannot(Action.Create, 'ChanInvitation', { invitedUserName: user.name }).because("self invitation")
 		cannot(Action.Create, 'ChanInvitation', { invitedUserName: { notIn: friends } }).because("not friend user")
 		cannot(Action.Create, 'ChanInvitation', { invitedUserName: { in: pendingOutcomingChanInvitations } }).because("already invited user")
 

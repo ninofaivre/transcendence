@@ -1,6 +1,5 @@
-import { DirectMessageStatus, ClassicDmEventType } from "@prisma/client";
+import { DirectMessageStatus, ClassicDmEventType, DirectMessageUserStatus } from "@prisma/client";
 import { initContract } from "@ts-rest/core";
-// import { zDiscussionElementReturn, zMessageId } from "contract/zod/global.zod";
 import { zUserName } from "contract/zod/user.zod";
 import { z } from "zod";
 
@@ -12,11 +11,12 @@ const zDmReturn = z.strictObject
 	friendShipId: z.string().uuid().nullable(),
 	requestingUserName: zUserName,
 	requestedUserName: zUserName,
-	requestingUserStatus: z.nativeEnum(DirectMessageStatus),
+	requestingUserStatus: z.nativeEnum(DirectMessageUserStatus),
 	requestingUserStatusMutedUntil: z.date().nullable(),
-	requestedUserStatus: z.nativeEnum(DirectMessageStatus),
+	requestedUserStatus: z.nativeEnum(DirectMessageUserStatus),
 	requestedUserStatusMutedUntil: z.date().nullable(),
-	creationDate: z.date()
+	creationDate: z.date(),
+	status: z.nativeEnum(DirectMessageStatus)
 })
 
 const zDmDiscussionMessageReturn = z.strictObject
@@ -64,19 +64,20 @@ export const zDmDiscussionElementReturn = z.discriminatedUnion("type",
 
 export const dmsContract = c.router
 ({
-	// getDms:
-	// {
-	// 	method: 'GET',
-	// 	path: '/',
-	// 	responses:
-	// 	{
-	// 		200: z.object
-	// 		({
-	// 			enabled: z.array(zDmReturn),
-	// 			disabled: z.array(zDmReturn)
-	// 		})
-	// 	}
-	// },
+	getDms:
+	{
+		method: 'GET',
+		path: '/',
+		responses:
+		{
+			200: z.strictObject
+			({
+				enabled: z.array(zDmReturn),
+				disabled: z.array(zDmReturn)
+			})
+		}
+	},
+	// stay commented because rn we can only have dm with friends (autocreated dms)
 	// createDm:
 	// {
 	// 	method: 'POST',
@@ -90,24 +91,24 @@ export const dmsContract = c.router
 	// 		201: zDmReturn
 	// 	}
 	// },
-	// getDmMessages:
-	// {
-	// 	method: 'GET',
-	// 	path: '/:dmId/messages',
-	// 	pathParams: z.strictObject
-	// 	({
-	// 		dmId: zDmId
-	// 	}),
-	// 	query: z.strictObject
-	// 	({
-	// 		nMessages: z.coerce.number().positive().int().max(50).default(25),
-	// 		cursor: zMessageId.optional()
-	// 	}),
-	// 	responses:
-	// 	{
-	// 		200: z.array(zDiscussionElementReturn)
-	// 	}
-	// },
+	getDmMessages:
+	{
+		method: 'GET',
+		path: '/:dmId/messages',
+		pathParams: z.strictObject
+		({
+			dmId: z.string().uuid()
+		}),
+		query: z.strictObject
+		({
+			nMessages: z.number().positive().int().max(50).default(25),
+			cursor: z.string().uuid().optional()
+		}),
+		responses:
+		{
+			200: z.array(zDmDiscussionElementReturn)
+		}
+	},
 	// createDmMessage:
 	// {
 	// 	method: 'POST',

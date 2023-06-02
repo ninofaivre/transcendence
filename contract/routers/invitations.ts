@@ -5,7 +5,6 @@ import { z } from "zod";
 import { unique } from "contract/zod/global.zod";
 import { ChanInvitationStatus, FriendInvitationStatus } from "@prisma/client";
 import { prefix } from "contract/lib/prefix";
-import { DmEvent } from "./dms";
 import { zChanTitle } from "contract/zod/chan.zod";
 
 const c = initContract()

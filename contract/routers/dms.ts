@@ -77,7 +77,9 @@ export const dmsContract = c.router
 			})
 		}
 	},
+	//
 	// stay commented because rn we can only have dm with friends (autocreated dms)
+	//
 	// createDm:
 	// {
 	// 	method: 'POST',
@@ -109,39 +111,39 @@ export const dmsContract = c.router
 			200: z.array(zDmDiscussionElementReturn)
 		}
 	},
-	// createDmMessage:
-	// {
-	// 	method: 'POST',
-	// 	path: '/:dmId/messages',
-	// 	pathParams: z.strictObject
-	// 	({
-	// 		dmId: zDmId
-	// 	}),
-	// 	body: z.strictObject
-	// 	({
-	// 		content: z.string().nonempty(),
-	// 		relatedTo: zDmId.optional()
-	// 	}),
-	// 	responses:
-	// 	{
-	// 		201: zDiscussionElementReturn
-	// 	}
-	// },
-	// deleteDmMessage:
-	// {
-	// 	method: 'DELETE',
-	// 	path: '/:dmId/messages/:messageId',
-	// 	pathParams: z.strictObject
-	// 	({
-	// 		dmId: zDmId,
-	// 		messageId: zMessageId
-	// 	}),
-	// 	body: c.body<null>(),
-	// 	responses:
-	// 	{
-	// 		202: c.response<null>()
-	// 	}
-	// }
+	createDmMessage:
+	{
+		method: 'POST',
+		path: '/:dmId/messages',
+		pathParams: z.strictObject
+		({
+			dmId: z.string().uuid()
+		}),
+		body: z.strictObject
+		({
+			content: z.string().nonempty(),
+			relatedTo: z.string().uuid().optional()
+		}),
+		responses:
+		{
+			201: zDmDiscussionElementReturn
+		}
+	},
+	deleteDmMessage:
+	{
+		method: 'DELETE',
+		path: '/:dmId/messages/:messageId',
+		pathParams: z.strictObject
+		({
+			dmId: z.string().uuid(),
+			messageId: z.string().uuid()
+		}),
+		body: c.body<null>(),
+		responses:
+		{
+			202: c.response<null>()
+		}
+	}
 })
 
 export type DmEvent =

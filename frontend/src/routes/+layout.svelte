@@ -60,7 +60,7 @@
 					>
 						Log out
 					</button>
-					<div class="card">
+					<div class="chip variant-ghost">
 						{$my_name}
 					</div>
 				{/if}

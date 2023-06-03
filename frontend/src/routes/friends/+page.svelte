@@ -41,9 +41,14 @@
 
 	const friendTableSource: TableSource = {
 		// A list of heading labels.
-		head: ["Name", "username"],
+		head: ["Friends"],
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues($page.data.friendships, ["name", "username"]),
+		body: tableMapperValues(
+			$page.data.friendships,
+			$page.data.friendships.requestingUserName !== $my_name
+				? ["requestingUserName"]
+				: ["requestedUserName"],
+		),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
 		// meta: tableMapperValues($page.data.friends, ["position", "name", "symbol", "weight"]),
 		// Optional: A list of footer labels.
@@ -74,22 +79,7 @@
 	{/if}
 </ul>
 
-<ul class="m-3 list-disc">
-	{#if friendships.length != 0}
-		Your friends:
-		{#each friendships as friendship}
-			<li class="">
-				{friendship.requestingUserName !== $my_name
-					? friendship.requestingUserName
-					: friendship.requestedUserName}
-			</li>
-		{/each}
-	{:else}
-		<p class="text-center text-2xl font-bold">You don't have any friends yet</p>
-	{/if}
-</ul>
-
-<!-- <Table source={friendTableSource} /> -->
+<Table source={friendTableSource} />
 
 <style>
 </style>

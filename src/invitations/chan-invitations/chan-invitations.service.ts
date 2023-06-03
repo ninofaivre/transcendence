@@ -35,26 +35,6 @@ export class ChanInvitationsService
 		status: true,
 		invitedUserName: true,
 		invitingUserName: true,
-		discussionEvent:
-		{
-			select:
-			{
-				dmDiscussionEvent:
-				{
-					select:
-					{
-						discussionElement:
-						{
-							select:
-							{
-								id: true,
-								directMessageId: true
-							}
-						}
-					}
-				},
-			}
-		},
 	} satisfies Prisma.ChanInvitationSelect
 
 	private chanInvitationGetPayload =
@@ -76,20 +56,7 @@ export class ChanInvitationsService
 	formatChanInvitation(chanInvitation: Prisma.ChanInvitationGetPayload<typeof this.chanInvitationGetPayload>)
 	: z.infer<typeof zChanInvitationReturn>
 	{
-		const { discussionEvent, ...rest } = chanInvitation
-
-		const dmId = discussionEvent.dmDiscussionEvent?.discussionElement?.directMessageId
-		const eventId = discussionEvent.dmDiscussionEvent?.discussionElement?.id
-		if (!dmId || !eventId)
-			throw new InternalServerErrorException('a chan invitation failed to be linked to an event')
-
-		const formattedChanInvitation =
-		{
-			...rest,
-			dmId,
-			eventId
-		}
-		return formattedChanInvitation
+		return chanInvitation
 	}
 
 	formatChanInvitationArray(chanInvitationsArray: Prisma.ChanInvitationGetPayload<typeof this.chanInvitationGetPayload>[])
@@ -160,20 +127,21 @@ export class ChanInvitationsService
 			throw new ForbiddenException("no dm with user")
 		const { chanInv, dmEvent } = await this.prisma.$transaction(async (tx) =>
 			{
-				const dmEventId = await this.dmsService.createChanInvitationDmEvent(directMessageId, invitingUserName, tx)
 				const chanInv = this.formatChanInvitation(await tx.chanInvitation.create({
 					data:
 					{
 						chan: { connect: { id: chanId } },
-						discussionEvent: { connect: { id: dmEventId } },
 						invitingUser: { connect: { name: invitingUserName } },
 						invitedUser: { connect: { name: invitedUserName } },
 					},
 					select: this.chanInvitationSelect }))
-				const dmEvent = await this.dmsService.findOneDmElement(chanInv.eventId, tx)
+				const dmEvent = await this.dmsService.createChanInvitationDmEvent(directMessageId, invitingUserName, chanInv.id, tx)
+				
+				// const dmEvent = await this.dmsService.findOneDmElement(chanInv.eventId, tx)
 				return { chanInv, dmEvent }
 			})
 		// to notify the dmEvent after the invitation (probably easier to render the event in this order for the front)
+		// TODO: type setTimeout extra args (mb I'm not using the right setTimeout)
 		setTimeout(this.sse.pushEventMultipleUser.bind(this.sse), 0, [invitingUserName, invitedUserName], { type: 'CREATED_DM_EVENT', data: { dmId: directMessageId, element: dmEvent } })
 		return chanInv
 	}

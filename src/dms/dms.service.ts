@@ -123,7 +123,7 @@ export class DmsService
 			select: select })
 	}
 
-	private getDmDiscussionEventCreateArgs<T extends Prisma.DmDiscussionEventSelect>(dmId: string, author: string, select: Prisma.Subset<T, Prisma.DmDiscussionEventSelect>)
+	private getDmDiscussionEventCreateArgs(dmId: string, author: string)
 	{
 		const args =
 		{
@@ -144,30 +144,29 @@ export class DmsService
 					}
 				}
 			},
-			select: select 
+			select: { discussionElement: { select: this.dmDiscussionElementSelect } } 
 		} satisfies Prisma.DmDiscussionEventCreateArgs
 		return args
 	}
 
 	public async createClassicDmEvent(dmId: string, eventType: ClassicDmEventType, author: string)
 	{
-		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId, author, { discussionElement: { select: this.dmDiscussionElementSelect } })
+		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId, author)
 		const createArgs = { ...rest, data: { classicDmDiscussionEvent: { create: { eventType: eventType } }, ...data } } satisfies Prisma.DmDiscussionEventCreateArgs
 		const newEvent = (await this.prisma.dmDiscussionEvent.create(createArgs)).discussionElement
 		if (!newEvent?.event?.classicDmDiscussionEvent)
 			throw new InternalServerErrorException('a discussion event has failed to be created')
-		const event = { ...newEvent.event, classicDmDiscussionEvent: newEvent.event.classicDmDiscussionEvent }
-		return { ...newEvent, event }
+		return this.formatDmElement(newEvent)
 	}
 
-	public async createChanInvitationDmEvent(dmId: string, author: string, prismaInstance: Tx = this.prisma)
+	public async createChanInvitationDmEvent(dmId: string, author: string, chanId: string, prismaInstance: Tx = this.prisma)
 	{
-		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId, author, { chanInvitationDmDiscussionEvent: { select: { id: true } } })
-		const createArgs = { ...rest, data: { chanInvitationDmDiscussionEvent: { create: {} }, ...data } } satisfies Prisma.DmDiscussionEventCreateArgs
-		const id = (await prismaInstance.dmDiscussionEvent.create(createArgs)).chanInvitationDmDiscussionEvent?.id
-		if (!id)
+		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId, author)
+		const createArgs = { ...rest, data: { chanInvitationDmDiscussionEvent: { create: { chanInvitationId: chanId } }, ...data } } satisfies Prisma.DmDiscussionEventCreateArgs
+		const newEvent = (await prismaInstance.dmDiscussionEvent.create(createArgs)).discussionElement
+		if (!newEvent?.event?.chanInvitationDmDiscussionEvent)
 			throw new InternalServerErrorException('a discussion event has failed to be created')
-		return id 
+		return this.formatDmElement(newEvent)
 	}
 
 	public async findOneDmElement(dmElementId: string, prismaInstance: Tx = this.prisma)
@@ -191,7 +190,7 @@ export class DmsService
 				},
 				select: this.directMessageSelect })
 		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_DM', data: newDm })
-		const newEvent = this.formatDmElement(await this.createClassicDmEvent(newDm.id, ClassicDmEventType.CREATED_FRIENDSHIP, requestedUserName))
+		const newEvent = await this.createClassicDmEvent(newDm.id, ClassicDmEventType.CREATED_FRIENDSHIP, requestedUserName)
 		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_DM_EVENT', data: { dmId: newDm.id, element: newEvent } })
 		return newDm.id
 	}
@@ -227,17 +226,6 @@ export class DmsService
 			{
 				elements:
 				{
-					where:
-					{
-						event:
-						{
-							OR:
-							[
-								{ chanInvitationDmDiscussionEvent: null },
-								{ chanInvitationDmDiscussionEvent: { isNot: { chanInvitation: null } } }
-							]
-						}
-					},
 					select: this.dmDiscussionElementSelect,
 					take: nMessages,
 					orderBy: { id: 'desc' },

@@ -26,8 +26,6 @@ export const zChanInvitationReturn = z.strictObject
 	status: z.nativeEnum(ChanInvitationStatus),
 	invitedUserName: zUserName,
 	invitingUserName: zUserName,
-	dmId: z.string().uuid(),
-	eventId: z.string().uuid()
 })
 
 const friendInvitationsContract = c.router

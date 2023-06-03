@@ -90,9 +90,7 @@ model ChanInvitation {
   chanId           String 
   chanTitle			String
 
-  discussionEvent   ChanInvitationDmDiscussionEvent @relation(fields: [discussionEventId], references: [id])
-  discussionEventId String @unique
-
+  discussionEvent   ChanInvitationDmDiscussionEvent?
   invitingUser	User @relation(name: "outcomingChanInvitation", fields: [invitingUserName], references: [name])
   invitingUserName	String
   invitedUser	User @relation(name: "incomingChanInvitation", fields: [invitedUserName], references: [name])
@@ -257,7 +255,8 @@ model DmDiscussionEvent {
 model ChanInvitationDmDiscussionEvent {
 	id String @id @default(uuid())
 
-	chanInvitation	ChanInvitation?
+	chanInvitation	ChanInvitation @relation(fields: [chanInvitationId], references: [id])
+	chanInvitationId String @unique
 
 	dmDiscussionEvent DmDiscussionEvent?
 }

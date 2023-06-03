@@ -632,7 +632,7 @@ export class ChansService {
 		if (!newEvent)
 			throw new InternalServerErrorException('a discussion event has failed to be created')
 		const formattedNewEvent = this.formatChanDiscussionElement(newEvent)
-		return this.notifyChan(chanId, { type: 'CREATED_CHAN_EVENT', data: formattedNewEvent })
+		return this.notifyChan(chanId, { type: 'CREATED_CHAN_EVENT', data: { chanId: chanId, element: formattedNewEvent } })
 	}
 	
 	public async pushUserToChan(username: string, chanId: string)

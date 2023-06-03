@@ -192,7 +192,7 @@ export class DmsService
 				select: this.directMessageSelect })
 		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_DM', data: newDm })
 		const newEvent = this.formatDmElement(await this.createClassicDmEvent(newDm.id, ClassicDmEventType.CREATED_FRIENDSHIP, requestedUserName))
-		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_DM_EVENT', data: newEvent })
+		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_DM_EVENT', data: { dmId: newDm.id, element: newEvent } })
 		return newDm.id
 	}
 

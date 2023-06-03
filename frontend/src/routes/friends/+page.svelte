@@ -8,25 +8,8 @@
 	import type contract from "$contract"
 	import { friendsClient, invitationsClient } from "$clients"
 	import { toastStore } from "@skeletonlabs/skeleton"
-
-	let invitee: string
-
-	let friend_request_form: HTMLFormElement
-	async function sendFriendRequest() {
-		const username = new FormData(friend_request_form).get("invitee")! as string
-		const { status, body } = await invitationsClient.createFriendInvitation({
-			body: { username },
-		})
-		if (status != 201) {
-			const message = `Could not create new discussion channel. Server returned code ${status}\n with message \"${
-				(body as any)?.message
-			}\"`
-			toastStore.trigger({
-				message,
-			})
-			console.error(message)
-		}
-	}
+	import { my_name } from "$stores"
+	import SendFriendRequest from "./SendFriendRequest.svelte"
 
 	async function acceptInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
 		const idString = e.currentTarget.dataset.id
@@ -36,7 +19,7 @@
 				body: { invitationId },
 			})
 			if (status != 201) {
-				const message = `Could not create new discussion channel. Server returned code ${status}\n with message \"${
+				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
 				toastStore.trigger({
@@ -47,19 +30,20 @@
 		}
 	}
 
+	$: friendships = $page.data.friendships
+	console.log("Your friendships are:", $page.data.friendships)
+
 	async function declineInvitation(_e: MouseEvent & { currentTarget: HTMLButtonElement }) {
 		console.log("This has not been implemented yet")
 	}
 
 	type friendType = ClientInferResponseBody<typeof contract.friends.getFriends, 200>[number]
 
-	console.log("Your friends are:", $page.data.friends)
-
 	const friendTableSource: TableSource = {
 		// A list of heading labels.
 		head: ["Name", "username"],
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues($page.data.friends, ["name", "username"]),
+		body: tableMapperValues($page.data.friendships, ["name", "username"]),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
 		// meta: tableMapperValues($page.data.friends, ["position", "name", "symbol", "weight"]),
 		// Optional: A list of footer labels.
@@ -67,51 +51,45 @@
 	}
 </script>
 
-<div class="m-14">
-	<form
-		method="POST"
-		on:submit|preventDefault={sendFriendRequest}
-		bind:this={friend_request_form}
-	>
-		<label for="invitee" class="label mx-3"> Send friendship request </label>
-		<input
-			bind:value={invitee}
-			name="invitee"
-			id="invitee"
-			type="text"
-			required
-			class="input m-3"
-		/>
-		<button id="login" type="submit" class="variant-filled-success btn m-3">
-			Send friend request
-		</button>
-	</form>
-</div>
-<div>
-	Pending invitations:
-	{#each $page.data.friend_requests as request}
-		<div>
-			{request}
-			<button
-				data-id={request.id}
-				class="variant-ghost-primary btn"
-				on:click={acceptInvitation}>V</button
-			>
-			<button data-id={request.id} class="variant-ghost-error btn">X</button>
-		</div>
-	{/each}
-</div>
+<SendFriendRequest />
 
-<div>
-	Your friends:
-	{#each $page.data.friends as friend}
-		<div>
-			{friend}
-		</div>
-	{/each}
-</div>
+<ul class="m-3">
+	{#if $page.data.friend_requests.length != 0}
+		Pending invitations:
+		{#each $page.data.friend_requests as request}
+			<li class="chip variant-soft m-2">
+				<span>
+					{request.invitingUserName}
+				</span>
+				<button
+					data-id={request.id}
+					class="variant-ghost-primary chip"
+					on:click={acceptInvitation}>✅</button
+				>
+				<button data-id={request.id} class="variant-ghost-error chip">❌</button>
+			</li>
+		{/each}
+	{:else}
+		<p class="text-center text-2xl font-bold">You have no pending invitations</p>
+	{/if}
+</ul>
 
-<Table source={friendTableSource} />
+<ul class="m-3 list-disc">
+	{#if friendships.length != 0}
+		Your friends:
+		{#each friendships as friendship}
+			<li class="">
+				{friendship.requestingUserName !== $my_name
+					? friendship.requestingUserName
+					: friendship.requestedUserName}
+			</li>
+		{/each}
+	{:else}
+		<p class="text-center text-2xl font-bold">You don't have any friends yet</p>
+	{/if}
+</ul>
+
+<!-- <Table source={friendTableSource} /> -->
 
 <style>
 </style>

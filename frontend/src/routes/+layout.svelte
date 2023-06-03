@@ -18,14 +18,14 @@
 	}
 
 	$: {
-		// if ($logged_in == true) {
-		// 	goto("/chat")
-		// } else if ($logged_in == false) {
-		// 	goto("/auth")
-		// }
-		if ($logged_in == false) {
+		if ($logged_in == true) {
+			goto("/friends")
+		} else if ($logged_in == false) {
 			goto("/auth")
 		}
+		// if ($logged_in == false) {
+		// 	goto("/auth")
+		// }
 	}
 
 	onMount(() => console.log("Layout mounted"))

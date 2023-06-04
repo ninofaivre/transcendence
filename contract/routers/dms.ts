@@ -5,16 +5,12 @@ import { z } from "zod";
 
 const c = initContract()
 
-const zDmReturn = z.strictObject
+export const zDmReturn = z.strictObject
 ({
 	id: z.string().uuid(),
-	friendShipId: z.string().uuid().nullable(),
-	requestingUserName: zUserName,
-	requestedUserName: zUserName,
-	requestingUserStatus: z.nativeEnum(DirectMessageUserStatus),
-	requestingUserStatusMutedUntil: z.date().nullable(),
-	requestedUserStatus: z.nativeEnum(DirectMessageUserStatus),
-	requestedUserStatusMutedUntil: z.date().nullable(),
+	friendName: zUserName,
+	myDmStatus: z.nativeEnum(DirectMessageUserStatus), // prévu pour plus tard, sera sûrement un peu modiffié d'ici-là
+	myDmMutedUntil: z.date().nullable(), // prévu pour plus tard, sera sûrement un peu modiffié d'ici-là
 	creationDate: z.date(),
 	status: z.nativeEnum(DirectMessageStatus)
 })
@@ -129,25 +125,28 @@ export const dmsContract = c.router
 			201: zDmDiscussionElementReturn
 		}
 	},
-	deleteDmMessage:
-	{
-		method: 'DELETE',
-		path: '/:dmId/messages/:messageId',
-		pathParams: z.strictObject
-		({
-			dmId: z.string().uuid(),
-			messageId: z.string().uuid()
-		}),
-		body: c.body<null>(),
-		responses:
-		{
-			202: c.response<null>()
-		}
-	}
+	// deleteDmMessage:
+	// {
+	// 	method: 'DELETE',
+	// 	path: '/:dmId/messages/:messageId',
+	// 	pathParams: z.strictObject
+	// 	({
+	// 		dmId: z.string().uuid(),
+	// 		messageId: z.string().uuid()
+	// 	}),
+	// 	body: c.body<null>(),
+	// 	responses:
+	// 	{
+	// 		202: c.response<null>()
+	// 	}
+	// }
 })
 
 export type DmEvent =
-{ type: 'CREATED_DM', data: z.infer<typeof zDmReturn> } |
+{
+	type: 'CREATED_DM' | 'UPDATED_DM',
+	data: z.infer<typeof zDmReturn>
+} |
 {
 	type: 'CREATED_DM_EVENT' | 'CREATED_DM_MESSAGE',
 	data: { dmId: string, element: z.infer<typeof zDmDiscussionElementReturn> }

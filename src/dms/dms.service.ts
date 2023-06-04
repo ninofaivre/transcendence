@@ -4,7 +4,7 @@ import { PrismaService } from 'nestjs-prisma';
 import { AppService } from 'src/app.service';
 import { EventTypeList, SseService } from 'src/sse/sse.service';
 import { z } from 'zod';
-import { zDmDiscussionElementReturn, zDmDiscussionEventReturn } from 'contract/routers/dms';
+import { zDmDiscussionElementReturn, zDmDiscussionEventReturn, zDmReturn } from 'contract/routers/dms';
 import { Tx } from 'src/types';
 
 
@@ -13,13 +13,12 @@ export class DmsService
 {
 	constructor(private readonly prisma: PrismaService,
 			    private readonly appService: AppService,
-			    private readonly sseService: SseService) {}
+			    private readonly sse: SseService) {}
 
 
-	private directMessageSelect = Prisma.validator<Prisma.DirectMessageSelect>()
-	({
+	private directMessageSelect =
+	{
 		id: true,
-		friendShipId: true,
 
 		requestedUserName: true,
 		requestedUserStatus: true,
@@ -30,38 +29,65 @@ export class DmsService
 		requestingUserStatusMutedUntil: true,
 		creationDate: true,
 		status: true,
-	} satisfies Prisma.DirectMessageSelect)
+	} satisfies Prisma.DirectMessageSelect
+
+	private directMessageGetPayload =
+	{
+		select: this.directMessageSelect
+	} satisfies Prisma.DirectMessageArgs
 	
-	private dmDiscussionEventSelect = Prisma.validator<Prisma.DmDiscussionEventSelect>()
-	({
+	private dmDiscussionEventSelect =
+	{
 		classicDmDiscussionEvent: { select: { eventType: true } },
 		chanInvitationDmDiscussionEvent: { select: { chanInvitation: { select: { id: true } } } }
-	} satisfies Prisma.DmDiscussionEventSelect)
+	} satisfies Prisma.DmDiscussionEventSelect
 	
-	private dmDiscussionEventGetPayload = Prisma.validator<Prisma.DmDiscussionEventArgs>()
-	({
+	private dmDiscussionEventGetPayload =
+	{
 		select: this.dmDiscussionEventSelect
-	} satisfies Prisma.DmDiscussionEventArgs)
+	} satisfies Prisma.DmDiscussionEventArgs
 
-	private dmDiscussionMessageSelect = Prisma.validator<Prisma.DmDiscussionMessageSelect>()
-	({
+	private dmDiscussionMessageSelect =
+	{
 		content: true,
 		relatedTo: true
-	} satisfies Prisma.DmDiscussionMessageSelect)
+	} satisfies Prisma.DmDiscussionMessageSelect
 
-	private dmDiscussionElementSelect = Prisma.validator<Prisma.DmDiscussionElementSelect>()
-	({
+	private dmDiscussionElementSelect =
+	{
 		id: true,
 		author: true,
 		creationDate: true,
 		message: { select: this.dmDiscussionMessageSelect },
 		event: { select: this.dmDiscussionEventSelect },
-	} satisfies Prisma.DmDiscussionElementSelect)
+	} satisfies Prisma.DmDiscussionElementSelect
 
-	private dmDiscussionElementGetPayload = Prisma.validator<Prisma.DmDiscussionElementArgs>()
-	({
+	private dmDiscussionElementGetPayload =
+	{
 		select: this.dmDiscussionElementSelect
-	} satisfies Prisma.DmDiscussionElementArgs)
+	} satisfies Prisma.DmDiscussionElementArgs
+
+	private formatDirectMessage(dm: Prisma.DirectMessageGetPayload<typeof this.directMessageGetPayload>, username: string)
+	: z.infer<typeof zDmReturn>
+	{
+		const { requestedUserName, requestedUserStatus, requestedUserStatusMutedUntil, requestingUserName, requestingUserStatus, requestingUserStatusMutedUntil, ...rest } = dm
+		
+		const requested: boolean = (requestedUserName === username)
+		const formattedDirectMessage =
+		{
+			...rest,
+			friendName: requested ? requestingUserName : requestedUserName,
+			myDmStatus: requested ? requestedUserStatus : requestingUserStatus,
+			myDmMutedUntil : requested ? requestedUserStatusMutedUntil : requestingUserStatusMutedUntil
+		}
+		return formattedDirectMessage
+	}
+
+	private formatDirectMessageArray(dms: Prisma.DirectMessageGetPayload<typeof this.directMessageGetPayload>[], username: string)
+	: z.infer<typeof zDmReturn>[]
+	{
+		return dms.map(dm => this.formatDirectMessage(dm, username))
+	}
 
 	private formatDmEvent(event: Prisma.DmDiscussionEventGetPayload<typeof this.dmDiscussionEventGetPayload>)
 	: z.infer<typeof zDmDiscussionEventReturn>
@@ -101,7 +127,7 @@ export class DmsService
 		return elements.map(el => this.formatDmElement(el))
 	}
 
-	public async findDmBetweenUsers<T extends Prisma.DirectMessageSelect>(usernameA: string, usernameB: string, select: Prisma.Subset<Prisma.DirectMessageSelect, T>)
+	public async findDmBetweenUsers<T extends Prisma.DirectMessageSelect>(usernameA: string, usernameB: string, select: Prisma.Subset<T, Prisma.DirectMessageSelect>)
 	{
 		//findFirst instead of findUnique because there is no way to express in
 		// a prisma schema than a relation is unique in both ways/direction
@@ -179,25 +205,40 @@ export class DmsService
 		return this.formatDmElement(dmDiscussionElement)
 	}
 
-	public async createDm(requestingUserName: string, requestedUserName: string, friendShipId: string)
+	public async createAndNotifyDm(requestingUserName: string, requestedUserName: string)
 	{
 		const newDm = await this.prisma.directMessage.create({
 				data:
 				{
 					requestingUserName: requestingUserName,
 					requestedUserName: requestedUserName,
-					friendShipId: friendShipId
 				},
 				select: this.directMessageSelect })
-		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_DM', data: newDm })
-		const newEvent = await this.createClassicDmEvent(newDm.id, ClassicDmEventType.CREATED_FRIENDSHIP, requestedUserName)
-		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_DM_EVENT', data: { dmId: newDm.id, element: newEvent } })
+		await this.sse.pushEvent(requestingUserName, { type: 'CREATED_DM', data: this.formatDirectMessage(newDm, requestingUserName) })
+		await this.sse.pushEvent(requestedUserName, { type: 'CREATED_DM', data: this.formatDirectMessage(newDm, requestedUserName) })
 		return newDm.id
+	}
+
+	public async updateAndNotifyDmStatus(dmId: string, newStatus: DirectMessageStatus, username: string)
+	{
+		const updatedDm = await this.prisma.directMessage.update({ where: { id: dmId },
+			data:
+			{
+				status: newStatus
+			},
+			select: this.directMessageSelect })
+		await Promise.all
+		([
+			this.sse.pushEvent(updatedDm.requestingUserName, { type: 'UPDATED_DM', data: this.formatDirectMessage(updatedDm, updatedDm.requestingUserName) }),
+			this.sse.pushEvent(updatedDm.requestedUserName, { type: 'UPDATED_DM', data: this.formatDirectMessage(updatedDm, updatedDm.requestedUserName) })
+		])
+		const newEvent = await this.createClassicDmEvent(dmId, (newStatus === DirectMessageStatus.ENABLED) ? ClassicDmEventType.ENABLED_DM : ClassicDmEventType.DISABLED_DM, username)
+		await this.sse.pushEventMultipleUser([updatedDm.requestedUserName, updatedDm.requestingUserName], { type: 'CREATED_DM_EVENT', data: { dmId: dmId, element: newEvent } })
 	}
 
 	async getDms(username: string)
 	{
-		const res = await this.prisma.directMessage.findMany({
+		const res = this.formatDirectMessageArray(await this.prisma.directMessage.findMany({
 			where:
 			{
 				OR:
@@ -206,8 +247,8 @@ export class DmsService
 					{ requestingUserName: username }
 				],
 			},
-			select: this.directMessageSelect})
-		return { disabled: res.filter(el => !el.friendShipId), enabled: res.filter(el => el.friendShipId) }
+			select: this.directMessageSelect}), username)
+		return { disabled: res.filter(el => el.status === DirectMessageStatus.DISABLED), enabled: res.filter(el => el.status === DirectMessageStatus.ENABLED) }
 	}
 
 	async getDmMessages(username: string, id: string, nMessages: number, start?: string)
@@ -295,7 +336,7 @@ export class DmsService
 		if (!res)
 			throw new InternalServerErrorException('discussion element creation failed')
 		const formattedRes = this.formatDmElement(res)
-		await this.sseService.pushEvent((username !== toCheck.requestedUserName) ? toCheck.requestedUserName : toCheck.requestingUserName,
+		await this.sse.pushEvent((username !== toCheck.requestedUserName) ? toCheck.requestedUserName : toCheck.requestingUserName,
 			{
 				type: 'CREATED_DM_MESSAGE',
 				data: { dmId: dmId, element: formattedRes } 
@@ -305,53 +346,53 @@ export class DmsService
 
 	async deleteDmMessage(username: string, dmId: string, msgId: string)
 	{
-		const toCheck = await this.prisma.directMessage.findUnique({
-			where:
-			{
-				id: dmId,
-				OR:
-				[
-					{ requestedUserName: username },
-					{ requestingUserName: username }
-				],
-			},
-			select:
-			{
-				elements:
-				{
-					where:
-					{
-						id: msgId,
-						message: { discussionElement: { id: msgId } },
-						author: username
-					},
-					select: { message: { select: { id: true } } },
-					take: 1
-				},
-				requestingUserName: true,
-				requestedUserName: true
-			}})
-		if (!toCheck)
-			throw new NotFoundException(`directMessage with id ${dmId} not found`)
-		if (!toCheck.elements.length || !toCheck.elements[0].message)
-			throw new NotFoundException(`message with id ${msgId} not found`)
-		const trueMsgId: number = toCheck.elements[0].message.id
-		const res = await this.prisma.discussionElement.update({ where: { id: msgId },
-			data:
-			{
-				message: { delete: { id: trueMsgId } },
-				event: { create: { eventType: EventType.MESSAGE_DELETED } },
-			},
-			select: this.appService.discussionElementsSelect})
-		const toNotify: string = (toCheck.requestedUserName !== username) ? toCheck.requestedUserName : toCheck.requestingUserName
-		if (toNotify)
-		{
-			await this.sseService.pushEvent(toNotify,
-				{
-					type: EventTypeList.DM_NEW_EVENT,
-					data: { directMessageId: dmId, event: res }
-				})
-		}
+		// const toCheck = await this.prisma.directMessage.findUnique({
+		// 	where:
+		// 	{
+		// 		id: dmId,
+		// 		OR:
+		// 		[
+		// 			{ requestedUserName: username },
+		// 			{ requestingUserName: username }
+		// 		],
+		// 	},
+		// 	select:
+		// 	{
+		// 		elements:
+		// 		{
+		// 			where:
+		// 			{
+		// 				id: msgId,
+		// 				message: { discussionElement: { id: msgId } },
+		// 				author: username
+		// 			},
+		// 			select: { message: { select: { id: true } } },
+		// 			take: 1
+		// 		},
+		// 		requestingUserName: true,
+		// 		requestedUserName: true
+		// 	}})
+		// if (!toCheck)
+		// 	throw new NotFoundException(`directMessage with id ${dmId} not found`)
+		// if (!toCheck.elements.length || !toCheck.elements[0].message)
+		// 	throw new NotFoundException(`message with id ${msgId} not found`)
+		// const trueMsgId: number = toCheck.elements[0].message.id
+		// const res = await this.prisma.discussionElement.update({ where: { id: msgId },
+		// 	data:
+		// 	{
+		// 		message: { delete: { id: trueMsgId } },
+		// 		event: { create: { eventType: EventType.MESSAGE_DELETED } },
+		// 	},
+		// 	select: this.appService.discussionElementsSelect})
+		// const toNotify: string = (toCheck.requestedUserName !== username) ? toCheck.requestedUserName : toCheck.requestingUserName
+		// if (toNotify)
+		// {
+		// 	await this.sseService.pushEvent(toNotify,
+		// 		{
+		// 			type: EventTypeList.DM_NEW_EVENT,
+		// 			data: { directMessageId: dmId, event: res }
+		// 		})
+		// }
 	}
 
 }

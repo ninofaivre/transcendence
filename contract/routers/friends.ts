@@ -4,13 +4,11 @@ import { z } from "zod";
 
 const c = initContract()
 
-const zFriendShipReturn = z.strictObject
+export const zFriendShipReturn = z.strictObject
 ({
 	id: z.string().uuid(),
 	creationDate: z.date(),
-	requestingUserName: zUserName,
-	requestedUserName: zUserName,
-	directMessageId: z.string().uuid().optional()
+	friendName: zUserName,
 })
 
 export const friendsContract = c.router

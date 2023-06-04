@@ -1,9 +1,11 @@
 import { ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { ClassicDmEventType, DirectMessageStatus, Prisma } from '@prisma/client';
 import { PrismaClientKnownRequestError, PrismaClientValidationError } from '@prisma/client/runtime';
+import { zFriendShipReturn } from 'contract/routers/friends';
 import { PrismaService } from 'nestjs-prisma';
 import { DmsService } from 'src/dms/dms.service';
 import { EventTypeList, SseService } from 'src/sse/sse.service';
+import { z } from 'zod';
 
 @Injectable()
 export class FriendsService
@@ -14,65 +16,53 @@ export class FriendsService
 			    private readonly dmsService: DmsService) {}
 
 
-	private friendShipSelect = Prisma.validator<Prisma.FriendShipSelect>()
-	({
+	private friendShipSelect =
+	{
 		id: true,
 		creationDate: true,
 		requestingUserName: true,
 		requestedUserName: true,
-		directMessage: { select: { id: true } },
-	})
+	} satisfies Prisma.FriendShipSelect
 
-	private friendShipArgsForPayload = Prisma.validator<Prisma.FriendShipArgs>()
-	({
-		select: this.friendShipSelect
-	})
-	
-	private formatFriendShip(friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipArgsForPayload>)
+	private friendShipGetPayload =
 	{
-		const { directMessage, ...rest } = friendShip
-
-		const directMessageId = directMessage?.id
-
+		select: this.friendShipSelect
+	} satisfies Prisma.FriendShipArgs
+	
+	private formatFriendShip(friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>, username: string)
+	: z.infer<typeof zFriendShipReturn>
+	{
+		const { requestedUserName, requestingUserName, ...rest } = friendShip
 		const formattedFriendShip =
 		{
 			...rest,
-			directMessageId
+			friendName: (requestedUserName === username) ? requestingUserName : requestedUserName
 		}
 		return formattedFriendShip
 	}
 
 	public async createFriend(requestingUserName: string, requestedUserName: string)
 	{
-		let directMessageId = (await this.dmsService.findDmBetweenUsers(requestingUserName, requestedUserName, { id: true } ))?.id
-		let newFriendShip = this.formatFriendShip(await this.prisma.friendShip.create({
+		let directMessage = (await this.dmsService.findDmBetweenUsers(requestingUserName, requestedUserName, { id: true, status: true } ))
+		let newFriendShip =await this.prisma.friendShip.create({
 			data:
 			{
 				requestingUserName: requestingUserName,
 				requestedUserName: requestedUserName,
-				...((directMessageId) ?
-				{
-					directMessage: { connect: { id: directMessageId } }
-				} : {})
 			},
-			select: this.friendShipSelect }))
-		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_FRIENDSHIP', data: newFriendShip })
-		if (!directMessageId)
-		{
-			directMessageId = await this.dmsService.createDm(requestingUserName, requestedUserName, newFriendShip.id)
-			newFriendShip = this.formatFriendShip(await this.prisma.friendShip.update({
-				where: { id: newFriendShip.id },
-				data:
-				{
-					directMessage:
-					{
-						connect: { id: directMessageId }
-					}
-				},
-				select: this.friendShipSelect }))
-			await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'UPDATED_FRIENDSHIP', data: newFriendShip })
-		}
+			select: this.friendShipSelect })
+		await this.sseService.pushEvent(requestingUserName, { type: 'CREATED_FRIENDSHIP', data: this.formatFriendShip(newFriendShip, requestingUserName) })
+		await this.sseService.pushEvent(requestedUserName, { type: 'CREATED_FRIENDSHIP', data: this.formatFriendShip(newFriendShip, requestedUserName) })
+		let newDmId: string = "" // a bit dirty
+		if (!directMessage)
+			newDmId = await this.dmsService.createAndNotifyDm(requestingUserName, requestedUserName)
+		const dmId = directMessage?.id || newDmId
+		const newEvent = await this.dmsService.createClassicDmEvent(dmId, ClassicDmEventType.CREATED_FRIENDSHIP, requestedUserName)
+		await this.sseService.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_DM_EVENT', data: { dmId: dmId, element: newEvent } })
+		if (directMessage && directMessage.status === DirectMessageStatus.DISABLED)
+			await this.dmsService.updateAndNotifyDmStatus(directMessage.id, DirectMessageStatus.ENABLED, requestedUserName)
 	}
+
 	// async getFriends(username: string)
 	// {
 	// 	return this.prisma.friendShip.findMany({

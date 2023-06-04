@@ -112,8 +112,6 @@ model FriendShip {
   requestedUser      User   @relation("friendOf", fields: [requestedUserName], references: [name])
   requestedUserName  String
 
-  directMessage DirectMessage?
-
   @@unique([requestingUserName, requestedUserName])
 }
 
@@ -163,6 +161,14 @@ model User {
   dmDiscussionMessage DmDiscussionMessage[]
 
   mutedUserChan MutedUserChan[]
+
+  dmPolicyLevel	dmPolicyLevelType @default(ONLY_FRIEND)
+}
+
+enum dmPolicyLevelType {
+	ONLY_FRIEND
+	IN_COMMON_CHAN	
+	ANYONE
 }
 
 
@@ -182,9 +188,6 @@ model DirectMessage {
   requestedUserName              String
   requestedUserStatus            DirectMessageUserStatus @default(OPEN)
   requestedUserStatusMutedUntil  DateTime?
-
-  friendShip   FriendShip? @relation(fields: [friendShipId], references: [id])
-  friendShipId String?        @unique
 
   status					DirectMessageStatus @default(ENABLED)
 
@@ -273,6 +276,8 @@ enum ClassicDmEventType {
   CREATED_FRIENDSHIP
   DELETED_FRIENDSHIP
   DELETED_MESSAGE
+  DISABLED_DM
+  ENABLED_DM
 }
 
 

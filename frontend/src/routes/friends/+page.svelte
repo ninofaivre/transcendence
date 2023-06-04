@@ -45,9 +45,7 @@
 		// The data visibly shown in your table body UI.
 		body: tableMapperValues(
 			$page.data.friendships,
-			$page.data.friendships.requestingUserName !== $my_name
-				? ["requestingUserName"]
-				: ["requestedUserName"],
+			["requestingUserName"], // This is ofc incorrect, waiting for the right field, probably "friendName"
 		),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
 		// meta: tableMapperValues($page.data.friends, ["position", "name", "symbol", "weight"]),
@@ -76,6 +74,21 @@
 		{/each}
 	{:else}
 		<p class="text-center text-2xl font-bold">You have no pending invitations</p>
+	{/if}
+</ul>
+
+<ul class="m-3 list-disc">
+	{#if friendships.length != 0}
+		Your friends:
+		{#each friendships as friendship}
+			<li class="">
+				{friendship.requestingUserName !== $my_name
+					? friendship.requestingUserName
+					: friendship.requestedUserName}
+			</li>
+		{/each}
+	{:else}
+		<p class="text-center text-2xl font-bold">You don't have any friends yet</p>
 	{/if}
 </ul>
 

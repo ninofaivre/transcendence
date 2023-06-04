@@ -5,7 +5,7 @@
 	export let currentDiscussionId: number
 
 	const dispatch = createEventDispatcher()
-	let placeholder = "Message"
+	let placeholder = "Enter to send\nShift + Enter for a new line"
 	let value: string
 	let disabled = false
 
@@ -27,24 +27,26 @@
 	}
 
 	async function handleKeypress(event: KeyboardEvent) {
-		switch (event.key) {
-			case "Enter":
-				sendMessage()
+		if (event.shiftKey == false) {
+			switch (event.key) {
+				case "Enter":
+					sendMessage()
+			}
 		}
 	}
 </script>
 
-<div class="flex">
-	<label for="textarea-input" hidden class="label"> Type your message here </label>
+<div class="input-group grid grid-cols-[1fr_auto] rounded-container-token">
+	<label for="textarea-input" hidden> Type your message here </label>
 	<textarea
 		id="textarea-input"
 		bind:value
 		on:keypress={handleKeypress}
 		{disabled}
 		{placeholder}
-		class="textarea mx-auto w-full"
+		class="textarea border-0"
 	/>
-	<button on:click={sendMessage} class="btn variant-filled mx-2 my-auto"> Send </button>
+	<button on:click={sendMessage} class="variant-filled-primary"> Send </button>
 </div>
 
 <style>

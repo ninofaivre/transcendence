@@ -56,7 +56,7 @@
 				{#if $logged_in}
 					<button
 						use:setup_logout
-						class="btn variant-filled-secondary text-xs font-semibold"
+						class="btn btn-sm variant-filled-secondary text-xs font-semibold"
 					>
 						Log out
 					</button>

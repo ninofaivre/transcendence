@@ -25,7 +25,7 @@
 
 {#if discussions.length}
 	<!--Column layout -->
-	<div class="grid grid-cols-[auto_1fr]" id="layout">
+	<div class="grid grid-cols-[auto_1fr]" id="col_layout">
 		<!-- Rows for Column 1-->
 		<div class="grid grid-rows-[auto_1fr]" id="col1">
 			<section class="p-4">
@@ -58,8 +58,8 @@
 	</div>
 {/if}
 
-<style lang="postcss">
-	#layout,
+<style>
+	#col_layout,
 	#col1,
 	#col2 {
 		height: calc(100vh - 78px);

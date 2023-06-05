@@ -1,15 +1,12 @@
 <script lang="ts">
 	/* types */
-	import type { PageData } from "./$types"
-	import type { ServerInferResponses, ClientInferResponses } from "@ts-rest/core"
+	import type { Chan, Chans } from "$types"
 
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"
 	import CreateDiscussion from "./CreateDiscussion.svelte"
 	import DiscussionList from "./DiscussionList.svelte"
 	import ChatBox from "./ChatBox.svelte"
-	/*utils*/
-	import type contract from "$contract"
 
 	// let new_message: [string, Promise<ClientInferResponses<typeof contract.chans.createChan>>]
 	let new_message: [string, Promise<Response>]
@@ -19,36 +16,34 @@
 	}
 
 	// Get our discussions
-	export let data: PageData
+	export let data
+	const discussions: Chan[] = data.discussions as Chan[]
+	// const discussions = data.discussions // Why can't SK infer the type !?
 
-	let currentDiscussionId: number = data.discussions[0]?.id
-	console.log("/chat/page.svelte", "Current discussion id is :", currentDiscussionId)
+	let currentDiscussionId: number = discussions[0]?.id
 </script>
 
-{#if data.discussions.length}
-	<!-- Horizontal grid -->
-	<div class="grid grid-cols-[auto_1fr]" id="wrapper">
-		<!-- Vertical grid 1-->
-		<div class="both grid grid-rows-[1fr_auto]" id="convo">
+{#if discussions.length}
+	<!--Column layout -->
+	<div class="grid grid-cols-[auto_1fr]" id="layout">
+		<!-- Rows for Column 1-->
+		<div class="grid grid-rows-[auto_1fr]" id="col1">
 			<section class="p-4">
 				<CreateDiscussion />
 			</section>
-			<section class="text-red-800">
-				{currentDiscussionId}
-			</section>
 			<section class="overflow-y-auto">
-				<DiscussionList discussions={data.discussions} bind:currentDiscussionId />
+				<DiscussionList {discussions} bind:currentDiscussionId />
 			</section>
 		</div>
 
-		<!-- Vertical grid 2-->
-		<div class="both grid grid-rows-[1fr_auto]" id="messages">
+		<!-- Rows for Column 2-->
+		<div class="grid grid-rows-[1fr_auto]" id="col2">
 			<!-- Messages -->
 			<DiscussionDisplay {new_message} {currentDiscussionId} />
 
 			<!-- Input box -->
 			<section class="border-t border-black p-4">
-				<ChatBox on:message_sent={messageSentHandler} {currentDiscussionId} />
+				<ChatBox on:message_sent={messageSentHandler} {currentDiscussionId} maxRows={20} />
 			</section>
 		</div>
 	</div>
@@ -64,15 +59,9 @@
 {/if}
 
 <style lang="postcss">
-	#wrapper {
-		height: calc(100vh - 78px);
-	}
-
-	#messages {
-		height: calc(100vh - 78px);
-	}
-
-	#convo {
+	#layout,
+	#col1,
+	#col2 {
 		height: calc(100vh - 78px);
 	}
 </style>

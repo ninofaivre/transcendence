@@ -64,9 +64,6 @@
 	#button {
 		border-top-right-radius: 10px;
 		border-bottom-right-radius: 10px;
-		margin: 0px;
-		border-radius: none;
-		border-left: solid 1px green;
 		padding: 0px 5px;
 	}
 
@@ -90,7 +87,7 @@
 		height: 100%;
 		top: 0;
 		resize: none;
-		border-top-left-radius: 10px;
-		border-bottom-left-radius: 10px;
+		border-top-left-radius: 6px;
+		border-bottom-left-radius: 6px;
 	}
 </style>

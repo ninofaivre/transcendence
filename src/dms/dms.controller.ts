@@ -20,7 +20,7 @@ export class DmsController implements NestControllerInterface<typeof c>
 	async getDms(@Request()req: any)
 	{
 		const body = await this.dmsService.getDms(req.user.username)
-		return { status: 200 as const, body: body }
+		return { status: 200 as const, body }
 	}
 
 	// @UseGuards(JwtAuthGuard)
@@ -28,7 +28,7 @@ export class DmsController implements NestControllerInterface<typeof c>
 	// async createDm(@Request()req: any, @TsRestRequest(){ body: { username } }: RequestShapes['createDm'])
 	// {
 	// 	const body = this.dmsService.createDm(req.user.username, username)
-	// 	return { status: 201 as const, body: body }
+	// 	return { status: 201 as const, body }
 	// }
 
 	@UseGuards(JwtAuthGuard)
@@ -36,7 +36,7 @@ export class DmsController implements NestControllerInterface<typeof c>
 	async getDmMessages(@Request()req: any, @TsRestRequest(){ params: { dmId }, query: { cursor, nMessages } }: RequestShapes['getDmMessages'])
 	{
 		const body = await this.dmsService.getDmMessages(req.user.username, dmId, nMessages, cursor)
-		return { status: 200 as const, body: body }
+		return { status: 200 as const, body }
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -44,14 +44,14 @@ export class DmsController implements NestControllerInterface<typeof c>
 	async createDmMessage(@Request()req: any, @TsRestRequest(){ params: { dmId }, body: { content, relatedTo } }: RequestShapes['createDmMessage'])
 	{
 		const body = await this.dmsService.createDmMessage(req.user.username, dmId, content, relatedTo)
-		return { status: 201 as const, body: body }
+		return { status: 201 as const, body }
 	}
 
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.deleteDmMessage)
-	// async deleteDmMessage(@Request()req: any, @TsRestRequest(){ params: { dmId, messageId } }: RequestShapes['deleteDmMessage'])
-	// {
-	// 	await this.dmsService.deleteDmMessage(req.user.username, dmId, messageId)
-	// 	return { status: 202 as const, body: null }
-	// }
+	@UseGuards(JwtAuthGuard)
+	@TsRest(c.deleteDmMessage)
+	async deleteDmMessage(@Request()req: any, @TsRestRequest(){ params: { dmId, messageId } }: RequestShapes['deleteDmMessage'])
+	{
+		const body = await this.dmsService.deleteDmMessage(req.user.username, dmId, messageId)
+		return { status: 202 as const, body }
+	}
 }

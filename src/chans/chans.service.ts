@@ -643,6 +643,20 @@ export class ChansService {
 			select: this.chansSelect }))
 	}
 
+	public async doesUsersHasCommonChan(usernameA: string, usernameB: string)
+	{
+		return Boolean(await this.prisma.chan.count({
+			where:
+			{
+				AND:
+				[
+					{ users: { some: { name: usernameA } } },
+					{ users: { some: { name: usernameB } } }
+				]
+			},
+			take: 1 }))
+	}
+
 	// private async addUserToChan(username: string, chanId: number) {
 	// 	const res = await this.prisma.chan.update({
 	// 		where: { id: chanId },

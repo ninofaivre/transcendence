@@ -251,19 +251,27 @@ export class DmsService
 		return { disabled: res.filter(el => el.status === DirectMessageStatus.DISABLED), enabled: res.filter(el => el.status === DirectMessageStatus.ENABLED) }
 	}
 
-	async getDmMessages(username: string, id: string, nMessages: number, start?: string)
+	private async getDmOrThrow<T extends Prisma.DirectMessageSelect>(username: string, dmId: string, select: Prisma.SelectSubset<T, Prisma.DirectMessageSelect>)
 	{
 		const res = await this.prisma.directMessage.findUnique({
 			where:
 			{
-				id: id,
+				id: dmId,
 				OR:
 				[
-					{ requestingUserName: username },
 					{ requestedUserName: username },
-				],
+					{ requestingUserName: username }
+				]
 			},
-			select:
+			select: select })
+		if (!res)
+			throw new NotFoundException(`not found dm ${dmId}`)
+		return res
+	}
+
+	async getDmMessages(username: string, dmId: string, nMessages: number, start?: string)
+	{
+		const res = await this.getDmOrThrow(username, dmId,
 			{
 				elements:
 				{
@@ -273,25 +281,13 @@ export class DmsService
 					cursor: (start !== undefined) ? { id: start } : undefined,
 					skip: Number(start !== undefined) ? 1 : undefined,
 				}
-			}})
-		if (!res)
-			throw new NotFoundException(`directMessage with id ${id} not found`)
+			})
 		return this.formatDmElementArray(res.elements.reverse())
 	}
 
 	async createDmMessage(username: string, dmId: string, content: string, relatedId?: string)
 	{
-		const toCheck = await this.prisma.directMessage.findUnique({
-			where:
-			{
-				id: dmId,
-				OR:
-				[
-					{ requestedUserName: username },
-					{ requestingUserName: username },
-				]
-			},
-			select:
+		const toCheck = await this.getDmOrThrow(username, dmId,
 			{
 				elements: (relatedId !== undefined) &&
 				{
@@ -302,9 +298,7 @@ export class DmsService
 				requestingUserName: true,
 				requestedUserName: true,
 				status: true
-			}})
-		if (!toCheck)
-			throw new NotFoundException(`directMessage with id ${dmId} not found`)
+			})
 		if (relatedId !== undefined && !toCheck.elements?.length)
 			throw new NotFoundException(`element with id ${relatedId} not found in directMessage with id ${dmId}`)
 		if (toCheck.status === DirectMessageStatus.DISABLED)
@@ -315,10 +309,7 @@ export class DmsService
 				content: content,
 				related: (relatedId !== undefined) ?
 				{
-					connect:
-					{
-						id: relatedId
-					}
+					connect: { id: relatedId }
 				}: undefined,
 				discussionElement:
 				{
@@ -344,55 +335,46 @@ export class DmsService
 		return formattedRes
 	}
 
+	// a bit dirty
 	async deleteDmMessage(username: string, dmId: string, msgId: string)
 	{
-		// const toCheck = await this.prisma.directMessage.findUnique({
-		// 	where:
-		// 	{
-		// 		id: dmId,
-		// 		OR:
-		// 		[
-		// 			{ requestedUserName: username },
-		// 			{ requestingUserName: username }
-		// 		],
-		// 	},
-		// 	select:
-		// 	{
-		// 		elements:
-		// 		{
-		// 			where:
-		// 			{
-		// 				id: msgId,
-		// 				message: { discussionElement: { id: msgId } },
-		// 				author: username
-		// 			},
-		// 			select: { message: { select: { id: true } } },
-		// 			take: 1
-		// 		},
-		// 		requestingUserName: true,
-		// 		requestedUserName: true
-		// 	}})
-		// if (!toCheck)
-		// 	throw new NotFoundException(`directMessage with id ${dmId} not found`)
-		// if (!toCheck.elements.length || !toCheck.elements[0].message)
-		// 	throw new NotFoundException(`message with id ${msgId} not found`)
-		// const trueMsgId: number = toCheck.elements[0].message.id
-		// const res = await this.prisma.discussionElement.update({ where: { id: msgId },
-		// 	data:
-		// 	{
-		// 		message: { delete: { id: trueMsgId } },
-		// 		event: { create: { eventType: EventType.MESSAGE_DELETED } },
-		// 	},
-		// 	select: this.appService.discussionElementsSelect})
-		// const toNotify: string = (toCheck.requestedUserName !== username) ? toCheck.requestedUserName : toCheck.requestingUserName
-		// if (toNotify)
-		// {
-		// 	await this.sseService.pushEvent(toNotify,
-		// 		{
-		// 			type: EventTypeList.DM_NEW_EVENT,
-		// 			data: { directMessageId: dmId, event: res }
-		// 		})
-		// }
+		const { elements, requestedUserName, requestingUserName } = await this.getDmOrThrow(username, dmId,
+			{
+				elements:
+				{
+					where:
+					{
+						id: msgId,
+						message: { discussionElement: { id: msgId } },
+					},
+					select: { message: { select: { id: true } }, author: true },
+					take: 1
+				},
+				requestingUserName: true,
+				requestedUserName: true
+			})
+		if (!elements.length || !elements[0].message)
+			throw new NotFoundException(`message with id ${msgId} not found`)
+		if (elements[0].author !== username)
+			throw new ForbiddenException('not owned message')
+		const trueMsgId: string = elements[0].message.id
+		await this.prisma.dmDiscussionElement.update({ where: { id: msgId },
+			data:
+			{
+				event: { create: { classicDmDiscussionEvent: { create: { eventType: ClassicDmEventType.DELETED_MESSAGE } } } },
+			}})
+		const res = this.formatDmElement(await this.prisma.dmDiscussionElement.update({ where: { id: msgId },
+			data:
+			{
+				message: { delete: { id: trueMsgId } },
+			},
+			select: this.dmDiscussionElementSelect }))
+		await this.sse.pushEvent((requestedUserName === username) ? requestingUserName : requestedUserName,
+			{
+				type: 'CREATED_DM_EVENT',
+				data: { dmId: dmId, element: res }
+			})
+		return res
 	}
 
 }

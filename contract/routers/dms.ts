@@ -125,21 +125,21 @@ export const dmsContract = c.router
 			201: zDmDiscussionElementReturn
 		}
 	},
-	// deleteDmMessage:
-	// {
-	// 	method: 'DELETE',
-	// 	path: '/:dmId/messages/:messageId',
-	// 	pathParams: z.strictObject
-	// 	({
-	// 		dmId: z.string().uuid(),
-	// 		messageId: z.string().uuid()
-	// 	}),
-	// 	body: c.body<null>(),
-	// 	responses:
-	// 	{
-	// 		202: c.response<null>()
-	// 	}
-	// }
+	deleteDmMessage:
+	{
+		method: 'DELETE',
+		path: '/:dmId/messages/:messageId',
+		pathParams: z.strictObject
+		({
+			dmId: z.string().uuid(),
+			messageId: z.string().uuid()
+		}),
+		body: c.body<null>(),
+		responses:
+		{
+			202: zDmDiscussionElementReturn
+		}
+	}
 })
 
 export type DmEvent =

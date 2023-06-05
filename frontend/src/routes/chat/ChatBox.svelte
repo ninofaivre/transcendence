@@ -34,6 +34,8 @@
 			switch (event.key) {
 				case "Enter":
 					sendMessage()
+					// I don't know why this works but it does prevent the textbox from growing after the first message
+					event.preventDefault()
 			}
 		}
 	}

@@ -9,9 +9,10 @@
 
 	const dispatch = createEventDispatcher()
 	let placeholder = "Shift + Enter for a new line"
-	let value: string
+	let value: string = ""
 
 	async function sendMessage() {
+		value = value.trim()
 		if (value) {
 			dispatch("message_sent", [
 				value,

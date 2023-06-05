@@ -29,7 +29,7 @@
 			displayed_messages = [
 				...displayed_messages,
 				{
-					id: 0,
+					id: -1,
 					message: { content: msg, relatedTo: null, relatedRoles: [], relatedUsers: [] },
 					author: $my_name,
 					creationDate: new Date(),
@@ -132,12 +132,13 @@
 				id={message.id.toString()}
 				from_me={message.author === $my_name}
 				from={message.author}
+				sent={message.id < 0}
 			>
 				{@const data = message.message?.content}
 				{#if data}
-					{`${message.id}: ${data}`}
+					{data}
 				{:else}
-					{`${message.id}: ${message.event}`}
+					{message.event}
 				{/if}
 			</ChatBubble>
 		{:else}

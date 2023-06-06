@@ -23,10 +23,26 @@
 
 	let currentDiscussionId: number = discussions[0]?.id
 
+	let header: HTMLElement | null
 	let header_height: number
 
 	onMount(() => {
-		header_height = document.getElementById("shell-header")?.offsetHeight || 0
+		header = document.getElementById("shell-header")
+		if (header) {
+			header_height = header.offsetHeight || 0
+
+			const resizeObserver = new ResizeObserver((entries) => {
+				// We're only watching one element
+				const new_height = entries.at(0)?.contentRect.height
+				if (new_height && new_height !== header_height) {
+					header_height = new_height
+				}
+			})
+
+			resizeObserver.observe(header)
+			// This callback cleans up the observer
+			return () => resizeObserver.unobserve(header as HTMLElement)
+		}
 	})
 </script>
 

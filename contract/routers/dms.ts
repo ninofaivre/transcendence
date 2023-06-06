@@ -8,7 +8,7 @@ const c = initContract()
 export const zDmReturn = z.strictObject
 ({
 	id: z.string().uuid(),
-	friendName: zUserName,
+	friendName: zUserName, // mb change it later as it is possibly not a friend
 	myDmStatus: z.nativeEnum(DirectMessageUserStatus), // prévu pour plus tard, sera sûrement un peu modiffié d'ici-là
 	myDmMutedUntil: z.date().nullable(), // prévu pour plus tard, sera sûrement un peu modiffié d'ici-là
 	creationDate: z.date(),
@@ -125,6 +125,38 @@ export const dmsContract = c.router
 			201: zDmDiscussionElementReturn
 		}
 	},
+	getOneDmMessage:
+	{
+		method: 'GET',
+		path: '/:dmId/messages/:msgId',
+		pathParams: z.strictObject
+		({
+			dmId: z.string().uuid(),
+			msgId: z.string().uuid()
+		}),
+		responses:
+		{
+			200: zDmDiscussionElementReturn
+		}
+	},
+	updateOneMessage:
+	{
+		method: 'PATCH',
+		path: '/:dmId/messages/:msgId',
+		pathParams: z.strictObject
+		({
+			dmId: z.string().uuid(),
+			msgId: z.string().uuid()
+		}),
+		body: z.strictObject
+		({
+			content: z.string().nonempty()
+		}),
+		responses:
+		{
+			200: zDmDiscussionElementReturn
+		}
+	}, 
 	deleteDmMessage:
 	{
 		method: 'DELETE',
@@ -148,6 +180,6 @@ export type DmEvent =
 	data: z.infer<typeof zDmReturn>
 } |
 {
-	type: 'CREATED_DM_EVENT' | 'CREATED_DM_MESSAGE',
+	type: 'CREATED_DM_EVENT' | 'CREATED_DM_MESSAGE' | 'UPDATED_DM_MESSAGE',
 	data: { dmId: string, element: z.infer<typeof zDmDiscussionElementReturn> }
 }

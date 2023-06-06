@@ -7,6 +7,7 @@
 	import CreateDiscussion from "./CreateDiscussion.svelte"
 	import DiscussionList from "./DiscussionList.svelte"
 	import ChatBox from "./ChatBox.svelte"
+	import { onMount } from "svelte"
 
 	// let new_message: [string, Promise<ClientInferResponses<typeof contract.chans.createChan>>]
 	let new_message: [string, Promise<Response>]
@@ -21,13 +22,27 @@
 	// const discussions = data.discussions // Why can't SK infer the type !?
 
 	let currentDiscussionId: number = discussions[0]?.id
+
+	let header_height: number
+
+	onMount(() => {
+		header_height = document.getElementById("shell-header")?.offsetHeight || 0
+	})
 </script>
 
 {#if discussions.length}
 	<!--Column layout -->
-	<div class="grid grid-cols-[auto_1fr]" id="col_layout">
+	<div
+		class="grid grid-cols-[auto_1fr]"
+		id="col_layout"
+		style="height: calc(100vh - {header_height}px);"
+	>
 		<!-- Rows for Column 1-->
-		<div class="grid grid-rows-[auto_1fr]" id="col1">
+		<div
+			class="grid grid-rows-[auto_1fr]"
+			id="col1"
+			style="height: calc(100vh - {header_height}px);"
+		>
 			<section class="p-4">
 				<CreateDiscussion />
 			</section>
@@ -37,7 +52,11 @@
 		</div>
 
 		<!-- Rows for Column 2-->
-		<div class="grid grid-rows-[1fr_auto]" id="col2">
+		<div
+			class="grid grid-rows-[1fr_auto]"
+			id="col2"
+			style="height: calc(100vh - {header_height}px);"
+		>
 			<!-- Messages -->
 			<DiscussionDisplay {new_message} {currentDiscussionId} />
 
@@ -59,9 +78,4 @@
 {/if}
 
 <style>
-	#col_layout,
-	#col1,
-	#col2 {
-		height: calc(100vh - 78px);
-	}
 </style>

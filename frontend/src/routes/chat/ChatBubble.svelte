@@ -11,7 +11,7 @@
 <div {id} class="message-row" style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}>
 	<div class="message-spacer" />
 	<div
-		class="message-bubble text-primary-800"
+		class="message-bubble text-black"
 		style={`background-color: ${from_me ? from_me_bg : from_them_bg} ; ` +
 			(from_me ? `margin-left: ${margin};` : `margin-right: ${margin} ;`)}
 	>

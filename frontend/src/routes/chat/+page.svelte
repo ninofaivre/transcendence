@@ -77,7 +77,7 @@
 			<DiscussionDisplay {new_message} {currentDiscussionId} />
 
 			<!-- Input box -->
-			<section class="border-t border-black p-4">
+			<section id="input-row" class="p-4">
 				<ChatBox on:message_sent={messageSentHandler} {currentDiscussionId} maxRows={20} />
 			</section>
 		</div>
@@ -94,4 +94,7 @@
 {/if}
 
 <style>
+	/* #input-row { */
+	/* 	box-shadow: -0px -2px 4px 0px; */
+	/* } */
 </style>

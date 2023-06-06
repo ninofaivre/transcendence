@@ -2,10 +2,13 @@
 	import { createEventDispatcher } from "svelte"
 	import { chansClient } from "$lib/clients"
 
+	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
+
 	export let currentDiscussionId: number
 	export let minRows = 1
 	export let maxRows: number | undefined
 	export let disabled = false
+	export let line_height = 1.2
 
 	const dispatch = createEventDispatcher()
 	let placeholder = "Shift + Enter for a new line"
@@ -34,17 +37,16 @@
 			switch (event.key) {
 				case "Enter":
 					sendMessage()
-					// I don't know why this works but it does prevent the textbox from growing after the first message
-					event.preventDefault()
+					event.preventDefault() // Prevent news line from being entered in the textarea
 			}
 		}
 	}
 
-	$: minHeight = `${1 + minRows * 1.2}em`
-	$: maxHeight = maxRows ? `${1 + maxRows * 1.2}em` : `auto`
+	$: minHeight = `${1 + minRows * line_height}em`
+	$: maxHeight = maxRows ? `${1 + maxRows * line_height}em` : `auto`
 </script>
 
-<div class="grid grid-cols-[1fr_auto]">
+<div id="grid" class="grid grid-cols-[1fr_auto]">
 	<div id="container">
 		<pre
 			aria-hidden="true"
@@ -64,6 +66,18 @@
 </div>
 
 <style>
+	#grid {
+		border-top-right-radius: 10px;
+		border-bottom-right-radius: 10px;
+		border-top-left-radius: 6px;
+		border-bottom-left-radius: 6px;
+	}
+
+	/* That var comes from the skeleton theme imported above*/
+	#grid:focus-within {
+		box-shadow: 0px 0px 0px 1px rgba(var(--color-primary-500));
+	}
+
 	#button {
 		border-top-right-radius: 10px;
 		border-bottom-right-radius: 10px;

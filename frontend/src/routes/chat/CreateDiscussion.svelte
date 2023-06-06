@@ -62,7 +62,7 @@
 {#if !show_discussion_creation_form}
 	<button
 		on:click={() => (show_discussion_creation_form = true)}
-		class="btn variant-filled w-full"
+		class="btn btn-sm variant-filled w-full"
 	>
 		Create new discussion
 	</button>

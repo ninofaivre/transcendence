@@ -8,8 +8,6 @@
 	export let from_them_bg = "lightgrey"
 	export let margin = "15px"
 	export let sent = true
-
-	$: hidden = !sent
 </script>
 
 <div id="message-row" style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}>
@@ -24,15 +22,21 @@
 			<div id="from-field">{from}</div>
 		{/if}
 		<div id="message-container" class="grid grid-cols-[auto_1fr]">
-			<div {hidden} id="spinner-container" class="self-center" out:scale={{ duration: 600 }}>
-				<!-- out:slide={{ axis: "x", duration: 600 }} -->
-				<ProgressRadial
-					width="w-3"
-					stroke={130}
-					meter="stroke-primary-600"
-					track="stroke-primary-500/30"
-				/>
-			</div>
+			{#if sent}
+				<div
+					id="spinner-container"
+					class="self-center"
+					out:slide={{ axis: "x", duration: 800 }}
+				>
+					<!-- out:scale={{ duration: 600 }} -->
+					<ProgressRadial
+						width="w-3"
+						stroke={130}
+						meter="stroke-primary-600"
+						track="stroke-primary-500/30"
+					/>
+				</div>
+			{/if}
 			<div id="message-content" class="mx-2">
 				<slot />
 			</div>

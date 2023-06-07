@@ -235,7 +235,7 @@ export class DmsService
 			this.sse.pushEvent(updatedDm.requestedUserName, { type: 'UPDATED_DM', data: this.formatDirectMessage(updatedDm, updatedDm.requestedUserName) })
 		])
 		const newEvent = await this.createClassicDmEvent(dmId, (newStatus === DirectMessageStatus.ENABLED) ? ClassicDmEventType.ENABLED_DM : ClassicDmEventType.DISABLED_DM, username)
-		await this.sse.pushEventMultipleUser([updatedDm.requestedUserName, updatedDm.requestingUserName], { type: 'CREATED_DM_EVENT', data: { dmId: dmId, element: newEvent } })
+		await this.sse.pushEventMultipleUser([updatedDm.requestedUserName, updatedDm.requestingUserName], { type: 'CREATED_DM_ELEMENT', data: { dmId: dmId, element: newEvent } })
 	}
 
 	async getDms(username: string)
@@ -355,7 +355,7 @@ export class DmsService
 		const formattedRes = this.formatDmElement(res)
 		await this.notifyOtherMemberOfDm(username, dmId,
 			{
-				type: 'CREATED_DM_MESSAGE',
+				type: 'CREATED_DM_ELEMENT',
 				data: { dmId: dmId, element: formattedRes } 
 			})
 		return formattedRes
@@ -402,7 +402,7 @@ export class DmsService
 			select: this.dmDiscussionElementSelect }))
 		await this.notifyOtherMemberOfDm(username, dmId,
 			{
-				type: 'CREATED_DM_EVENT',
+				type: 'CREATED_DM_ELEMENT',
 				data: { dmId: dmId, element: res }
 			})
 		return res

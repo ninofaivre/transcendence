@@ -117,9 +117,12 @@ export class CaslAbilityFactory
 				@Inject(forwardRef(() => UserService))
 			    private readonly userService: UserService) {}
 
-	private async getChan(chanId: string, username: string)
+	public  async getChanOrThrow(chanId: string, username: string)
 	{
-		return this.prisma.chan.findUnique({ where: { id: chanId, users: { some: { name: username } } }, ...chanSelect })
+		const res = await this.prisma.chan.findUnique({ where: { id: chanId, users: { some: { name: username } } }, ...chanSelect })
+		if (!res)
+			throw new NotFoundException(`not found chan ${chanId}`)
+		return res
 	}
 
 	private async getChanUser(chanId: string, username: string)
@@ -226,6 +229,7 @@ export class CaslAbilityFactory
 		cannot(Action.Create, 'ChanInvitation', { invitedUserName: { in: pendingOutcomingChanInvitations } }).because("already invited user")
 
 		can(Action.Update, 'ChanInvitation', { status: ChanInvitationStatus.PENDING })
+		cannot(Action.Update, 'ChanInvitation', { status: ChanInvitationStatus.BANNED_FROM_CHAN }).because("banned from chan")
 		cannot(Action.Update, 'ChanInvitation', { status: { not: ChanInvitationStatus.PENDING } }).because("not a PENDING invitation")
 		/* CHAN_INVITATION */
 
@@ -236,7 +240,7 @@ export class CaslAbilityFactory
 	async checkAbilitiesForUserInChan(username: string, chanId: string, rules: { action: Action | ChanAction, subject: any }[])
 	{
 		const user = await this.getChanUser(chanId, username)
-		const chan = await this.getChan(chanId, username)
+		const chan = await this.getChanOrThrow(chanId, username)
 		if (!chan)
 			throw new NotFoundException(`not found chan ${chanId}`)
 

@@ -1,5 +1,5 @@
 import { subject } from '@casl/ability';
-import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, InternalServerErrorException, NotFoundException, forwardRef } from '@nestjs/common';
 import { Prisma, ChanInvitationStatus, ChanInvitationDmDiscussionEvent, ClassicChanEventType } from '@prisma/client';
 import { NestRequestShapes, nestControllerContract } from '@ts-rest/nest';
 import contract from 'contract/contract';
@@ -25,6 +25,7 @@ export class ChanInvitationsService
 			    private readonly casl: CaslAbilityFactory,
 			    private readonly dmsService: DmsService,
 			    private readonly sse: SseService,
+				@Inject(forwardRef(() => ChansService))
 			    private readonly chansService: ChansService) {}
 
 	private chanInvitationSelect =
@@ -146,7 +147,23 @@ export class ChanInvitationsService
 		return chanInv
 	}
 
-	private async acceptAllChanInvitations(username: string, chanId: string, exceptionInvitationId: string)
+	public async updateAndNotifyManyInvs(newStatus: ChanInvitationStatus, invsId: string[])
+	{
+		await this.prisma.chanInvitation.updateMany({ where: { id: { in: invsId } },
+			data:
+			{
+				status: newStatus
+			} })
+		const res = this.formatChanInvitationArray(await this.prisma.chanInvitation.findMany({
+			where: { id: { in: invsId } },
+			select: this.chanInvitationSelect }))
+		return Promise.all(res.map(async el =>
+			{ 
+				return this.sse.pushEventMultipleUser([el.invitingUserName, el.invitedUserName], { type: 'UPDATED_CHAN_INVITATION', data: el })
+			}))
+	}
+
+	async acceptAllChanInvitationsForUser(username: string, chanId: string, exceptionInvitationId?: string)
 	{
 		const invs = (await this.usersService.getUserByNameOrThrow(username,
 			{
@@ -156,23 +173,13 @@ export class ChanInvitationsService
 					{
 						status: ChanInvitationStatus.PENDING,
 						chanId: chanId,
-						id: { not: exceptionInvitationId }
+						...((!!exceptionInvitationId) ?
+							{ id: { not: exceptionInvitationId } } : {})
 					},
 					select: { id: true }
 				}
 			})).incomingChanInvitation.map(el => el.id)
-		await this.prisma.chanInvitation.updateMany({ where: { id: { in: invs } },
-			data:
-			{
-				status: ChanInvitationStatus.ACCEPTED
-			} })
-		const res = this.formatChanInvitationArray(await this.prisma.chanInvitation.findMany({
-			where: { id: { in: invs } },
-			select: this.chanInvitationSelect }))
-		return Promise.all(res.map(async el =>
-			{ 
-				return this.sse.pushEventMultipleUser([el.invitingUserName, el.invitedUserName], { type: 'UPDATED_CHAN_INVITATION', data: el })
-			}))
+		await this.updateAndNotifyManyInvs(ChanInvitationStatus.ACCEPTED, invs)
 	}
 
 	async updateIncomingChanInvitation(username: string, newStatus: RequestShapes['updateIncomingChanInvitation']['body']['status'], id: string)
@@ -181,16 +188,10 @@ export class ChanInvitationsService
 		await this.casl.checkAbilitiesForUser(username, [{ action: Action.Update, subject: subject('ChanInvitation', chanInvitation) }])
 		if (newStatus === 'ACCEPTED')
 		{
-			const newChan = await this.chansService.pushUserToChan(username, chanInvitation.chanId)
-			await this.acceptAllChanInvitations(username, chanInvitation.chanId, id)
+			await this.acceptAllChanInvitationsForUser(username, chanInvitation.chanId, id)
+			const newChan = await this.chansService.pushUserToChanAndNotifyUsers(username, chanInvitation.chanId)
 
-			await Promise.all
-			([
-				this.sse.pushEvent(username, { type: 'CREATED_CHAN', data: newChan }),
-				this.sse.pushEventMultipleUser(newChan.users.filter(el => el !== username), { type: 'UPDATED_CHAN', data: newChan })
-			])
-
-			await this.chansService.createAndNotifyClassicChanEvent(username, null, chanInvitation.chanId, ClassicChanEventType.AUTHOR_JOINED)
+			await this.sse.pushEvent(username, { type: 'CREATED_CHAN', data: newChan })
 		}
 		return this.formatChanInvitation(await this.prisma.chanInvitation.update({
 			where: { id: id },

@@ -180,6 +180,6 @@ export type DmEvent =
 	data: z.infer<typeof zDmReturn>
 } |
 {
-	type: 'CREATED_DM_EVENT' | 'CREATED_DM_MESSAGE' | 'UPDATED_DM_MESSAGE',
+	type: 'CREATED_DM_ELEMENT' | 'UPDATED_DM_MESSAGE',
 	data: { dmId: string, element: z.infer<typeof zDmDiscussionElementReturn> }
 }

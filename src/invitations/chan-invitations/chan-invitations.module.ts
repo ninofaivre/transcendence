@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ChanInvitationsService } from './chan-invitations.service';
 import { ChanInvitationsController } from './chan-invitations.controller';
 import { UserModule } from 'src/user/user.module';
@@ -9,8 +9,9 @@ import { ChansModule } from 'src/chans/chans.module';
 
 @Module
 ({
-	imports: [UserModule, SseModule, CaslModule, DmsModule, ChansModule],
+	imports: [UserModule, SseModule, CaslModule, DmsModule, forwardRef(() => ChansModule)],
 	providers: [ChanInvitationsService],
-	controllers: [ChanInvitationsController]
+	controllers: [ChanInvitationsController],
+	exports: [ChanInvitationsService]
 })
 export class ChanInvitationsModule {}

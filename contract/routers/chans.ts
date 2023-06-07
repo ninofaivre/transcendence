@@ -1,13 +1,28 @@
 import { extendApi } from "@anatine/zod-openapi"
 import { ClassicChanEventType, ChanType, PermissionList, RoleApplyingType } from "@prisma/client"
 import { initContract } from "@ts-rest/core"
-import { zChanId, zChanPassword, zChanTitle, zCreatePrivateChan, zCreatePublicChan, zRoleName } from "contract/zod/chan.zod"
-// import { zDiscussionElementReturn, zMessageId } from "contract/zod/global.zod"
+import { unique } from "contract/zod/global.zod"
 import { zUserName } from "contract/zod/user.zod"
 import { z } from "zod"
-import { unique } from "contract/zod/global.zod"
 
 const c = initContract()
+
+export const zChanTitle = z.string().nonempty().max(50).refine(title => title !== "@me", { message: "invalid title" })
+export const zChanPassword = z.string().nonempty().min(8).max(150)
+export const zRoleName = z.string().nonempty()
+
+export const zCreatePublicChan = z.strictObject
+({
+	type: z.literal(ChanType.PUBLIC),
+	title: zChanTitle,
+	password: zChanPassword.optional(),
+})
+
+export const zCreatePrivateChan = z.strictObject
+({
+	type: z.literal(ChanType.PRIVATE),
+	title: zChanTitle.optional(),
+})
 
 const zRoleReturn = z.object
 ({
@@ -81,100 +96,87 @@ export const zChanDiscussionElementReturn = z.discriminatedUnion("type",
 
 export const chansContract = c.router
 ({
-	// searchChans:
-	// {
-	// 	method: 'GET',
-	// 	path: '/',
-	// 	summary: 'search for a chan',
-	// 	description: 'only chan with type PUBLIC are searchable',
-	// 	query: z.strictObject
-	// 	({
-	// 		titleContains: zChanTitle,
-	// 		nResult: z.coerce.number().positive().int().max(30).default(10)
-	// 	}),
-	// 	responses:
-	// 	{
-	// 		200: z.array(z.object
-	// 		({
-	// 			passwordProtected: z.boolean(),
-	// 			nUsers: z.number().positive().int(),
-	// 			id: zChanId,
-	// 			title: zChanTitle,
-	// 		}))
-	// 	}
-	// },
-	// getMyChans:
-	// {
-	// 	method: 'GET',
-	// 	path: '/me',
-	// 	responses:
-	// 	{
-	// 		200: z.array(zChanReturn)
-	// 	}
-	// },
-	// leaveChan:
-	// {
-	// 	method: 'DELETE',
-	// 	path: '/me/:chanId',
-	// 	summary: 'leave a chan',
-	// 	pathParams: z.strictObject
-	// 	({
-	// 		chanId: zChanId
-	// 	}),
-	// 	body: c.body<null>(),
-	// 	responses:
-	// 	{
-	// 		202: c.response<null>()
-	// 	}
-	// },
-	// joinChanByInvitation:
-	// {
-	// 	method: 'POST',
-	// 	path: '/me/joinByInvitation',
-	// 	body: z.strictObject
-	// 	({
-	// 		invitationId: z.number().positive().int()
-	// 	}),
-	// 	responses:
-	// 	{
-	// 		200: zChanReturn
-	// 	}
-	// },
-	// joinChanById:
-	// {
-	// 	method: 'POST',
-	// 	path: '/me/joinById',
-	// 	body: z.strictObject
-	// 	({
-	// 		chanId: zChanId,
-	// 		password: zChanPassword
-	// 	}),
-	// 	responses:
-	// 	{
-	// 		200: zChanReturn
-	// 	}
-	// },
-	// createChan:
-	// {
-	// 	method: 'POST',
-	// 	path: '/',
-	// 	summary: 'create a chan',
-	// 	body: z.discriminatedUnion("type",
-	// 	[
-	// 		extendApi(zCreatePublicChan,
-	// 		{
-	// 			title: "PUBLIC",
-	// 		}),
-	// 		extendApi(zCreatePrivateChan,
-	// 		{
-	// 			title: "PRIVATE",
-	// 		})
-	// 	]),
-	// 	responses:
-	// 	{
-	// 		201: zChanReturn 
-	// 	}
-	// },
+	searchChans:
+	{
+		method: 'GET',
+		path: '/',
+		summary: 'search for a chan',
+		description: 'only chan with type PUBLIC are searchable',
+		query: z.strictObject
+		({
+			titleContains: zChanTitle,
+			nResult: z.number().positive().int().max(30).default(10)
+		}),
+		responses:
+		{
+			200: z.array(z.object
+			({
+				passwordProtected: z.boolean(),
+				nUsers: z.number().positive().int(),
+				id: z.string().uuid(),
+				title: zChanTitle,
+			}))
+		}
+	},
+	getMyChans:
+	{
+		method: 'GET',
+		path: '/@me',
+		responses:
+		{
+			200: z.array(zChanReturn)
+		}
+	},
+	leaveChan:
+	{
+		method: 'DELETE',
+		path: '/@me/:chanId',
+		summary: 'leave a chan',
+		pathParams: z.strictObject
+		({
+			chanId: z.string().uuid()
+		}),
+		body: c.body<null>(),
+		responses:
+		{
+			202: c.response<null>()
+		}
+	},
+	joinChanById:
+	{
+		method: 'POST',
+		path: '/@me',
+		body: z.strictObject
+		({
+			chanId: z.string().uuid(),
+			password: zChanPassword.optional()
+		}),
+		responses:
+		{
+			200: zChanReturn
+		}
+	},
+	createChan:
+	{
+		method: 'POST',
+		path: '/',
+		summary: 'create a chan',
+		body: z.discriminatedUnion("type",
+		[
+			extendApi(zCreatePublicChan,
+			{
+				title: "PUBLIC",
+			}),
+			extendApi(zCreatePrivateChan,
+			{
+				title: "PRIVATE",
+			})
+		]),
+		responses:
+		{
+			201: zChanReturn 
+		}
+	},
 	// updateChan:
 	// {
 	// 	method: 'PATCH',
@@ -208,42 +210,42 @@ export const chansContract = c.router
 	// 		204: zChanReturn
 	// 	}
 	// },
-	// deleteChan:
-	// {
-	// 	method: 'DELETE',
-	// 	path: '/:chanId',
-	// 	summary: 'delete a chan',
-	// 	pathParams: z.strictObject
-	// 	({ 
-	// 		chanId: zChanId
-	// 	}),
-	// 	body: c.body<null>(),
-	// 	responses:
-	// 	{
-	// 		202: c.response<null>()
-	// 	}
-	// },
-	// createChanMessage:
-	// {
-	// 	method: 'POST',
-	// 	path: '/:chanId/messages',
-	// 	summary: 'post a message to a chan',
-	// 	pathParams: z.strictObject
-	// 	({
-	// 		chanId: zChanId
-	// 	}),
-	// 	body: z.strictObject
-	// 	({
-	// 		content: z.string().nonempty().max(5000),
-	// 		relatedTo: z.number().positive().int().optional().describe("id of the related msg/event"),
-	// 		usersAt: unique(z.array(zUserName).nonempty()).optional(),
-	// 		rolesAt: unique(z.array(zRoleName).nonempty()).optional()
-	// 	}),
-	// 	responses:
-	// 	{
-	// 		201: zDiscussionElementReturn // .extend({ event: z.null() }) ==> Doable but a bit complex
-	// 	}
-	// },
+	deleteChan:
+	{
+		method: 'DELETE',
+		path: '/:chanId',
+		summary: 'delete a chan',
+		pathParams: z.strictObject
+		({ 
+			chanId: z.string().uuid()
+		}),
+		body: c.body<null>(),
+		responses:
+		{
+			202: c.response<null>()
+		}
+	},
+	createChanMessage:
+	{
+		method: 'POST',
+		path: '/:chanId/messages',
+		summary: 'post a message to a chan',
+		pathParams: z.strictObject
+		({
+			chanId: z.string().uuid()
+		}),
+		body: z.strictObject
+		({
+			content: z.string().nonempty().max(5000),
+			relatedTo: z.string().uuid().optional().describe("id of the related msg/event"),
+			usersAt: unique(z.array(zUserName).nonempty()).optional(),
+			rolesAt: unique(z.array(zRoleName).nonempty()).optional()
+		}),
+		responses:
+		{
+			201: zChanDiscussionElementReturn
+		}
+	},
 	// getChanMessages:
 	// {
 	// 	method: 'GET',
@@ -301,6 +303,10 @@ export type ChanEvent =
 	data: z.infer<typeof zChanReturn>
 } |
 {
-	type: 'CREATED_CHAN_EVENT' | 'CREATED_CHAN_MESSAGE',
+	type: 'CREATED_CHAN_ELEMENT',
 	data: { chanId: string, element: z.infer<typeof zChanDiscussionElementReturn> }
+} |
+{
+	type: 'DELETED_CHAN',
+	data: { chanId: string }
 }

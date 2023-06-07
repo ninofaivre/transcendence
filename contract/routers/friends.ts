@@ -13,15 +13,15 @@ export const zFriendShipReturn = z.strictObject
 
 export const friendsContract = c.router
 ({
-	// getFriends:
-	// {
-	// 	method: 'GET',
-	// 	path: '/',
-	// 	responses:
-	// 	{
-	// 		200: z.array(zFriendShip)
-	// 	}
-	// },
+	getFriends:
+	{
+		method: 'GET',
+		path: '/',
+		responses:
+		{
+			200: z.array(zFriendShipReturn)
+		}
+	},
 	deleteFriend:
 	{
 		method: 'DELETE',

@@ -62,7 +62,9 @@
 			{disabled}
 		/>
 	</div>
-	<button id="button" on:click={sendMessage} class="variant-filled-primary"> Send </button>
+	<button id="button" on:click={sendMessage} class="variant-filled-primary hover:font-medium">
+		Send
+	</button>
 </div>
 
 <style>
@@ -75,7 +77,9 @@
 
 	/* That var comes from the skeleton theme imported above*/
 	#grid:focus-within {
-		box-shadow: 0px 0px 0px 1px rgba(var(--color-primary-500));
+		/* box-shadow: 0px 0px 0px 1px rgba(var(--color-primary-500)); */
+		outline: rgba(var(--color-primary-600)) solid 2px;
+		outline-offset: 5px;
 	}
 
 	#button {

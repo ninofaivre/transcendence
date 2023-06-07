@@ -1,6 +1,6 @@
 <script lang="ts">
 	/* types */
-	import type { Chan, Chans } from "$types"
+	import type { Chan } from "$types"
 
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"

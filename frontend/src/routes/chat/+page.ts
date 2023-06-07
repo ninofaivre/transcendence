@@ -13,14 +13,14 @@ export const load = async ({ depends }: LoadEvent) => {
 	}
 
 	depends(":friends")
-	const { status: status2, body: friends } = await friendsClient.getFriends()
+	const { status: status2, body: friendships } = await friendsClient.getFriends()
 	if (status !== 200) {
 		console.log(
 			`Failed to load friend list. Server returned code ${status2} with message \"${
-				(friends as any)?.message
+				(friendships as any)?.message
 			}\"`,
 		)
 	}
 
-	return { discussions, friends }
+	return { discussions, friendships }
 }

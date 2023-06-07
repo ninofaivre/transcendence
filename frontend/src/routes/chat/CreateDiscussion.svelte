@@ -5,6 +5,7 @@
 	import { invalidate } from "$app/navigation"
 	import { chansClient, invitationsClient } from "$clients"
 	import { page } from "$app/stores"
+	import { my_name } from "$stores"
 
 	let show_discussion_creation_form = false
 	let minlength = 3
@@ -36,7 +37,7 @@
 	}
 
 	function validation(_username: string): boolean {
-		const friends = $page.data?.friends
+		const friends = $page.data?.friendships
 		if (friends) {
 			return friends.indexOf(_username) !== -1
 		}
@@ -45,9 +46,12 @@
 
 	let input: string
 	let value: string[]
-
 	// let friends: string[] = ["alice", "bob", "cha", "denis", "john", "zelda"]
-	let friends: string[] = $page.data.friends
+	let friends: string[] = $page.data.friendships.map(
+		({ requestedUserName, requestingUserName }: any) => {
+			return $my_name === requestingUserName ? requestedUserName : requestingUserName
+		},
+	)
 	console.log("Current friends:", friends)
 	let friendOptions: AutocompleteOption[] = friends.map((username) => ({
 		label: username,

@@ -62,7 +62,7 @@
 			<section class="p-4">
 				<CreateDiscussion />
 			</section>
-			<section class="overflow-y-auto">
+			<section id="discussions" class="overflow-y-auto">
 				<DiscussionList {discussions} bind:currentDiscussionId />
 			</section>
 		</div>
@@ -94,6 +94,10 @@
 {/if}
 
 <style>
+	#discussions {
+		scrollbar-gutter: stable;
+		scrollbar-width: thin;
+	}
 	/* #input-row { */
 	/* 	box-shadow: -0px -2px 4px 0px; */
 	/* } */

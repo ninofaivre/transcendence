@@ -292,16 +292,6 @@ export class ChansService {
 		await this.createAndNotifyClassicChanEvent(username, null, chanId, ClassicChanEventType.AUTHOR_LEAVED)
 	}
 
-	// async formatChanMessage(chanMsg: Prisma.PromiseReturnType<typeof this.createChanMessage>) {
-	// 	// TODO: find a way to handle this shit
-	// 	if (chanMsg.message) {
-	// 		const msg = { ...chanMsg.message, relatedRoles: this.namesArrayToStringArray(chanMsg.message.relatedRoles), relatedUsers: this.namesArrayToStringArray(chanMsg.message.relatedUsers) }
-	// 		return { ...chanMsg, message: msg, event: null }
-	// 	}
-	// 	else
-	// 		return { ...chanMsg, message: null }
-	// }
-	//
 	async createAndNotifyChanMessage(username: string, chanId: string, content: string, relatedTo: string | undefined, usersAt: string[] | undefined)
 	{
 		const res = (await this.prisma.chanDiscussionMessage.create({
@@ -480,59 +470,7 @@ export class ChansService {
 	// 	await this.notifyChanEventToChanUsers(chanId, newChanEvent)
 	// 	await this.notifyChanEventToUser(toKick, chanId, newChanEvent)
 	// }
-	//
-	// async createChanEvent(author: string, chanId: number, eventType: EventType, concerned?: string) {
-	// 	return (await this.prisma.discussionEvent.create({
-	// 		data:
-	// 		{
-	// 			eventType: eventType,
-	// 			concernedUserRelation: (concerned) ? { connect: { name: concerned } } : undefined,
-	// 			discussionElement:
-	// 			{
-	// 				create:
-	// 				{
-	// 					authorRelation: { connect: { name: author } },
-	// 					chan: { connect: { id: chanId } }
-	// 				}
-	// 			}
-	// 		},
-	// 		select:
-	// 		{
-	// 			discussionElement: { select: ChansService.discussionElementsSelect }
-	// 		}
-	// 	})).discussionElement
-	// }
-	//
-	// async notifyChanUsers(chanId: number, toNotify: any)
-	// {
-	// 	const res = await this.prisma.chan.findUnique({ where: { id: chanId }, select: { users: { select: { name: true } } } })
-	// 	if (!res)
-	// 		return
-	// 	return this.sseService.pushEventMultipleUser(res.users.map(el => el.name), toNotify)
-	// }
-	//
-	// async notifyChanEventToChanUsers(chanId: number, event: Prisma.PromiseReturnType<typeof this.createChanEvent>)
-	// {
-	// 	return this.notifyChanUsers(chanId, { type: EventTypeList.CHAN_NEW_EVENT, data: { chanId: chanId, event: event } })
-	// }
-	//
-	// async notifyChanEventToUser(username: string, chanId: number, event: Prisma.PromiseReturnType<typeof this.createChanEvent>)
-	// {
-	// 	return this.sseService.pushEvent(username,
-	// 		{
-	// 			type: EventTypeList.CHAN_NEW_EVENT,
-	// 			data: { chanId: chanId, event: event }
-	// 		})
-	// }
-	//
-	// async notifyChanMessageToChanUsers(chanId: number, message: Prisma.PromiseReturnType<typeof this.createChanMessage>)
-	// {
-	// 	return this.notifyChanUsers(chanId,
-	// 		{
-	// 			type: EventTypeList.CHAN_NEW_MESSAGE,
-	// 			data: { chanId: chanId, message: message }
-	// 		})
-	// }
+
 	private async notifyChan(chanId: string, toNotify: ChanEvent, exceptionUserName: string | null)
 	{
 		const userNames = (await this.prisma.chan.findUnique({ where: { id: chanId },
@@ -597,115 +535,6 @@ export class ChansService {
 			},
 			take: 1 }))
 	}
-
-	// private async addUserToChan(username: string, chanId: number) {
-	// 	const res = await this.prisma.chan.update({
-	// 		where: { id: chanId },
-	// 		data: { users: { connect: { name: username } } },
-	// 		select: ChansService.chansSelect
-	// 	})
-	// 	if (res.roles.some(el => el.name === 'DEFAULT')) {
-	// 		await this.prisma.role.update({
-	// 			where: { chanId_name: { chanId: chanId, name: 'DEFAULT' } },
-	// 			data: { users: { connect: { name: username } } }
-	// 		})
-	// 	}
-	// 	const newEvent = await this.prisma.discussionElement.create({
-	// 		data:
-	// 		{
-	// 			chan: { connect: { id: chanId } },
-	// 			authorRelation: { connect: { name: username } },
-	// 			event:
-	// 			{
-	// 				create:
-	// 				{
-	// 					eventType: EventType.AUTHOR_JOINED
-	// 				}
-	// 			}
-	// 		},
-	// 		select: this.appService.discussionElementsSelect
-	// 	})
-
-	// 	await this.sseService.pushEventMultipleUser(res.users.map(el => el.name),
-	// 		{
-	// 			type: EventTypeList.CHAN_NEW_EVENT,
-	// 			data: { chanId: chanId, event: newEvent }
-	// 		})
-	// 	return res
-	// }
-	//
-	// async deleteAllInvitationsToChanForUser(username: string, chanId: number) {
-	// 	// Get all Invitations
-	// 	let invitations = (await this.prisma.user.findUnique({
-	// 		where: { name: username },
-	// 		select:
-	// 		{
-	// 			incomingChanInvitation:
-	// 			{
-	// 				where: { chanId: chanId },
-	// 				select:
-	// 				{
-	// 					id: true,
-	// 					requestingUserName: true,
-	// 					discussionEvent: { select: { id: true } },
-	// 					friendShip: { select: { directMessage: { select: { id: true } } } }
-	// 				}
-	// 			}
-	// 		}
-	// 	}))?.incomingChanInvitation
-	//
-	// 	if (!invitations)
-	// 		throw new InternalServerErrorException(`your account has been permanently deleted, please logout`)
-	// 	// Delete all Invitations
-	// 	await this.prisma.chanInvitation.deleteMany({ where: { id: { in: invitations.map(el => el.id) } } })
-	//
-	// 	// Update all invitations events in dms
-	// 	await this.prisma.discussionEvent.updateMany({
-	// 		where: { id: { in: invitations.filter(el => !!el.discussionEvent).map(el => el.discussionEvent.id) } },
-	// 		data:
-	// 		{
-	// 			eventType: EventType.ACCEPTED_CHAN_INVITATION,
-	// 		}
-	// 	})
-	//
-	// 	// select on findMany because not possible on updateMany
-	// 	const newEvents = (await this.prisma.discussionEvent.findMany({
-	// 		where: { id: { in: invitations.map(el => el.discussionEvent.id) } },
-	// 		select:
-	// 		{
-	// 			discussionElement:
-	// 			{
-	// 				select:
-	// 				{
-	// 					directMessage: { select: { id: true, requestingUserName: true, requestedUserName: true } },
-	// 					...this.appService.discussionElementsSelect
-	// 				}
-	// 			}
-	// 		}
-	// 	})).map(el => el.discussionElement)
-	//
-	// 	// sse notify for updated invitations events in dms
-	// 	await Promise.all(newEvents.map(async ev => {
-	// 		const { directMessage, ...event } = ev
-	// 		if (!directMessage)
-	// 			return
-	// 		return this.sseService.pushEventMultipleUser([directMessage.requestingUserName, directMessage.requestedUserName],
-	// 			{
-	// 				type: EventTypeList.DM_NEW_EVENT,
-	// 				data:
-	// 				{
-	// 					directMessageId: directMessage.id,
-	// 					event: event
-	// 				}
-	// 			})
-	// 	}))
-	// }
-
-	// async pushUserToChanAndEmitDmEvent(username: string, chanId: number) {
-	// 	const newChan = await this.addUserToChan(username, chanId)
-	// 	await this.deleteAllInvitationsToChanForUser(username, chanId)
-	// 	return newChan
-	// }
 
 	async getChanOrThrow<Sel extends Prisma.ChanSelect>(where: Prisma.ChanWhereUniqueInput, select: Prisma.Subset<Sel, Prisma.ChanSelect>)
 	{

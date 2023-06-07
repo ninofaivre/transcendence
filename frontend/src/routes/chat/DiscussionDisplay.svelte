@@ -129,7 +129,6 @@
 		<div bind:this={canary} />
 		{#each displayed_messages as message}
 			<ChatBubble
-				id={message.id.toString()}
 				from_me={message.author === $my_name}
 				from={message.author}
 				sent={message.id < 0}

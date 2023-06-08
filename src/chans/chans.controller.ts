@@ -83,14 +83,22 @@ export class ChansController implements NestControllerInterface<typeof c>
 		return { status: 201 as const, body }
 	}
 
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.getChanMessages)
-	// async getChanMessages(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId }, query: { nMessages, cursor } }: RequestShapes['getChanMessages'])
-	// {
-	// 	const body = await this.chansService.getChanMessages(req.user.username, chanId, nMessages, cursor)
-	// 	return { status: 200 as const, body: await Promise.all(body.map(el => this.chansService.formatChanMessage(el))) }
-	// }
-	//
+	@UseGuards(JwtAuthGuard)
+	@TsRest(c.getChanMessages)
+	async getChanMessages(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId }, query: { nMessages, cursor } }: RequestShapes['getChanMessages'])
+	{
+		const body = await this.chansService.getChanMessages(req.user.username, chanId, nMessages, cursor)
+		return { status: 200 as const, body }
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@TsRest(c.getOneChanMessage)
+	async getOneChanMessage(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId, msgId } }: RequestShapes['getOneChanMessage'])
+	{
+		const body = await this.chansService.getOneChanElement(req.user.username, chanId, msgId)
+		return { status: 200 as const, body }
+	}
+
 	// @UseGuards(JwtAuthGuard)
 	// @TsRest(c.deleteChanMessage)
 	// async deleteChanMessage(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId, messageId } }: RequestShapes['deleteChanMessage'])

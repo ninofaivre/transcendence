@@ -22,7 +22,7 @@ export class FriendInvitationsController implements NestControllerInterface<type
 	async getFriendInvitations(@Request()req: EnrichedRequest, @TsRestRequest(){ query: { status } }: RequestShapes['getFriendInvitations'])
 	{
 		const body = await this.friendInvitationsService.getFriendInvitations(req.user.username, status)
-		return { status: 200 as const, body: body }
+		return { status: 200 as const, body }
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -30,7 +30,7 @@ export class FriendInvitationsController implements NestControllerInterface<type
 	async getFriendInvitationById(@Request()req: EnrichedRequest, @TsRestRequest(){ params: { id } }: RequestShapes['getFriendInvitationById'])
 	{
 		const body = await this.friendInvitationsService.getFriendInvitationById(req.user.username, id)
-		return { status: 200 as const, body: body }
+		return { status: 200 as const, body }
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -38,7 +38,7 @@ export class FriendInvitationsController implements NestControllerInterface<type
 	async getFriendInvitationsByType(@Request()req: EnrichedRequest, @TsRestRequest(){ params: { type }, query: { status } }: RequestShapes['getFriendInvitationsByType'])
 	{
 		const body = await this.friendInvitationsService.getFriendInvitationsByType(req.user.username, type, status)
-		return { status: 200 as const, body: body }
+		return { status: 200 as const, body }
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -47,7 +47,7 @@ export class FriendInvitationsController implements NestControllerInterface<type
 	{
 		const body = await this.friendInvitationsService.createFriendInvitation(req.user.username, invitedUserName)
 		await this.sse.pushEvent(invitedUserName, { type: 'CREATED_FRIEND_INVITATION', data: body })
-		return { status: 201 as const, body: body }
+		return { status: 201 as const, body }
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -56,7 +56,7 @@ export class FriendInvitationsController implements NestControllerInterface<type
 	{
 		const body = await this.friendInvitationsService.updateIncomingFriendInvitation(req.user.username, status, id)
 		await this.sse.pushEvent(body.invitingUserName, { type: 'UPDATED_FRIEND_INVITATION', data: body })
-		return { status: 200 as const, body: body }
+		return { status: 200 as const, body }
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -65,7 +65,7 @@ export class FriendInvitationsController implements NestControllerInterface<type
 	{
 		const body = await this.friendInvitationsService.updateOutcomingFriendInvitation(req.user.username, status, id)
 		await this.sse.pushEvent(body.invitedUserName, { type: 'UPDATED_FRIEND_INVITATION', data: body })
-		return { status: 200 as const, body: body }
+		return { status: 200 as const, body }
 	}
 
 }

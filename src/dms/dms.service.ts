@@ -298,11 +298,11 @@ export class DmsService
 			{
 				elements:
 				{
-					select: this.dmDiscussionElementSelect,
-					take: nMessages,
+					cursor: (start) ? { id: start } : undefined,
 					orderBy: { id: 'desc' },
-					cursor: (start !== undefined) ? { id: start } : undefined,
-					skip: Number(start !== undefined) ? 1 : undefined,
+					take: nMessages,
+					select: this.dmDiscussionElementSelect,
+					skip: Number(!!start),
 				}
 			})
 		return this.formatDmElementArray(res.elements.reverse())

@@ -246,38 +246,52 @@ export const chansContract = c.router
 			201: zChanDiscussionElementReturn
 		}
 	},
-	// getChanMessages:
-	// {
-	// 	method: 'GET',
-	// 	path: '/:chanId/messages',
-	// 	summary: 'get messages by cursor in chan',
-	// 	pathParams: z.strictObject
-	// 	({
-	// 		chanId: zChanId
-	// 	}),
-	// 	query: z.strictObject
-	// 	({
-	// 		nMessages: z.coerce.number().positive().int().max(50).default(25),
-	// 		cursor: zMessageId.optional()
-	// 	}),
-	// 	responses:
-	// 	{
-	// 		200: z.array(zDiscussionElementReturn)
-	// 	}
-	// },
+	getChanMessages:
+	{
+		method: 'GET',
+		path: '/:chanId/messages',
+		summary: 'get messages by cursor in chan',
+		pathParams: z.strictObject
+		({
+			chanId: z.string().uuid()
+		}),
+		query: z.strictObject
+		({
+			nMessages: z.number().positive().int().max(50).default(25),
+			cursor: z.string().uuid().optional()
+		}),
+		responses:
+		{
+			200: z.array(zChanDiscussionElementReturn)
+		}
+	},
+	getOneChanMessage:
+	{
+		method: 'GET',
+		path: '/:chanId/messages/:msgId',
+		pathParams: z.strictObject
+		({
+			chanId: z.string().uuid(),
+			msgId: z.string().uuid()
+		}),
+		responses:
+		{
+			200: zChanDiscussionElementReturn
+		}
+	},
 	// deleteChanMessage:
 	// {
 	// 	method: 'DELETE',
 	// 	path: '/:chanId/messages/:messageId',
 	// 	pathParams: z.strictObject
 	// 	({
-	// 		chanId: zChanId,
-	// 		messageId: zMessageId
+	// 		chanId: z.string().uuid(),
+	// 		messageId: z.string().uuid()
 	// 	}),
 	// 	body: c.body<null>(),
 	// 	responses:
 	// 	{
-	// 		202: c.response<null>()
+	// 		202: zChanDiscussionElementReturn
 	// 	}
 	// },
 	// kickUserFromChan:

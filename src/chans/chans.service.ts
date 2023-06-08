@@ -185,6 +185,11 @@ export class ChansService {
 			return { ...rest, type: 'message', message: this.formatChanDiscussionMessage(message) }
 	}
 
+	private formatChanDiscussionElementArray(elements: Prisma.ChanDiscussionElementGetPayload<typeof this.chanDiscussionElementsGetPayload>[])
+	{
+		return elements.map(element => this.formatChanDiscussionElement(element))
+	}
+
 	async getUserChans(username: string) {
 		return this.formatChanArray(await this.prisma.chan.findMany({
 			where:
@@ -364,95 +369,51 @@ export class ChansService {
 			throw new ForbiddenException(`not found one of users ${usersAt}`)
 		return this.createAndNotifyChanMessage(username, chanId, content, relatedTo, usersAt)
 	}
-	//
-	// async getChanMessageById(id: number)
+
+	private async getChanElementOrThrow<Sel extends Prisma.ChanDiscussionElementSelect>(username: string, chanId: string, elementId: string, select: Prisma.Subset<Sel, Prisma.ChanDiscussionElementSelect>)
+	{
+		const element = await this.prisma.chanDiscussionElement.findUnique({
+			where:
+			{
+				chanId: chanId,
+				chan: { users: { some: { name: username } } },
+				id: elementId
+			},
+			select })
+		if (!element)
+			throw new NotFoundException(`not found msg where chanId ${chanId}, id: ${elementId}`)
+		return element
+	}
+
+
+	async getOneChanElement(username: string, chanId: string, elementId: string)
+	{
+		return this.formatChanDiscussionElement(await this.getChanElementOrThrow(username, chanId, elementId, this.chanDiscussionElementsSelect))
+	}
+
+	async getChanMessages(username: string, chanId: string, nMessages: number, start?: string) {
+		const res = await this.getChanOrThrow(
+			{
+				id: chanId,
+				users: { some: { name: username } }
+			},
+			{
+				elements:
+				{
+					cursor: (start) ? { id: start } : undefined,
+					orderBy: { id: 'desc' },
+					take: nMessages,
+					select: this.chanDiscussionElementsSelect,
+					skip: Number(!!start),
+				}
+			})
+		return this.formatChanDiscussionElementArray(res.elements.reverse())
+	}
+
+	// async deleteChanMessage(username: string, chanId: string, msgId: )
 	// {
-	// 	return this.prisma.discussionElement.findUnique
-	// 	({
-	// 		where: { id: id },
-	// 		select: ChansService.discussionElementsSelect
-	// 	})
 	// }
-	//
-	// async getChanMessages(username: string, chanId: number, nMessages: number, start?: number) {
-	// 	const res = await this.prisma.chan.findUnique({
-	// 		where:
-	// 		{
-	// 			id: chanId,
-	// 			users: { some: { name: username } }
-	// 		},
-	// 		select:
-	// 		{
-	// 			elements:
-	// 			{
-	// 				cursor: (start) ? { id: start } : undefined,
-	// 				orderBy: { id: 'desc' },
-	// 				take: nMessages,
-	// 				skip: Number(!!start),
-	// 				select: ChansService.discussionElementsSelect,
-	// 			}
-	// 		}
-	// 	})
-	// 	if (!res)
-	// 		throw new NotFoundException(`chan with id ${chanId} not found`)
-	// 	return res.elements.reverse()
-	// }
-	//
-	// async deleteChanMessage(username: string, chanId: number, msgId: number) {
-	// 	// const ability = this.caslFact.createAbility({ name: username })
-	// 	// const res = await this.prisma.discussionElement.findUnique({ where: { id: msgId }, include: { event: true, message: true } })
-	// 	// if (res)
-	// 	// {
-	// 	// 	console.log('CAN :', ability.can(Action.Delete, subject('Message', res)))
-	// 	// }
-	// 	// const toCheck = await this.prisma.chan.findUnique({
-	// 	// 	where:
-	// 	// 	{
-	// 	// 		id: chanId,
-	// 	// 		users: { some: { name: username } }
-	// 	// 	},
-	// 	// 	select:
-	// 	// 	{
-	// 	// 		elements:
-	// 	// 		{
-	// 	// 			where:
-	// 	// 			{
-	// 	// 				id: msgId,
-	// 	// 				message: { discussionElementId: msgId }
-	// 	// 			},
-	// 	// 			select:
-	// 	// 			{
-	// 	// 				message: { select: { id: true } },
-	// 	// 				author: true
-	// 	// 			},
-	// 	// 			take: 1
-	// 	// 		},
-	// 	// 		users:
-	// 	// 		{
-	// 	// 			where: { name: { not: username } },
-	// 	// 			select: { name: true }
-	// 	// 		}
-	// 	// 	}
-	// 	// })
-	// 	// if (!toCheck)
-	// 	// 	throw new NotFoundException(`chan with id ${chanId} not found`)
-	// 	// if (!toCheck.elements.length)
-	// 	// 	throw new NotFoundException(`msg with id ${msgId} not found in chan with id ${chanId}`)
-	// 	// const author = toCheck.elements[0].author
-	// 	// if (!(await this.permissionsService.doesUserHasRightTo(username, author, PermissionList.DELETE_MESSAGE, chanId)))
-	// 	// 	throw new ForbiddenException(`you don't have the right to do delete this msg`)
-	// 	// const res = await this.prisma.discussionElement.update({
-	// 	// 	where: { id: msgId },
-	// 	// 	data:
-	// 	// 	{
-	// 	// 		message: { delete: {} },
-	// 	// 		event: { create: { eventType: EventType.MESSAGE_DELETED } },
-	// 	// 	},
-	// 	// 	select: ChansService.discussionElementsSelect
-	// 	// })
-	// 	// await this.notifyChanEvent(toCheck.users, chanId, res)
-	// }
-	//
+
 	// // TODO: Maybe createChanEvent and removing user from chan need to be in a transaction so if the creation of the event failed the user is not removed from the chan
 	// async kickUserFromChan(username: string, toKick: string, chanId: number)
 	// {

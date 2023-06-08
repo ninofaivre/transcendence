@@ -13,3 +13,4 @@
 - [X] route pour update un message
 - [ ] dans les contrats, mettre les params redondant sous forme de var (example : content de msg: z.string().nonempty().max(150))
 - [ ] pour ce qui est des bans n'exposer la liste des bans dans les chans qu'aux users ayant la perm de ban (format chan)
+- [ ] régler la confusion entre message et element aussi bien dans le code du backend que dans les routes exposée dans l'api

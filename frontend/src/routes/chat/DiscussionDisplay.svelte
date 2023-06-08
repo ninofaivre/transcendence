@@ -18,7 +18,7 @@
 	let observer: IntersectionObserver
 	const threshold = 0.5
 	const reactivity = 500
-	const loading_greediness = 12
+	const loading_greediness = 20
 	let canary: HTMLDivElement
 	let _init: boolean = true
 

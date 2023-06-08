@@ -4,8 +4,10 @@
 
 	export let from = ""
 	export let from_me = false
-	export let from_me_bg = "lightblue"
-	export let from_them_bg = "lightgrey"
+	// export let from_me_bg = "lightblue"
+	// export let from_them_bg = "lightgrey"
+	// export let from_me_class = "variant-filled-primary"
+	// export let from_them_class = "variant-filled-secondary"
 	export let margin = "15px"
 	export let sent = true
 	export let data_id = -1
@@ -19,9 +21,8 @@
 	<div id="message-spacer" />
 	<div
 		id="message-bubble"
-		class="text-black"
-		style={`background-color: ${from_me ? from_me_bg : from_them_bg} ; ` +
-			(from_me ? `margin-left: ${margin};` : `margin-right: ${margin} ;`)}
+		class={from_me ? `variant-filled-primary` : `variant-filled-secondary`}
+		style={from_me ? `margin-left: ${margin};` : `margin-right: ${margin} ;`}
 	>
 		{#if !from_me}
 			<div id="from-field">{from}</div>

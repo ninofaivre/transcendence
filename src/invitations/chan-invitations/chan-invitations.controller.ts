@@ -5,7 +5,6 @@ import { ChanInvitationsService } from './chan-invitations.service';
 import contract from 'contract/contract';
 import { EnrichedRequest } from 'src/auth/auth.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { SseService } from 'src/sse/sse.service';
 
 const c = nestControllerContract(contract.invitations.chan)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -15,15 +14,14 @@ type RequestShapes = NestRequestShapes<typeof c>
 export class ChanInvitationsController implements NestControllerInterface<typeof c>
 {
 
-	constructor(private readonly chanInvitationsService: ChanInvitationsService,
-			    private readonly sse: SseService) {}
+	constructor(private readonly chanInvitationsService: ChanInvitationsService) {}
 
 	@UseGuards(JwtAuthGuard)
 	@TsRest(c.getChanInvitations)
 	async getChanInvitations(@Request()req: EnrichedRequest, @TsRestRequest(){ query: { status } }: RequestShapes['getChanInvitations'])
 	{
 		const body = await this.chanInvitationsService.getChanInvitations(req.user.username, status)
-		return { status: 200 as const, body: body }
+		return { status: 200 as const, body }
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -31,15 +29,7 @@ export class ChanInvitationsController implements NestControllerInterface<typeof
 	async getChanInvitationById(@Request()req: EnrichedRequest, @TsRestRequest(){ params: { id } }: RequestShapes['getChanInvitationById'])
 	{
 		const body = await this.chanInvitationsService.getChanInvitationById(req.user.username, id)
-		return { status: 200 as const, body: body }
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@TsRest(c.getChanInvitationsByType)
-	async getChanInvitationsByType(@Request()req: EnrichedRequest, @TsRestRequest(){ params: { type }, query: { status } }: RequestShapes['getChanInvitationsByType'])
-	{
-		const body = await this.chanInvitationsService.getChanInvitationsByType(req.user.username, type, status)
-		return { status: 200 as const, body: body }
+		return { status: 200 as const, body }
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -47,25 +37,14 @@ export class ChanInvitationsController implements NestControllerInterface<typeof
 	async createChanInvitation(@Request()req: EnrichedRequest, @TsRestRequest(){ body: { invitedUserName, chanId } }: RequestShapes['createChanInvitation'])
 	{
 		const body = await this.chanInvitationsService.createChanInvitation(req.user.username, invitedUserName, chanId)
-		await this.sse.pushEvent(invitedUserName, { type: 'CREATED_CHAN_INVITATION', data: body })
-		return { status: 201 as const, body: body }
+		return { status: 201 as const, body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@TsRest(c.updateIncomingChanInvitation)
-	async updateIncomingChanInvitation(@Request()req: EnrichedRequest, @TsRestRequest(){ body: { status }, params: { id } }: RequestShapes['updateIncomingChanInvitation'])
+	@TsRest(c.updateChanInvitation)
+	async updateChanInvitation(@Request()req: EnrichedRequest, @TsRestRequest(){ body: { status }, params: { id } }: RequestShapes['updateChanInvitation'])
 	{
-		const body = await this.chanInvitationsService.updateIncomingChanInvitation(req.user.username, status, id)
-		await this.sse.pushEvent(body.invitingUserName, { type: 'UPDATED_CHAN_INVITATION', data: body })
-		return { status: 200 as const, body: body }
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@TsRest(c.updateOutcomingChanInvitation)
-	async updateOutcomingChanInvitation(@Request()req: EnrichedRequest, @TsRestRequest(){ body: { status }, params: { id } }: RequestShapes['updateOutcomingChanInvitation'])
-	{
-		const body = await this.chanInvitationsService.updateOutcomingChanInvitation(req.user.username, status, id)
-		await this.sse.pushEvent(body.invitedUserName, { type: 'UPDATED_CHAN_INVITATION', data: body })
-		return { status: 200 as const, body: body }
+		const body = await this.chanInvitationsService.updateChanInvitation(req.user.username, status, id)
+		return { status: 200 as const, body }
 	}
 }

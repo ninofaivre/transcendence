@@ -597,7 +597,7 @@ export class ChansService {
 	{
 		const chan = await this.prisma.chan.findUnique({ where, select })
 		if (!chan)
-			throw new NotFoundException(`not found chan where ${where}`)
+			throw new NotFoundException(`not found chan where ${JSON.stringify(where)}`)
 		return chan
 	}
 

@@ -1,18 +1,12 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { Prisma, ChanInvitationStatus, PermissionList } from '@prisma/client';
-import { NestRequestShapes, nestControllerContract } from '@ts-rest/nest';
-import contract from 'contract/contract';
 import { zChanInvitationReturn } from 'contract/routers/invitations';
-import { zInvitationFilterType } from 'contract/zod/inv.zod';
 import { PrismaService } from 'nestjs-prisma';
 import { ChansService } from 'src/chans/chans.service';
 import { DmsService } from 'src/dms/dms.service';
 import { SseService } from 'src/sse/sse.service';
 import { UserService } from 'src/user/user.service';
 import { z } from 'zod';
-
-const c = nestControllerContract(contract.invitations.chan)
-type RequestShapes = NestRequestShapes<typeof c>
 
 @Injectable()
 export class ChanInvitationsService
@@ -97,21 +91,6 @@ export class ChanInvitationsService
 		return this.formatChanInvitation(await this.getChanInvitationOrThrow(username, id, 'ANY', this.chanInvitationSelect))
 	}
 
-	async getChanInvitationsByType(username: string, type: zInvitationFilterType, status: ChanInvitationStatus[])
-	{
-		if (type === 'INCOMING')
-		{
-			return this.formatChanInvitationArray((await this.usersService.getUserByNameOrThrow(username,
-				{
-					incomingChanInvitation: this.getChanInvitationArgViaUser(status),
-				})).incomingChanInvitation)
-		}
-		return this.formatChanInvitationArray((await this.usersService.getUserByNameOrThrow(username,
-			{
-				outcomingChanInvitation: this.getChanInvitationArgViaUser(status),
-			})).outcomingChanInvitation)
-	}
-
 	async createChanInvitation(invitingUserName: string, invitedUserName: string, chanId: string)
 	{
 		if (invitingUserName === invitedUserName)
@@ -144,6 +123,7 @@ export class ChanInvitationsService
 		// to notify the dmEvent after the invitation (probably easier to render the event in this order for the front)
 		// TODO: type setTimeout extra args (mb I'm not using the right setTimeout)
 		setTimeout(this.sse.pushEventMultipleUser.bind(this.sse), 0, [invitingUserName, invitedUserName], { type: 'CREATED_DM_EVENT', data: { dmId: directMessageId, element: dmEvent } })
+		await this.sse.pushEvent(invitedUserName, { type: 'CREATED_CHAN_INVITATION', data: chanInv })
 		return chanInv
 	}
 
@@ -182,32 +162,30 @@ export class ChanInvitationsService
 		await this.updateAndNotifyManyInvs(ChanInvitationStatus.ACCEPTED, invs)
 	}
 
-	async updateIncomingChanInvitation(username: string, newStatus: RequestShapes['updateIncomingChanInvitation']['body']['status'], id: string)
+	async updateChanInvitation(username: string, newStatus: ChanInvitationStatus, id: string)
 	{
-		const { status: oldStatus, chanId } = await this.getChanInvitationOrThrow(username, id, 'INCOMING', { status: true, chanId: true })
+		const { status: oldStatus, chanId, invitedUserName, invitingUserName } = await this.getChanInvitationOrThrow(username, id, 'INCOMING', { status: true, chanId: true, invitingUserName: true, invitedUserName: true })
 		if (oldStatus !== ChanInvitationStatus.PENDING)
 			throw new ForbiddenException(`can't update not PENDING chan invitation`)
-		if (newStatus === 'ACCEPTED')
+		if (invitingUserName === username && newStatus === ChanInvitationStatus.ACCEPTED)
+			throw new ForbiddenException(`can't accept OUTCOMING chan invitation`)
+		if (invitingUserName === username && newStatus === ChanInvitationStatus.REFUSED)
+			throw new ForbiddenException(`can't refuse OUTCOMING chan invitation`)
+		if (invitedUserName === username && newStatus === ChanInvitationStatus.CANCELED)
+			throw new ForbiddenException(`can't cancel incoming chan invitation`)
+		if (newStatus === ChanInvitationStatus.ACCEPTED)
 		{
 			await this.acceptAllChanInvitationsForUser(username, chanId, id)
 			const newChan = await this.chansService.pushUserToChanAndNotifyUsers(username, chanId)
 
 			await this.sse.pushEvent(username, { type: 'CREATED_CHAN', data: newChan })
 		}
-		return this.formatChanInvitation(await this.prisma.chanInvitation.update({
-			where: { id: id },
+		const updatedChanInvitation = this.formatChanInvitation(await this.prisma.chanInvitation.update({
+			where: { id },
 			data: { status: newStatus },
 			select: this.chanInvitationSelect }))
-	}
-
-	async updateOutcomingChanInvitation(username: string, newStatus: RequestShapes['updateOutcomingChanInvitation']['body']['status'], id: string)
-	{
-		const { status: oldStatus } = await this.getChanInvitationOrThrow(username, id, 'OUTCOMING', { status: true })
-		if (oldStatus !== ChanInvitationStatus.PENDING)
-			throw new ForbiddenException(`can't update not PENDING chan invitation`)
-		return this.formatChanInvitation(await this.prisma.chanInvitation.update({
-			where: { id: id },
-			data: { status: newStatus },
-			select: this.chanInvitationSelect }))
+		await this.sse.pushEvent((invitingUserName !== username) ? invitingUserName: invitedUserName,
+			{ type: 'UPDATED_CHAN_INVITATION', data: updatedChanInvitation })
+		return updatedChanInvitation
 	}
 }

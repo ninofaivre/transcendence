@@ -1,15 +1,9 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { FriendInvitationStatus, Prisma } from '@prisma/client';
-import { NestRequestShapes, nestControllerContract } from '@ts-rest/nest';
-import contract from 'contract/contract';
-import { zInvitationFilterType } from 'contract/zod/inv.zod';
 import { PrismaService } from 'nestjs-prisma';
 import { FriendsService } from 'src/friends/friends.service';
 import { SseService } from 'src/sse/sse.service';
 import { UserService } from 'src/user/user.service';
-
-const c = nestControllerContract(contract.invitations.friend)
-type RequestShapes = NestRequestShapes<typeof c>
 
 @Injectable()
 export class FriendInvitationsService
@@ -51,35 +45,19 @@ export class FriendInvitationsService
 		return { incoming: res.incomingFriendInvitation, outcoming: res.outcomingFriendInvitation }
 	}
 
-	async getFriendInvitationsByType(username: string, type: zInvitationFilterType, status: FriendInvitationStatus[])
+	private async getFriendInvitationOrThrow<T extends Prisma.FriendInvitationSelect>(username: string, id: string, select: Prisma.SelectSubset<T, Prisma.FriendInvitationSelect>)
 	{
-		if (type === 'INCOMING')
-		{
-			return (await this.userService.getUserByNameOrThrow(username,
-				{
-					incomingFriendInvitation: this.getFriendInvitationArgViaUser(status),
-				})).incomingFriendInvitation
-		}
-		return (await this.userService.getUserByNameOrThrow(username,
-			{
-				outcomingFriendInvitation: this.getFriendInvitationArgViaUser(status),
-			})).outcomingFriendInvitation
-	}
-
-	private async getFriendInvitationOrThrow<T extends Prisma.FriendInvitationSelect>(username: string, id: string, type: 'INCOMING' | 'OUTCOMING' | 'ANY', select: Prisma.SelectSubset<T, Prisma.FriendInvitationSelect>)
-	{
-		let whereArg = Prisma.validator<Prisma.FriendInvitationWhereUniqueInput>()
-		({
-			id: id,
-			OR: [{}]
-		})
-		if (type === 'INCOMING' || type === 'ANY')
-			whereArg.OR.push({ invitedUserName: username } satisfies Prisma.FriendInvitationWhereInput)
-		if (type === 'OUTCOMING' || type === 'ANY')
-			whereArg.OR.push({ invitingUserName: username } satisfies Prisma.FriendInvitationWhereInput)
 		const res = await this.prisma.friendInvitation.findUnique({
-			where: whereArg,
-			select: select })
+			where:
+			{
+				id,
+				OR:
+				[
+					{ invitingUserName: username },
+					{ invitedUserName: username }
+				]
+			},
+			select })
 		if (!res)
 			throw new NotFoundException(`not found friend invitation ${id}`)
 		return res
@@ -87,7 +65,7 @@ export class FriendInvitationsService
 
 	async getFriendInvitationById(username: string, id: string)
 	{
-		return this.getFriendInvitationOrThrow(username, id, 'ANY', this.friendInvitationSelect)
+		return this.getFriendInvitationOrThrow(username, id, this.friendInvitationSelect)
 	}
 
 	async createFriendInvitation(invitingUserName: string, invitedUserName: string)
@@ -114,36 +92,36 @@ export class FriendInvitationsService
 			throw new ForbiddenException(`${invitingUserName} has already a PENDING invitation from ${invitedUserName} (${incomingFriendInvitation[0].id})`)
 		if (outcomingFriendInvitation.length)
 			throw new ForbiddenException(`${invitingUserName} has already a PENDING invitation for ${invitedUserName} (${outcomingFriendInvitation[0].id})`)
-		return this.prisma.friendInvitation.create({
+		const newFriendInvitation = await this.prisma.friendInvitation.create({
 			data:
 			{
 				invitingUserName: invitingUserName,
 				invitedUserName: invitedUserName
 			},
 			select: this.friendInvitationSelect })
+		await this.sse.pushEvent(invitedUserName, { type: 'CREATED_FRIEND_INVITATION', data: newFriendInvitation })
+		return newFriendInvitation
 	}
 
-	async updateIncomingFriendInvitation(username: string, newStatus: RequestShapes['updateIncomingFriendInvitation']['body']['status'], id: string)
+	async updateFriendInvitation(username: string, newStatus: FriendInvitationStatus, id: string)
 	{
-		const { invitedUserName, invitingUserName, status: oldStatus } = await this.getFriendInvitationOrThrow(username, id, 'INCOMING', { status: true, invitedUserName: true, invitingUserName: true })
+		const { invitedUserName, invitingUserName, status: oldStatus } = await this.getFriendInvitationOrThrow(username, id, { status: true, invitedUserName: true, invitingUserName: true })
 		if (oldStatus !== FriendInvitationStatus.PENDING)
 			throw new ForbiddenException(`can't update not PENDING friend invitation`)
-		if (newStatus === 'ACCEPTED')
+		if (invitingUserName === username && newStatus === FriendInvitationStatus.ACCEPTED)
+			throw new ForbiddenException(`can't accept OUTCOMING friend invitation`)
+		if (invitingUserName === username && newStatus === FriendInvitationStatus.REFUSED)
+			throw new ForbiddenException(`can't refuse OUTCOMING friend invitation`)
+		if (invitedUserName === username && newStatus === FriendInvitationStatus.CANCELED)
+			throw new ForbiddenException(`can't cancel incoming friend invitation`)
+		if (newStatus === FriendInvitationStatus.ACCEPTED)
 			await this.friendService.createFriend(invitingUserName, invitedUserName)
-		return this.prisma.friendInvitation.update({
-			where: { id: id },
+		const updatedFriendInvitation = await this.prisma.friendInvitation.update({
+			where: { id },
 			data: { status: newStatus },
 			select: this.friendInvitationSelect })
-	}
-
-	async updateOutcomingFriendInvitation(username: string, newStatus: RequestShapes['updateOutcomingFriendInvitation']['body']['status'], id: string)
-	{
-		const { status: oldStatus } = await this.getFriendInvitationOrThrow(username, id, 'OUTCOMING', { status: true })
-		if (oldStatus !== FriendInvitationStatus.PENDING)
-			throw new ForbiddenException(`can't update not PENDING friend invitation`)
-		return this.prisma.friendInvitation.update({
-			where: { id: id },
-			data: { status: newStatus },
-			select: this.friendInvitationSelect })
+		await this.sse.pushEvent((invitingUserName !== username) ? invitingUserName: invitedUserName,
+			{ type: 'UPDATED_FRIEND_INVITATION', data: updatedFriendInvitation })
+		return updatedFriendInvitation
 	}
 }

@@ -60,27 +60,10 @@ const friendInvitationsContract = c.router
 			200: zFriendInvitationReturn
 		}
 	},
-	getFriendInvitationsByType:
-	{
-		method: 'GET',
-		path: '/:type',
-		query: z.strictObject
-		({
-			status: unique(z.array(z.nativeEnum(FriendInvitationStatus))).default(["PENDING"]),
-		}),
-		pathParams: z.strictObject
-		({
-			type: zInvitationFilter
-		}),
-		responses:
-		{
-			200: z.array(zFriendInvitationReturn)
-		}
-	},
 	createFriendInvitation:
 	{
 		method: 'POST',
-		path: `/${zInvitationFilter.enum.OUTCOMING}`,
+		path: `/`,
 		body: z.strictObject
 		({
 			invitedUserName: zUserName
@@ -90,34 +73,17 @@ const friendInvitationsContract = c.router
 			201: zFriendInvitationReturn
 		}
 	},
-	updateIncomingFriendInvitation:
+	updateFriendInvitation:
 	{
 		method: 'PATCH',
-		path: `/${zInvitationFilter.enum.INCOMING}/:id`,
+		path: `/:id`,
 		pathParams: z.strictObject
 		({
 			id: z.string().uuid()
 		}),
 		body: z.strictObject
 		({
-			status: z.enum([FriendInvitationStatus.ACCEPTED, FriendInvitationStatus.REFUSED])
-		}),
-		responses:
-		{
-			200: zFriendInvitationReturn
-		}
-	},
-	updateOutcomingFriendInvitation:
-	{
-		method: 'PATCH',
-		path: `/${zInvitationFilter.enum.OUTCOMING}/:id`,
-		pathParams: z.strictObject
-		({
-			id: z.string().uuid()
-		}),
-		body: z.strictObject
-		({
-			status: z.enum([FriendInvitationStatus.CANCELED])
+			status: z.enum([FriendInvitationStatus.ACCEPTED, FriendInvitationStatus.REFUSED, FriendInvitationStatus.CANCELED]),
 		}),
 		responses:
 		{
@@ -158,27 +124,10 @@ const chanInvitationsContract = c.router
 			200: zChanInvitationReturn
 		}
 	},
-	getChanInvitationsByType:
-	{
-		method: 'GET',
-		path: '/:type',
-		query: z.strictObject
-		({
-			status: unique(z.array(z.nativeEnum(ChanInvitationStatus))).default(["PENDING"]),
-		}),
-		pathParams: z.strictObject
-		({
-			type: zInvitationFilter
-		}),
-		responses:
-		{
-			200: z.array(zChanInvitationReturn)
-		}
-	},
 	createChanInvitation:
 	{
 		method: 'POST',
-		path: `/${zInvitationFilter.enum.OUTCOMING}`,
+		path: `/`,
 		body: z.strictObject
 		({
 			invitedUserName: zUserName,
@@ -189,34 +138,17 @@ const chanInvitationsContract = c.router
 			201: zChanInvitationReturn
 		}
 	},
-	updateIncomingChanInvitation:
+	updateChanInvitation:
 	{
 		method: 'PATCH',
-		path: `/${zInvitationFilter.enum.INCOMING}/:id`,
+		path: `/:id`,
 		pathParams: z.strictObject
 		({
 			id: z.string().uuid()
 		}),
 		body: z.strictObject
 		({
-			status: z.enum([ChanInvitationStatus.ACCEPTED, ChanInvitationStatus.REFUSED])
-		}),
-		responses:
-		{
-			200: zChanInvitationReturn
-		}
-	},
-	updateOutcomingChanInvitation:
-	{
-		method: 'PATCH',
-		path: `/${zInvitationFilter.enum.OUTCOMING}/:id`,
-		pathParams: z.strictObject
-		({
-			id: z.string().uuid()
-		}),
-		body: z.strictObject
-		({
-			status: z.enum([ChanInvitationStatus.CANCELED])
+			status: z.enum([ChanInvitationStatus.ACCEPTED, ChanInvitationStatus.REFUSED, ChanInvitationStatus.CANCELED])
 		}),
 		responses:
 		{

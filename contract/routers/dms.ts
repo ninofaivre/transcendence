@@ -89,17 +89,17 @@ export const dmsContract = c.router
 	// 		201: zDmReturn
 	// 	}
 	// },
-	getDmMessages:
+	getDmElements:
 	{
 		method: 'GET',
-		path: '/:dmId/messages',
+		path: '/:dmId/elements',
 		pathParams: z.strictObject
 		({
 			dmId: z.string().uuid()
 		}),
 		query: z.strictObject
 		({
-			nMessages: z.number().positive().int().max(50).default(25),
+			nElements: z.number().positive().int().max(50).default(25),
 			cursor: z.string().uuid().optional()
 		}),
 		responses:
@@ -110,7 +110,7 @@ export const dmsContract = c.router
 	createDmMessage:
 	{
 		method: 'POST',
-		path: '/:dmId/messages',
+		path: '/:dmId/elements',
 		pathParams: z.strictObject
 		({
 			dmId: z.string().uuid()
@@ -125,28 +125,28 @@ export const dmsContract = c.router
 			201: zDmDiscussionElementReturn
 		}
 	},
-	getOneDmMessage:
+	getDmElementById:
 	{
 		method: 'GET',
-		path: '/:dmId/messages/:msgId',
+		path: '/:dmId/elements/:elementId',
 		pathParams: z.strictObject
 		({
 			dmId: z.string().uuid(),
-			msgId: z.string().uuid()
+			elementId: z.string().uuid()
 		}),
 		responses:
 		{
 			200: zDmDiscussionElementReturn
 		}
 	},
-	updateOneMessage:
+	updateMessage:
 	{
 		method: 'PATCH',
-		path: '/:dmId/messages/:msgId',
+		path: '/:dmId/elements/:elementId',
 		pathParams: z.strictObject
 		({
 			dmId: z.string().uuid(),
-			msgId: z.string().uuid()
+			elementId: z.string().uuid()
 		}),
 		body: z.strictObject
 		({
@@ -180,6 +180,6 @@ export type DmEvent =
 	data: z.infer<typeof zDmReturn>
 } |
 {
-	type: 'CREATED_DM_ELEMENT' | 'UPDATED_DM_MESSAGE',
+	type: 'CREATED_DM_ELEMENT' | 'UPDATED_DM_ELEMENT',
 	data: { dmId: string, element: z.infer<typeof zDmDiscussionElementReturn> }
 }

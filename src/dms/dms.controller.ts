@@ -33,10 +33,10 @@ export class DmsController implements NestControllerInterface<typeof c>
 	// }
 
 	@UseGuards(JwtAuthGuard)
-	@TsRest(c.getDmMessages)
-	async getDmMessages(@Request()req: EnrichedRequest, @TsRestRequest(){ params: { dmId }, query: { cursor, nMessages } }: RequestShapes['getDmMessages'])
+	@TsRest(c.getDmElements)
+	async getDmElements(@Request()req: EnrichedRequest, @TsRestRequest(){ params: { dmId }, query: { cursor, nElements } }: RequestShapes['getDmElements'])
 	{
-		const body = await this.dmsService.getDmMessages(req.user.username, dmId, nMessages, cursor)
+		const body = await this.dmsService.getDmElements(req.user.username, dmId, nElements, cursor)
 		return { status: 200 as const, body }
 	}
 
@@ -49,18 +49,18 @@ export class DmsController implements NestControllerInterface<typeof c>
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@TsRest(c.getOneDmMessage)
-	async getOneDmMessage(@Request()req: EnrichedRequest, @TsRestRequest(){ params: { dmId, msgId } }: RequestShapes['getOneDmMessage'])
+	@TsRest(c.getDmElementById)
+	async getDmElementById(@Request()req: EnrichedRequest, @TsRestRequest(){ params: { dmId, elementId } }: RequestShapes['getDmElementById'])
 	{
-		const body = await this.dmsService.getOneDmElement(req.user.username, dmId, msgId)
+		const body = await this.dmsService.getDmElementById(req.user.username, dmId, elementId)
 		return { status: 200 as const, body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@TsRest(c.updateOneMessage)
-	async updateOneMessage(@Request()req: EnrichedRequest, @TsRestRequest(){ body: { content }, params: { msgId, dmId } }: RequestShapes['updateOneMessage'])
+	@TsRest(c.updateMessage)
+	async updateMessage(@Request()req: EnrichedRequest, @TsRestRequest(){ body: { content }, params: { elementId, dmId } }: RequestShapes['updateMessage'])
 	{
-		const body = await this.dmsService.updateOneMessage(req.user.username, dmId, msgId, content)
+		const body = await this.dmsService.updateMessage(req.user.username, dmId, elementId, content)
 		return { status: 200 as const, body }
 	}
 

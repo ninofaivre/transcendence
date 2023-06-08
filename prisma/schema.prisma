@@ -155,6 +155,7 @@ model User {
 
   chanDiscussionElement ChanDiscussionElement[]
   chanDiscussionEvent   ChanDiscussionEvent[]
+  deletedMessageChanDiscussionEvent DeletedMessageChanDiscussionEvent[]
   chanDiscussionMessage ChanDiscussionMessage[]
 
   dmDiscussionElement DmDiscussionElement[]
@@ -371,13 +372,16 @@ model ChanDiscussionEvent {
   concernedUser				User?   @relation(fields: [concernedUserName], references: [name])
   concernedUserName         String?
 
-  // CUSTOM MIGRATION ==> classicEvent | changedTitleEvent
-  // ==>	{ classicEvent: null, changedTitleEvent: ChangedTitleEvent } |
-  //		{ classicEvent: ClassicEvent, changedTitleEvent: null }
+  // CUSTOM MIGRATION ==> classicEvent | changedTitleEvent | deletedMessageChanDiscussionEvent
+  // ==>	{ classicEvent: null, deletedMessageChanDiscussionEvent: null, changedTitleEvent: ChangedTitleEvent } |
+  //		{ classicEvent: ClassicEvent, deletedMessageChanDiscussionEvent: null, changedTitleEvent: null } |
+  //		{ classicEvent: null, deletedMessageChanDiscussionEvent: DeletedMessageChanDiscussionEvent, changedTitleEvent: null }
   classicChanDiscussionEvent ClassicChanDiscussionEvent? @relation(fields: [classicChanDiscussionEventId], references: [id])
   classicChanDiscussionEventId	String? @unique
   changedTitleChanDiscussionEvent ChangedTitleChanDiscussionEvent? @relation(fields: [changedTitleChanDiscussionEventId], references: [id])
   changedTitleChanDiscussionEventId String? @unique
+  deletedMessageChanDiscussionEvent DeletedMessageChanDiscussionEvent? @relation(fields: [deletedMessageChanDiscussionEventId], references: [id])
+  deletedMessageChanDiscussionEventId String? @unique
 
   discussionElement   ChanDiscussionElement?
 }
@@ -387,6 +391,15 @@ model ChangedTitleChanDiscussionEvent {
 
 	oldTitle String
 	newTitle String
+
+	chanDiscussionEvent ChanDiscussionEvent?
+}
+
+model DeletedMessageChanDiscussionEvent {
+	id String @id @default(uuid())
+
+	deletingUsers User @relation(fields: [deletingUserName], references: [name])
+	deletingUserName String @unique
 
 	chanDiscussionEvent ChanDiscussionEvent?
 }
@@ -404,5 +417,4 @@ enum ClassicChanEventType {
   AUTHOR_KICKED_CONCERNED
   AUTHOR_JOINED
   AUTHOR_MUTED_CONCERNED
-  DELETED_MESSAGE
 }

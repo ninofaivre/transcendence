@@ -1,20 +1,18 @@
-import { ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { ClassicDmEventType, DirectMessageStatus, Prisma } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { AppService } from 'src/app.service';
-import { EventTypeList, SseService } from 'src/sse/sse.service';
+import { SseService } from 'src/sse/sse.service';
 import { z } from 'zod';
 import { DmEvent, zDmDiscussionElementReturn, zDmDiscussionEventReturn, zDmReturn } from 'contract/routers/dms';
 import { Tx } from 'src/types';
-import { FriendEvent } from 'contract/routers/friends';
-import { SseEvent } from 'contract/contract';
 
 
 @Injectable()
 export class DmsService
 {
 	constructor(private readonly prisma: PrismaService,
-			    private readonly appService: AppService,
+			    // private readonly appService: AppService,
 			    private readonly sse: SseService) {}
 
 
@@ -292,7 +290,7 @@ export class DmsService
 		return element
 	}
 
-	async getDmMessages(username: string, dmId: string, nMessages: number, start?: string)
+	async getDmElements(username: string, dmId: string, nElements: number, start?: string)
 	{
 		const res = await this.getDmOrThrow(username, dmId,
 			{
@@ -300,7 +298,7 @@ export class DmsService
 				{
 					cursor: (start) ? { id: start } : undefined,
 					orderBy: { id: 'desc' },
-					take: nMessages,
+					take: nElements,
 					select: this.dmDiscussionElementSelect,
 					skip: Number(!!start),
 				}
@@ -308,7 +306,7 @@ export class DmsService
 		return this.formatDmElementArray(res.elements.reverse())
 	}
 
-	async getOneDmElement(username: string, dmId: string, elementId: string)
+	async getDmElementById(username: string, dmId: string, elementId: string)
 	{
 		return this.formatDmElement(await this.getDmElementOrThrow(username, this.dmDiscussionElementSelect, { id: elementId, directMessageId: dmId }))
 	}
@@ -326,9 +324,9 @@ export class DmsService
 				status: true
 			})
 		if (relatedId !== undefined && !toCheck.elements?.length)
-			throw new NotFoundException(`element with id ${relatedId} not found in directMessage with id ${dmId}`)
+			throw new NotFoundException(`not found element ${relatedId} in directMessage ${dmId}`)
 		if (toCheck.status === DirectMessageStatus.DISABLED)
-			throw new ForbiddenException(`DISABLED Dm`)
+			throw new ForbiddenException(`DISABLED DirectMessage`)
 		const res = (await this.prisma.dmDiscussionMessage.create({
 			data:
 			{
@@ -361,7 +359,7 @@ export class DmsService
 		return formattedRes
 	}
 
-	async updateOneMessage(username: string, dmId: string, elementId: string, content: string)
+	async updateMessage(username: string, dmId: string, elementId: string, content: string)
 	{
 		const element = await this.getDmElementOrThrow(username, { author: true, messageId: true }, { id: elementId, directMessageId: dmId })
 		if (element.author !== username)
@@ -374,7 +372,7 @@ export class DmsService
 			select: this.dmDiscussionElementSelect }))
 		await this.notifyOtherMemberOfDm(username, dmId,
 			{
-				type: 'UPDATED_DM_MESSAGE',
+				type: 'UPDATED_DM_ELEMENT',
 				data: { dmId: dmId, element: updatedElement }
 			})
 		return updatedElement
@@ -383,29 +381,29 @@ export class DmsService
 	// a bit dirty
 	async deleteDmMessage(username: string, dmId: string, elementId: string)
 	{
-		const element = await this.getDmElementOrThrow(username, { author: true, messageId: true }, { id: elementId, directMessageId: dmId })
-		if (element.author !== username)
-			throw new ForbiddenException('not owned message')
-		if (!element.messageId)
+		const { messageId, author } = await this.getDmElementOrThrow(username, { author: true, messageId: true }, { id: elementId, directMessageId: dmId })
+		if (!messageId)
 			throw new ForbiddenException("event can't be deleted")
-		const trueMsgId: string = element.messageId
+		if (author !== username)
+			throw new ForbiddenException('not owned message')
 		await this.prisma.dmDiscussionElement.update({ where: { id: elementId },
 			data:
 			{
 				event: { create: { classicDmDiscussionEvent: { create: { eventType: ClassicDmEventType.DELETED_MESSAGE } } } },
 			}})
-		const res = this.formatDmElement(await this.prisma.dmDiscussionElement.update({ where: { id: elementId },
+		const res = await this.prisma.dmDiscussionElement.update({ where: { id: elementId },
 			data:
 			{
-				message: { delete: { id: trueMsgId } },
+				message: { delete: { id: messageId } },
 			},
-			select: this.dmDiscussionElementSelect }))
+			select: this.dmDiscussionElementSelect })
+		const formattedRes = this.formatDmElement({ ...res, message: null })
 		await this.notifyOtherMemberOfDm(username, dmId,
 			{
-				type: 'CREATED_DM_ELEMENT',
-				data: { dmId: dmId, element: res }
+				type: 'UPDATED_DM_ELEMENT',
+				data: { dmId: dmId, element: formattedRes }
 			})
-		return res
+		return formattedRes
 	}
 
 	async notifyOtherMemberOfDm(username: string, dmId: string, event: DmEvent)

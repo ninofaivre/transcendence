@@ -2,14 +2,9 @@ import { BadRequestException, ConflictException, ForbiddenException, Inject, Inj
 import { ChanType, PermissionList, Prisma, RoleApplyingType, ChanInvitationStatus, ClassicChanEventType } from '@prisma/client';
 import { compareSync, hash } from 'bcrypt';
 import { PrismaService } from 'nestjs-prisma';
-import { AppService } from 'src/app.service';
-import { PermissionsService } from './permissions/permissions.service';
-import { EventTypeList, SseService } from 'src/sse/sse.service';
+import { SseService } from 'src/sse/sse.service';
 import { NestRequestShapes, nestControllerContract } from '@ts-rest/nest';
 import contract from 'contract/contract';
-import { Action, CaslAbilityFactory, ChanAction } from 'src/casl/casl-ability.factory/casl-ability.factory';
-import { ForbiddenError, subject } from '@casl/ability';
-import { UserService } from 'src/user/user.service';
 import { ChanEvent, zChanDiscussionElementReturn, zChanDiscussionEventReturn } from 'contract/routers/chans';
 import { z } from 'zod';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
@@ -22,11 +17,9 @@ type RequestShapes = NestRequestShapes<typeof c>
 export class ChansService {
 
 	constructor(private readonly prisma: PrismaService,
-				private readonly permissionsService: PermissionsService,
-				private readonly appService: AppService,
+				// private readonly appService: AppService,
 				private readonly sse: SseService,
-			    private readonly casl: CaslAbilityFactory,
-			    private readonly usersService: UserService,
+			    // private readonly usersService: UserService,
 				@Inject(forwardRef(() => ChanInvitationsService))
 			    private readonly chanInvitationsService: ChanInvitationsService) {}
 
@@ -68,7 +61,8 @@ export class ChansService {
 	{
 		concernedUserName: true,
 		classicChanDiscussionEvent: { select: { eventType: true } },
-		changedTitleChanDiscussionEvent: { select: { oldTitle: true, newTitle: true } }
+		changedTitleChanDiscussionEvent: { select: { oldTitle: true, newTitle: true } },
+		deletedMessageChanDiscussionEvent: { select: { deletingUserName: true } }
 	} satisfies Prisma.ChanDiscussionEventSelect
 
 	private chanDiscussionEventsGetPayload =
@@ -107,13 +101,15 @@ export class ChansService {
 	[
 		'INVITE',
 		'SEND_MESSAGE',
+		'DELETE_MESSAGE',
 	]
 
 	private adminPermissions: PermissionList[] =
 	[
 		'KICK',
 		'BAN',
-		'MUTE'
+		'MUTE',
+		'DELETE_MESSAGE'
 	]
 
 	private namesArrayToStringArray(users: { name: string }[])
@@ -159,14 +155,20 @@ export class ChansService {
 	private formatChanDiscussionEvent(event: Prisma.ChanDiscussionEventGetPayload<typeof this.chanDiscussionEventsGetPayload>)
 	: z.infer<typeof zChanDiscussionEventReturn>
 	{
-		type RetypedEvent = (Omit<typeof event, 'classicChanDiscussionEvent' | 'changedTitleChanDiscussionEvent'> & { classicChanDiscussionEvent: null, changedTitleChanDiscussionEvent: Exclude<typeof event.changedTitleChanDiscussionEvent, null> }) |
-		(Omit<typeof event, 'classicChanDiscussionEvent' | 'changedTitleChanDiscussionEvent'> & { classicChanDiscussionEvent: Exclude<typeof event.classicChanDiscussionEvent, null>, changedTitleChanDiscussionEvent: null })
+		type omittedEvent = Omit<typeof event, 'classicChanDiscussionEvent' | 'changedTitleChanDiscussionEvent' | 'deletedMessageChanDiscussionEvent'>
+
+		type RetypedEvent = ( omittedEvent & { classicChanDiscussionEvent: null, changedTitleChanDiscussionEvent: Exclude<typeof event.changedTitleChanDiscussionEvent, null>, deletedMessageChanDiscussionEvent: null }) |
+		(omittedEvent & { classicChanDiscussionEvent: Exclude<typeof event.classicChanDiscussionEvent, null>, changedTitleChanDiscussionEvent: null, deletedMessageChanDiscussionEvent: null }) |
+		(omittedEvent & { classicChanDiscussionEvent: null, changedTitleChanDiscussionEvent: null, deletedMessageChanDiscussionEvent: Exclude<typeof event.deletedMessageChanDiscussionEvent, null> })
+
 		const retypedEvent = event as RetypedEvent
 
-		const { classicChanDiscussionEvent, changedTitleChanDiscussionEvent, ...rest } = retypedEvent
+		const { classicChanDiscussionEvent, changedTitleChanDiscussionEvent, deletedMessageChanDiscussionEvent, ...rest } = retypedEvent
 
 		if (changedTitleChanDiscussionEvent)
 			return { ...rest, eventType: 'CHANGED_TITLE', ...changedTitleChanDiscussionEvent  }
+		if (deletedMessageChanDiscussionEvent)
+			return { ...rest, eventType: 'DELETED_MESSAGE', ...deletedMessageChanDiscussionEvent }
 		else
 			return { ...rest, ...classicChanDiscussionEvent }
 	}
@@ -245,10 +247,9 @@ export class ChansService {
 		}
 		catch (e)
 		{
-			if (e instanceof PrismaClientKnownRequestError)
-				throw new ConflictException(`conflict, a chan with the  title ${chan.title} already exist`)
-			else
-				throw e
+			if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002')
+				throw new ConflictException(`conflict, chan ${chan.title} already exist`)
+			throw e
 		}
 	}
 
@@ -265,13 +266,76 @@ export class ChansService {
 			} })).invitations.map(el => el.id)
 	}
 
+	public async throwIfUserNotAuthorizedInChan(username: string, chanId: string, perm: PermissionList)
+	{
+		const { roles, ownerName } = await this.getChanOrThrow({ id: chanId, users: { some: { name: username } } },
+			{
+				roles:
+				{
+					where:
+					{
+						users: { some: { name: username } },
+						permissions: { has: perm }
+					},
+					take: 1,
+					select: { name: true }
+				},
+				ownerName: true
+			})
+		if (username === ownerName)
+			return
+		if (!roles.length)
+			throw new ForbiddenException(`${username} can't ${perm} in ${chanId}`)
+	}
+
+	async throwIfUserNotAuthorizedOverUserInChan(username: string, otherUserName: string, chanId: string, perm: PermissionList)
+	{
+		const { ownerName, roles, users } = await this.getChanOrThrow({ id: chanId, users: { some: { name: username } } },
+			{
+				roles:
+				{
+					where:
+					{
+						users: { some: { name: username } },
+						roleApplyOn: { not: RoleApplyingType.NONE },
+						OR:
+						[
+							{
+								roleApplyOn: RoleApplyingType.ROLES,
+								users: { none: { name: otherUserName } },
+								roles: { some: { users: { some: { name: otherUserName } } } }
+							},
+							{
+								roleApplyOn: RoleApplyingType.ROLES_AND_SELF,
+								OR:
+								[
+									{ users: { some: { name: otherUserName } } },
+									{ roles: { some: { users: { some: { name: otherUserName } } } } }
+								]
+							}
+						]
+					},
+					take: 1,
+					select: { name: true }
+				},
+				ownerName: true,
+				users: { where: { name: otherUserName }, take: 1, select: { name: true } }
+			})
+		if (username === otherUserName)
+			throw new BadRequestException(`${username} can't ${perm} over himself`)
+		if (username === ownerName)
+			return
+		if (otherUserName === ownerName)
+			throw new ForbiddenException(`${username} can't ${perm} in chan ${chanId} over the owner`)
+		if (!users.length)
+			throw new ForbiddenException(`${otherUserName} not in chan ${chanId}`)
+		if (!roles.length)
+			throw new ForbiddenException(`${username} can't ${perm} in chan ${chanId} over ${otherUserName}`)
+	}
+
 	async deleteChan(username: string, chanId: string)
 	{
-		await this.casl.checkAbilitiesForUserInChan(username, chanId,
-			[
-				{ action: Action.Delete, subject: subject('Chan', await this.casl.getChanOrThrow(chanId, username)) }
-			])
-		const pendingInvsId = await 
+		await this.throwIfUserNotAuthorizedInChan(username, chanId, PermissionList.DESTROY)
 		// a bit dangerous, need to think about what need to be in a transaction or something like that in case something fail
 		Promise.all
 		([
@@ -284,10 +348,9 @@ export class ChansService {
 	}
 
 	async leaveChan(username: string, chanId: string) {
-		await this.casl.checkAbilitiesForUserInChan(username, chanId,
-			[
-				{ action: ChanAction.Leave, subject: subject('Chan', await this.casl.getChanOrThrow(chanId, username)) }
-			])
+		const { ownerName } = await this.getChanOrThrow({ id: chanId, users: { some: { name: username } } }, { ownerName: true })
+		if (username === ownerName)
+			throw new ForbiddenException("owner can't leave chan (transfer ownerShip or Delete chan)")
 		await this.prisma.chan.update({
 			where: { id: chanId },
 			data:
@@ -333,20 +396,36 @@ export class ChansService {
 	}
 
 	// TODO: type state
-	public async removeMutedIfUntilDateReached(state: any) {
+	public async removeMutedIfUntilDateReached(state: { id: string, untilDate: Date | null })
+	{
 		if (!state.untilDate || new Date() < state.untilDate)
 			return false
 		await this.prisma.mutedUserChan.delete({ where: { id: state.id }, select: { id: true } })
 		return true
 	}
 
+	async throwIfUserMutedInChan(username: string, chanId: string)
+	{
+		const { mutedUsers } = await this.getChanOrThrow({ id: chanId, users: { some: { name: username } } },
+			{
+				mutedUsers:
+				{
+					where: { mutedUserName: username },
+					take: 1,
+					select: { id: true, untilDate: true }
+				}
+			})
+		if (!mutedUsers.length)
+			return
+		if (!(await this.removeMutedIfUntilDateReached(mutedUsers[0])))
+			throw new ForbiddenException(`${username} muted in chan ${chanId}`)
+	}
+
 	async createChanMessageIfRightTo(username: string, chanId: string, dto: RequestShapes['createChanMessage']['body'])
 	{
 		const { relatedTo, content, usersAt } = dto
-		await this.casl.checkAbilitiesForUserInChan(username, chanId,
-			[
-				{ action: Action.Create, subject: 'Message' }
-			])
+		await this.throwIfUserMutedInChan(username, chanId)
+		await this.throwIfUserNotAuthorizedInChan(username, chanId, PermissionList.SEND_MESSAGE)
 		const toCheck = await this.prisma.chan.findUnique({
 			where: { id: chanId },
 			select:
@@ -364,7 +443,7 @@ export class ChansService {
 			}
 		})
 		if (relatedTo && !toCheck?.elements.length)
-			throw new ForbiddenException(`not found message ${relatedTo}`)
+			throw new ForbiddenException(`not found element ${relatedTo} in chan ${chanId}`)
 		if (usersAt && usersAt.length !== toCheck?.users.length)
 			throw new ForbiddenException(`not found one of users ${usersAt}`)
 		return this.createAndNotifyChanMessage(username, chanId, content, relatedTo, usersAt)
@@ -386,23 +465,20 @@ export class ChansService {
 	}
 
 
-	async getOneChanElement(username: string, chanId: string, elementId: string)
+	async getChanElementById(username: string, chanId: string, elementId: string)
 	{
 		return this.formatChanDiscussionElement(await this.getChanElementOrThrow(username, chanId, elementId, this.chanDiscussionElementsSelect))
 	}
 
-	async getChanMessages(username: string, chanId: string, nMessages: number, start?: string) {
+	async getChanElements(username: string, chanId: string, nElements: number, start?: string) {
 		const res = await this.getChanOrThrow(
-			{
-				id: chanId,
-				users: { some: { name: username } }
-			},
+			{ id: chanId, users: { some: { name: username } } },
 			{
 				elements:
 				{
 					cursor: (start) ? { id: start } : undefined,
 					orderBy: { id: 'desc' },
-					take: nMessages,
+					take: nElements,
 					select: this.chanDiscussionElementsSelect,
 					skip: Number(!!start),
 				}
@@ -410,27 +486,47 @@ export class ChansService {
 		return this.formatChanDiscussionElementArray(res.elements.reverse())
 	}
 
-	// async deleteChanMessage(username: string, chanId: string, msgId: )
-	// {
-	// }
+	async deleteChanMessage(username: string, chanId: string, elementId: string)
+	{
+		const { messageId, authorName } = await this.getChanElementOrThrow(username, chanId, elementId, { authorName: true, messageId: true })
+		if (!messageId)
+			throw new ForbiddenException("event can't be deleted")
+		if (username === authorName)
+			await this.throwIfUserNotAuthorizedInChan(username, chanId, PermissionList.DELETE_MESSAGE)
+		else
+			await this.throwIfUserNotAuthorizedOverUserInChan(username, chanId, authorName, PermissionList.DELETE_MESSAGE)
+		await this.prisma.chanDiscussionElement.update({ where: { id: elementId },
+			data:
+			{
+				event: { create: { deletedMessageChanDiscussionEvent: { create: { deletingUserName: username } } } }
+			}})
+		const res = await this.prisma.chanDiscussionElement.update({ where: { id: elementId },
+			data:
+			{
+				message: { delete: { id: messageId } }
+			},
+			select: this.chanDiscussionElementsSelect })
+		const formattedRes = this.formatChanDiscussionElement({ ...res, message: null })
+		await this.notifyChan(chanId, { type: 'UPDATED_CHAN_ELEMENT', data: { chanId, element: formattedRes } }, username)
+		return formattedRes
+	}
 
-	// // TODO: Maybe createChanEvent and removing user from chan need to be in a transaction so if the creation of the event failed the user is not removed from the chan
-	// async kickUserFromChan(username: string, toKick: string, chanId: number)
-	// {
-	// 	await this.checkAbilities(username, chanId,
-	// 		[
-	// 			{ action: ChanAction.Kick, subject: subject('ChanUser', await this.caslFact.getUser(chanId, toKick)) }
-	// 		])
-	// 	await this.prisma.chan.update({
-	// 		where: { id: chanId },
-	// 		data:
-	// 		{
-	// 			users: { disconnect: { name: toKick } }
-	// 		}})
-	// 	const newChanEvent = await this.createChanEvent(username, chanId, EventType.AUTHOR_KICKED_CONCERNED, toKick)
-	// 	await this.notifyChanEventToChanUsers(chanId, newChanEvent)
-	// 	await this.notifyChanEventToUser(toKick, chanId, newChanEvent)
-	// }
+	async kickUserFromChan(username: string, toKickUserName: string, chanId: string)
+	{
+		await this.throwIfUserNotAuthorizedOverUserInChan(username, chanId, toKickUserName, PermissionList.KICK)
+		const res = this.formatChan(await this.prisma.chan.update({ where: { id: chanId },
+			data:
+			{
+				users: { disconnect: { name: toKickUserName } }
+			},
+			select: this.chansSelect }))
+		return Promise.all
+		([
+			this.notifyChan(chanId, { type: 'UPDATED_CHAN', data: res }, null),
+			this.createAndNotifyClassicChanEvent(username, toKickUserName, chanId, ClassicChanEventType.AUTHOR_KICKED_CONCERNED),
+			this.sse.pushEvent(toKickUserName, { type: 'KICKED_FROM_CHAN', data: { chanId } })
+		])
+	}
 
 	private async notifyChan(chanId: string, toNotify: ChanEvent, exceptionUserName: string | null)
 	{
@@ -505,7 +601,8 @@ export class ChansService {
 		return chan
 	}
 
-	async joinChanById(username: string, chanId: string, password?: string) {
+	async joinChanById(username: string, chanId: string, password?: string)
+	{
 		const { password: chanPassword } = await this.getChanOrThrow(
 			{
 				id: chanId,

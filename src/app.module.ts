@@ -14,9 +14,6 @@ import { FriendsModule } from './friends/friends.module';
 import { SseModule } from './sse/sse.module';
 import { APP_PIPE } from '@nestjs/core'
 import { ZodValidationPipe } from '@anatine/zod-nestjs'
-// import { CaslModule } from 'nest-casl'
-import { Roles } from './app.roles'
-import { CaslModule } from './casl/casl.module';
 
 
 @Module({
@@ -47,10 +44,6 @@ import { CaslModule } from './casl/casl.module';
 				}
 			}),
 		}),
-		CaslModule/* .forRoot<Roles> */,
-		// ({
-		// 	superuserRole: Roles.admin
-		// }),
 		ServeStaticModule.forRoot
 		({
 			rootPath: join(__dirname, '../../frontend/build'),
@@ -63,7 +56,6 @@ import { CaslModule } from './casl/casl.module';
 		DmsModule,
 		FriendsModule,
 		SseModule,
-		CaslModule
 	],
 	controllers: [AppController],
 	providers:

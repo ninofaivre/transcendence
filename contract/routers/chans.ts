@@ -53,13 +53,13 @@ const zChanDiscussionMessageReturn = z.strictObject
 
 const zChanDiscussionBaseEvent = z.strictObject
 ({
-	concernedUserName: zUserName.nullable()
 })
 
 export const zChanDiscussionEventReturn = z.union
 ([
 	zChanDiscussionBaseEvent.extend
 	({
+		concernedUserName: zUserName.nullable(),
 		eventType: z.nativeEnum(ClassicChanEventType),
 	}),
 	zChanDiscussionBaseEvent.extend
@@ -67,6 +67,11 @@ export const zChanDiscussionEventReturn = z.union
 		eventType: z.literal("CHANGED_TITLE"),
 		oldTitle: z.string(),
 		newTitle: z.string()
+	}),
+	zChanDiscussionBaseEvent.extend
+	({
+		eventType: z.literal("DELETED_MESSAGE"),
+		deletingUserName: zUserName,
 	})
 ])
 
@@ -228,7 +233,7 @@ export const chansContract = c.router
 	createChanMessage:
 	{
 		method: 'POST',
-		path: '/:chanId/messages',
+		path: '/:chanId/elements',
 		summary: 'post a message to a chan',
 		pathParams: z.strictObject
 		({
@@ -246,18 +251,18 @@ export const chansContract = c.router
 			201: zChanDiscussionElementReturn
 		}
 	},
-	getChanMessages:
+	getChanElements:
 	{
 		method: 'GET',
-		path: '/:chanId/messages',
-		summary: 'get messages by cursor in chan',
+		path: '/:chanId/elements',
+		summary: 'get elements by cursor in chan',
 		pathParams: z.strictObject
 		({
 			chanId: z.string().uuid()
 		}),
 		query: z.strictObject
 		({
-			nMessages: z.number().positive().int().max(50).default(25),
+			nElements: z.number().positive().int().max(50).default(25),
 			cursor: z.string().uuid().optional()
 		}),
 		responses:
@@ -265,50 +270,50 @@ export const chansContract = c.router
 			200: z.array(zChanDiscussionElementReturn)
 		}
 	},
-	getOneChanMessage:
+	getChanElementById:
 	{
 		method: 'GET',
-		path: '/:chanId/messages/:msgId',
+		path: '/:chanId/elements/:elementId',
 		pathParams: z.strictObject
 		({
 			chanId: z.string().uuid(),
-			msgId: z.string().uuid()
+			elementId: z.string().uuid()
 		}),
 		responses:
 		{
 			200: zChanDiscussionElementReturn
 		}
 	},
-	// deleteChanMessage:
-	// {
-	// 	method: 'DELETE',
-	// 	path: '/:chanId/messages/:messageId',
-	// 	pathParams: z.strictObject
-	// 	({
-	// 		chanId: z.string().uuid(),
-	// 		messageId: z.string().uuid()
-	// 	}),
-	// 	body: c.body<null>(),
-	// 	responses:
-	// 	{
-	// 		202: zChanDiscussionElementReturn
-	// 	}
-	// },
-	// kickUserFromChan:
-	// {
-	// 	method: 'DELETE',
-	// 	path: '/:chanId/:username',
-	// 	pathParams: z.strictObject
-	// 	({
-	// 		chanId: zChanId,
-	// 		username: zUserName
-	// 	}),
-	// 	body: c.body<null>(),
-	// 	responses:
-	// 	{
-	// 		202: c.response<null>()
-	// 	}
-	// }
+	deleteChanMessage:
+	{
+		method: 'DELETE',
+		path: '/:chanId/elements/:elementId',
+		pathParams: z.strictObject
+		({
+			chanId: z.string().uuid(),
+			elementId: z.string().uuid()
+		}),
+		body: c.body<null>(),
+		responses:
+		{
+			202: zChanDiscussionElementReturn
+		}
+	},
+	kickUserFromChan:
+	{
+		method: 'DELETE',
+		path: '/:chanId/:username',
+		pathParams: z.strictObject
+		({
+			chanId: z.string().uuid(),
+			username: zUserName
+		}),
+		body: c.body<null>(),
+		responses:
+		{
+			202: c.response<null>()
+		}
+	}
 })
 
 export type ChanEvent =
@@ -317,10 +322,10 @@ export type ChanEvent =
 	data: z.infer<typeof zChanReturn>
 } |
 {
-	type: 'CREATED_CHAN_ELEMENT',
+	type: 'CREATED_CHAN_ELEMENT' | 'UPDATED_CHAN_ELEMENT',
 	data: { chanId: string, element: z.infer<typeof zChanDiscussionElementReturn> }
 } |
 {
-	type: 'DELETED_CHAN',
+	type: 'DELETED_CHAN' | 'KICKED_FROM_CHAN',
 	data: { chanId: string }
 }

@@ -1,11 +1,8 @@
-import { Body, Controller, Delete, ForbiddenException, Get, InternalServerErrorException, NotFoundException, NotImplementedException, Param, Patch, Post, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
-import { ApiOkResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ChansService } from './chans.service';
 import contract from 'contract/contract';
-import { nestControllerContract, NestControllerInterface, NestRequestShapes, NestResponseShapes, TsRest, TsRestRequest, } from '@ts-rest/nest';
-import { zCreatePublicChan } from 'contract/routers/chans'; 
-import { ChanAction } from 'src/casl/casl-ability.factory/casl-ability.factory';
+import { nestControllerContract, NestControllerInterface, NestRequestShapes, TsRest, TsRestRequest, } from '@ts-rest/nest';
 import { EnrichedRequest } from 'src/auth/auth.service';
 
 const c = nestControllerContract(contract.chans)
@@ -84,34 +81,34 @@ export class ChansController implements NestControllerInterface<typeof c>
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@TsRest(c.getChanMessages)
-	async getChanMessages(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId }, query: { nMessages, cursor } }: RequestShapes['getChanMessages'])
+	@TsRest(c.getChanElements)
+	async getChanElements(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId }, query: { nElements, cursor } }: RequestShapes['getChanElements'])
 	{
-		const body = await this.chansService.getChanMessages(req.user.username, chanId, nMessages, cursor)
+		const body = await this.chansService.getChanElements(req.user.username, chanId, nElements, cursor)
 		return { status: 200 as const, body }
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@TsRest(c.getOneChanMessage)
-	async getOneChanMessage(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId, msgId } }: RequestShapes['getOneChanMessage'])
+	@TsRest(c.getChanElementById)
+	async getChanElementById(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId, elementId } }: RequestShapes['getChanElementById'])
 	{
-		const body = await this.chansService.getOneChanElement(req.user.username, chanId, msgId)
+		const body = await this.chansService.getChanElementById(req.user.username, chanId, elementId)
 		return { status: 200 as const, body }
 	}
 
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.deleteChanMessage)
-	// async deleteChanMessage(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId, messageId } }: RequestShapes['deleteChanMessage'])
-	// {
-	// 	const body = await this.chansService.deleteChanMessage(req.user.username, chanId, messageId)
-	// 	return { status: 202 as const, body: null }
-	// }
-	//
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.kickUserFromChan)
-	// async kickUserFromChan(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId, username } }: RequestShapes['kickUserFromChan'])
-	// {
-	// 	const body = await this.chansService.kickUserFromChan(req.user.username, username, chanId) 
-	// 	return { status: 202 as const, body: null }
-	// }
+	@UseGuards(JwtAuthGuard)
+	@TsRest(c.deleteChanMessage)
+	async deleteChanMessage(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId, elementId } }: RequestShapes['deleteChanMessage'])
+	{
+		const body = await this.chansService.deleteChanMessage(req.user.username, chanId, elementId)
+		return { status: 202 as const, body }
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@TsRest(c.kickUserFromChan)
+	async kickUserFromChan(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId, username } }: RequestShapes['kickUserFromChan'])
+	{
+		await this.chansService.kickUserFromChan(req.user.username, username, chanId) 
+		return { status: 202 as const, body: null }
+	}
 }

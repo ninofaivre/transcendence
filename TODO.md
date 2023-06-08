@@ -1,8 +1,8 @@
 # Backend :
 - [-] [X] Finir la transition en mode strict
-- [ ] Finir le refacto du module chan
+- [X] Finir le refacto du module chan
 - [X] Finir la transition à zod
-- [ ] Passer en transaction ce qui doit l'être avec prisma
+- [X] Passer en transaction ce qui doit l'être avec prisma
 - [ ] Testing
 - [X] Connexion multiple d'un même utilisateur au sse
 - [ ] status avec le sse (quand un user se log il doit savoir qui de sa liste d'amis est logged-in)
@@ -14,4 +14,5 @@
 - [ ] dans les contrats, mettre les params redondant sous forme de var (example : content de msg: z.string().nonempty().max(150))
 - [ ] pour ce qui est des bans n'exposer la liste des bans dans les chans qu'aux users ayant la perm de ban (format chan)
 - [ ] faire les bans / kick avec une raison
-- [ ] régler la confusion entre message et element aussi bien dans le code du backend que dans les routes exposée dans l'api
+- [X] régler la confusion entre message et element aussi bien dans le code du backend que dans les routes exposée dans l'api
+- [ ] remove toute les dépendances pnpm qui ne sont plus nécéssaire

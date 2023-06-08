@@ -37,18 +37,29 @@
 		<!-- App Bar -->
 		<AppBar slotDefault="place-self-center">
 			<svelte:fragment slot="lead">
-				<strong class="text-xl uppercase">
+				<strong
+					class="origin-center -rotate-45 py-8 text-xs uppercase md:rotate-0 md:text-lg lg:text-xl xl:text-2xl"
+				>
 					<a href="/">Transcendance</a>
 				</strong>
 			</svelte:fragment>
 			{#if $logged_in}
-				<a class="variant-filled-success btn mx-4 text-2xl font-semibold" href="/pong">
+				<a
+					class="variant-filled-success btn btn-sm mx-4 mb-1 text-2xl font-semibold"
+					href="/pong"
+				>
 					🏓
 				</a>
-				<a class="variant-filled-success btn mx-4 text-2xl font-semibold" href="/chat">
+				<a
+					class="variant-filled-success btn btn-sm mx-4 text-2xl font-semibold"
+					href="/chat"
+				>
 					💬
 				</a>
-				<a class="variant-filled-success btn mx-4 text-2xl font-semibold" href="/dms">
+				<a
+					class="variant-filled-success btn btn-sm mx-4 mt-1 text-2xl font-semibold"
+					href="/dms"
+				>
 					✉️
 				</a>
 			{/if}
@@ -72,3 +83,6 @@
 	<slot />
 	<Toast />
 </AppShell>
+
+<style>
+</style>

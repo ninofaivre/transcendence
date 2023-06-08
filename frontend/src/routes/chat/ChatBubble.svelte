@@ -8,9 +8,14 @@
 	export let from_them_bg = "lightgrey"
 	export let margin = "15px"
 	export let sent = true
+	export let data_id = -1
 </script>
 
-<div id="message-row" style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}>
+<div
+	id="message-row"
+	data-id={data_id}
+	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
+>
 	<div id="message-spacer" />
 	<div
 		id="message-bubble"

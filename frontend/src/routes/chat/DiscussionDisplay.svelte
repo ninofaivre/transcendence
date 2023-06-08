@@ -71,12 +71,12 @@
 	async function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
 		if (_init) return
 		console.log("intersectionHandler has been called", entry)
-		const oldest_message = canary.nextElementSibling
-		const start = oldest_message?.getAttribute("id")
+		const oldest_message = canary.nextElementSibling as HTMLElement
+		const start = oldest_message?.dataset?.id
 		if (start && entry.isIntersecting) {
 			const { status, body } = await chansClient.getChanMessages({
 				params: { chanId: currentDiscussionId.toString() },
-				query: { nMessages: loading_greediness, cursor: parseInt(start) },
+				query: { nMessages: loading_greediness, cursor: Number(start) },
 			})
 			if (status == 200) {
 				if (body.length > 0) {
@@ -129,6 +129,7 @@
 		<div bind:this={canary} />
 		{#each displayed_messages as message}
 			<ChatBubble
+				data_id={message.id}
 				from_me={message.author === $my_name}
 				from={message.author}
 				sent={message.id < 0}

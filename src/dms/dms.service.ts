@@ -297,7 +297,7 @@ export class DmsService
 				elements:
 				{
 					cursor: (start) ? { id: start } : undefined,
-					orderBy: { id: 'desc' },
+					orderBy: { creationDate: 'desc' },
 					take: nElements,
 					select: this.dmDiscussionElementSelect,
 					skip: Number(!!start),

@@ -477,7 +477,7 @@ export class ChansService {
 				elements:
 				{
 					cursor: (start) ? { id: start } : undefined,
-					orderBy: { id: 'desc' },
+					orderBy: { creationDate: 'desc' },
 					take: nElements,
 					select: this.chanDiscussionElementsSelect,
 					skip: Number(!!start),

@@ -2,7 +2,6 @@ import { initContract } from "@ts-rest/core";
 import { zUserName } from "../zod/user.zod";
 import { z } from "zod";
 import { unique } from "../zod/global.zod";
-import { prefix } from "../lib/prefix";
 import { zChanTitle } from "./chans";
 
 const c = initContract();

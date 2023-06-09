@@ -1,28 +1,26 @@
 <script lang="ts">
-	import { ProgressRadial } from "@skeletonlabs/skeleton"
+	import { Avatar, ProgressRadial } from "@skeletonlabs/skeleton"
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
 
 	export let from = ""
 	export let from_me = false
-	// export let from_me_bg = "lightblue"
-	// export let from_them_bg = "lightgrey"
-	// export let from_me_class = "variant-filled-primary"
-	// export let from_them_class = "variant-filled-secondary"
-	export let margin = "15px"
 	export let sent = true
 	export let data_id = -1
+
+	from_me = false
 </script>
 
 <div
 	id="message-row"
 	data-id={data_id}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
+	class={from_me ? "space-x-2 space-x-reverse" : "space-x-2"}
 >
 	<div id="message-spacer" />
+	<Avatar src="https://i.pravatar.cc/?img=42" width="w-8 h-8" />
 	<div
 		id="message-bubble"
-		class={from_me ? `variant-filled-primary` : `variant-filled-secondary`}
-		style={from_me ? `margin-left: ${margin};` : `margin-right: ${margin} ;`}
+		class={from_me ? "variant-filled-primary" : "variant-filled-secondary"}
 	>
 		{#if !from_me}
 			<div id="from-field">{from}</div>
@@ -34,16 +32,15 @@
 					class="self-center"
 					out:slide={{ axis: "x", duration: 800 }}
 				>
-					<!-- out:scale={{ duration: 600 }} -->
 					<ProgressRadial
 						width="w-3"
 						stroke={130}
-						meter="stroke-primary-600"
-						track="stroke-primary-500/30"
+						meter={from_me ? "stroke-secondary-600" : "stroke-tertiary-500"}
+						track={from_me ? "stroke-secondary-500/30" : "stroke-tertiary-500/30"}
 					/>
 				</div>
 			{/if}
-			<div id="message-content" class="mx-2">
+			<div id="message-content">
 				<slot />
 			</div>
 		</div>
@@ -72,6 +69,12 @@
 		overflow-wrap: break-word; /*So that max-width is not ignored max-width if a word is too long*/
 		border-radius: 8px;
 		padding: 4px;
+	}
+
+	#from-field,
+	#message-content {
+		margin-left: 0.5rem;
+		margin-right: 0.5rem;
 	}
 
 	#from-field {

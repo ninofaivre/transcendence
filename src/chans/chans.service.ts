@@ -323,12 +323,12 @@ export class ChansService {
 			})
 		if (username === otherUserName)
 			throw new BadRequestException(`${username} can't ${perm} over himself`)
+		if (!users.length)
+			throw new ForbiddenException(`${otherUserName} not in chan ${chanId}`)
 		if (username === ownerName)
 			return
 		if (otherUserName === ownerName)
 			throw new ForbiddenException(`${username} can't ${perm} in chan ${chanId} over the owner`)
-		if (!users.length)
-			throw new ForbiddenException(`${otherUserName} not in chan ${chanId}`)
 		if (!roles.length)
 			throw new ForbiddenException(`${username} can't ${perm} in chan ${chanId} over ${otherUserName}`)
 	}
@@ -546,18 +546,15 @@ export class ChansService {
 			{
 				classicChanDiscussionEvent:
 				{
-					create:
-					{
-						eventType: event
-					}
+					create: { eventType: event }
 				},
 				...((concerned) ? { concernedUser: { connect: { name: concerned } } } : {}),
 				discussionElement:
 				{
 					create:
 					{
-						chanId: chanId,
-						authorName: author
+						chan: { connect: { id: chanId } },
+						author: { connect: { name: author } },
 					}
 				}
 			},
@@ -587,8 +584,8 @@ export class ChansService {
 			},
 			select: this.chansSelect }))
 
-		this.sse.pushEventMultipleUser(newChan.users.filter(el => el !== username), { type: 'UPDATED_CHAN', data: newChan })
-		setTimeout(this.createAndNotifyClassicChanEvent, 0, username, null, chanId, ClassicChanEventType.AUTHOR_JOINED)
+		await this.sse.pushEventMultipleUser(newChan.users.filter(el => el !== username), { type: 'UPDATED_CHAN', data: newChan })
+		setTimeout(this.createAndNotifyClassicChanEvent.bind(this), 0, username, null, chanId, ClassicChanEventType.AUTHOR_JOINED)
 		return newChan
 	}
 
@@ -616,14 +613,17 @@ export class ChansService {
 
 	async joinChanById(username: string, chanId: string, password?: string)
 	{
-		const { password: chanPassword } = await this.getChanOrThrow(
+		const { password: chanPassword, users } = await this.getChanOrThrow(
 			{
 				id: chanId,
 				type: ChanType.PUBLIC
 			},
 			{
-				password: true
+				password: true,
+				users: { where: { name: username }, select: { name: true } }
 			})
+		if (users.length)
+			throw new ForbiddenException(`${username} already in chan ${chanId}`)
 		if (password && !chanPassword)
 			throw new BadRequestException(`chan ${chanId} doesn't has a password`)
 		if (!password && chanPassword)

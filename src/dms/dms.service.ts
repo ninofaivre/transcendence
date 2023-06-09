@@ -159,14 +159,8 @@ export class DmsService
 				{
 					create:
 					{
-						authorRelation:
-						{
-							connect: { name: author }
-						},
-						directMessage:
-						{
-							connect: { id: dmId }
-						}
+						authorRelation: { connect: { name: author } },
+						directMessage: { connect: { id: dmId } }
 					}
 				}
 			},

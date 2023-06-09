@@ -513,13 +513,15 @@ export class ChansService {
 
 	async kickUserFromChan(username: string, toKickUserName: string, chanId: string)
 	{
-		await this.throwIfUserNotAuthorizedOverUserInChan(username, chanId, toKickUserName, PermissionList.KICK)
+		await this.throwIfUserNotAuthorizedOverUserInChan(username, toKickUserName, chanId, PermissionList.KICK)
 		const res = this.formatChan(await this.prisma.chan.update({ where: { id: chanId },
-			data:
-			{
-				users: { disconnect: { name: toKickUserName } }
-			},
+			data: { users: { disconnect: { name: toKickUserName } } },
 			select: this.chansSelect }))
+
+		// PRISMA SUCK
+		const roles = (await this.prisma.role.findMany({ where: { chanId, users: { some: { name: toKickUserName } } }, select: { id: true } })).map(role => role.id)
+		await Promise.all(roles.map(async (id) => this.prisma.role.update({ where: { id }, data: { users: { disconnect: { name: toKickUserName } } } })))
+
 		return Promise.all
 		([
 			this.notifyChan(chanId, { type: 'UPDATED_CHAN', data: res }, null),
@@ -549,7 +551,7 @@ export class ChansService {
 						eventType: event
 					}
 				},
-				...((concerned) ? { concernedUserRelation: { connect: { name: concerned } } } : {}),
+				...((concerned) ? { concernedUser: { connect: { name: concerned } } } : {}),
 				discussionElement:
 				{
 					create:
@@ -563,7 +565,7 @@ export class ChansService {
 		if (!newEvent)
 			throw new InternalServerErrorException('a discussion event has failed to be created')
 		const formattedNewEvent = this.formatChanDiscussionElement(newEvent)
-		return this.notifyChan(chanId, { type: 'CREATED_CHAN_ELEMENT', data: { chanId: chanId, element: formattedNewEvent } }, null)
+		await this.notifyChan(chanId, { type: 'CREATED_CHAN_ELEMENT', data: { chanId: chanId, element: formattedNewEvent } }, null)
 	}
 	
 	// TODO: when banned user setted up in the schema check and throw here if user is banned from chan
@@ -571,7 +573,18 @@ export class ChansService {
 	{
 		const newChan = this.formatChan(await this.prisma.chan.update({
 			where: { id: chanId },
-			data: { users: { connect: { name: username } } },
+			data:
+			{
+				users: { connect: { name: username } },
+				roles:
+				{
+					update:
+					{
+						where: { chanId_name: { chanId, name: "DEFAULT" } },
+						data: { users: { connect: { name: username } } }
+					}
+				}
+			},
 			select: this.chansSelect }))
 
 		this.sse.pushEventMultipleUser(newChan.users.filter(el => el !== username), { type: 'UPDATED_CHAN', data: newChan })

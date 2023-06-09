@@ -95,6 +95,8 @@ export class FriendsService
 			if (!res) // should never happen as dms is auto created at friendShip Creation and there should not be any way of deleting a dm
 				throw new NotFoundException(`not found dm between ${requestedUserName} and ${requestingUserName}`)
 			const { id: dmId } = res
+			const newEvent = await this.dmsService.createClassicDmEvent(dmId, ClassicDmEventType.DELETED_FRIENDSHIP, username)
+			await this.sse.pushEventMultipleUser([requestingUserName, requestedUserName], { type: 'CREATED_DM_ELEMENT', data: { dmId, element: newEvent } })
 			if ((requestingUserDmPolicyLevel === dmPolicyLevelType.ONLY_FRIEND || requestedUserDmPolicyLevel === dmPolicyLevelType.ONLY_FRIEND) ||
 				((requestingUserDmPolicyLevel === dmPolicyLevelType.IN_COMMON_CHAN || requestedUserDmPolicyLevel === dmPolicyLevelType.IN_COMMON_CHAN) &&
 			    	!(await this.chansService.doesUsersHasCommonChan(requestingUserName, requestedUserName))))

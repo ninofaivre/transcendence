@@ -1,11 +1,15 @@
 import { extendApi } from "@anatine/zod-openapi";
-import { ClassicChanEventType, ChanType, PermissionList, RoleApplyingType } from "@prisma/client";
 import { initContract } from "@ts-rest/core";
 import { unique } from "../zod/global.zod";
 import { zUserName } from "../zod/user.zod";
 import { z } from "zod";
 
 const c = initContract();
+
+const zClassicChanEventType = z.enum(["AUTHOR_LEAVED", "AUTHOR_KICKED_CONCERNED", "AUTHOR_JOINED", "AUTHOR_MUTED_CONCERNED"])
+const zChanType = z.enum(["PUBLIC", "PRIVATE"])
+const zPermissionList = z.enum(["SEND_MESSAGE", "DELETE_MESSAGE", "EDIT", "INVITE", "KICK", "BAN", "MUTE", "DESTROY"])
+const zRoleApplyingType = z.enum(["NONE", "ROLES", "ROLES_AND_SELF"])
 
 export const zChanTitle = z
   .string()
@@ -16,27 +20,27 @@ export const zChanPassword = z.string().nonempty().min(8).max(150);
 export const zRoleName = z.string().nonempty();
 
 export const zCreatePublicChan = z.strictObject({
-  type: z.literal(ChanType.PUBLIC),
+  type: z.literal(zChanType.enum.PUBLIC),
   title: zChanTitle,
   password: zChanPassword.optional(),
 });
 
 export const zCreatePrivateChan = z.strictObject({
-  type: z.literal(ChanType.PRIVATE),
+  type: z.literal(zChanType.enum.PRIVATE),
   title: zChanTitle.optional(),
 });
 
 const zRoleReturn = z.object({
   users: z.array(zUserName),
   roles: z.array(zRoleName),
-  permissions: z.array(z.nativeEnum(PermissionList)),
-  roleApplyOn: z.nativeEnum(RoleApplyingType),
+  permissions: z.array(zPermissionList),
+  roleApplyOn: zRoleApplyingType,
   name: z.string(),
 });
 
 const zChanReturn = z.object({
   title: zChanTitle.nullable(),
-  type: z.nativeEnum(ChanType),
+  type: zChanType,
   ownerName: z.string(),
   id: z.string().uuid(),
   users: z.array(zUserName).min(1),
@@ -55,7 +59,7 @@ const zChanDiscussionBaseEvent = z.strictObject({});
 export const zChanDiscussionEventReturn = z.union([
   zChanDiscussionBaseEvent.extend({
     concernedUserName: zUserName.nullable(),
-    eventType: z.nativeEnum(ClassicChanEventType),
+    eventType: zClassicChanEventType,
   }),
   zChanDiscussionBaseEvent.extend({
     eventType: z.literal("CHANGED_TITLE"),
@@ -267,6 +271,9 @@ export const chansContract = c.router({
       202: c.response<null>(),
     },
   },
+},
+{
+	pathPrefix: "/chans"
 });
 
 export type ChanEvent =

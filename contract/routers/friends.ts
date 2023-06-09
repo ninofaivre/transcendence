@@ -29,6 +29,9 @@ export const friendsContract = c.router({
       202: c.response<null>(),
     },
   },
+},
+{
+	pathPrefix: "/friends"
 });
 
 export type FriendEvent =

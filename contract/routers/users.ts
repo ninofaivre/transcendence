@@ -27,4 +27,7 @@ export const usersContract = c.router({
       }),
     },
   },
+},
+{
+	pathPrefix: "/users"
 });

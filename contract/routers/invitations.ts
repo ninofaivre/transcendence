@@ -1,27 +1,28 @@
 import { initContract } from "@ts-rest/core";
-import { zInvitationFilter } from "../zod/inv.zod";
 import { zUserName } from "../zod/user.zod";
 import { z } from "zod";
 import { unique } from "../zod/global.zod";
-import { ChanInvitationStatus, FriendInvitationStatus } from "@prisma/client";
 import { prefix } from "../lib/prefix";
 import { zChanTitle } from "./chans";
 
 const c = initContract();
+
+const zChanInvitationStatus = z.enum(["PENDING", "ACCEPTED", "REFUSED", "CANCELED", "DELETED_CHAN", "BLOCKED_USER", "BANNED_FROM_CHAN"])
+const zFriendInvitationStatus = z.enum(["PENDING", "ACCEPTED", "REFUSED", "CANCELED", "BLOCKED_USER"])
 
 export const zFriendInvitationReturn = z.strictObject({
   id: z.string().uuid(),
   creationDate: z.date(),
   invitingUserName: zUserName,
   invitedUserName: zUserName,
-  status: z.nativeEnum(FriendInvitationStatus),
+  status: zFriendInvitationStatus,
 });
 
 export const zChanInvitationReturn = z.strictObject({
   id: z.string().uuid(),
   chanId: z.string().uuid().nullable(),
   chanTitle: zChanTitle.nullable(),
-  status: z.nativeEnum(ChanInvitationStatus),
+  status: zChanInvitationStatus,
   invitedUserName: zUserName,
   invitingUserName: zUserName,
 });
@@ -31,7 +32,7 @@ const friendInvitationsContract = c.router({
     method: "GET",
     path: "/",
     query: z.strictObject({
-      status: unique(z.array(z.nativeEnum(FriendInvitationStatus))).default(["PENDING"]),
+      status: unique(z.array(zFriendInvitationStatus)).default(["PENDING"]),
     }),
     responses: {
       200: z.strictObject({
@@ -67,16 +68,15 @@ const friendInvitationsContract = c.router({
       id: z.string().uuid(),
     }),
     body: z.strictObject({
-      status: z.enum([
-        FriendInvitationStatus.ACCEPTED,
-        FriendInvitationStatus.REFUSED,
-        FriendInvitationStatus.CANCELED,
-      ]),
-    }),
+      status: zFriendInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"])
+	}),
     responses: {
       200: zFriendInvitationReturn,
     },
   },
+},
+{
+	pathPrefix: "/friend"
 });
 
 const chanInvitationsContract = c.router({
@@ -84,7 +84,7 @@ const chanInvitationsContract = c.router({
     method: "GET",
     path: "/",
     query: z.strictObject({
-      status: unique(z.array(z.nativeEnum(ChanInvitationStatus))).default(["PENDING"]),
+      status: unique(z.array(zChanInvitationStatus)).default(["PENDING"]),
     }),
     responses: {
       200: z.strictObject({
@@ -121,21 +121,23 @@ const chanInvitationsContract = c.router({
       id: z.string().uuid(),
     }),
     body: z.strictObject({
-      status: z.enum([
-        ChanInvitationStatus.ACCEPTED,
-        ChanInvitationStatus.REFUSED,
-        ChanInvitationStatus.CANCELED,
-      ]),
-    }),
+      status: zChanInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"])
+	}),
     responses: {
       200: zChanInvitationReturn,
     },
   },
+},
+{
+	pathPrefix: "/chan"
 });
 
 export const invitationsContract = c.router({
-  friend: prefix(friendInvitationsContract, "friend"),
-  chan: prefix(chanInvitationsContract, "chan"),
+  friend: friendInvitationsContract,
+  chan: chanInvitationsContract,
+},
+{
+	pathPrefix: "/invitations"
 });
 
 type FriendInvitationEvent = {

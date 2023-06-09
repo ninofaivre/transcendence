@@ -141,6 +141,9 @@ export const dmsContract = c.router({
       202: zDmDiscussionElementReturn,
     },
   },
+},
+{
+	pathPrefix: "/dms"
 });
 
 export type DmEvent =

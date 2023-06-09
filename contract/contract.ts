@@ -4,21 +4,20 @@ import { InvitationEvent, invitationsContract } from "./routers/invitations";
 import { DmEvent, dmsContract } from "./routers/dms";
 import { FriendEvent, friendsContract } from "./routers/friends";
 import { usersContract } from "./routers/users";
-import { prefix } from "./lib/prefix";
 import { MessageEvent } from "@nestjs/common";
 
 const c = initContract();
 
-const contract = prefix(
-  c.router({
-    chans: prefix(chansContract, "chans"),
-    invitations: prefix(invitationsContract, "invitations"),
-    dms: prefix(dmsContract, "dms"),
-    friends: prefix(friendsContract, "friends"),
-    users: prefix(usersContract, "users"),
-  }),
-  "api"
-);
+const contract = c.router({
+    chans: chansContract,
+    invitations: invitationsContract,
+    dms: dmsContract,
+    friends: friendsContract,
+    users: usersContract,
+	},
+	{
+		pathPrefix: "/api"
+	})
 
 export default contract;
 

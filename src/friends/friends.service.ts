@@ -1,6 +1,6 @@
 import { ConflictException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { ClassicDmEventType, DirectMessageStatus, Prisma, dmPolicyLevelType } from '@prisma/client';
-import { PrismaClientKnownRequestError, PrismaClientValidationError } from '@prisma/client/runtime';
+import { PrismaClientKnownRequestError, PrismaClientUnknownRequestError, PrismaClientValidationError } from '@prisma/client/runtime';
 import { zFriendShipReturn } from 'contract/routers/friends';
 import { PrismaService } from 'nestjs-prisma';
 import { ChansService } from 'src/chans/chans.service';
@@ -102,7 +102,7 @@ export class FriendsService
 		}
 		catch (e)
 		{
-			if (e instanceof PrismaClientKnownRequestError)
+			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025')
 				throw new NotFoundException(`not found friendShip ${friendShipId}`)
 			else
 				throw e

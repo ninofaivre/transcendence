@@ -1,10 +1,9 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { ChatModule } from 'src/chat/chat.module';
 
 @Module({
-	imports: [ forwardRef(() => ChatModule) ],
+	imports: [],
 	providers: [UserService],
 	controllers: [UserController],
 	exports: [UserService]

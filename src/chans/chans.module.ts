@@ -1,17 +1,13 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ChansService } from './chans.service';
 import { ChansController } from './chans.controller';
-import { AppService } from 'src/app.service';
-import { PermissionsService } from './permissions/permissions.service';
 import { SseModule } from 'src/sse/sse.module';
-import { CaslModule } from 'src/casl/casl.module';
-// import { CaslModule } from 'nest-casl';
-// import { permissions } from './chans.permissions'
+import { ChanInvitationsModule } from 'src/invitations/chan-invitations/chan-invitations.module';
 
 @Module({
-  providers: [ChansService, AppService, PermissionsService],
+  imports: [SseModule, /* UserModule,  */forwardRef(() => ChanInvitationsModule)],
   controllers: [ChansController],
-  exports: [PermissionsService],
-  imports: [SseModule, CaslModule]
+  providers: [ChansService/* , AppService */],
+  exports: [ChansService]
 })
 export class ChansModule {}

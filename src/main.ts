@@ -1,16 +1,17 @@
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser'
 import { SwaggerTheme } from 'swagger-themes';
 import { PrismaClientExceptionFilter, PrismaService } from 'nestjs-prisma';
-import { patchNestjsSwagger } from '@anatine/zod-nestjs';
 import { generateOpenApi } from '@ts-rest/open-api'
-import * as fs from  'fs'
 import contract from 'contract/contract'
+import { HttpStatus } from '@nestjs/common';
+import { join } from 'path';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
+		// bodyParser: true,
 		// httpsOptions:
 		// {
 		// 	key: fs.readFileSync('./secrets/key.pem'),
@@ -31,12 +32,9 @@ async function bootstrap() {
 	const theme = new SwaggerTheme('v3')
 	const options =
 	{
-		// explorer: true,
 		customCss: theme.getBuffer('dark'),
 	}
-	patchNestjsSwagger()
-    // const document = SwaggerModule.createDocument(app, config);
-	const document = generateOpenApi(contract, config, { setOperationId: true })
+	const document = overrideTsRestGeneratedTags(generateOpenApi(contract, config, { setOperationId: true, jsonQuery: true }))
     SwaggerModule.setup('api', app, document, options);
 	const prismaService: PrismaService = app.get(PrismaService);
 	prismaService.$on("query", (event) => {
@@ -44,9 +42,37 @@ async function bootstrap() {
 	});
 
 	const { httpAdapter } = app.get(HttpAdapterHost);
-	app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
+	app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter,
+		{
+			P2003: HttpStatus.NOT_FOUND
+		}));
 
 	await app.listen(3000);
+}
+
+// TODO: make this function a bit cleaner and put it somewhere else
+function overrideTsRestGeneratedTags(document: OpenAPIObject)
+{
+	for (const path of Object.values(document.paths))
+	{
+		for (const subpath of Object.values(path))
+		{
+			if (!subpath['tags'])
+				continue;
+			const oldTags = subpath.tags as string[]
+			if (oldTags.length < 2)
+				continue ;
+			let res = ''
+			let newTags: string[] = []
+			for (const tag of oldTags)
+			{
+				res = join(res, tag)
+				newTags.push(res)
+			}
+			subpath.tags = newTags
+		}
+	}
+	return document
 }
 
 bootstrap();

@@ -2,7 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service'
 import { compare } from 'bcrypt'
 import { JwtService } from '@nestjs/jwt'
-import { Roles } from 'src/app.roles';
+import { Request } from 'express';
+
+export type EnrichedRequest = Request & { user: { username: string } }
 
 @Injectable()
 export class AuthService {
@@ -12,10 +14,10 @@ export class AuthService {
     ) { }
 
     async validateUser(username: string, pass: string) {
-        const dbUser = await this.usersService.getUserByName(username)
+        const dbUser = await this.usersService.getUserByName(username, { name: true, password: true })
         if (dbUser && dbUser.password && dbUser.name && await compare(pass, dbUser.password)) {
             const { password, ...result } = dbUser
-            return { ...result, id: username, roles: [Roles.customer] }
+            return { ...result, id: username }
         }
         return null
     }

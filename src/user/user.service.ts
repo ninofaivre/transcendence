@@ -1,11 +1,14 @@
-import { CreateUserDTO } from './dto/createUser.dto'
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { MessageEvent, NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common'
 import { hash } from 'bcrypt'
 import { Prisma, User } from '@prisma/client';
-import { filterType as blockedFilterType } from './dto/getBlockedList.query.dto';
 import { concat, Subject } from 'rxjs';
+import { NestRequestShapes, nestControllerContract } from '@ts-rest/nest';
+import contract from 'contract/contract';
+
+const c = nestControllerContract(contract.users)
+type RequestShapes = NestRequestShapes<typeof c>
 
 @Injectable()
 export class UserService
@@ -65,14 +68,22 @@ export class UserService
 	// 	await Promise.all([updatePromise, addEventPromise])
 	// }
 
-	async getUserByName(name: string, select: Prisma.UserSelect = { name: true, password: true })
+	async getUserByName(name: string, select: Prisma.UserSelect)
 	{
 		return this.prisma.user.findUnique({ where: { name: name }, select: select })
 	}
 
-	async createUser(user: CreateUserDTO)
+	public async getUserByNameOrThrow<T extends Prisma.UserSelect>(username: string, select: Prisma.SelectSubset<T, Prisma.UserSelect>)
 	{
-		if (await this.getUserByName(user.name))
+		const user = await this.prisma.user.findUnique({ where: { name: username }, select: select })
+		if (!user)
+			throw new NotFoundException(`not found user ${username}`)
+		return user
+	}
+
+	async createUser(user: RequestShapes['signUp']['body'])
+	{
+		if (await this.getUserByName(user.name, { name: true }))
 			throw new ConflictException("user already exist")
 		user.password = await hash(user.password, 10)
 		const { password, ...result } = await this.prisma.user.create({ data: user })

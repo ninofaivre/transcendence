@@ -1,17 +1,20 @@
-import { Controller, Res, Request, Body, Get, Post, UseGuards, Sse, MessageEvent, ValidationPipe } from '@nestjs/common';
+import { Controller, Res, Request, Get, Post, UseGuards } from '@nestjs/common';
 import { LocalAuthGuard } from './local-auth.guard'
 import { AuthService } from './auth.service'
-import { ApiTags } from '@nestjs/swagger';
+import { NestControllerInterface, TsRest, nestControllerContract } from '@ts-rest/nest';
+import contract from 'contract/contract';
 
-@ApiTags('auth')
-@Controller('api/auth')
-export class AuthController {
+const c = nestControllerContract(contract.auth)
+
+@Controller()
+export class AuthController implements NestControllerInterface<typeof c>
+{
 
     constructor(private authService: AuthService) {}
 
 
 	@UseGuards(LocalAuthGuard)
-	@Post('/login')
+	@TsRest(c.login)
 	async login(@Res({ passthrough: true }) res: any, @Request() req: any)
 	{
 		res.cookie('access_token', await this.authService.login(req.user),
@@ -19,12 +22,14 @@ export class AuthController {
 				secure: true,
 				sameSite: true,
 			})
+		return { status: 202 as const, body: null }
 	}
 
-    @Get('/logout')
+	@TsRest(c.logout)
     async logout(@Res({ passthrough: true }) res: any)
 	{
         res.cookie('access_token', '', { expires: new Date(0) })
+		return { status: 200 as const, body: null }
     }
 
 }

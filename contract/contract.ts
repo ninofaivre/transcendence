@@ -5,6 +5,7 @@ import { DmEvent, dmsContract } from "./routers/dms";
 import { FriendEvent, friendsContract } from "./routers/friends";
 import { usersContract } from "./routers/users";
 import { MessageEvent } from "@nestjs/common";
+import { authContract } from "./routers/auth";
 
 const c = initContract();
 
@@ -14,6 +15,7 @@ const contract = c.router({
     dms: dmsContract,
     friends: friendsContract,
     users: usersContract,
+	auth: authContract
 	},
 	{
 		pathPrefix: "/api"

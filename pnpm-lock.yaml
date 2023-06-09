@@ -42,14 +42,14 @@ dependencies:
     specifier: ^4.15.0
     version: 4.15.0(prisma@4.15.0)
   '@ts-rest/core':
-    specifier: ^3.25.1
-    version: 3.25.1(zod@3.21.4)
+    specifier: ^3.26.0
+    version: 3.26.0(zod@3.21.4)
   '@ts-rest/nest':
-    specifier: ^3.25.1
-    version: 3.25.1(@nestjs/common@9.4.2)(@nestjs/core@9.4.2)(@ts-rest/core@3.25.1)(rxjs@7.8.1)(zod@3.21.4)
+    specifier: ^3.26.0
+    version: 3.26.0(@nestjs/common@9.4.2)(@nestjs/core@9.4.2)(@ts-rest/core@3.26.0)(rxjs@7.8.1)(zod@3.21.4)
   '@ts-rest/open-api':
-    specifier: ^3.25.1
-    version: 3.25.1(@ts-rest/core@3.25.1)(zod@3.21.4)
+    specifier: ^3.26.0
+    version: 3.26.0(@ts-rest/core@3.26.0)(zod@3.21.4)
   bcrypt:
     specifier: ^5.1.0
     version: 5.1.0
@@ -455,8 +455,8 @@ packages:
     resolution: {integrity: sha512-+9jVqKhRSpsc591z5vX+X5Yyw+he/HCB4iQ/RYxw35CEPaY1gnsNE43nf9n9AaYjAQrTiI/mOwKUKdUs9vf7Xg==}
     dev: false
 
-  /@ts-rest/core@3.25.1(zod@3.21.4):
-    resolution: {integrity: sha512-NAX38qzma4yws+9CZxcl3HavMK6gIcXIGIO84cSYgoFCCvgtlMNuUYl5L8r9vfGFImx8/4TkfUy/MIQTJqKG5Q==}
+  /@ts-rest/core@3.26.0(zod@3.21.4):
+    resolution: {integrity: sha512-KCxbuzWjrtCAq262D7bJPNxafX/TButIYqJk3kEcWId2lr/6MjEbhRWUAUfGVf1OiVGwsVX/exNYB/K+ycxZlg==}
     peerDependencies:
       zod: ^3.0.0
     peerDependenciesMeta:
@@ -466,12 +466,12 @@ packages:
       zod: 3.21.4
     dev: false
 
-  /@ts-rest/nest@3.25.1(@nestjs/common@9.4.2)(@nestjs/core@9.4.2)(@ts-rest/core@3.25.1)(rxjs@7.8.1)(zod@3.21.4):
-    resolution: {integrity: sha512-pBDt0EYFfVkBze3wdfMBFjj5JEwXBLpB5CRk/lW592vsdgd89wJBs+E8NgnuJ/FLYGgJXctfY10bwXExdbzycQ==}
+  /@ts-rest/nest@3.26.0(@nestjs/common@9.4.2)(@nestjs/core@9.4.2)(@ts-rest/core@3.26.0)(rxjs@7.8.1)(zod@3.21.4):
+    resolution: {integrity: sha512-lJMWD6p+whz/meaLJ0wb4RbRAjvr/PP73XWofGh1kWKVLiteTleP3/dNTF3o+pe2ptseufiwv2NZXFIkrtP1mA==}
     peerDependencies:
       '@nestjs/common': ^9.0.0
       '@nestjs/core': ^9.0.0
-      '@ts-rest/core': 3.25.1
+      '@ts-rest/core': 3.26.0
       rxjs: ^7.1.0
       zod: ^3.0.0
     peerDependenciesMeta:
@@ -480,19 +480,19 @@ packages:
     dependencies:
       '@nestjs/common': 9.4.2(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/core': 9.4.2(@nestjs/common@9.4.2)(@nestjs/platform-express@9.4.2)(@nestjs/websockets@9.4.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@ts-rest/core': 3.25.1(zod@3.21.4)
+      '@ts-rest/core': 3.26.0(zod@3.21.4)
       rxjs: 7.8.1
       zod: 3.21.4
     dev: false
 
-  /@ts-rest/open-api@3.25.1(@ts-rest/core@3.25.1)(zod@3.21.4):
-    resolution: {integrity: sha512-xukG0PFy/v1dqpNwva8F1Ji7fOREvISsndPBMbKcMC5yiROM9N8hN4NgRRI9MG+3DzsqV88c/vmgp/x/7Xdx8g==}
+  /@ts-rest/open-api@3.26.0(@ts-rest/core@3.26.0)(zod@3.21.4):
+    resolution: {integrity: sha512-ye00YDQeCRcOZjhwOOCO/uX7aXzkwRzcsZg62Uscqvc0MTqzCH47opLJkIhvJ4fEUYEKN4IW9W9YgjUr6c3E1w==}
     peerDependencies:
-      '@ts-rest/core': 3.25.1
+      '@ts-rest/core': 3.26.0
       zod: ^3.0.0
     dependencies:
       '@anatine/zod-openapi': 1.14.0(openapi3-ts@2.0.2)(zod@3.21.4)
-      '@ts-rest/core': 3.25.1(zod@3.21.4)
+      '@ts-rest/core': 3.26.0(zod@3.21.4)
       openapi3-ts: 2.0.2
       zod: 3.21.4
     dev: false

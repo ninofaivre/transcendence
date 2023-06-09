@@ -39,7 +39,6 @@ export class ChansController implements NestControllerInterface<typeof c>
 		return { status: 200 as const, body: null }
 	}
 
-	// TODO: full test because the setTimeout might be fucked up
 	@UseGuards(JwtAuthGuard)
 	@TsRest(c.joinChanById)
 	async joinChanById(@Req()req: EnrichedRequest, @TsRestRequest(){ body: { chanId, password } }: RequestShapes['joinChanById'])

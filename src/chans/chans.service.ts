@@ -360,7 +360,7 @@ export class ChansService {
 		await this.createAndNotifyClassicChanEvent(username, null, chanId, ClassicChanEventType.AUTHOR_LEAVED)
 	}
 
-	async createAndNotifyChanMessage(username: string, chanId: string, content: string, relatedTo: string | undefined, usersAt: string[] | undefined)
+	async createAndNotifyChanMessage(username: string, chanId: string, content: string, relatedTo: string | undefined, usersAt: string[] | undefined, rolesAt: string[] | undefined)
 	{
 		const res = (await this.prisma.chanDiscussionMessage.create({
 			data:
@@ -373,6 +373,10 @@ export class ChansService {
 				relatedUsers: (usersAt) ?
 				{
 					connect: usersAt.map(el => { return { name: el } })
+				} : undefined,
+				relatedRoles: (rolesAt) ?
+				{
+					connect: rolesAt.map(el => { return { chanId_name: { chanId, name: el } } })
 				} : undefined,
 				discussionElement:
 				{
@@ -423,12 +427,11 @@ export class ChansService {
 
 	async createChanMessageIfRightTo(username: string, chanId: string, dto: RequestShapes['createChanMessage']['body'])
 	{
-		const { relatedTo, content, usersAt } = dto
+		const { relatedTo, content, usersAt, rolesAt } = dto
 		await this.throwIfUserMutedInChan(username, chanId)
 		await this.throwIfUserNotAuthorizedInChan(username, chanId, PermissionList.SEND_MESSAGE)
-		const toCheck = await this.prisma.chan.findUnique({
-			where: { id: chanId },
-			select:
+		const { elements, users, roles } = await this.getChanOrThrow(
+			{ id: chanId },
 			{
 				elements: !!relatedTo &&
 				{
@@ -439,14 +442,20 @@ export class ChansService {
 				{
 					where: { name: { in: usersAt } },
 					select: { name: true }
+				},
+				roles: !!rolesAt &&
+				{
+					where: { name: { in: rolesAt } },
+					select: { name: true }
 				}
-			}
-		})
-		if (relatedTo && !toCheck?.elements.length)
+			})
+		if (relatedTo && !elements.length)
 			throw new ForbiddenException(`not found element ${relatedTo} in chan ${chanId}`)
-		if (usersAt && usersAt.length !== toCheck?.users.length)
+		if (usersAt && usersAt.length !== users.length)
 			throw new ForbiddenException(`not found one of users ${usersAt}`)
-		return this.createAndNotifyChanMessage(username, chanId, content, relatedTo, usersAt)
+		if (rolesAt && rolesAt.length !== roles.length)
+			throw new ForbiddenException(`not found one of roles ${rolesAt}`)
+		return this.createAndNotifyChanMessage(username, chanId, content, relatedTo, usersAt, rolesAt)
 	}
 
 	private async getChanElementOrThrow<Sel extends Prisma.ChanDiscussionElementSelect>(username: string, chanId: string, elementId: string, select: Prisma.Subset<Sel, Prisma.ChanDiscussionElementSelect>)

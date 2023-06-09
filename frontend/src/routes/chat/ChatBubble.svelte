@@ -22,7 +22,6 @@
 		id="message-bubble"
 		class={from_me ? "variant-filled-primary" : "variant-filled-secondary"}
 	>
-		<!-- style={from_me ? `margin-left: ${margin};` : `margin-right: ${margin} ;`} -->
 		{#if !from_me}
 			<div id="from-field">{from}</div>
 		{/if}
@@ -41,7 +40,7 @@
 					/>
 				</div>
 			{/if}
-			<div id="message-content" class="mx-2">
+			<div id="message-content">
 				<slot />
 			</div>
 		</div>
@@ -70,6 +69,12 @@
 		overflow-wrap: break-word; /*So that max-width is not ignored max-width if a word is too long*/
 		border-radius: 8px;
 		padding: 4px;
+	}
+
+	#from-field,
+	#message-content {
+		margin-left: 0.5rem;
+		margin-right: 0.5rem;
 	}
 
 	#from-field {

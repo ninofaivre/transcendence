@@ -39,3 +39,6 @@ tags
 .env
 package-lock.json
 Session.vim
+REMEMBER.md
+
+cookies.*.txt

@@ -23,7 +23,7 @@
 		class={from_me ? "variant-filled-primary" : "variant-filled-secondary"}
 	>
 		{#if !from_me}
-			<div id="from-field">{from}</div>
+			<div id="from-field" class="font-medium">{from}</div>
 		{/if}
 		<div id="message-container" class="grid grid-cols-[auto_1fr]">
 			{#if sent}
@@ -66,8 +66,9 @@
 	}
 
 	#message-bubble {
-		overflow-wrap: break-word; /*So that max-width is not ignored max-width if a word is too long*/
-		border-radius: 8px;
+		max-width: 80%;
+		overflow-wrap: break-word; /*So that max-width is not ignored if a word is too long*/
+		border-radius: 10px;
 		padding: 4px;
 	}
 

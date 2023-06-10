@@ -2,7 +2,7 @@
 	import type { Chan } from "$types"
 	import { sse_store } from "$lib/stores"
 
-	export let currentDiscussionId: number
+	export let currentDiscussionId: string
 	export let discussions: Chan[]
 
 	// This does not work

@@ -1,19 +1,9 @@
 <script lang="ts">
 	import { type ToastSettings, toastStore } from "@skeletonlabs/skeleton"
-	import { login } from "$lib/global"
-	import { usersClient } from "$lib/clients"
+	import { login, signup } from "$lib/global"
 
 	let username = ""
 	let password = ""
-
-	const signup = async () => {
-		return usersClient.signUp({
-			body: {
-				name: username,
-				password,
-			},
-		})
-	}
 
 	const signup_failed_toast: ToastSettings = {
 		message: "Signup failed",
@@ -25,12 +15,12 @@
 	async function formSubmit(e: SubmitEvent) {
 		if (e.submitter) {
 			if (e.submitter.id === "login") {
-				if (!(await login(username, password)).ok) {
-					console.log("Log-in failed")
+				const errcode = await login(username, password)
+				if (errcode > 400) {
 					toastStore.trigger(login_failed_toast)
 				}
 			} else if (e.submitter.id === "signup") {
-				const { status, body } = await signup()
+				const { status, body } = await signup(username, password)
 				if (status > 400) {
 					toastStore.trigger(signup_failed_toast)
 					console.log(
@@ -56,7 +46,7 @@
 					Password
 					<input bind:value={password} type="password" required class="input" />
 				</label>
-				<button id="login" type="submit" class="btn variant-filled-success">
+				<button id="login" type="submit" class="variant-filled-success btn">
 					Log in
 				</button>
 				<button id="signup" type="submit" class="btn variant-filled-primary">

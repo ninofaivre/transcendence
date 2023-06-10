@@ -25,7 +25,11 @@
 		})
 		if (status == 201) {
 			console.log("Server returned:", status, body)
-			invitationsClient.createChanInvitation({ body: { chanId: body.id, usernames } })
+			for (let invitedUserName in usernames) {
+				invitationsClient.chan.createChanInvitation({
+					body: { chanId: body.id, invitedUserName },
+				})
+			}
 			invalidate(":discussions") // Seems reasonnable and simpler to reload all the whole channel list
 		} else {
 			toastStore.trigger({

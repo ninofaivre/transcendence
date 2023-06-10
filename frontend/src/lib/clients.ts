@@ -6,6 +6,11 @@ import { PUBLIC_BACKEND_URL as baseUrl } from "$env/static/public"
 
 import contract from "$contract"
 
+export const authClient = initClient(contract.auth, {
+	baseUrl,
+	baseHeaders: {},
+})
+
 export const chansClient = initClient(contract.chans, {
 	baseUrl,
 	baseHeaders: {},

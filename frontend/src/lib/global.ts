@@ -1,5 +1,6 @@
 import { PUBLIC_BACKEND_URL } from "$env/static/public"
 import { logged_in } from "$lib/stores"
+import { authClient, usersClient } from "$clients"
 
 export function getCookie(cname: string) {
 	const name = cname + "="
@@ -76,24 +77,43 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: object, urlArgs
 
 export async function login(username: string, password: string) {
 	await logout()
-	const response = fetchPostJSON("/api/auth/login", {
-		username,
-		password,
+	const { status } = await authClient.login({
+		body: {
+			username,
+			password,
+		},
 	})
-	if ((await response).ok) {
+	if (status == 200) {
 		console.log("Login successful")
 		logged_in.set(true)
 	} else {
-		console.log("Login UNsuccessful", "Setting logged in as false")
+		console.log("Login UNsuccessful")
 	}
-	return response
+	return status
 }
 
 export async function logout() {
-	fetchGet("/api/auth/logout")
-		.catch(() => deleteCookie("access_token"))
-		.finally(() => {
+	return authClient
+		.logout()
+		.catch(({ status, message }) => {
+			console.warn(
+				`Can't log out. Server returned ${status} ${
+					message ? "without a message" : `${message}`
+				}`,
+			)
+		})
+		.then((result) => {
 			console.log("Logging out...")
 			logged_in.set(false)
+			return result
 		})
+}
+
+export async function signup(name: string, password: string) {
+	return usersClient.signUp({
+		body: {
+			name,
+			password,
+		},
+	})
 }

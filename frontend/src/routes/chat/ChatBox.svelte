@@ -4,7 +4,7 @@
 
 	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
 
-	export let currentDiscussionId: number
+	export let currentDiscussionId: string
 	export let minRows = 1
 	export let maxRows: number | undefined
 	export let disabled = false

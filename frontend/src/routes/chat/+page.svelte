@@ -21,7 +21,7 @@
 	const discussions: Chan[] = data.discussions as Chan[]
 	// const discussions = data.discussions // Why can't SK infer the type !?
 
-	let currentDiscussionId: number = discussions[0]?.id
+	let currentDiscussionId: string = discussions[0]?.id
 
 	let header: HTMLElement | null
 	let header_height: number

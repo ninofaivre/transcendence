@@ -9,7 +9,7 @@
 	import { sse_store } from "$stores"
 	import { chansClient } from "$clients"
 
-	export let currentDiscussionId: number // To detect change of current conversation
+	export let currentDiscussionId: string // To detect change of current conversation
 	export let new_message: [string, Promise<Response>]
 
 	let displayed_messages: ChanMessages = []
@@ -55,10 +55,10 @@
 		console.log("switchMessages was called ")
 		if (_currentDiscussionId === currentDiscussionId) {
 			load_error = false
-			const { body, status } = await chansClient.getChanMessages({
+			const { body, status } = await chansClient.getChanElements({
 				params: { chanId: currentDiscussionId.toString() },
 				query: {
-					nMessages: initial_load,
+					nElements: initial_load,
 				},
 			})
 			if (status === 200) {
@@ -74,9 +74,9 @@
 		const oldest_message = canary.nextElementSibling as HTMLElement
 		const start = oldest_message?.dataset?.id
 		if (start && entry.isIntersecting) {
-			const { status, body } = await chansClient.getChanMessages({
+			const { status, body } = await chansClient.getChanElements({
 				params: { chanId: currentDiscussionId.toString() },
-				query: { nMessages: loading_greediness, cursor: Number(start) },
+				query: { nElements: loading_greediness, cursor: start },
 			})
 			if (status == 200) {
 				if (body.length > 0) {

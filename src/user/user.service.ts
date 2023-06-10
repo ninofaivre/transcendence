@@ -69,6 +69,16 @@ export class UserService {
 	// 	await Promise.all([updatePromise, addEventPromise])
 	// }
 
+    async searchUsers(username: string, contains: string, nRes: number) {
+        const res = await this.prisma.user.findMany({
+            where: { name: { contains } },
+            take: nRes,
+            orderBy: { name: "asc" },
+            select: { name: true }
+        })
+        return res.map(el => ({ userName: el.name }))
+    }
+
 	async getUserByName(name: string, select: Prisma.UserSelect) {
 		return this.prisma.user.findUnique({ where: { name: name }, select: select })
 	}

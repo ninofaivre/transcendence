@@ -6,6 +6,23 @@ const c = initContract()
 
 export const usersContract = c.router(
 	{
+        searchUsers: {
+            method: "GET",
+            path: "/",
+            summary: "search for users",
+            description: "not finished yet (beta)",
+            query: z.strictObject({
+                userNameContains: zUserName,
+                nResult: z.number().positive().int().max(30).default(10)
+            }),
+            responses: {
+                200: z.array(
+                    z.object({
+                        userName: zUserName
+                    })
+                )
+            }
+        },
 		getMe: {
 			method: "GET",
 			path: "/@me",

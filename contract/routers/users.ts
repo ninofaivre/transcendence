@@ -1,8 +1,16 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName, zUserPassword } from "../zod/user.zod"
 import { z } from "zod"
+import { zChanTitle, zChanType } from "./chans"
 
 const c = initContract()
+
+export const zUserProfileReturn = z.strictObject({
+    dmPolicyLevel: z.enum(["ONLY_FRIEND", "IN_COMMON_CHAN", "ANYONE"]),
+    userName: zUserName,
+    commonChans: z.array(z.strictObject({ type: zChanType, title: zChanTitle.nullable(), id: z.string().uuid() })),
+    blocked: z.string().uuid().optional()
+})
 
 export const usersContract = c.router(
 	{

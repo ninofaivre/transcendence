@@ -11,13 +11,33 @@ import { Prisma, User } from "@prisma/client"
 import { concat, Subject } from "rxjs"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import contract from "contract/contract"
+import { z } from "zod"
+import { zUserProfileReturn } from "contract/routers/users"
 
 const c = nestControllerContract(contract.users)
 type RequestShapes = NestRequestShapes<typeof c>
 
 @Injectable()
 export class UserService {
+
 	constructor(private readonly prisma: PrismaService) {}
+
+    getUserSelectForUser(username: string) {
+        return {
+            name: true,
+            chans: {
+                where: { users: { some: { name: username } } },
+                select: { title: true, id: true, type: true }
+            },
+            dmPolicyLevel: true,
+            blockedUser: { where: { blockedUserName: username }, select: { id: true }, take: 1 }
+        } satisfies Prisma.UserSelect
+    }
+
+    private userSelectGetPayload =
+    {
+        select: this.getUserSelectForUser("example")
+    } satisfies Prisma.UserArgs
 
 	// async getBlockedUsers(username: string, filter: blockedFilterType)
 	// {
@@ -68,15 +88,30 @@ export class UserService {
 	// 	const addEventPromise = this.pushEvent(blockedUsername, { data: { user: blockingUsername }, type: "createdBlocked" })
 	// 	await Promise.all([updatePromise, addEventPromise])
 	// }
+    
+    formatUserForUser(username: string, toFormat: Prisma.UserGetPayload<typeof this.userSelectGetPayload>)
+    : z.infer<typeof zUserProfileReturn> {
+        const { name, chans, blockedUser,...rest } = toFormat
+        return {
+            ...rest,
+            userName: name,
+            commonChans: chans,
+            blocked: (blockedUser.length) ? blockedUser[0].id : undefined
+        }
+    }
+
+    formatUserForUserArray(username: string, toFormat: Prisma.UserGetPayload<typeof this.userSelectGetPayload>[]) {
+        return toFormat.map(el => this.formatUserForUser(username, el))
+    }
 
     async searchUsers(username: string, contains: string, nRes: number) {
         const res = await this.prisma.user.findMany({
             where: { name: { contains } },
             take: nRes,
             orderBy: { name: "asc" },
-            select: { name: true }
+            select: this.getUserSelectForUser(username)
         })
-        return res.map(el => ({ userName: el.name }))
+        return this.formatUserForUserArray(username, res)
     }
 
 	async getUserByName(name: string, select: Prisma.UserSelect) {

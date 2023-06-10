@@ -12,7 +12,7 @@ const zClassicChanEventType = z.enum([
 	"AUTHOR_JOINED",
 	"AUTHOR_MUTED_CONCERNED",
 ])
-const zChanType = z.enum(["PUBLIC", "PRIVATE"])
+export const zChanType = z.enum(["PUBLIC", "PRIVATE"])
 const zPermissionList = z.enum([
 	"SEND_MESSAGE",
 	"DELETE_MESSAGE",

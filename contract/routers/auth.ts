@@ -1,5 +1,5 @@
 import { initContract } from "@ts-rest/core"
-import { zUserName, zUserPassword } from "contract/zod/user.zod"
+import { zUserName, zUserPassword } from "../zod/user.zod"
 import { z } from "zod"
 
 const c = initContract()

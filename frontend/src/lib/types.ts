@@ -7,7 +7,7 @@ type Flatten<T> = T extends any[] ? T[number] : T
 export type Chans = ClientInferResponseBody<typeof contract.chans.getMyChans, 200>
 export type Chan = Flatten<Chans>
 
-export type ChanMessages = ClientInferResponseBody<typeof contract.chans.getChanMessages, 200>
+export type ChanMessages = ClientInferResponseBody<typeof contract.chans.getChanElements, 200>
 export type ChanMessage = Flatten<ChanMessages>
 
 export type Conversations = ClientInferResponseBody<typeof contract.dms.getDms, 200>

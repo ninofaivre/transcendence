@@ -11,8 +11,8 @@
 	let friend_request_form: HTMLFormElement
 	async function sendFriendRequest() {
 		const username = new FormData(friend_request_form).get("invitee")! as string
-		const { status, body } = await invitationsClient.createFriendInvitation({
-			body: { username },
+		const { status, body } = await invitationsClient.friend.createFriendInvitation({
+			body: { invitedUserName: username },
 		})
 		if (status != 201) {
 			const message = `Could not create friend request. Server returned code ${status}\n with message \"${

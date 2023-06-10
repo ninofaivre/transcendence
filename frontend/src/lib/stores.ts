@@ -1,11 +1,14 @@
 import { derived } from "svelte/store"
 
 import { localStorageStore } from "@skeletonlabs/skeleton"
-import { usersClient } from "$lib/clients"
+import { usersClient } from "$clients"
+import { get } from "svelte/store"
 
 console.log("The stores module is being executed...")
 
 export const logged_in = localStorageStore("logged", false)
+
+console.log("Am I logged in ?:", get(logged_in))
 
 export const my_name = derived(
 	logged_in,

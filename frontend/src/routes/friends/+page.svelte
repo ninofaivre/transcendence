@@ -12,11 +12,30 @@
 	import SendFriendRequest from "./SendFriendRequest.svelte"
 
 	async function acceptInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
-		const idString = e.currentTarget.dataset.id
-		if (idString) {
-			const invitationId = Number(idString)
-			const { status, body } = await friendsClient.acceptFriendInvitation({
-				body: { invitationId },
+		const id = e.currentTarget.dataset.id
+		if (id) {
+			const { status, body } = await invitationsClient.friend.updateFriendInvitation({
+				params: { id },
+				body: { status: "ACCEPTED" },
+			})
+			if (status != 201) {
+				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
+					(body as any)?.message
+				}\"`
+				toastStore.trigger({
+					message,
+				})
+				console.error(message)
+			}
+		}
+	}
+
+	async function declineInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
+		const id = e.currentTarget.dataset.id
+		if (id) {
+			const { status, body } = await invitationsClient.friend.updateFriendInvitation({
+				params: { id },
+				body: { status: "REFUSED" },
 			})
 			if (status != 201) {
 				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
@@ -32,10 +51,6 @@
 
 	$: friendships = $page.data.friendships
 	console.log("Your friendships are:", $page.data.friendships)
-
-	async function declineInvitation(_e: MouseEvent & { currentTarget: HTMLButtonElement }) {
-		console.log("This has not been implemented yet")
-	}
 
 	type friendType = ClientInferResponseBody<typeof contract.friends.getFriends, 200>[number]
 
@@ -69,7 +84,11 @@
 					class="variant-ghost-primary chip"
 					on:click={acceptInvitation}>✅</button
 				>
-				<button data-id={request.id} class="variant-ghost-error chip">❌</button>
+				<button
+					data-id={request.id}
+					class="variant-ghost-error chip"
+					on:click={declineInvitation}>❌</button
+				>
 			</li>
 		{/each}
 	{:else}

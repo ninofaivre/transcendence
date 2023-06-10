@@ -4,7 +4,7 @@ import { InvitationEvent, invitationsContract } from "./routers/invitations"
 import { DmEvent, dmsContract } from "./routers/dms"
 import { FriendEvent, friendsContract } from "./routers/friends"
 import { usersContract } from "./routers/users"
-import { MessageEvent } from "@nestjs/common"
+import type { MessageEvent } from "@nestjs/common"
 import { authContract } from "./routers/auth"
 
 const c = initContract()

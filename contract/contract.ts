@@ -11,7 +11,7 @@ const c = initContract()
 
 const contract = c.router(
 	{
-		chans: chansContract,
+	    chans: chansContract,
 		invitations: invitationsContract,
 		dms: dmsContract,
 		friends: friendsContract,

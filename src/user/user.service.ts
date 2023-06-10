@@ -1,19 +1,23 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'nestjs-prisma';
-import { MessageEvent, NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common'
-import { hash } from 'bcrypt'
-import { Prisma, User } from '@prisma/client';
-import { concat, Subject } from 'rxjs';
-import { NestRequestShapes, nestControllerContract } from '@ts-rest/nest';
-import contract from 'contract/contract';
+import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common"
+import { PrismaService } from "nestjs-prisma"
+import {
+	MessageEvent,
+	NotFoundException,
+	UnauthorizedException,
+	ConflictException,
+} from "@nestjs/common"
+import { hash } from "bcrypt"
+import { Prisma, User } from "@prisma/client"
+import { concat, Subject } from "rxjs"
+import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
+import contract from "contract/contract"
 
 const c = nestControllerContract(contract.users)
 type RequestShapes = NestRequestShapes<typeof c>
 
 @Injectable()
-export class UserService
-{
-	constructor(private readonly prisma: PrismaService) { }
+export class UserService {
+	constructor(private readonly prisma: PrismaService) {}
 
 	// async getBlockedUsers(username: string, filter: blockedFilterType)
 	// {
@@ -48,9 +52,6 @@ export class UserService
 	// 	await Promise.all([updatePromise, addEventPromise])
 	// }
 
-
-
-
 	// async blockUser(blockingUsername: string, blockedUsername: string)
 	// {
 	// 	const checkBlockedUserExistance = this.getUserByNameOrThrow(blockedUsername)
@@ -68,21 +69,33 @@ export class UserService
 	// 	await Promise.all([updatePromise, addEventPromise])
 	// }
 
-	async getUserByName(name: string, select: Prisma.UserSelect)
-	{
+    async searchUsers(username: string, contains: string, nRes: number) {
+        const res = await this.prisma.user.findMany({
+            where: { name: { contains } },
+            take: nRes,
+            orderBy: { name: "asc" },
+            select: { name: true }
+        })
+        return res.map(el => ({ userName: el.name }))
+    }
+
+	async getUserByName(name: string, select: Prisma.UserSelect) {
 		return this.prisma.user.findUnique({ where: { name: name }, select: select })
 	}
 
-	public async getUserByNameOrThrow<T extends Prisma.UserSelect>(username: string, select: Prisma.SelectSubset<T, Prisma.UserSelect>)
-	{
-		const user = await this.prisma.user.findUnique({ where: { name: username }, select: select })
-		if (!user)
-			throw new NotFoundException(`not found user ${username}`)
+	public async getUserByNameOrThrow<T extends Prisma.UserSelect>(
+		username: string,
+		select: Prisma.SelectSubset<T, Prisma.UserSelect>,
+	) {
+		const user = await this.prisma.user.findUnique({
+			where: { name: username },
+			select: select,
+		})
+		if (!user) throw new NotFoundException(`not found user ${username}`)
 		return user
 	}
 
-	async createUser(user: RequestShapes['signUp']['body'])
-	{
+	async createUser(user: RequestShapes["signUp"]["body"]) {
 		if (await this.getUserByName(user.name, { name: true }))
 			throw new ConflictException("user already exist")
 		user.password = await hash(user.password, 10)

@@ -1,5 +1,5 @@
 import { initContract } from "@ts-rest/core"
-import { zUserName } from "../zod/user.zod"
+import { zUserName, zUserPassword } from "contract/zod/user.zod"
 import { z } from "zod"
 
 const c = initContract()
@@ -18,7 +18,7 @@ export const authContract = c.router(
 			path: "/login",
 			body: z.strictObject({
 				username: zUserName,
-				password: z.string(),
+				password: zUserPassword,
 			}),
 			responses: {
 				202: c.response<null>(),

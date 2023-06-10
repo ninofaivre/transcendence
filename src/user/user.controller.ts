@@ -1,31 +1,43 @@
-import { Body, Get, Post, UseGuards, ValidationPipe, Sse, MessageEvent, Delete, Param, Query, Res, Next, NotImplementedException } from '@nestjs/common';
-import { Controller, Request } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { UserService } from './user.service'
-import { ApiBody, ApiParam, ApiProperty, ApiResponseProperty, ApiTags } from '@nestjs/swagger';
-import { NestControllerInterface, NestRequestShapes, TsRest, TsRestRequest, nestControllerContract } from '@ts-rest/nest';
-import contract from 'contract/contract';
+import {
+	UseGuards,
+} from "@nestjs/common"
+import { Controller, Request } from "@nestjs/common"
+import { JwtAuthGuard } from "../auth/jwt-auth.guard"
+import { UserService } from "./user.service"
+import {
+	NestControllerInterface,
+	NestRequestShapes,
+	TsRest,
+	TsRestRequest,
+	nestControllerContract,
+} from "@ts-rest/nest"
+import contract from "contract/contract"
+import { EnrichedRequest } from "src/auth/auth.service"
 
 const c = nestControllerContract(contract.users)
 type RequestShapes = NestRequestShapes<typeof c>
 
+@TsRest({jsonQuery: true})
 @Controller()
-export class UserController implements NestControllerInterface<typeof c>
-{
-
+export class UserController implements NestControllerInterface<typeof c> {
 	constructor(private userService: UserService) {}
+
+    @UseGuards(JwtAuthGuard)
+    @TsRest(c.searchUsers)
+    async searchUsers(@Request() req: EnrichedRequest, @TsRestRequest(){ query: { nResult, userNameContains } }: RequestShapes["searchUsers"]) {
+        const body = await this.userService.searchUsers(req.user.username, userNameContains, nResult)
+        return { status: 200 as const, body }
+    }
 
 	@UseGuards(JwtAuthGuard)
 	@TsRest(c.getMe)
-	async getMe(@Request() req: any)
-	{
+	async getMe(@Request() req: EnrichedRequest) {
 		const body = { name: req.user.username }
-		return { status: 200 as const, body: body }
+		return { status: 200 as const, body }
 	}
 
 	@TsRest(c.signUp)
-	async signUp(@TsRestRequest(){ body: requestBody }: RequestShapes['signUp'])
-	{
+	async signUp(@TsRestRequest() { body: requestBody }: RequestShapes["signUp"]) {
 		const responseBody = await this.userService.createUser(requestBody)
 		return { status: 201 as const, body: responseBody }
 	}

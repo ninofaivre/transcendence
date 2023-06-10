@@ -1,5 +1,5 @@
 import type { LoadEvent } from "@sveltejs/kit"
-import { usersClient, friendsClient, invitationsClient } from "$lib/clients"
+import { friendsClient, invitationsClient } from "$lib/clients"
 
 export const load = async ({ depends }: LoadEvent) => {
 	depends(":friendships")
@@ -15,8 +15,8 @@ export const load = async ({ depends }: LoadEvent) => {
 	} else console.log("Loaded friendship list")
 
 	const { status: retcode2, body: friend_requests } =
-		await invitationsClient.getFriendInvitationsByType({
-			params: { type: "INCOMING" },
+		await invitationsClient.friend.getFriendInvitations({
+			query: { status: ["PENDING"] },
 		})
 	if (retcode2 !== 200) {
 		console.log(

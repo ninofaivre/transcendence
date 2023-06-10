@@ -5,9 +5,9 @@
 	export let from = ""
 	export let from_me = false
 	export let sent = true
-	export let data_id = -1
+	export let data_id: string
 
-	from_me = false
+	// from_me = false
 </script>
 
 <div

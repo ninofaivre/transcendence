@@ -29,11 +29,16 @@
 			displayed_messages = [
 				...displayed_messages,
 				{
-					id: -1,
-					message: { content: msg, relatedTo: null, relatedRoles: [], relatedUsers: [] },
-					author: $my_name,
+					id: "none",
 					creationDate: new Date(),
-					event: null,
+					authorName: $my_name,
+					type: "message",
+					message: {
+						content: msg,
+						relatedTo: null,
+						relatedUsers: [],
+						relatedRoles: [],
+					},
 				},
 			]
 			msg_promise.then(({ status, body }) => {
@@ -130,15 +135,15 @@
 		{#each displayed_messages as message}
 			<ChatBubble
 				data_id={message.id}
-				from_me={message.author === $my_name}
-				from={message.author}
-				sent={message.id < 0}
+				from_me={message.authorName === $my_name}
+				from={message.authorName}
+				sent={message.id !== "none"}
 			>
-				{@const data = message.message?.content}
-				{#if data}
-					{data}
+				{#if message.type === "message"}
+					{message.message.content}
 				{:else}
-					{message.event}
+					{JSON.stringify(message.event)}
+					<!-- {message.event} -->
 				{/if}
 			</ChatBubble>
 		{:else}

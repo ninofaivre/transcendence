@@ -15,3 +15,6 @@ export type Conversation = Flatten<Conversations>
 
 export type DirectMessages = ClientInferResponseBody<typeof contract.dms.getDms, 200>
 export type DirectMessage = Flatten<DirectMessages>
+
+export type Friendships = ClientInferResponseBody<typeof contract.friends.getFriends, 200>
+export type Friendship = Flatten<Friendships>

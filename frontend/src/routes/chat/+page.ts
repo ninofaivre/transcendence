@@ -1,5 +1,6 @@
 import type { LoadEvent } from "@sveltejs/kit"
 import { chansClient, friendsClient } from "$lib/clients"
+import type { Friendship } from "$types"
 
 export const load = async ({ depends }: LoadEvent) => {
 	depends(":discussions")
@@ -22,5 +23,7 @@ export const load = async ({ depends }: LoadEvent) => {
 		)
 	}
 
-	return { discussions, friendships }
+    const friendList = friendships.map((friendship: Friendship) => friendship.friendName)
+
+	return { discussions, friendships, friendList }
 }

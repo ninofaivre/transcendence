@@ -83,11 +83,11 @@ export async function login(username: string, password: string) {
 			password,
 		},
 	})
-	if (status == 200) {
+	if (status < 400) {
 		console.log("Login successful")
 		logged_in.set(true)
 	} else {
-		console.log("Login UNsuccessful")
+		console.log("Login UNsuccessful. Server returned:", status)
 	}
 	return status
 }

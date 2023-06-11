@@ -5,7 +5,8 @@
 	import { invalidate } from "$app/navigation"
 	import { chansClient, invitationsClient } from "$clients"
 	import { page } from "$app/stores"
-	import { my_name } from "$stores"
+
+    export let friendList: string[]
 
 	let show_discussion_creation_form = false
 	let minlength = 3
@@ -48,16 +49,11 @@
 		return true
 	}
 
+    
+
 	let input: string
 	let value: string[]
-	// let friends: string[] = ["alice", "bob", "cha", "denis", "john", "zelda"]
-	let friends: string[] = $page.data.friendships.map(
-		({ requestedUserName, requestingUserName }: any) => {
-			return $my_name === requestingUserName ? requestedUserName : requestingUserName
-		},
-	)
-	console.log("Current friends:", friends)
-	let friendOptions: AutocompleteOption[] = friends.map((username) => ({
+	let friendOptions: AutocompleteOption[] = friendList.map((username) => ({
 		label: username,
 		value: username,
 	}))
@@ -76,6 +72,9 @@
 	</button>
 {:else}
 	<!-- TODO: Try width: min-content; on the form's parent or display: inline-block; on the form element to see if it fixes unwantd widening  -->
+    <pre>
+        {JSON.stringify(friendList)}
+    </pre>
 	<form
 		bind:this={form}
 		on:submit|preventDefault|stopPropagation={handleDiscussionCreation}
@@ -95,7 +94,7 @@
 		/>
 		<label for="priv" class="label">Make private</label>
 		<input id="priv" type="checkbox" bind:checked={priv} />
-		{#if friends.length != 0}
+		{#if friendList.length != 0}
 			<label for="invites" class="label">Send invites</label>
 			<InputChip bind:input bind:value name="users" id="invites" {validation} />
 			<Autocomplete

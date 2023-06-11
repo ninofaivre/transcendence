@@ -60,7 +60,7 @@
 			style="height: calc(100vh - {header_height}px);"
 		>
 			<section class="p-4">
-				<CreateDiscussion />
+				<CreateDiscussion friendList={data.friendList}/>
 			</section>
 			<section id="discussions" class="overflow-y-auto">
 				<DiscussionList {discussions} bind:currentDiscussionId />
@@ -88,7 +88,7 @@
 			You haven't started any conversations yet
 		</div>
 		<div class="mx-auto my-10">
-			<CreateDiscussion />
+			<CreateDiscussion friendList={data.friendList}/>
 		</div>
 	</div>
 {/if}

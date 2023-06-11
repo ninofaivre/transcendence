@@ -14,7 +14,6 @@ const config = {
 			fallback: "index.html",
 		}),
 		alias: {
-			$contract: "../contract/contract",
 			$types: "src/lib/types",
 			$stores: "src/lib/stores",
 			$clients: "src/lib/clients",

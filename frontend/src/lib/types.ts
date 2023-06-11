@@ -1,6 +1,6 @@
 import type { ClientInferResponseBody } from "@ts-rest/core"
 
-import type contract from "$contract"
+import type {contract} from "contract"
 
 type Flatten<T> = T extends any[] ? T[number] : T
 

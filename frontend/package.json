@@ -43,6 +43,8 @@
   "type": "module",
   "dependencies": {
     "@sveltejs/adapter-static": "^2.0.2",
+    "@ts-rest/core": "^3.26.0",
+    "contract": "link:../contract",
     "cors": "^2.8.5",
     "socket.io-client": "^4.6.2"
   },

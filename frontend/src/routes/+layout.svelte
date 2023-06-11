@@ -35,7 +35,7 @@
 <AppShell>
 	<svelte:fragment slot="header">
 		<!-- App Bar -->
-		<AppBar slotDefault="place-self-center">
+		<AppBar slotDefault="place-self-center grid grid-cols-4" gap="gap-x-1">
 			<svelte:fragment slot="lead">
 				<strong
 					class="origin-center -rotate-45 py-8 text-xs uppercase md:rotate-0 md:text-lg lg:text-xl xl:text-2xl"
@@ -61,6 +61,12 @@
 					href="/dms"
 				>
 					✉️
+				</a>
+				<a
+					class="variant-filled-success btn btn-sm mx-4 mt-1 text-2xl font-semibold"
+					href="/friends"
+				>
+                    🤝
 				</a>
 			{/if}
 			<svelte:fragment slot="trail">

@@ -1,7 +1,7 @@
 {
 	"dependencies": {
-		"@anatine/zod-openapi": "^...",
-		"@nestjs/common": "^...",
+		"@anatine/zod-openapi": "^1.14.0",
+		"@nestjs/common": "^9.4.2",
 		"@nestjs/config": "^2.3.2",
 		"@nestjs/core": "^9.4.2",
 		"@nestjs/jwt": "^10.0.3",
@@ -12,9 +12,9 @@
 		"@nestjs/swagger": "^6.3.0",
 		"@nestjs/websockets": "^9.4.2",
 		"@prisma/client": "^4.15.0",
-		"@ts-rest/core": "^...",
+		"@ts-rest/core": "^3.26.0",
 		"@ts-rest/nest": "^3.26.0",
-		"@ts-rest/open-api": "^...",
+		"@ts-rest/open-api": "^3.26.0",
 		"bcrypt": "^5.1.0",
 		"cookie": "^0.5.0",
 		"cookie-parser": "^1.4.6",
@@ -28,7 +28,7 @@
 		"rxjs": "^7.8.1",
 		"source-map-support": "^0.5.21",
 		"swagger-themes": "^1.2.28",
-		"zod": "^..."
+		"zod": "^3.21.4"
 	},
 	"devDependencies": {
 		"@types/bcrypt": "^5.0.0",

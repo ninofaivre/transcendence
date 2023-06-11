@@ -5,7 +5,7 @@
 	import { Table } from "@skeletonlabs/skeleton"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import type { ClientInferResponseBody } from "@ts-rest/core"
-	import type contract from "$contract"
+	import type { contract } from "contract"
 
 	type friendType = ClientInferResponseBody<typeof contract.friends.getFriends, 200>[number]
 

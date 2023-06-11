@@ -1,5 +1,5 @@
 import type { LoadEvent } from "@sveltejs/kit"
-import { usersClient, friendsClient } from "$lib/clients"
+import { friendsClient } from "$clients"
 
 export const load = async ({ depends }: LoadEvent) => {
 	const ret: any = {}

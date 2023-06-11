@@ -4,11 +4,8 @@
 	import { page } from "$app/stores"
 	import { Table } from "@skeletonlabs/skeleton"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
-	import type { ClientInferResponseBody } from "@ts-rest/core"
-	import type contract from "$contract"
-	import { friendsClient, invitationsClient } from "$clients"
+	import { invitationsClient } from "$clients"
 	import { toastStore } from "@skeletonlabs/skeleton"
-	import { my_name } from "$stores"
 	import SendFriendRequest from "./SendFriendRequest.svelte"
 
 	async function acceptInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
@@ -18,7 +15,7 @@
 				params: { id },
 				body: { status: "ACCEPTED" },
 			})
-			if (status != 201) {
+			if (status >= 400) {
 				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
@@ -52,15 +49,13 @@
 	$: friendships = $page.data.friendships
 	console.log("Your friendships are:", $page.data.friendships)
 
-	type friendType = ClientInferResponseBody<typeof contract.friends.getFriends, 200>[number]
-
 	const friendTableSource: TableSource = {
 		// A list of heading labels.
 		head: ["Friends"],
 		// The data visibly shown in your table body UI.
 		body: tableMapperValues(
 			$page.data.friendships,
-			["requestingUserName"], // This is ofc incorrect, waiting for the right field, probably "friendName"
+			["friendName"], // This is ofc incorrect, waiting for the right field, probably "friendName"
 		),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
 		// meta: tableMapperValues($page.data.friends, ["position", "name", "symbol", "weight"]),
@@ -72,9 +67,9 @@
 <SendFriendRequest />
 
 <ul class="m-3">
-	{#if $page.data.friend_requests.length != 0}
+	{#if $page.data.friend_requests.incoming.length != 0}
 		Pending invitations:
-		{#each $page.data.friend_requests as request}
+		{#each $page.data.friend_requests.incoming as request}
 			<li class="chip variant-soft m-2">
 				<span>
 					{request.invitingUserName}
@@ -93,21 +88,6 @@
 		{/each}
 	{:else}
 		<p class="text-center text-2xl font-bold">You have no pending invitations</p>
-	{/if}
-</ul>
-
-<ul class="m-3 list-disc">
-	{#if friendships.length != 0}
-		Your friends:
-		{#each friendships as friendship}
-			<li class="">
-				{friendship.requestingUserName !== $my_name
-					? friendship.requestingUserName
-					: friendship.requestedUserName}
-			</li>
-		{/each}
-	{:else}
-		<p class="text-center text-2xl font-bold">You don't have any friends yet</p>
 	{/if}
 </ul>
 

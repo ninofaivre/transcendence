@@ -25,5 +25,6 @@ export const load = async ({ depends }: LoadEvent) => {
 			}\"`,
 		)
 	} else console.log("Loaded friendship requests list")
+    console.log({ friendships, friend_requests })
 	return { friendships, friend_requests }
 }

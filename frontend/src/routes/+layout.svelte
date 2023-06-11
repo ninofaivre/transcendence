@@ -19,7 +19,7 @@
 
 	$: {
 		if ($logged_in == true) {
-			goto("/chat")
+			goto("/friends")
 		} else if ($logged_in == false) {
 			goto("/auth")
 		}

@@ -83,11 +83,11 @@
 		</div>
 	</div>
 {:else}
-	<div id="convo" class="my-10 flex h-full flex-col justify-center">
-		<div class="mx-auto text-center text-3xl font-bold">
+	<div id="convo" class="flex flex-col justify-center my-10 h-full">
+		<div class="mx-auto text-3xl font-bold text-center">
 			You haven't started any conversations yet
 		</div>
-		<div class="mx-auto my-10">
+		<div class="my-10 mx-auto">
 			<CreateDiscussion friendList={data.friendList}/>
 		</div>
 	</div>

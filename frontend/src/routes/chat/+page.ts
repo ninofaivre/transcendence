@@ -14,16 +14,17 @@ export const load = async ({ depends }: LoadEvent) => {
 	}
 
 	depends(":friends")
-	const { status: status2, body: friendships } = await friendsClient.getFriends()
-	if (status >= 400) {
+	const { status: status2, body: friendships} = await friendsClient.getFriends() 
+    let friendList: string[] = []
+	if (status2 === 200) {
+        friendList = friendships.map((friendship) => friendship.friendName)
+	}
+    else {
 		console.log(
 			`Failed to load friend list. Server returned code ${status2} with message \"${
 				(friendships as any)?.message
 			}\"`,
 		)
-	}
-
-    const friendList = friendships.map((friendship: Friendship) => friendship.friendName)
-
-	return { discussions, friendships, friendList }
+    }
+    return { discussions, friendships, friendList }
 }

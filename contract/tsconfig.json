@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+		"module": "commonjs",
+        "declaration": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "moduleResolution": "Node",
+        "target": "es2021",
+        "outDir": "./dist",
+    }
+}

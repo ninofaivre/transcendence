@@ -7,6 +7,9 @@
   "files": [
     "/dist"
   ],
+  "scripts": {
+    "build": "pnpm tsc -p ."
+  },
   "dependencies": {
     "@anatine/zod-openapi": "^1.14.0",
     "@nestjs/common": "^9.4.2",

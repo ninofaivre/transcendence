@@ -3,7 +3,7 @@ import { AppModule } from "./app.module"
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from "@nestjs/swagger"
 import * as cookieParser from "cookie-parser"
 import { SwaggerTheme } from "swagger-themes"
-import { PrismaClientExceptionFilter, PrismaService } from "nestjs-prisma"
+import { PrismaClientExceptionFilter, CustomPrismaService } from "nestjs-prisma"
 import { generateOpenApi } from "@ts-rest/open-api"
 import { contract } from "contract"
 import { HttpStatus } from "@nestjs/common"
@@ -34,10 +34,12 @@ async function bootstrap() {
 		generateOpenApi(contract, config, { setOperationId: true, jsonQuery: true }),
 	)
 	SwaggerModule.setup("api", app, document, options)
-	const prismaService: PrismaService = app.get(PrismaService)
-	prismaService.$on("query", (event) => {
-		console.log(event)
-	})
+
+    // TODO : patch this with custom client location
+	// const prismaService: PrismaService = app.get(PrismaService)
+	// prismaService.$on("query", (event) => {
+	// 	console.log(event)
+	// })
 
 	const { httpAdapter } = app.get(HttpAdapterHost)
 	app.useGlobalFilters(

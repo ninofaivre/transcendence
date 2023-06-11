@@ -14,7 +14,7 @@ export const load = async ({ depends }: LoadEvent) => {
 
 	depends(":friends")
 	const { status: status2, body: friendships } = await friendsClient.getFriends()
-	if (status !== 200) {
+	if (status >= 400) {
 		console.log(
 			`Failed to load friend list. Server returned code ${status2} with message \"${
 				(friendships as any)?.message

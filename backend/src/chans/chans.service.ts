@@ -27,7 +27,7 @@ import {
 	zChanDiscussionEventReturn,
 } from "contract"
 import { z } from "zod"
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime"
+import { PrismaClientKnownRequestError } from "@prisma/client"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
 
 const c = nestControllerContract(contract.chans)

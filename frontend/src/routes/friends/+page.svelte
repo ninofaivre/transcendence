@@ -5,7 +5,7 @@
 	import { Table } from "@skeletonlabs/skeleton"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import type { ClientInferResponseBody } from "@ts-rest/core"
-	import type contract from "$contract"
+	import type { contract } from "contract"
 	import { friendsClient, invitationsClient } from "$clients"
 	import { toastStore } from "@skeletonlabs/skeleton"
 	import { my_name } from "$stores"

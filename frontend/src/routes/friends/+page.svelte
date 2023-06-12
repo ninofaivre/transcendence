@@ -4,7 +4,7 @@
 	import { page } from "$app/stores"
 	import { Table } from "@skeletonlabs/skeleton"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
-	import { invitationsClient } from "$clients"
+	import { dmsClient, invitationsClient } from "$clients"
 	import { toastStore } from "@skeletonlabs/skeleton"
 	import SendFriendRequest from "./SendFriendRequest.svelte"
 
@@ -47,21 +47,17 @@
 	}
 
     function messageFriend(e: Event) {
-        alert(JSON.stringify(e))
+        // dmsClient.getDmIdWithName(e.detail)
     }
 
-	$: friendships = $page.data.friendships
 	console.log("Your friendships are:", $page.data.friendships)
+	console.log(tableMapperValues($page.data.friendships, ["friendName"]))
 
 	const friendTableSource: TableSource = {
 		// A list of heading labels.
 		head: ["Friends"],
 		// The data visibly shown in your table body UI.
 		body: tableMapperValues(
-			$page.data.friendships,
-			["friendName"],
-		),
-		meta: tableMapperValues(
 			$page.data.friendships,
 			["friendName"],
 		),

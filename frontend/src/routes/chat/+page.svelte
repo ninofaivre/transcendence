@@ -18,8 +18,8 @@
 
 	// Get our discussions
 	export let data
-	// const discussions: Chan[] = data.discussions as Chan[]
-	const discussions = data.discussions // Why can't SK infer the type !?
+	const discussions: Chan[] = data.discussions as Chan[]
+	// const discussions = data.discussions // Why can't SK infer the type !?
 
 	let currentDiscussionId: string = discussions[0]?.id
 

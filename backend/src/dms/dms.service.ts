@@ -1,11 +1,5 @@
-import {
-	ForbiddenException,
-	Injectable,
-	InternalServerErrorException,
-	NotFoundException,
-} from "@nestjs/common"
-import { ClassicDmEventType, DirectMessageStatus, Prisma } from "@prisma/client"
-import { PrismaService } from "nestjs-prisma"
+import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common"
+import { ClassicDmEventType, DirectMessageStatus, Prisma } from "prisma-client"
 import { SseService } from "src/sse/sse.service"
 import { z } from "zod"
 import {
@@ -15,12 +9,12 @@ import {
 	zDmReturn,
 } from "contract"
 import { Tx } from "src/types"
+import { PrismaService } from "src/prisma/prisma.service"
 
 @Injectable()
 export class DmsService {
 	constructor(
-		private readonly prisma: PrismaService,
-		// private readonly appService: AppService,
+        private readonly prisma: PrismaService,
 		private readonly sse: SseService,
 	) {}
 

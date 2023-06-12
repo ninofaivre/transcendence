@@ -25,5 +25,6 @@ export const load = async ({ depends }: LayoutLoadEvent) => {
 			}\"`,
 		)
     }
+    console.log("List of your DMS: ",  dmList)
     return { dmList, friendships, friendList }
 } 

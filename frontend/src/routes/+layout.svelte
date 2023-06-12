@@ -11,7 +11,6 @@
 	import { logged_in, my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
-	import { usersClient } from "$lib/clients"
 
 	function setup_logout(node: HTMLButtonElement) {
 		node.addEventListener("click", () => logout())
@@ -19,7 +18,7 @@
 
 	$: {
 		if ($logged_in == true) {
-			goto("/friends")
+			goto("/dms")
 		} else if ($logged_in == false) {
 			goto("/auth")
 		}

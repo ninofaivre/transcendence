@@ -1,23 +1,6 @@
-import {
-	BadRequestException,
-	ConflictException,
-	ForbiddenException,
-	Inject,
-	Injectable,
-	InternalServerErrorException,
-	NotFoundException,
-	forwardRef,
-} from "@nestjs/common"
-import {
-	ChanType,
-	PermissionList,
-	Prisma,
-	RoleApplyingType,
-	ChanInvitationStatus,
-	ClassicChanEventType,
-} from "@prisma/client"
+import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, InternalServerErrorException, NotFoundException, forwardRef } from "@nestjs/common"
+import { ChanType, PermissionList, Prisma, RoleApplyingType, ChanInvitationStatus, ClassicChanEventType } from "prisma-client"
 import { compareSync, hash } from "bcrypt"
-import { PrismaService } from "nestjs-prisma"
 import { SseService } from "src/sse/sse.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"
@@ -29,6 +12,7 @@ import {
 import { z } from "zod"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
+import { PrismaService } from "src/prisma/prisma.service"
 
 const c = nestControllerContract(contract.chans)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -36,8 +20,7 @@ type RequestShapes = NestRequestShapes<typeof c>
 @Injectable()
 export class ChansService {
 	constructor(
-		private readonly prisma: PrismaService,
-		// private readonly appService: AppService,
+        private readonly prisma: PrismaService,
 		private readonly sse: SseService,
 		// private readonly usersService: UserService,
 		@Inject(forwardRef(() => ChanInvitationsService))

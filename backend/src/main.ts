@@ -3,10 +3,9 @@ import { AppModule } from "./app.module"
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from "@nestjs/swagger"
 import * as cookieParser from "cookie-parser"
 import { SwaggerTheme } from "swagger-themes"
-import { PrismaClientExceptionFilter, PrismaService } from "nestjs-prisma"
 import { generateOpenApi } from "@ts-rest/open-api"
 import { contract } from "contract"
-import { HttpStatus } from "@nestjs/common"
+// import { HttpStatus } from "@nestjs/common"
 import { join } from "path"
 
 async function bootstrap() {
@@ -34,17 +33,17 @@ async function bootstrap() {
 		generateOpenApi(contract, config, { setOperationId: true, jsonQuery: true }),
 	)
 	SwaggerModule.setup("api", app, document, options)
-	const prismaService: PrismaService = app.get(PrismaService)
-	prismaService.$on("query", (event) => {
-		console.log(event)
-	})
+	// const prismaService: PrismaService = app.get(PrismaService)
+	// prismaService.$on("query", (event) => {
+	// 	console.log(event)
+	// })
 
-	const { httpAdapter } = app.get(HttpAdapterHost)
-	app.useGlobalFilters(
-		new PrismaClientExceptionFilter(httpAdapter, {
-			P2003: HttpStatus.NOT_FOUND,
-		}),
-	)
+	// const { httpAdapter } = app.get(HttpAdapterHost)
+	// app.useGlobalFilters(
+	// 	new PrismaClientExceptionFilter(httpAdapter, {
+	// 		P2003: HttpStatus.NOT_FOUND,
+	// 	}),
+	// )
 
 	await app.listen(3000)
 }

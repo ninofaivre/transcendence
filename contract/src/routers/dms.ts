@@ -1,12 +1,13 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
+import { ClassicDmEventType, DirectMessageStatus, DirectMessageUserStatus } from "prisma-client"
 
 const c = initContract()
 
-const zDirectMessageStatus = z.enum(["ENABLED", "DISABLED"])
-const zClassicDmEventType = z.enum(["CREATED_FRIENDSHIP", "DELETED_FRIENDSHIP", "DELETED_MESSAGE", "DISABLED_DM", "ENABLED_DM"])
-const zDirectMessageUserStatus = z.enum(["CLOSED", "OPEN", "MUTED"])
+const zDirectMessageStatus = z.nativeEnum(DirectMessageStatus)
+const zClassicDmEventType = z.nativeEnum(ClassicDmEventType)
+const zDirectMessageUserStatus = z.nativeEnum(DirectMessageUserStatus)
 
 export const zDmReturn = z.strictObject({
 	id: z.string().uuid(),

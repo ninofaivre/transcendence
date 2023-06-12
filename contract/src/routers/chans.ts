@@ -3,27 +3,15 @@ import { initContract } from "@ts-rest/core"
 import { unique } from "../zod/global.zod"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
+import { ChanType, ClassicChanEventType, PermissionList, RoleApplyingType } from "prisma-client"
 
 const c = initContract()
 
-const zClassicChanEventType = z.enum([
-	"AUTHOR_LEAVED",
-	"AUTHOR_KICKED_CONCERNED",
-	"AUTHOR_JOINED",
-	"AUTHOR_MUTED_CONCERNED",
-])
-export const zChanType = z.enum(["PUBLIC", "PRIVATE"])
-const zPermissionList = z.enum([
-	"SEND_MESSAGE",
-	"DELETE_MESSAGE",
-	"EDIT",
-	"INVITE",
-	"KICK",
-	"BAN",
-	"MUTE",
-	"DESTROY",
-])
-const zRoleApplyingType = z.enum(["NONE", "ROLES", "ROLES_AND_SELF"])
+const zClassicChanEventType = z.nativeEnum(ClassicChanEventType)
+export const zChanType = z.nativeEnum(ChanType)
+
+const zPermissionList = z.nativeEnum(PermissionList)
+const zRoleApplyingType = z.nativeEnum(RoleApplyingType)
 
 export const zChanTitle = z
 	.string()

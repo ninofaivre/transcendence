@@ -10,7 +10,7 @@ export const authContract = c.router(
 			method: "GET",
 			path: "/logout",
 			responses: {
-				200: c.response<null>(),
+				200: c.type<null>(),
 			},
 		},
 		login: {
@@ -21,7 +21,7 @@ export const authContract = c.router(
 				password: zUserPassword,
 			}),
 			responses: {
-				202: c.response<null>(),
+				202: c.type<null>(),
 			},
 		},
 	},

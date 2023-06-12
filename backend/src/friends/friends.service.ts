@@ -1,20 +1,17 @@
-import {
-	Injectable,
-	NotFoundException,
-} from "@nestjs/common"
-import { ClassicDmEventType, DirectMessageStatus, Prisma, dmPolicyLevelType } from "@prisma/client"
+import { Injectable, NotFoundException } from "@nestjs/common"
+import { ClassicDmEventType, DirectMessageStatus, Prisma, dmPolicyLevelType } from "prisma-client"
 import { zFriendShipReturn } from "contract"
-import { PrismaService } from "nestjs-prisma"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
 import { SseService } from "src/sse/sse.service"
 import { UserService } from "src/user/user.service"
 import { z } from "zod"
+import { PrismaService } from "src/prisma/prisma.service"
 
 @Injectable()
 export class FriendsService {
 	constructor(
-		private readonly prisma: PrismaService,
+        private readonly prisma: PrismaService,
 		private readonly sse: SseService,
 		private readonly dmsService: DmsService,
 		private readonly usersService: UserService,

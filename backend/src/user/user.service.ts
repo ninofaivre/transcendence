@@ -1,11 +1,8 @@
 import { Injectable } from "@nestjs/common"
-import { PrismaService } from "nestjs-prisma"
-import {
-	NotFoundException,
-	ConflictException,
-} from "@nestjs/common"
+import { NotFoundException, ConflictException } from "@nestjs/common"
 import { hash } from "bcrypt"
-import { Prisma } from "@prisma/client"
+import { Prisma } from "prisma-client"
+import { PrismaService } from "src/prisma/prisma.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"
 import { z } from "zod"
@@ -17,7 +14,7 @@ type RequestShapes = NestRequestShapes<typeof c>
 @Injectable()
 export class UserService {
 
-	constructor(private readonly prisma: PrismaService) {}
+	constructor( private readonly prisma: PrismaService ) {}
 
     getUserSelectForUser(username: string) {
         return {

@@ -1,0 +1,17 @@
+echo Building... \
+&& cd prisma \
+    && pnpm install \
+    && pnpm build \
+&& cd .. \
+&& cd contract \
+    && pnpm install \
+    && pnpm build \
+&& cd .. \
+&& cd backend \
+    && pnpm install \
+    && pnpm build \
+&& cd .. \
+&& cd frontend \
+    && pnpm install \
+    && pnpm build \
+&& cd .. \

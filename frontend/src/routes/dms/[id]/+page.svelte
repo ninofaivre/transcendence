@@ -1,13 +1,18 @@
 <script lang="ts">
+
+    /*  This page is responsible for displaying the current conversation with a friend.
+        and the associated input box. While the Chatbox could have been part of the layout
+        it was deemed too complex for little benefit */
+
 	/* types */
-	import type { Chan } from "$types"
+    import type { PageData } from "./$types"
 
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"
-	import CreateDiscussion from "./CreateDiscussion.svelte"
-	import DiscussionList from "./DiscussionList.svelte"
+	import CreateDiscussion from "../CreateDiscussion.svelte"
 	import ChatBox from "./ChatBox.svelte"
 	import { onMount } from "svelte"
+	import { page } from "$app/stores"
 
 	// let new_message: [string, Promise<ClientInferResponses<typeof contract.chans.createChan>>]
 	let new_message: [string, Promise<Response>]
@@ -17,15 +22,13 @@
 	}
 
 	// Get our discussions
-	export let data
-	const discussions: Chan[] = data.discussions as Chan[]
-	// const discussions = data.discussions // Why can't SK infer the type !?
-
-	let currentDiscussionId: string = discussions[0]?.id
+	export let data: PageData; // This almost always complains about data being "unknown"
+	const messages = $page.data.messages 
 
 	let header: HTMLElement | null
 	let header_height: number
 
+    // Calculate the NavBar height in order to adapt the layout
 	onMount(() => {
 		header = document.getElementById("shell-header")
 		if (header) {
@@ -46,27 +49,8 @@
 	})
 </script>
 
-{#if discussions.length}
+{#if messages.length}
 	<!--Column layout -->
-	<div
-		class="grid grid-cols-[auto_1fr]"
-		id="col_layout"
-		style="height: calc(100vh - {header_height}px);"
-	>
-		<!-- Rows for Column 1-->
-		<div
-			class="grid grid-rows-[auto_1fr]"
-			id="col1"
-			style="height: calc(100vh - {header_height}px);"
-		>
-			<section class="p-4">
-				<CreateDiscussion friendList={data.friendList}/>
-			</section>
-			<section id="discussions" class="overflow-y-auto">
-				<DiscussionList {discussions} bind:currentDiscussionId />
-			</section>
-		</div>
-
 		<!-- Rows for Column 2-->
 		<div
 			class="grid grid-rows-[1fr_auto]"
@@ -74,18 +58,17 @@
 			style="height: calc(100vh - {header_height}px);"
 		>
 			<!-- Messages -->
-			<DiscussionDisplay {new_message} {currentDiscussionId} />
 
+			<DiscussionDisplay {messages} {new_message} currentDiscussionId={$page.params.slug} />
 			<!-- Input box -->
 			<section id="input-row" class="p-4">
-				<ChatBox on:message_sent={messageSentHandler} {currentDiscussionId} maxRows={20} />
+				<ChatBox on:message_sent={messageSentHandler} currentDiscussionId={$page.params.slug} maxRows={20} />
 			</section>
 		</div>
-	</div>
 {:else}
 	<div id="convo" class="flex flex-col justify-center my-10 h-full">
 		<div class="mx-auto text-3xl font-bold text-center">
-			You haven't started any conversations yet
+			This conversation has not started
 		</div>
 		<div class="my-10 mx-auto">
 			<CreateDiscussion friendList={data.friendList}/>
@@ -94,10 +77,6 @@
 {/if}
 
 <style>
-	#discussions {
-		scrollbar-gutter: stable;
-		scrollbar-width: thin;
-	}
 	/* #input-row { */
 	/* 	box-shadow: -0px -2px 4px 0px; */
 	/* } */

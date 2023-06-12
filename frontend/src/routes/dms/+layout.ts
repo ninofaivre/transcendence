@@ -1,13 +1,13 @@
-import type { LoadEvent } from "@sveltejs/kit"
+import type { LayoutLoad , LayoutLoadEvent} from "./$types"
 import { dmsClient, friendsClient } from "$lib/clients"
 
-export const load = async ({ depends }: LoadEvent) => {
+export const load = async ({ depends }: LayoutLoadEvent) => {
 	depends(":discussions")
-	const { status, body: discussions } = await dmsClient.getDms()
+	const { status, body: dmList } = await dmsClient.getDms()
 	if (status !== 200) {
 		console.log(
 			`Failed to load channel list. Server returned code ${status} with message \"${
-				(discussions as any)?.message
+				(dmList as any)?.message
 			}\"`,
 		)
 	}
@@ -25,5 +25,5 @@ export const load = async ({ depends }: LoadEvent) => {
 			}\"`,
 		)
     }
-    return { discussions, friendships, friendList }
-}
+    return { dmList, friendships, friendList }
+} 

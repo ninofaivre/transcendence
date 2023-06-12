@@ -2,7 +2,6 @@
     "name": "prisma-client",
     "version": "1.0.0",
     "scripts": {
-        "preinstall": "pnpm prisma generate",
         "build": "pnpm prisma generate"
     },
     "dependencies": {
@@ -14,6 +13,7 @@
     "main": "prisma/client/index.js",
     "types": "prisma/client/index.d.ts",
     "files": [
-        "prisma/client"
+        "prisma/client",
+        "scripts"
     ]
 }

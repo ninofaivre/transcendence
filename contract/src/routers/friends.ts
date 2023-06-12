@@ -25,9 +25,9 @@ export const friendsContract = c.router(
 			pathParams: z.strictObject({
 				friendShipId: z.string().uuid(),
 			}),
-			body: c.body<null>(),
+			body: c.type<null>(),
 			responses: {
-				202: c.response<null>(),
+				202: c.type<null>(),
 			},
 		},
 	},

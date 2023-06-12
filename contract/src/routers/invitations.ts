@@ -3,25 +3,12 @@ import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
 import { unique } from "../zod/global.zod"
 import { zChanTitle } from "./chans"
+import { ChanInvitationStatus, FriendInvitationStatus } from "prisma-client"
 
 const c = initContract()
 
-const zChanInvitationStatus = z.enum([
-	"PENDING",
-	"ACCEPTED",
-	"REFUSED",
-	"CANCELED",
-	"DELETED_CHAN",
-	"BLOCKED_USER",
-	"BANNED_FROM_CHAN",
-])
-const zFriendInvitationStatus = z.enum([
-	"PENDING",
-	"ACCEPTED",
-	"REFUSED",
-	"CANCELED",
-	"BLOCKED_USER",
-])
+const zChanInvitationStatus = z.nativeEnum(ChanInvitationStatus)
+const zFriendInvitationStatus = z.nativeEnum(FriendInvitationStatus)
 
 export const zFriendInvitationReturn = z.strictObject({
 	id: z.string().uuid(),
@@ -82,7 +69,7 @@ const friendInvitationsContract = c.router(
 				id: z.string().uuid(),
 			}),
 			body: z.strictObject({
-				status: zFriendInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"]),
+				status: z.enum([zFriendInvitationStatus.enum.ACCEPTED, zFriendInvitationStatus.enum.REFUSED, zFriendInvitationStatus.enum.CANCELED]),
 			}),
 			responses: {
 				200: zFriendInvitationReturn,
@@ -137,7 +124,7 @@ const chanInvitationsContract = c.router(
 				id: z.string().uuid(),
 			}),
 			body: z.strictObject({
-				status: zChanInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"]),
+				status: z.enum([zChanInvitationStatus.enum.ACCEPTED, zChanInvitationStatus.enum.REFUSED, zChanInvitationStatus.enum.CANCELED]),
 			}),
 			responses: {
 				200: zChanInvitationReturn,

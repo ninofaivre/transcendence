@@ -5,13 +5,13 @@ import { ServeStaticModule } from "@nestjs/serve-static"
 import { AuthModule } from "./auth/auth.module"
 import { join } from "path"
 import { TestWebsocketModule } from "./test-websocket/test-websocket.module"
-import { ConfigModule, ConfigService } from "@nestjs/config"
 import { ChansModule } from "./chans/chans.module"
 import { InvitationsModule } from "./invitations/invitations.module"
 import { DmsModule } from "./dms/dms.module"
 import { FriendsModule } from "./friends/friends.module"
 import { SseModule } from "./sse/sse.module"
 import { PrismaModule } from './prisma/prisma.module';
+import { EnvModule } from './env/env.module';
 
 @Module({
 	imports: [
@@ -27,6 +27,7 @@ import { PrismaModule } from './prisma/prisma.module';
 		FriendsModule,
 		SseModule,
 		PrismaModule,
+		EnvModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

@@ -15,7 +15,8 @@
         "@nestjs/common": "^9.4.2",
         "@ts-rest/core": "^3.26.0",
         "typescript": "^5.1.3",
-        "zod": "^3.21.4"
+        "zod": "^3.21.4",
+        "prisma-client": "file:../prisma"
     },
     "devDependencies": {
         "@types/node": "^20.3.0"

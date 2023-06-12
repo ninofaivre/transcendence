@@ -1,4 +1,3 @@
-import { Prisma } from "../../prisma/dist"
 import { initContract } from "@ts-rest/core"
 import { type ChanEvent, chansContract } from "./routers/chans"
 import { type InvitationEvent, invitationsContract } from "./routers/invitations"

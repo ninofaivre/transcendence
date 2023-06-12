@@ -292,7 +292,7 @@ export class DmsService {
 	}
 
 	async getDms(username: string) {
-		const res = this.formatDirectMessageArray(
+		return this.formatDirectMessageArray(
 			await this.prisma.directMessage.findMany({
 				where: {
 					OR: [{ requestedUserName: username }, { requestingUserName: username }],
@@ -301,10 +301,6 @@ export class DmsService {
 			}),
 			username,
 		)
-		return {
-			disabled: res.filter((el) => el.status === DirectMessageStatus.DISABLED),
-			enabled: res.filter((el) => el.status === DirectMessageStatus.ENABLED),
-		}
 	}
 
 	private async getDmOrThrow<T extends Prisma.DirectMessageSelect>(

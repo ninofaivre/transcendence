@@ -59,10 +59,7 @@ export const dmsContract = c.router(
 			method: "GET",
 			path: "/",
 			responses: {
-				200: z.strictObject({
-					enabled: z.array(zDmReturn),
-					disabled: z.array(zDmReturn),
-				}),
+				200: z.array(zDmReturn),
 			},
 		},
 		//

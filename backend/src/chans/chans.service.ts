@@ -1,7 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, InternalServerErrorException, NotFoundException, forwardRef } from "@nestjs/common"
 import { ChanType, PermissionList, Prisma, RoleApplyingType, ChanInvitationStatus, ClassicChanEventType } from "prisma-client"
 import { compareSync, hash } from "bcrypt"
-import { PrismaService } from "nestjs-prisma"
 import { SseService } from "src/sse/sse.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"

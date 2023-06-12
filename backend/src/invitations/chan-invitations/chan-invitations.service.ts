@@ -5,11 +5,11 @@ import {
 	NotFoundException,
 	forwardRef,
 } from "@nestjs/common"
-import { Prisma, ChanInvitationStatus, PermissionList } from "@prisma/client"
+import { Prisma, ChanInvitationStatus, PermissionList } from "prisma-client"
 import { zChanInvitationReturn } from "contract"
-import { PrismaService } from "nestjs-prisma"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
+import { PrismaService } from "src/prisma/prisma.service"
 import { SseService } from "src/sse/sse.service"
 import { UserService } from "src/user/user.service"
 import { z } from "zod"
@@ -18,7 +18,7 @@ import { z } from "zod"
 export class ChanInvitationsService {
 	constructor(
 		private readonly usersService: UserService,
-		private readonly prisma: PrismaService,
+        private readonly prisma: PrismaService,
 		private readonly dmsService: DmsService,
 		private readonly sse: SseService,
 		@Inject(forwardRef(() => ChansService))

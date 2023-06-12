@@ -4,7 +4,7 @@
 	import { page } from "$app/stores"
 	import { Table } from "@skeletonlabs/skeleton"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
-	import { invitationsClient } from "$clients"
+	import { dmsClient, invitationsClient } from "$clients"
 	import { toastStore } from "@skeletonlabs/skeleton"
 	import SendFriendRequest from "./SendFriendRequest.svelte"
 
@@ -46,8 +46,12 @@
 		}
 	}
 
-	$: friendships = $page.data.friendships
+    function messageFriend(e: Event) {
+        // dmsClient.getDmIdWithName(e.detail)
+    }
+
 	console.log("Your friendships are:", $page.data.friendships)
+	console.log(tableMapperValues($page.data.friendships, ["friendName"]))
 
 	const friendTableSource: TableSource = {
 		// A list of heading labels.
@@ -55,13 +59,10 @@
 		// The data visibly shown in your table body UI.
 		body: tableMapperValues(
 			$page.data.friendships,
-			["friendName"], // This is ofc incorrect, waiting for the right field, probably "friendName"
+			["friendName"],
 		),
-		// Optional: The data returned when interactive is enabled and a row is clicked.
-		// meta: tableMapperValues($page.data.friends, ["position", "name", "symbol", "weight"]),
-		// Optional: A list of footer labels.
-		// foot: ["Total", "", '<code class="code">5</code>'],
 	}
+
 </script>
 
 <SendFriendRequest />
@@ -87,11 +88,11 @@
 			</li>
 		{/each}
 	{:else}
-		<p class="text-center text-2xl font-bold">You have no pending invitations</p>
+		<div class="text-center text-2xl font-bold pb-8">You have no pending invitations</div>
 	{/if}
 </ul>
 
-<Table source={friendTableSource} />
+<Table source={friendTableSource} interactive={true} on:selected={messageFriend}/>
 
 <style>
 </style>

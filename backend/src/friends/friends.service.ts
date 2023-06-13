@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from "@nestjs/common"
-import { ClassicDmEventType, DirectMessageStatus, Prisma, dmPolicyLevelType } from "prisma-client"
+import { Inject, Injectable, NotFoundException, forwardRef } from "@nestjs/common"
+import { ClassicDmEventType, DirectMessageStatus, DmPolicyLevelType, Prisma } from "prisma-client"
 import { zFriendShipReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
@@ -14,6 +14,7 @@ export class FriendsService {
         private readonly prisma: PrismaService,
 		private readonly sse: SseService,
 		private readonly dmsService: DmsService,
+        @Inject(forwardRef(() => UserService))
 		private readonly usersService: UserService,
 		private readonly chansService: ChansService,
 	) {}
@@ -90,6 +91,18 @@ export class FriendsService {
 			)
 	}
 
+    public async areUsersFriend(usernameA: string, usernameB: string) {
+        return Boolean(await this.prisma.friendShip.count({
+            where: {
+                OR: [
+                    { requestedUserName: usernameA, requestingUserName: usernameB },
+                    { requestedUserName: usernameB, requestingUserName: usernameA }
+                ]
+            },
+            take: 1
+        }))
+    }
+
 	// bien crade mais techniquement ça devrait marcher
 	public async deleteFriend(username: string, friendShipId: string) {
 		try {
@@ -117,11 +130,10 @@ export class FriendsService {
 				requestedUserName,
 				{ id: true },
 			)
-			if (!res)
+			if (!res) {
 				// should never happen as dms is auto created at friendShip Creation and there should not be any way of deleting a dm
-				throw new NotFoundException(
-					`not found dm between ${requestedUserName} and ${requestingUserName}`,
-				)
+				throw new NotFoundException(`not found dm between ${requestedUserName} and ${requestingUserName}`)
+            }
 			const { id: dmId } = res
 			const newEvent = await this.dmsService.createClassicDmEvent(
 				dmId,
@@ -133,10 +145,10 @@ export class FriendsService {
 				data: { dmId, element: newEvent },
 			})
 			if (
-				requestingUserDmPolicyLevel === dmPolicyLevelType.ONLY_FRIEND ||
-				requestedUserDmPolicyLevel === dmPolicyLevelType.ONLY_FRIEND ||
-				((requestingUserDmPolicyLevel === dmPolicyLevelType.IN_COMMON_CHAN ||
-					requestedUserDmPolicyLevel === dmPolicyLevelType.IN_COMMON_CHAN) &&
+				requestingUserDmPolicyLevel === "ONLY_FRIEND" ||
+				requestedUserDmPolicyLevel === "ONLY_FRIEND" ||
+				((requestingUserDmPolicyLevel === "IN_COMMON_CHAN" ||
+					requestedUserDmPolicyLevel === "IN_COMMON_CHAN") &&
 					!(await this.chansService.doesUsersHasCommonChan(
 						requestingUserName,
 						requestedUserName,

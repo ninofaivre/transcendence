@@ -164,10 +164,18 @@ model User {
 
   mutedUserChan MutedUserChan[]
 
-  dmPolicyLevel	dmPolicyLevelType @default(ONLY_FRIEND)
+  dmPolicyLevel	DmPolicyLevelType @default(ONLY_FRIEND)
+  statusVisibilityLevel StatusVisibilityLevel @default(ONLY_FRIEND)
 }
 
-enum dmPolicyLevelType {
+enum StatusVisibilityLevel {
+    NO_ONE
+    ONLY_FRIEND
+    IN_COMMON_CHAN
+    ANYONE
+}
+
+enum DmPolicyLevelType {
 	ONLY_FRIEND
 	IN_COMMON_CHAN	
 	ANYONE

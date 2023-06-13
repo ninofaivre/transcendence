@@ -7,7 +7,7 @@ import { DmsModule } from "src/dms/dms.module"
 import { ChansModule } from "src/chans/chans.module"
 
 @Module({
-	imports: [UserModule, SseModule, DmsModule, forwardRef(() => ChansModule)],
+	imports: [forwardRef(() => UserModule), SseModule, DmsModule, forwardRef(() => ChansModule)],
 	providers: [ChanInvitationsService],
 	controllers: [ChanInvitationsController],
 	exports: [ChanInvitationsService],

@@ -8,7 +8,7 @@
 -   [x] Connexion multiple d'un même utilisateur au sse
 -   [ ] status avec le sse (quand un user se log il doit savoir qui de sa liste d'amis est logged-in)
 -   [ ] sse notif quand un user se login ou se logout à sa liste d'amis
--   [ ] refactor user pour avoir /me (mes infos) et /:username profil public d'un utilisateur
+-   [x] refactor user pour avoir /me (mes infos) et /:username profil public d'un utilisateur
 -   [ ] login redirect sur /me (peut-être pas possible de redirect une requête POST sur une requête GET)
 -   [x] route pour GET un dmElement par Id pour les relatedTo
 -   [x] route pour update un message
@@ -22,3 +22,4 @@
 -   [ ] add les photos de profils
 -   [ ] route pour update un message dans les chans
 -   [ ] route pour update un chan
+-   [ ] simplifier les modules (peut-être certains services regroupés dans un seul module, peut-être passer sse en global par ex vu que lui n'importe aucun autre module)

@@ -5,7 +5,8 @@ import { SseEvent } from "contract"
 
 @Injectable()
 export class SseService {
-	eventSource = new Map<string, Subject<MessageEvent>>()
+
+	private eventSource = new Map<string, Subject<MessageEvent>>()
 
 	addSubject(username: string) {
 		let tmp = this.eventSource.get(username)
@@ -36,34 +37,9 @@ export class SseService {
 			console.log(`deleting subject for ${username}`)
 		}
 	}
-}
 
-export enum EventTypeList {}
-// // chans
-// CHAN_DELETED = "CHAN_DELETED",
-// CHAN_NEW_EVENT = "CHAN_NEW_EVENT",
-// CHAN_NEW_MESSAGE = "CHAN_NEW_MESSAGE",
-//
-// // dms
-// NEW_DM = 'NEW_DM',
-// DM_DELETED = "DM_DELETED",
-// DM_NEW_EVENT = "DM_NEW_EVENT",
-// DM_UPDATED_EVENT = "DM_UPDATED_EVENT",
-// DM_NEW_MESSAGE = "DM_NEW_MESSAGE",
-//
-// // invitations
-// NEW_FRIEND_INVITATION = "NEW_FRIEND_INVITATION",
-// FRIEND_INVITATION_REFUSED = "FRIEND_INVITATION_REFUSED",
-// FRIEND_INVITATION_CANCELED = "FRIEND_INVITATION_CANCELED",
-//
-// //
-// DELETED_CHAN_INVITATION = "DELETED_CHAN_INVITATION",
-// //
-// CHAN_NEW_INVITATION = "CHAN_NEW_INVITATION",
-// CHAN_INVITATION_CANCELED = "CHAN_INVITATION_CANCELED",
-// CHAN_INVITATION_REFUSED = "CHAN_INVITATION_REFUSED",
-// CHAN_DELETED_INVITATIONS = "CHAN_DELETED_INVITATIONS",
-//
-// // friends
-// NEW_FRIEND = "NEW_FRIEND",
-// DELETED_FRIEND = "DELETED_FRIEND"
+    public isUserOnline(username: string) {
+        return this.eventSource.has(username)
+    }
+
+}

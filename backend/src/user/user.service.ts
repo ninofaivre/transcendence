@@ -1,12 +1,16 @@
-import { Injectable } from "@nestjs/common"
+import { Inject, Injectable, forwardRef } from "@nestjs/common"
 import { NotFoundException, ConflictException } from "@nestjs/common"
 import { hash } from "bcrypt"
-import { Prisma } from "prisma-client"
+import { Prisma, StatusVisibilityLevel } from "prisma-client"
 import { PrismaService } from "src/prisma/prisma.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"
 import { z } from "zod"
 import { zUserProfileReturn } from "contract"
+import { zMyProfileReturn, zUserProfilePreviewReturn } from "contract/dist/routers/users"
+import { SseService } from "src/sse/sse.service"
+import { ChansService } from "src/chans/chans.service"
+import { FriendsService } from "src/friends/friends.service"
 
 const c = nestControllerContract(contract.users)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -14,24 +18,54 @@ type RequestShapes = NestRequestShapes<typeof c>
 @Injectable()
 export class UserService {
 
-	constructor( private readonly prisma: PrismaService ) {}
+	constructor(private readonly prisma: PrismaService,
+                private readonly sse: SseService,
+                @Inject(forwardRef(() => ChansService))
+                private readonly chansService: ChansService,
+                @Inject(forwardRef(() => FriendsService))
+                private readonly friendsService: FriendsService) {}
 
-    getUserSelectForUser(username: string) {
+    private getUserProfilePreviewSelectForUser(username: string) {
         return {
-            name: true,
+            name: true
+        } satisfies Prisma.UserSelect
+    }
+
+    private getUserProfileSelectForUser(username: string) {
+        return {
+            ...this.getUserProfilePreviewSelectForUser(username),
             chans: {
                 where: { users: { some: { name: username } } },
                 select: { title: true, id: true, type: true }
             },
             dmPolicyLevel: true,
-            blockedUser: { where: { blockedUserName: username }, select: { id: true }, take: 1 }
+            blockedUser: { where: { blockedUserName: username }, select: { id: true }, take: 1 },
+            statusVisibilityLevel: true
         } satisfies Prisma.UserSelect
     }
 
-    private userSelectGetPayload =
-    {
-        select: this.getUserSelectForUser("example")
+    private myProfileSelect = {
+        name: true,
+        dmPolicyLevel: true,
+        statusVisibilityLevel: true
+    } satisfies Prisma.UserSelect
+
+    private myProfileSelectGetPayload = {
+        select: this.myProfileSelect
     } satisfies Prisma.UserArgs
+
+    private userProfilePreviewSelectGetPayload = {
+        select: this.getUserProfilePreviewSelectForUser("example")
+    } satisfies Prisma.UserArgs
+
+    private userProfileSelectGetPayload = {
+        select: this.getUserProfileSelectForUser("example")
+    } satisfies Prisma.UserArgs
+
+    private userOwnProfileSelectGetPayload = {
+        select: this.myProfileSelect
+    } satisfies Prisma.UserArgs
+
 
 	// async getBlockedUsers(username: string, filter: blockedFilterType)
 	// {
@@ -83,19 +117,53 @@ export class UserService {
 	// 	await Promise.all([updatePromise, addEventPromise])
 	// }
     
-    formatUserForUser(username: string, toFormat: Prisma.UserGetPayload<typeof this.userSelectGetPayload>)
-    : z.infer<typeof zUserProfileReturn> {
-        const { name, chans, blockedUser,...rest } = toFormat
+    private formatUserProfilePreviewForUser(username: string, toFormat: Prisma.UserGetPayload<typeof this.userProfilePreviewSelectGetPayload>)
+    : z.infer<typeof zUserProfilePreviewReturn> {
+        const { name, ...rest } = toFormat
+        return { ...rest, userName: name }
+    }
+
+    private formatUserProfilePreviewForUserArray(username: string, toFormat: Prisma.UserGetPayload<typeof this.userProfilePreviewSelectGetPayload>[])
+    : z.infer<typeof zUserProfilePreviewReturn>[] {
+        return toFormat.map(el => this.formatUserProfilePreviewForUser(username, el))
+    }
+
+    private async formatUserStatusForUser(username: string, toGetStatusUserName: string, visibilityLevel: StatusVisibilityLevel)
+    : Promise<"ONLINE" | "OFFLINE" | "INVISIBLE"> {
+        if (visibilityLevel === "NO_ONE")
+            return "INVISIBLE"
+        if (visibilityLevel === "ANYONE")
+            return (this.sse.isUserOnline(toGetStatusUserName)) ? "ONLINE" : "OFFLINE"
+        const proximityLevel = await this.getProximityLevelBetweenUsers(username, toGetStatusUserName)
+        if (proximityLevel === "FRIEND" || (proximityLevel === "COMMON_CHAN" && visibilityLevel === "IN_COMMON_CHAN") )
+            return (this.sse.isUserOnline(toGetStatusUserName)) ? "ONLINE" : "OFFLINE"
+        return "INVISIBLE"
+    }
+    
+    private async formatUserProfileForUser(username: string, toFormat: Prisma.UserGetPayload<typeof this.userProfileSelectGetPayload>)
+    : Promise<z.infer<typeof zUserProfileReturn>> {
+        const { name, statusVisibilityLevel, chans, blockedUser,...rest } = toFormat
+
         return {
             ...rest,
-            userName: name,
+            status: await this.formatUserStatusForUser(username, name, statusVisibilityLevel),
+            ...this.formatUserProfilePreviewForUser(username, { name }),
             commonChans: chans,
             blocked: (blockedUser.length) ? blockedUser[0].id : undefined
         }
     }
 
-    formatUserForUserArray(username: string, toFormat: Prisma.UserGetPayload<typeof this.userSelectGetPayload>[]) {
-        return toFormat.map(el => this.formatUserForUser(username, el))
+    // async formatUserProfileForUserArray(username: string, toFormat: Prisma.UserGetPayload<typeof this.userProfileSelectGetPayload>[])
+    // : Promise<z.infer<typeof zUserProfileReturn>[]> {
+    //     return Promise.all(toFormat.map(el => this.formatUserProfileForUser(username, el)))
+    // }
+
+    async getProximityLevelBetweenUsers(usernameA: string, usernameB: string) {
+        if (await this.friendsService.areUsersFriend(usernameA, usernameB))
+            return "FRIEND"
+        if (await this.chansService.doesUsersHasCommonChan(usernameA, usernameB))
+            return "COMMON_CHAN"
+        return "ANYONE"
     }
 
     async searchUsers(username: string, contains: string, nRes: number) {
@@ -103,9 +171,31 @@ export class UserService {
             where: { name: { contains } },
             take: nRes,
             orderBy: { name: "asc" },
-            select: this.getUserSelectForUser(username)
+            select: this.getUserProfilePreviewSelectForUser(username)
         })
-        return this.formatUserForUserArray(username, res)
+        return this.formatUserProfilePreviewForUserArray(username, res)
+    }
+
+    async getUser(username: string, searchedUserName: string) {
+        const res = await this.getUserByNameOrThrow(searchedUserName, this.getUserProfileSelectForUser(username))
+        return this.formatUserProfileForUser(username, res)
+    }
+
+    formatMe(toFormat: Prisma.UserGetPayload<typeof this.myProfileSelectGetPayload>)
+    : z.infer<typeof zMyProfileReturn> {
+        const { name, ...rest } = toFormat
+        return { ...rest, userName: name }
+    }
+
+    async getMe(username: string) {
+        return this.formatMe(await this.getUserByNameOrThrow(username, this.myProfileSelect))
+    }
+
+    // TODO: take and notify all actions (example disable / enable dms)
+    async updateMe(username: string, dto: RequestShapes['updateMe']['body']) {
+        return this.formatMe(await this.prisma.user.update({ where: { name: username },
+            data: dto,
+        select: this.myProfileSelect}))
     }
 
 	async getUserByName(name: string, select: Prisma.UserSelect) {

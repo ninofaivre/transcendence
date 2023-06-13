@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common"
+import { Module, forwardRef } from "@nestjs/common"
 import { FriendsService } from "./friends.service"
 import { FriendsController } from "./friends.controller"
 import { AppService } from "src/app.service"
@@ -8,7 +8,7 @@ import { ChansModule } from "src/chans/chans.module"
 import { UserModule } from "src/user/user.module"
 
 @Module({
-	imports: [SseModule, DmsModule, ChansModule, UserModule],
+	imports: [SseModule, DmsModule, forwardRef(() => ChansModule), forwardRef(() => UserModule)],
 	providers: [FriendsService, AppService],
 	controllers: [FriendsController],
 	exports: [FriendsService],

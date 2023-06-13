@@ -29,12 +29,26 @@ export class UserController implements NestControllerInterface<typeof c> {
         return { status: 200 as const, body }
     }
 
+    @UseGuards(JwtAuthGuard)
+    @TsRest(c.getUser)
+    async getUser(@Request() req: EnrichedRequest, @TsRestRequest(){ params: { userName } }: RequestShapes['getUser']) {
+        const body = await this.userService.getUser(req.user.username, userName)
+        return { status: 200 as const, body }
+    }
+
 	@UseGuards(JwtAuthGuard)
 	@TsRest(c.getMe)
 	async getMe(@Request() req: EnrichedRequest) {
-		const body = { name: req.user.username }
+		const body = await this.userService.getMe(req.user.username)
 		return { status: 200 as const, body }
 	}
+
+    @UseGuards(JwtAuthGuard)
+    @TsRest(c.updateMe)
+    async updateMe(@Request()req: EnrichedRequest, @TsRestRequest(){ body: requestBody }: RequestShapes['updateMe']) {
+        const body = await this.userService.updateMe(req.user.username, requestBody)
+        return { status: 200 as const, body }
+    }
 
 	@TsRest(c.signUp)
 	async signUp(@TsRestRequest() { body: requestBody }: RequestShapes["signUp"]) {

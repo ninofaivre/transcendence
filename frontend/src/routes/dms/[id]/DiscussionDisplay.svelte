@@ -108,13 +108,12 @@
 				data_id={message.id}
 				from_me={message.author === $my_name}
 				from={message.author}
-				sent={message.id !== "none"}
+				sent={message.id ? false : message.id !== "none"}
 			>
 				{#if message.type === "message"}
 					{message.message.content}
 				{:else}
-					{JSON.stringify(message.event)}
-					<!-- {message.event} -->
+					{message.event.eventType}
 				{/if}
 			</ChatBubble>
 		{:else}

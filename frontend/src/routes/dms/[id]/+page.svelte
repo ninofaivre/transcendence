@@ -59,10 +59,10 @@
 		>
 			<!-- Messages -->
 
-			<DiscussionDisplay {messages} {new_message} currentDiscussionId={$page.params.slug} />
+			<DiscussionDisplay {messages} {new_message} currentDiscussionId={$page.params.id} />
 			<!-- Input box -->
 			<section id="input-row" class="p-4">
-				<ChatBox on:message_sent={messageSentHandler} currentDiscussionId={$page.params.slug} maxRows={20} />
+				<ChatBox on:message_sent={messageSentHandler} currentDiscussionId={$page.params.id} maxRows={20} />
 			</section>
 		</div>
 {:else}

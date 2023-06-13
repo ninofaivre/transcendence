@@ -39,6 +39,7 @@
 			return () => resizeObserver.unobserve(header as HTMLElement)
 		}
 	})
+
 </script>
 
 {#if $page.data.dmList.length}
@@ -69,10 +70,10 @@
 {:else}
 	<div id="convo" class="flex flex-col justify-center my-10 h-full">
 		<div class="mx-auto text-3xl font-bold text-center">
-			You haven't started any conversations yet
+			You don't have any friends yet
 		</div>
 		<div class="my-10 mx-auto">
-			<CreateDiscussion friendList={data.friendList}/>
+            Thingie form to make forms
 		</div>
 	</div>
 {/if}

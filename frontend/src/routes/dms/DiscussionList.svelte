@@ -32,24 +32,28 @@
 {#each discussions as d}
 	{#if d.id != currentDiscussionId}
 		<a
-            href={`/dms/${d.id}`}
+			href={`/dms/${d.id}`}
 			class="hover:variant-soft-secondary p-4 font-medium rounded-container-token hover:font-semibold"
+			style="text-decoration:none;"
 		>
 			{d.friendName}
 		</a>
 	{:else}
-		<a 
-            href={`/dms/${d.id}`}
-            class="variant-ghost-secondary p-4 font-semibold rounded-container-token">
+		<a
+			href={`/dms/${d.id}`}
+			class="variant-ghost-secondary p-4 font-semibold rounded-container-token"
+			style="text-decoration:none;"
+		>
 			{d.friendName}
 		</a>
 	{/if}
 {/each}
 
 <style>
-    a {
-        display: block;
-    }
+	a {
+		display: block;
+		text-decoration: none; /* For some reason this nor the "no-underline" tw classe seems to be working */
+	}
 	a::first-letter {
 		text-transform: capitalize;
 	}

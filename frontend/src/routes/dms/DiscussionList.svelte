@@ -34,7 +34,6 @@
 		<a
 			href={`/dms/${d.id}`}
 			class="hover:variant-soft-secondary p-4 font-medium rounded-container-token hover:font-semibold"
-			style="text-decoration:none;"
 		>
 			{d.friendName}
 		</a>
@@ -42,7 +41,6 @@
 		<a
 			href={`/dms/${d.id}`}
 			class="variant-ghost-secondary p-4 font-semibold rounded-container-token"
-			style="text-decoration:none;"
 		>
 			{d.friendName}
 		</a>
@@ -52,7 +50,6 @@
 <style>
 	a {
 		display: block;
-		text-decoration: none; /* For some reason this nor the "no-underline" tw classe seems to be working */
 	}
 	a::first-letter {
 		text-transform: capitalize;

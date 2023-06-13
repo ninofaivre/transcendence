@@ -1,7 +1,7 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import { ClassicDmEventType, DirectMessageStatus, DirectMessageUserStatus } from "prisma-client"
+import { ClassicDmEventType, DirectMessageStatus, DirectMessageUserStatus } from "@prisma-generated/enums"
 
 const c = initContract()
 

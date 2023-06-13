@@ -3,7 +3,7 @@ import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
 import { unique } from "../zod/global.zod"
 import { zChanTitle } from "./chans"
-import { ChanInvitationStatus, FriendInvitationStatus } from "prisma-client"
+import { ChanInvitationStatus, FriendInvitationStatus } from "@prisma-generated/enums"
 
 const c = initContract()
 

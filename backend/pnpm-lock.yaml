@@ -51,8 +51,8 @@ dependencies:
     specifier: ^5.1.0
     version: 5.1.0
   contract:
-    specifier: file:../contract
-    version: file:../contract(openapi3-ts@3.2.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+    specifier: link:../contract
+    version: link:../contract
   cookie:
     specifier: ^0.5.0
     version: 0.5.0
@@ -78,8 +78,8 @@ dependencies:
     specifier: ^1.0.0
     version: 1.0.0
   prisma-client:
-    specifier: file:../prisma
-    version: file:../prisma
+    specifier: link:../prisma
+    version: link:../prisma
   rxjs:
     specifier: ^7.8.1
     version: 7.8.1
@@ -125,17 +125,6 @@ packages:
       zod: ^3.20.0
     dependencies:
       openapi3-ts: 2.0.2
-      ts-deepmerge: 6.0.3
-      zod: 3.21.4
-    dev: false
-
-  /@anatine/zod-openapi@1.14.0(openapi3-ts@3.2.0)(zod@3.21.4):
-    resolution: {integrity: sha512-fNpzgdrqTdHLK2/rZjALyZbyZAua+cXm9kKug2TZ1ly2szSu9G1eH4YrnR6p2uHME/5/BOfCebUjWTVm83hJIg==}
-    peerDependencies:
-      openapi3-ts: ^2.0.0 || ^3.0.0
-      zod: ^3.20.0
-    dependencies:
-      openapi3-ts: 3.2.0
       ts-deepmerge: 6.0.3
       zod: 3.21.4
     dev: false
@@ -1365,12 +1354,6 @@ packages:
       yaml: 1.10.2
     dev: false
 
-  /openapi3-ts@3.2.0:
-    resolution: {integrity: sha512-/ykNWRV5Qs0Nwq7Pc0nJ78fgILvOT/60OxEmB3v7yQ8a8Bwcm43D4diaYazG/KBn6czA+52XYy931WFLMCUeSg==}
-    dependencies:
-      yaml: 2.3.1
-    dev: false
-
   /parseurl@1.3.3:
     resolution: {integrity: sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==}
     engines: {node: '>= 0.8'}
@@ -1727,12 +1710,6 @@ packages:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
     dev: false
 
-  /typescript@5.1.3:
-    resolution: {integrity: sha512-XH627E9vkeqhlZFQuL+UsyAXEnibT0kWR2FWONlr4sTjvxyJYnyefgrkyECLzM5NenmKzRAy2rR/OlYLA1HkZw==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-    dev: false
-
   /uid@2.0.2:
     resolution: {integrity: sha512-u3xV3X7uzvi5b1MncmZo3i2Aw222Zk1keqLA1YkHldREkAhAqi65wuPfe7lHx8H/Wzy+8CE7S7uS3jekIM5s8g==}
     engines: {node: '>=8'}
@@ -1812,45 +1789,6 @@ packages:
     engines: {node: '>= 6'}
     dev: false
 
-  /yaml@2.3.1:
-    resolution: {integrity: sha512-2eHWfjaoXgTBC2jNM1LRef62VQa0umtvRiDSk6HSzW7RvS5YtkabJrwYLLEKWBc8a5U2PTSCs+dJjUTJdlHsWQ==}
-    engines: {node: '>= 14'}
-    dev: false
-
   /zod@3.21.4:
     resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
-    dev: false
-
-  file:../contract(openapi3-ts@3.2.0)(reflect-metadata@0.1.13)(rxjs@7.8.1):
-    resolution: {directory: ../contract, type: directory}
-    id: file:../contract
-    name: contract
-    version: 1.0.0
-    requiresBuild: true
-    dependencies:
-      '@anatine/zod-openapi': 1.14.0(openapi3-ts@3.2.0)(zod@3.21.4)
-      '@nestjs/common': 9.4.3(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@ts-rest/core': 3.26.0(zod@3.21.4)
-      prisma-client: file:../prisma
-      typescript: 5.1.3
-      zod: 3.21.4
-    transitivePeerDependencies:
-      - cache-manager
-      - class-transformer
-      - class-validator
-      - openapi3-ts
-      - prisma
-      - reflect-metadata
-      - rxjs
-    dev: false
-
-  file:../prisma:
-    resolution: {directory: ../prisma, type: directory}
-    name: prisma-client
-    version: 1.0.0
-    requiresBuild: true
-    dependencies:
-      '@prisma/client': 4.15.0
-    transitivePeerDependencies:
-      - prisma
     dev: false

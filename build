@@ -2,7 +2,10 @@ echo Building... \
 && cd prisma \
     && pnpm install \
     && pnpm build \
-&& cd .. \
+&& cd enums \
+    && pnpm install \
+    && pnpm build \
+&& cd ../.. \
 && cd contract \
     && pnpm install \
     && pnpm build \

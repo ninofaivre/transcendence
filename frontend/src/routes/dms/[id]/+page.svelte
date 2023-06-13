@@ -55,7 +55,8 @@
 			id="col2"
 			style="height: calc(100vh - {header_height}px);"
 	>
-{#if $page.data.messages.length}
+<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
+{#if $page.data.messages.length > 1}
 			<!-- Messages -->
 			<DiscussionDisplay messages={$page.data.messages} {new_message} currentDiscussionId={$page.params.id} />
 {:else}

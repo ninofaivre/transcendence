@@ -18,3 +18,7 @@
 -   [x] régler la confusion entre message et element aussi bien dans le code du backend que dans les routes exposée dans l'api
 -   [x] remove toute les dépendances pnpm qui ne sont plus nécéssaires
 -   [ ] remettre les filtres prisma en place maintenant que je me suis débarrassé de nestjs-prisma
+-   [ ] passer sur la nouvelle version de ts-rest/nest
+-   [ ] add les photos de profils
+-   [ ] route pour update un message dans les chans
+-   [ ] route pour update un chan

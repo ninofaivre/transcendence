@@ -49,32 +49,27 @@
 	})
 </script>
 
-{#if messages.length}
 	<!--Column layout -->
 		<!-- Rows for Column 2-->
 		<div
 			class="grid grid-rows-[1fr_auto]"
 			id="col2"
 			style="height: calc(100vh - {header_height}px);"
-		>
+	>
+{#if $page.data.length}
 			<!-- Messages -->
-
-			<DiscussionDisplay {messages} {new_message} currentDiscussionId={$page.params.id} />
-			<!-- Input box -->
-			<section id="input-row" class="p-4">
-				<ChatBox on:message_sent={messageSentHandler} currentDiscussionId={$page.params.id} maxRows={20} />
-			</section>
-		</div>
+			<DiscussionDisplay messages={$page.data.messages} {new_message} currentDiscussionId={$page.params.id} />
 {:else}
-	<div id="convo" class="flex flex-col justify-center my-10 h-full">
-		<div class="mx-auto text-3xl font-bold text-center">
+	<div class="flex flex-col justify-center my-10 h-full">
+		<div class="mx-auto text-2xl font-bold text-center">
 			This conversation has not started
-		</div>
-		<div class="my-10 mx-auto">
-			<CreateDiscussion friendList={data.friendList}/>
 		</div>
 	</div>
 {/if}
+		<section id="input-row" class="p-4">
+				<ChatBox on:message_sent={messageSentHandler} currentDiscussionId={$page.params.id} maxRows={20} />
+		</section>
+</div>
 
 <style>
 	/* #input-row { */

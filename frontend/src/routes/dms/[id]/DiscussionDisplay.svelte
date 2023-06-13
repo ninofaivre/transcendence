@@ -1,6 +1,8 @@
 <script lang="ts">
 	// DiscussionDisplay.svelte
 
+    console.log("Running DiscussionDisplay")
+
 	import type { DirectMessage } from "$types"
 
 	import ChatBubble from "./ChatBubble.svelte"
@@ -94,6 +96,7 @@
 		// This causes a call to intersectionHandler to fetch messages even though oldest_message.getAttribute("id") returns nothing
 		// Also this is not necessary because switchMessages handles observing
 		// observer.observe(canary)
+        console.log("Mounting DiscussionDisplay")
 	})
 
 	_init = false

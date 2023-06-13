@@ -102,25 +102,22 @@
 	_init = false
 </script>
 
-<!-- The normal flexbox inside a reverse flexbox is a trick to scroll to the bottom when the element loads -->
-<div class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
-	<div class="flex flex-col scroll-smooth">
-		<div bind:this={canary} />
-		{#each messages as message}
-			<ChatBubble
-				data_id={message.id}
-				from_me={message.author === $my_name}
-				from={message.author}
-				sent={message.id ? false : message.id !== "none"}
-			>
-				{#if message.type === "message"}
-					{message.message.content}
-				{:else}
-					{message.event.eventType}
-				{/if}
-			</ChatBubble>
-		{:else}
-			<p class="font-semibold text-center">This conversation has not started yet</p>
-		{/each}
-	</div>
+<div class="flex overflow-y-auto flex-col-reverse p-4 space-y-4">
+    <div class="flex flex-col scroll-smooth">
+        <div bind:this={canary} />
+        {#each messages as message}
+            <ChatBubble
+                data_id={message.id}
+                from_me={message.author === $my_name}
+                from={message.author}
+                sent={message.id ? false : message.id !== "none"}
+            >
+                {#if message.type === "message"}
+                    {message.message.content}
+                {:else}
+                    {message.event.eventType}
+                {/if}
+            </ChatBubble>
+        {/each}
+    </div>
 </div>

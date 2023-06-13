@@ -18,5 +18,6 @@ export const load = async ({ depends, params }: PageLoadEvent) => {
 		)
 	}
 
+    console.log("Your messages:", messages)
     return { messages }
 }

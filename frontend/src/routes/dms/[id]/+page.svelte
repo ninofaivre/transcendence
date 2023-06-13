@@ -9,7 +9,6 @@
 
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"
-	import CreateDiscussion from "../CreateDiscussion.svelte"
 	import ChatBox from "./ChatBox.svelte"
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
@@ -56,7 +55,7 @@
 			id="col2"
 			style="height: calc(100vh - {header_height}px);"
 	>
-{#if $page.data.length}
+{#if $page.data.messages.length}
 			<!-- Messages -->
 			<DiscussionDisplay messages={$page.data.messages} {new_message} currentDiscussionId={$page.params.id} />
 {:else}

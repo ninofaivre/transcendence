@@ -77,7 +77,7 @@
 		if (_init) return
 		console.log("intersectionHandler has been called", entry)
 		const oldest_message = canary.nextElementSibling as HTMLElement
-		const start = oldest_message?.dataset?.id
+		const start = oldest_message?.getAttribute("id")
 		if (start && entry.isIntersecting) {
 			const { status, body } = await chansClient.getChanElements({
 				params: { chanId: currentDiscussionId.toString() },
@@ -134,7 +134,7 @@
 		<div bind:this={canary} />
 		{#each displayed_messages as message}
 			<ChatBubble
-				data_id={message.id}
+				id={message.id}
 				from_me={message.authorName === $my_name}
 				from={message.authorName}
 				sent={message.id !== "none"}

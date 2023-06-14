@@ -5,16 +5,15 @@
 	export let from = ""
 	export let from_me = false
 	export let sent = true
-	export let data_id: string
+	export let id: string
 
 	// from_me = false
 </script>
 
 <div
-	id="message-row"
-	data-id={data_id}
+	{id}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
-	class={from_me ? "space-x-2 space-x-reverse" : "space-x-2"}
+	class={(from_me ? "space-x-2 space-x-reverse" : "space-x-2") + "message-row"}
 >
 	<div id="message-spacer" />
 	<Avatar src="https://i.pravatar.cc/?img=42" width="w-8 h-8" />
@@ -59,7 +58,7 @@
 	/* #message-container :global(> :last-child) { */
 	/* } */
 
-	#message-row {
+	.message-row {
 		display: flex;
 		margin-top: 8px;
 		margin-bottom: 8px;

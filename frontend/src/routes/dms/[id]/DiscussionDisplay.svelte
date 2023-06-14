@@ -107,7 +107,7 @@
 		{#each messages as message}
 			{#if message.type === "message"}
 				<ChatBubble
-					data_id={message.id}
+					id={message.id}
 					from_me={message.author === $my_name}
 					from={message.author}
 					sent={message.id ? false : message.id !== "none"}

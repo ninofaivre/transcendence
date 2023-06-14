@@ -13,3 +13,4 @@ Session.vim
 package-lock.json
 *.mjs
 *.js
+.vscode/

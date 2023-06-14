@@ -1,9 +1,13 @@
+import { join, resolve } from 'path'
+import forms from '@tailwindcss/forms'
+import skeleton from '@skeletonlabs/skeleton/tailwind/skeleton.cjs'
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
 	darkMode: 'class',
-	content: ['./src/**/*.{html,js,svelte,ts}', require('path').join(require.resolve('@skeletonlabs/skeleton'), '../**/*.{html,js,svelte,ts}')],
+	content: ['./src/**/*.{html,js,svelte,ts}', join(resolve('@skeletonlabs/skeleton'), '../**/*.{html,js,svelte,ts}')],
 	theme: {
 		extend: {},
 	},
-	plugins: [require('@tailwindcss/forms'),...require('@skeletonlabs/skeleton/tailwind/skeleton.cjs')()],
+	plugins: [forms,...skeleton()],
 }

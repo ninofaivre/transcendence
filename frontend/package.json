@@ -1,3 +1,6 @@
+	"devDependencies": {
+	},
+}
 {
   "name": "frontend",
   "version": "0.0.1",
@@ -7,7 +10,6 @@
     "build": "pnpm vite build",
     "build:watch": "find src -type f | entr -c -r pnpm vite build #pnpm vite build --watch ",
     "preview": "pnpm vite preview",
-    "test": "pnpm playwright test",
     "check": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test:unit": "pnpm vitest",
@@ -15,10 +17,9 @@
     "format": "pnpm prettier --plugin-search-dir . --write ."
   },
   "devDependencies": {
-    "@playwright/test": "^1.35.0",
+    "@floating-ui/dom": "^1.3.0",
     "@skeletonlabs/skeleton": "^1.7.1",
-    "@sveltejs/adapter-auto": "^2.1.0",
-    "@sveltejs/kit": "^1.20.2",
+    "@sveltejs/kit": "^1.5.0",
     "@tailwindcss/forms": "^0.5.3",
     "@typescript-eslint/eslint-plugin": "^5.59.11",
     "@typescript-eslint/parser": "^5.59.11",
@@ -36,9 +37,8 @@
     "svelte-reactive-preprocessor": "^0.8.3",
     "tailwindcss": "^3.3.2",
     "tslib": "^2.5.3",
-    "typescript": "^4.9.5",
+    "typescript": "^5.0.0",
     "vite": "^4.3.9",
-    "vitest": "^0.25.8"
   },
   "type": "module",
   "dependencies": {

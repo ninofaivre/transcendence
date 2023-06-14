@@ -10,6 +10,7 @@
 	import { onMount } from "svelte"
 	import { sse_store } from "$stores"
 	import { dmsClient } from "$clients"
+    import { page } from "$app/stores"
 
 	export let messages: DirectMessage[] = []
 	export let new_message: [string, Promise<Response>]
@@ -86,6 +87,24 @@
 		handleOwnMessage(new_message)
 	}
 
+	// This should be ok as this route is only accessible to logged in users
+	$: {
+		$sse_store?.addEventListener("CREATED_DM_ELEMENT", ({ data }: MessageEvent) => {
+			const parsedData: DirectMessage = JSON.parse(data)
+			console.log("Server message: New message", parsedData)
+            // if (parsedData?.dmId != $page.params.id)
+            //     console.log("... but this message is not for the current conversation", parsedData)
+		})
+		$sse_store?.addEventListener("UPDATED_DM_ELEMENT", ({ data }: MessageEvent) => {
+			const parsedData: DirectMessage = JSON.parse(data)
+			console.log("Server message: Update the DM message:", parsedData)
+            // if (parsedData?.dmId != $page.params.id)
+            //     console.log("... but this message is not for the current conversation", parsedData)
+		})
+	}
+
+	_init = false
+
 	onMount(() => {
 		//Set up observer
 		observer = new IntersectionObserver(intersectionHandler, {
@@ -97,8 +116,6 @@
 		// observer.observe(canary)
 		console.log("Mounting DiscussionDisplay")
 	})
-
-	_init = false
 </script>
 
 <div class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">

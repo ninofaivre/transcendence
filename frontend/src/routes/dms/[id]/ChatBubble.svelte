@@ -17,7 +17,7 @@
 	class={from_me ? "space-x-2 space-x-reverse" : "space-x-2"}
 >
 	<div id="message-spacer" />
-	<Avatar src="https://i.pravatar.cc/?img=42" width="w-8 h-8" />
+	<Avatar src="https://i.pravatar.cc/?img=42" width="w-8 h-8" rounded="rounded-full"/>
 	<div
 		id="message-bubble"
 		class={from_me ? "variant-filled-primary" : "variant-filled-secondary"}

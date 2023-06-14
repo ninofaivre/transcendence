@@ -1,8 +1,8 @@
 <script lang="ts">
-	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
 	// The ordering of these imports is critical to your app working properly
+	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
 	// If you have source.organizeImports set to true in VSCode, then it will auto change this ordering
-	import "@skeletonlabs/skeleton/styles/all.css"
+	import "@skeletonlabs/skeleton/styles/skeleton.css"
 	// Most of your app wide CSS should be put in this file
 	import "../app.postcss"
 
@@ -17,14 +17,14 @@
 	}
 
 	$: {
-		// if ($logged_in == true) {
-		// 	goto("/dms")
-		// } else if ($logged_in == false) {
-		// 	goto("/auth")
-		// }
-		if ($logged_in == false) {
+		if ($logged_in == true) {
+			goto("/friends")
+		} else if ($logged_in == false) {
 			goto("/auth")
 		}
+		// if ($logged_in == false) {
+		// 	goto("/auth")
+		// }
 	}
 
 	onMount(() => console.log("Layout mounted"))
@@ -34,7 +34,13 @@
 <AppShell>
 	<svelte:fragment slot="header">
 		<!-- App Bar -->
-		<AppBar slotDefault="place-self-center grid grid-cols-4" gap="gap-x-1">
+		<AppBar
+			gridColumns="grid-cols-[auto_1fr_auto]"
+			padding="px-2 py-2"
+			slotLead=""
+			slotDefault="place-self-center grid grid-cols-4"
+			slotTrail="place-self-center"
+		>
 			<svelte:fragment slot="lead">
 				<strong
 					class="origin-center -rotate-45 py-8 text-xs uppercase md:rotate-0 md:text-lg lg:text-xl xl:text-2xl"
@@ -65,18 +71,18 @@
 					class="variant-filled-success btn btn-sm mx-4 mt-1 text-2xl font-semibold"
 					href="/friends"
 				>
-                    🤝
+					🤝
 				</a>
 			{/if}
 			<svelte:fragment slot="trail">
 				{#if $logged_in}
 					<button
 						use:setup_logout
-						class="btn btn-sm variant-filled-secondary text-xs font-semibold"
+						class="btn btn-sm variant-filled-secondary mr-1 text-xs font-semibold"
 					>
 						Log out
 					</button>
-					<div class="chip variant-ghost">
+					<div class="chip variant-ghost ml-1">
 						{$my_name}
 					</div>
 				{/if}
@@ -88,6 +94,3 @@
 	<slot />
 	<Toast />
 </AppShell>
-
-<style>
-</style>

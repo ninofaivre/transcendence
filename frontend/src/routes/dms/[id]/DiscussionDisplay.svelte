@@ -1,7 +1,7 @@
 <script lang="ts">
 	// DiscussionDisplay.svelte
 
-    console.log("Running DiscussionDisplay")
+	console.log("Running DiscussionDisplay")
 
 	import type { DirectMessage } from "$types"
 
@@ -13,7 +13,7 @@
 
 	export let messages: DirectMessage[] = []
 	export let new_message: [string, Promise<Response>]
-    export let currentDiscussionId: string
+	export let currentDiscussionId: string
 
 	let observer: IntersectionObserver
 	const threshold = 0.5
@@ -29,16 +29,15 @@
 			messages = [
 				...messages,
 				{
-                    type : "message",
-                    message: { content, relatedTo: null },
-                    id: "none",
-                    creationDate: new Date(),
-                    author: $my_name,
+					type: "message",
+					message: { content, relatedTo: null },
+					id: "none",
+					creationDate: new Date(),
+					author: $my_name,
 				},
 			]
 			msg_promise.then(({ status, body }) => {
-				let last_elt_index =
-					messages.length > 0 ? messages.length - 1 : 0
+				let last_elt_index = messages.length > 0 ? messages.length - 1 : 0
 				if (status == 201 && body) {
 					messages[last_elt_index] = body as unknown as DirectMessage
 				} else
@@ -96,28 +95,35 @@
 		// This causes a call to intersectionHandler to fetch messages even though oldest_message.getAttribute("id") returns nothing
 		// Also this is not necessary because switchMessages handles observing
 		// observer.observe(canary)
-        console.log("Mounting DiscussionDisplay")
+		console.log("Mounting DiscussionDisplay")
 	})
 
 	_init = false
 </script>
 
-<div class="flex overflow-y-auto flex-col-reverse p-4 space-y-4">
-    <div class="flex flex-col scroll-smooth">
-        <div bind:this={canary} />
-        {#each messages as message}
-            <ChatBubble
-                data_id={message.id}
-                from_me={message.author === $my_name}
-                from={message.author}
-                sent={message.id ? false : message.id !== "none"}
-            >
-                {#if message.type === "message"}
-                    {message.message.content}
-                {:else}
-                    {message.event.eventType}
-                {/if}
-            </ChatBubble>
-        {/each}
-    </div>
+<div class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
+	<div class="flex flex-col scroll-smooth">
+		<div bind:this={canary} />
+		{#each messages as message}
+			{#if message.type === "message"}
+				<ChatBubble
+					data_id={message.id}
+					from_me={message.author === $my_name}
+					from={message.author}
+					sent={message.id ? false : message.id !== "none"}
+				>
+					{message.message.content}
+				</ChatBubble>
+			{:else if message.event.eventType == "CREATED_FRIENDSHIP"}
+				<div class="text-center text-gray-500">
+					<!-- Hehe this is wrong -->
+					{`You are now friend with ${message.author}`}
+				</div>
+			{:else}
+				<div class="text-center text-gray-500">
+					{`${message.event.eventType}`}
+				</div>
+			{/if}
+		{/each}
+	</div>
 </div>

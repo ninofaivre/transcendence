@@ -16,7 +16,7 @@ export class SseController {
 
 	@UseGuards(JwtAuthGuard)
 	@Sse("/")
-	sse(@Request() req: any): Observable<MessageEvent> {
+	async sse(@Request() req: any): Promise<Observable<MessageEvent>> {
 		const res = this.sseService
 			.addSubject(req.user.username)
 			.asObservable()

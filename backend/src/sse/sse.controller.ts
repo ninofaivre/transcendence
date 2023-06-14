@@ -19,9 +19,8 @@ export class SseController {
 	sse(@Request() req: any): Observable<MessageEvent> {
 		const res = this.sseService
 			.addSubject(req.user.username)
-			?.asObservable()
+			.asObservable()
 			.pipe(finalize(() => this.sseService.deleteSubject(req.user.username)))
-		if (!res) throw new InternalServerErrorException(`failed to open sse`)
 		return res
 	}
 }

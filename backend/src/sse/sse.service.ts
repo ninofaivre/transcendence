@@ -12,7 +12,8 @@ export class SseService {
 		let tmp = this.eventSource.get(username)
 		if (!tmp) {
 			console.log(`creating subject for ${username}`)
-			tmp = this.eventSource.set(username, new Subject<MessageEvent>()).get(username)
+            tmp = new Subject<MessageEvent>()
+			this.eventSource.set(username, tmp)
 		}
 		console.log(`open SSE for ${username}`)
 		return tmp

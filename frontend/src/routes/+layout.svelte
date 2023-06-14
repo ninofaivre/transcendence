@@ -31,7 +31,7 @@
 </script>
 
 <!-- App Shell -->
-<AppShell>
+<AppShell regionPage="w-full">
 	<svelte:fragment slot="header">
 		<!-- App Bar -->
 		<AppBar

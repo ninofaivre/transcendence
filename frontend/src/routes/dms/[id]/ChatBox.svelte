@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte"
-	import { chansClient } from "$lib/clients"
+	import { dmsClient } from "$lib/clients"
 
 	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
 
@@ -19,9 +19,9 @@
 		if (value) {
 			dispatch("message_sent", [
 				value,
-				chansClient.createChanMessage({
+                dmsClient.createDmMessage({
 					params: {
-						chanId: currentDiscussionId.toString(),
+						dmId: currentDiscussionId.toString(),
 					},
 					body: {
 						content: value,

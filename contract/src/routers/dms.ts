@@ -23,15 +23,26 @@ export const zDmReturn = z.strictObject({
 })
 
 const zDmDiscussionMessageReturn = z.strictObject({
+    author: zUserName,
 	content: z.string(),
 	relatedTo: z.string().uuid().nullable(),
 })
 
-// unused right now but probably usefull in the future
-const zDmDiscussionBaseEvent = z.strictObject({})
+const zDmDiscussionBaseElement = z.strictObject({
+	id: z.string().uuid(),
+	creationDate: z.date(),
+})
 
-export const zDmDiscussionEventReturn = z.union([
-	zDmDiscussionBaseEvent.extend({
+const zDmDiscussionBaseEvent = zDmDiscussionBaseElement
+    .extend({
+        type: z.literal("event")
+    })
+
+export const zDmDiscussionElementReturn = z.discriminatedUnion("type", [
+	zDmDiscussionBaseElement
+        .merge(zDmDiscussionMessageReturn)
+        .extend({ type: z.literal("message") }),
+    zDmDiscussionBaseEvent.extend({
 		eventType: zClassicDmEventType,
 	}),
     zDmDiscussionBaseEvent.extend({
@@ -42,24 +53,7 @@ export const zDmDiscussionEventReturn = z.union([
 		eventType: z.literal("CHAN_INVITATION"),
         author: zUserName,
         chanTitle: zChanTitle.optional() // peut-être plus tard complexifier avec chan preview qui du coup serait à J
-	}),
-])
-
-const zDmDiscussionBaseElement = z.strictObject({
-	id: z.string().uuid(),
-	creationDate: z.date(),
-})
-
-export const zDmDiscussionElementReturn = z.discriminatedUnion("type", [
-	zDmDiscussionBaseElement.extend({
-		type: z.literal("message"),
-	    author: zUserName,
-		message: zDmDiscussionMessageReturn,
-	}),
-	zDmDiscussionBaseElement.extend({
-		type: z.literal("event"),
-		event: zDmDiscussionEventReturn,
-	}),
+	})
 ])
 
 export const dmsContract = c.router(

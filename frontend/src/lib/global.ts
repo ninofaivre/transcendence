@@ -1,6 +1,7 @@
 import { PUBLIC_BACKEND_URL } from "$env/static/public"
 import { logged_in } from "$lib/stores"
 import { authClient, usersClient } from "$clients"
+import type { SseEvent } from "contract"
 
 export function getCookie(cname: string) {
 	const name = cname + "="
@@ -116,4 +117,15 @@ export async function signup(name: string, password: string) {
 			password,
 		},
 	})
+}
+
+type GetDataFromEventType<T extends SseEvent['type']> = Extract<SseEvent, { type: T}>['data']
+export function appendEventSourceListener <EventType extends SseEvent['type']> (
+    es: EventSource,
+    eventType: EventType, 
+    callback: (data: GetDataFromEventType<EventType>, event: MessageEvent) => void)
+{
+    es.addEventListener(eventType, (ev: MessageEvent) => {
+        callback(JSON.parse(ev.data), ev)
+    })
 }

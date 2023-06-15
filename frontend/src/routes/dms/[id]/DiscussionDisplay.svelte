@@ -11,6 +11,7 @@
 	import { sse_store } from "$stores"
 	import { dmsClient } from "$clients"
     import { page } from "$app/stores"
+    import { appendEventSourceListener } from "$lib/global"
 
 	export let messages: DirectMessage[] = []
 	export let new_message: [string, Promise<Response>]
@@ -73,34 +74,33 @@
 		}
 	}
 
-	function addNewMessageFromEventSource({ data }: MessageEvent) {
-		const parsedData = JSON.parse(data)
-		console.log("Message received from server:", parsedData)
-		messages = [...messages, parsedData]
-	}
-
-	// This should be ok since this is route is only accessible to logged_in user but
-	// since the event source remains undefined until success is confirmed it needs to be reactive
-	$: $sse_store?.addEventListener("CHAN_NEW_MESSAGE", addNewMessageFromEventSource)
-
 	$: {
 		handleOwnMessage(new_message)
 	}
 
 	// This should be ok as this route is only accessible to logged in users
 	$: {
+        if ($sse_store) {
+            appendEventSourceListener($sse_store, "CREATED_DM_ELEMENT",  (data) => {
+            console.log("Server message: New message", data)
+            // if (data?.dmId != $page.params.id)
+            //     console.log("... but this message is not for the current conversation", data)
+		})
+
 		$sse_store?.addEventListener("CREATED_DM_ELEMENT", ({ data }: MessageEvent) => {
-			const parsedData: DirectMessage = JSON.parse(data)
+			const parsedData = JSON.parse(data)
 			console.log("Server message: New message", parsedData)
-            // if (parsedData?.dmId != $page.params.id)
-            //     console.log("... but this message is not for the current conversation", parsedData)
+            if (parsedData?.dmId != $page.params.id)
+                console.log("... but this message is not for the current conversation", parsedData)
 		})
 		$sse_store?.addEventListener("UPDATED_DM_ELEMENT", ({ data }: MessageEvent) => {
-			const parsedData: DirectMessage = JSON.parse(data)
+			const parsedData = JSON.parse(data)
 			console.log("Server message: Update the DM message:", parsedData)
-            // if (parsedData?.dmId != $page.params.id)
-            //     console.log("... but this message is not for the current conversation", parsedData)
+            if (parsedData?.dmId != $page.params.id)
+                console.log("... but this message is not for the current conversation", parsedData)
 		})
+
+        }
 	}
 
 	_init = false

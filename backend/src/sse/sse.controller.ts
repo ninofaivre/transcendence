@@ -16,12 +16,12 @@ export class SseController {
 
 	@UseGuards(JwtAuthGuard)
 	@Sse("/")
-	sse(@Request() req: any): Observable<MessageEvent> {
-		const res = this.sseService
+	async sse(@Request() req: any): Promise<Observable<MessageEvent>> {
+		return this.sseService
 			.addSubject(req.user.username)
-			?.asObservable()
-			.pipe(finalize(() => this.sseService.deleteSubject(req.user.username)))
-		if (!res) throw new InternalServerErrorException(`failed to open sse`)
-		return res
+            .then(subject =>
+                subject.asObservable()
+                .pipe(finalize(() => this.sseService.deleteSubject(req.user.username)))
+            )
 	}
 }

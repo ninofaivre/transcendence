@@ -1,19 +1,23 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import { ClassicDmEventType, DirectMessageStatus, DirectMessageUserStatus } from "@prisma-generated/enums"
+import { ClassicDmEventType, DirectMessageStatus } from "@prisma-generated/enums"
+import { zChanTitle } from "./chans"
 
 const c = initContract()
 
 const zDirectMessageStatus = z.nativeEnum(DirectMessageStatus)
 const zClassicDmEventType = z.nativeEnum(ClassicDmEventType)
-const zDirectMessageUserStatus = z.nativeEnum(DirectMessageUserStatus)
+
+const test = z.enum(["ENABLED", "DISABLED"])
+
+type t = z.infer<typeof test>
+(a: DirectMessageStatus, b: t) => a satisfies t && b satisfies DirectMessageStatus
 
 export const zDmReturn = z.strictObject({
 	id: z.string().uuid(),
-	friendName: zUserName, // mb change it later as it is possibly not a friend
-	myDmStatus: zDirectMessageUserStatus, // prévu pour plus tard, sera sûrement un peu modiffié d'ici-là
-	myDmMutedUntil: z.date().nullable(), // prévu pour plus tard, sera sûrement un peu modiffié d'ici-là
+	otherName: zUserName,
+	// myDmMutedUntil: z.date().nullable(), // à implémenter si on veux et qu'on a le temps
 	creationDate: z.date(),
 	status: zDirectMessageStatus,
 })
@@ -30,21 +34,26 @@ export const zDmDiscussionEventReturn = z.union([
 	zDmDiscussionBaseEvent.extend({
 		eventType: zClassicDmEventType,
 	}),
+    zDmDiscussionBaseEvent.extend({
+        eventType: z.literal("DELETED_MESSAGE"),
+        author: zUserName
+    }),
 	zDmDiscussionBaseEvent.extend({
 		eventType: z.literal("CHAN_INVITATION"),
-		chanInvitationId: z.string().uuid(),
+        author: zUserName,
+        chanTitle: zChanTitle.optional() // peut-être plus tard complexifier avec chan preview qui du coup serait à J
 	}),
 ])
 
 const zDmDiscussionBaseElement = z.strictObject({
 	id: z.string().uuid(),
-	author: zUserName,
 	creationDate: z.date(),
 })
 
 export const zDmDiscussionElementReturn = z.discriminatedUnion("type", [
 	zDmDiscussionBaseElement.extend({
 		type: z.literal("message"),
+	    author: zUserName,
 		message: zDmDiscussionMessageReturn,
 	}),
 	zDmDiscussionBaseElement.extend({
@@ -138,7 +147,7 @@ export const dmsContract = c.router(
 				dmId: z.string().uuid(),
 				messageId: z.string().uuid(),
 			}),
-			body: c.body<null>(),
+			body: c.type<null>(),
 			responses: {
 				202: zDmDiscussionElementReturn,
 			},

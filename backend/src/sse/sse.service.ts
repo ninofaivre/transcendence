@@ -1,17 +1,25 @@
-import { Injectable } from "@nestjs/common"
+import { Inject, Injectable, forwardRef } from "@nestjs/common"
 import { Subject } from "rxjs"
 import { MessageEvent } from "@nestjs/common"
 import { SseEvent } from "contract"
+import { UserService } from "src/user/user.service"
 
 @Injectable()
 export class SseService {
-	eventSource = new Map<string, Subject<MessageEvent>>()
 
-	addSubject(username: string) {
+    constructor(
+        @Inject(forwardRef(() => UserService))
+        private readonly usersService: UserService) {}
+
+	private eventSource = new Map<string, Subject<MessageEvent>>()
+
+	async addSubject(username: string) {
 		let tmp = this.eventSource.get(username)
 		if (!tmp) {
 			console.log(`creating subject for ${username}`)
-			tmp = this.eventSource.set(username, new Subject<MessageEvent>()).get(username)
+            await this.usersService.notifyStatus(username, "ONLINE")
+            tmp = new Subject<MessageEvent>()
+			this.eventSource.set(username, tmp)
 		}
 		console.log(`open SSE for ${username}`)
 		return tmp
@@ -27,43 +35,19 @@ export class SseService {
 		return Promise.all(usernames.map(async (el) => this.pushEvent(el, event)))
 	}
 
-	deleteSubject(username: string) {
+	async deleteSubject(username: string) {
 		const tmp = this.eventSource.get(username)
 		if (!tmp) return
 		console.log("close SSE for", username)
 		if (!tmp.observed) {
 			this.eventSource.delete(username)
 			console.log(`deleting subject for ${username}`)
+            await this.usersService.notifyStatus(username, "OFFLINE")
 		}
 	}
-}
 
-export enum EventTypeList {}
-// // chans
-// CHAN_DELETED = "CHAN_DELETED",
-// CHAN_NEW_EVENT = "CHAN_NEW_EVENT",
-// CHAN_NEW_MESSAGE = "CHAN_NEW_MESSAGE",
-//
-// // dms
-// NEW_DM = 'NEW_DM',
-// DM_DELETED = "DM_DELETED",
-// DM_NEW_EVENT = "DM_NEW_EVENT",
-// DM_UPDATED_EVENT = "DM_UPDATED_EVENT",
-// DM_NEW_MESSAGE = "DM_NEW_MESSAGE",
-//
-// // invitations
-// NEW_FRIEND_INVITATION = "NEW_FRIEND_INVITATION",
-// FRIEND_INVITATION_REFUSED = "FRIEND_INVITATION_REFUSED",
-// FRIEND_INVITATION_CANCELED = "FRIEND_INVITATION_CANCELED",
-//
-// //
-// DELETED_CHAN_INVITATION = "DELETED_CHAN_INVITATION",
-// //
-// CHAN_NEW_INVITATION = "CHAN_NEW_INVITATION",
-// CHAN_INVITATION_CANCELED = "CHAN_INVITATION_CANCELED",
-// CHAN_INVITATION_REFUSED = "CHAN_INVITATION_REFUSED",
-// CHAN_DELETED_INVITATIONS = "CHAN_DELETED_INVITATIONS",
-//
-// // friends
-// NEW_FRIEND = "NEW_FRIEND",
-// DELETED_FRIEND = "DELETED_FRIEND"
+    public isUserOnline(username: string) {
+        return this.eventSource.has(username)
+    }
+
+}

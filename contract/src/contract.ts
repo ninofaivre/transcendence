@@ -3,7 +3,7 @@ import { type ChanEvent, chansContract } from "./routers/chans"
 import { type InvitationEvent, invitationsContract } from "./routers/invitations"
 import { type DmEvent, dmsContract } from "./routers/dms"
 import { type FriendEvent, friendsContract } from "./routers/friends"
-import { usersContract } from "./routers/users"
+import { UserEvent, usersContract } from "./routers/users"
 import type { MessageEvent } from "@nestjs/common"
 import { authContract } from "./routers/auth"
 
@@ -23,13 +23,16 @@ export const contract = c.router(
 	},
 )
 
-export type SseEvent = InvitationEvent | DmEvent | FriendEvent | ChanEvent
+type TransformUnion<T> = T extends { type: infer U, data: infer D }
+    ? U extends any
+        ? { type: U, data: D }
+        : never
+    : never;
 
-// Dummy function to raise error directyl in contract if SseEvent does not satisfies MessageEvent
-// instead of raising it in backend. There is probably a cleaner way...
+export type SseEvent = TransformUnion<InvitationEvent | DmEvent | FriendEvent | ChanEvent | UserEvent>
+
+export type GetData<T extends SseEvent['type']> = Extract<SseEvent, { type: T }>['data']
+
+// Dummy function to raise error at contract compilation instead
+// of raising it in backend. There is probably a cleaner way...
 ;(T: SseEvent) => T satisfies MessageEvent
-
-// export const client = initClient(contract, {
-//   baseUrl: 'http://localhost:3334',
-//   baseHeaders: {},
-// });

@@ -6,7 +6,7 @@ import { ChansModule } from "src/chans/chans.module"
 import { FriendsModule } from "src/friends/friends.module"
 
 @Module({
-	imports: [SseModule, ChansModule, forwardRef(() => FriendsModule)],
+	imports: [forwardRef(() => SseModule), ChansModule, forwardRef(() => FriendsModule)],
 	providers: [UserService],
 	controllers: [UserController],
 	exports: [UserService],

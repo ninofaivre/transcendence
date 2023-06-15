@@ -1,17 +1,23 @@
-import { Injectable } from "@nestjs/common"
+import { Inject, Injectable, forwardRef } from "@nestjs/common"
 import { Subject } from "rxjs"
 import { MessageEvent } from "@nestjs/common"
 import { SseEvent } from "contract"
+import { UserService } from "src/user/user.service"
 
 @Injectable()
 export class SseService {
 
+    constructor(
+        @Inject(forwardRef(() => UserService))
+        private readonly usersService: UserService) {}
+
 	private eventSource = new Map<string, Subject<MessageEvent>>()
 
-	addSubject(username: string) {
+	async addSubject(username: string) {
 		let tmp = this.eventSource.get(username)
 		if (!tmp) {
 			console.log(`creating subject for ${username}`)
+            await this.usersService.notifyStatus(username, "ONLINE")
             tmp = new Subject<MessageEvent>()
 			this.eventSource.set(username, tmp)
 		}
@@ -29,13 +35,14 @@ export class SseService {
 		return Promise.all(usernames.map(async (el) => this.pushEvent(el, event)))
 	}
 
-	deleteSubject(username: string) {
+	async deleteSubject(username: string) {
 		const tmp = this.eventSource.get(username)
 		if (!tmp) return
 		console.log("close SSE for", username)
 		if (!tmp.observed) {
 			this.eventSource.delete(username)
 			console.log(`deleting subject for ${username}`)
+            await this.usersService.notifyStatus(username, "OFFLINE")
 		}
 	}
 

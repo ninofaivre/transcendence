@@ -10,12 +10,16 @@ export const zUserProfilePreviewReturn = z.strictObject({
     userName: zUserName
 })
 
+export const zUserStatus = z.enum(["OFFLINE", "ONLINE", "INVISIBLE"])
+
 export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
     dmPolicyLevel: z.nativeEnum(DmPolicyLevelType),
     commonChans: z.array(z.strictObject({ type: zChanType, title: zChanTitle.nullable(), id: z.string().uuid() })),
-    blocked: z.string().uuid().optional(),
-    status: z.enum(["OFFLINE", "ONLINE", "INVISIBLE"])
-}).strict()
+    blockedShipId: z.string().uuid().optional(),
+    status: zUserStatus
+})
+
+export const zPartialUserProfileReturn = zUserProfileReturn.partial()
 
 export const zMyProfileReturn = z.strictObject({
     userName: zUserName,
@@ -81,3 +85,11 @@ export const usersContract = c.router(
 		pathPrefix: "/users",
 	},
 )
+
+export type UserEvent = {
+    type: "UPDATED_USER_PROFILE",
+    data: {
+        userName: z.infer<typeof zUserName>,
+        userProfile: z.infer<typeof zPartialUserProfileReturn>
+    }
+}

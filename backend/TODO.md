@@ -23,3 +23,5 @@
 -   [ ] route pour update un message dans les chans
 -   [ ] route pour update un chan
 -   [ ] simplifier les modules (peut-être certains services regroupés dans un seul module, peut-être passer sse en global par ex vu que lui n'importe aucun autre module)
+-   [ ] essayer de s'interroger sur l'intérêt d'avoir certaines fonctions en async (si c'est pour les await de toutes façon ça n'a pas d'intérêt sauf dans le cadre d'un endpoint ou d'une fonction qui doit être async pour elle-même pouvoir use une fonction d'une lib qui l'est)
+-   [ ] tester de ne pas await certaines fonctions async si le résultat ou l'ordre d'exécution ne sont pas importants

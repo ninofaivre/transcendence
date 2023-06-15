@@ -7,7 +7,7 @@ import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"
 import { z } from "zod"
 import { zUserProfileReturn } from "contract"
-import { zMyProfileReturn, zUserProfilePreviewReturn } from "contract/dist/routers/users"
+import { zMyProfileReturn, zUserProfilePreviewReturn, zUserStatus } from "contract/dist/routers/users"
 import { SseService } from "src/sse/sse.service"
 import { ChansService } from "src/chans/chans.service"
 import { FriendsService } from "src/friends/friends.service"
@@ -19,6 +19,7 @@ type RequestShapes = NestRequestShapes<typeof c>
 export class UserService {
 
 	constructor(private readonly prisma: PrismaService,
+                @Inject(forwardRef(() => SseService))
                 private readonly sse: SseService,
                 @Inject(forwardRef(() => ChansService))
                 private readonly chansService: ChansService,
@@ -129,7 +130,7 @@ export class UserService {
     }
 
     private async formatUserStatusForUser(username: string, toGetStatusUserName: string, visibilityLevel: StatusVisibilityLevel)
-    : Promise<"ONLINE" | "OFFLINE" | "INVISIBLE"> {
+    : Promise<z.infer<typeof zUserStatus>> {
         if (visibilityLevel === "NO_ONE")
             return "INVISIBLE"
         if (visibilityLevel === "ANYONE")
@@ -149,7 +150,7 @@ export class UserService {
             status: await this.formatUserStatusForUser(username, name, statusVisibilityLevel),
             ...this.formatUserProfilePreviewForUser(username, { name }),
             commonChans: chans,
-            blocked: (blockedUser.length) ? blockedUser[0].id : undefined
+            blockedShipId: (blockedUser.length) ? blockedUser[0].id : undefined
         }
     }
 
@@ -158,7 +159,8 @@ export class UserService {
     //     return Promise.all(toFormat.map(el => this.formatUserProfileForUser(username, el)))
     // }
 
-    async getProximityLevelBetweenUsers(usernameA: string, usernameB: string) {
+    async getProximityLevelBetweenUsers(usernameA: string, usernameB: string)
+    : Promise<"FRIEND" | "COMMON_CHAN" | "ANYONE"> {
         if (await this.friendsService.areUsersFriend(usernameA, usernameB))
             return "FRIEND"
         if (await this.chansService.doesUsersHasCommonChan(usernameA, usernameB))
@@ -192,6 +194,7 @@ export class UserService {
     }
 
     // TODO: take and notify all actions (example disable / enable dms)
+    // remember to notify online status when status visibilityChange and to notify invisible
     async updateMe(username: string, dto: RequestShapes['updateMe']['body']) {
         return this.formatMe(await this.prisma.user.update({ where: { name: username },
             data: dto,
@@ -221,4 +224,25 @@ export class UserService {
 		const { password, ...result } = await this.prisma.user.create({ data: user })
 		return result
 	}
+
+    public async notifyStatus(username: string, status: z.infer<typeof zUserStatus>) {
+        const { statusVisibilityLevel: statusVisi, ...res } = await this.getUserByNameOrThrow(username, {
+            chans: { select: { users: { select: { name: true } } } },
+            friend: { select: { requestedUserName: true } },
+            friendOf: { select: { requestingUserName: true } },
+            directMessage: { select: { requestedUserName: true } },
+            directMessageOf: { select: { requestingUserName: true } },
+            statusVisibilityLevel: true })
+        const friends = res.friend.map(el => el.requestedUserName)
+            .concat(res.friendOf.map(el => el.requestingUserName))
+        const dms = res.directMessage.map(el => el.requestedUserName)
+            .concat(res.directMessageOf.map(el => el.requestingUserName))
+        const chansUsers = res.chans.map(el => el.users.map(user => user.name)).flat()
+        if (statusVisi === "NO_ONE")
+            return
+        const toNotify = friends
+            .concat((statusVisi !== "ONLY_FRIEND") ? chansUsers : [],
+                    (statusVisi === "ANYONE") ? dms : [])
+        return this.sse.pushEventMultipleUser([...new Set(toNotify)], { type: "UPDATED_USER_PROFILE", data: { userName: username, userProfile: { status } } })
+    }
 }

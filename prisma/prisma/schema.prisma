@@ -192,12 +192,10 @@ model DirectMessage {
 
   requestingUser                 User                @relation(name: "directMessage", fields: [requestingUserName], references: [name])
   requestingUserName             String
-  requestingUserStatus           DirectMessageUserStatus @default(OPEN)
-  requestingUserStatusMutedUntil DateTime?
+  // requestingUserStatusMutedUntil DateTime? // à faire plus tard si on a le temps/l'envie
   requestedUser                  User                @relation("directMessageOf", fields: [requestedUserName], references: [name])
   requestedUserName              String
-  requestedUserStatus            DirectMessageUserStatus @default(OPEN)
-  requestedUserStatusMutedUntil  DateTime?
+  // requestedUserStatusMutedUntil  DateTime? // à farie plus tard si on a le temps/l'envie
 
   status					DirectMessageStatus @default(ENABLED)
 
@@ -209,12 +207,6 @@ model DirectMessage {
 enum DirectMessageStatus {
 	ENABLED
 	DISABLED
-}
-
-enum DirectMessageUserStatus {
-  CLOSED
-  OPEN
-  MUTED
 }
 
 model DmDiscussionElement {

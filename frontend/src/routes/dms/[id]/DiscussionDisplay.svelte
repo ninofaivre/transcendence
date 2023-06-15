@@ -14,7 +14,8 @@
     import { appendEventSourceListener } from "$lib/global"
 
 	export let messages: DirectMessage[] = []
-	export let new_message: [string, Promise<Response>]
+	// export let new_message: [string, Promise<Response>]
+	export let new_message: [string, ReturnType<typeof dmsClient.createDmMessage>]
 	export let currentDiscussionId: string
 
 	let observer: IntersectionObserver
@@ -41,7 +42,7 @@
 			msg_promise.then(({ status, body }) => {
 				let last_elt_index = messages.length > 0 ? messages.length - 1 : 0
 				if (status == 201 && body) {
-					messages[last_elt_index] = body as unknown as DirectMessage
+					messages[last_elt_index] = body
 				} else
 					console.error(
 						"The message sent was received by the server but has not been created. Server responder with:",
@@ -134,7 +135,7 @@
 			{:else if message.event.eventType == "CREATED_FRIENDSHIP"}
 				<div class="text-center text-gray-500">
 					<!-- Hehe this is wrong -->
-					{`You are now friend with ${message.author}`}
+					{`You are now friend with ${"Achetez cet emplacement publicitaire"}`}
 				</div>
 			{:else}
 				<div class="text-center text-gray-500">

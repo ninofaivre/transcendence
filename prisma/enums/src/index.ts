@@ -1,1 +1,1 @@
-export { ClassicChanEventType, ChanType, ClassicDmEventType, DirectMessageUserStatus, DirectMessageStatus, ChanInvitationStatus, FriendInvitationStatus, RoleApplyingType, PermissionList, dmPolicyLevelType } from "../../prisma/client"
+export { ClassicChanEventType, ChanType, ClassicDmEventType, DirectMessageStatus, ChanInvitationStatus, FriendInvitationStatus, RoleApplyingType, PermissionList, DmPolicyLevelType, StatusVisibilityLevel } from "../../prisma/client"

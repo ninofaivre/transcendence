@@ -11,7 +11,7 @@ export const zFriendShipReturn = z.strictObject({
 })
 
 export const friendsContract = c.router(
-	{
+    {
 		getFriends: {
 			method: "GET",
 			path: "/",

@@ -2,15 +2,29 @@ import { initContract } from "@ts-rest/core"
 import { zUserName, zUserPassword } from "../zod/user.zod"
 import { z } from "zod"
 import { zChanTitle, zChanType } from "./chans"
-import { dmPolicyLevelType } from "@prisma-generated/enums"
+import { DmPolicyLevelType, StatusVisibilityLevel } from "@prisma-generated/enums"
 
 const c = initContract()
 
-export const zUserProfileReturn = z.strictObject({
-    dmPolicyLevel: z.nativeEnum(dmPolicyLevelType),
-    userName: zUserName,
+export const zUserProfilePreviewReturn = z.strictObject({
+    userName: zUserName
+})
+
+export const zUserStatus = z.enum(["OFFLINE", "ONLINE", "INVISIBLE"])
+
+export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
+    dmPolicyLevel: z.nativeEnum(DmPolicyLevelType),
     commonChans: z.array(z.strictObject({ type: zChanType, title: zChanTitle.nullable(), id: z.string().uuid() })),
-    blocked: z.string().uuid().optional()
+    blockedShipId: z.string().uuid().optional(),
+    status: zUserStatus
+})
+
+export const zPartialUserProfileReturn = zUserProfileReturn.partial()
+
+export const zMyProfileReturn = z.strictObject({
+    userName: zUserName,
+    dmPolicyLevel: z.nativeEnum(DmPolicyLevelType),
+    statusVisibilityLevel: z.nativeEnum(StatusVisibilityLevel),
 })
 
 export const usersContract = c.router(
@@ -25,22 +39,34 @@ export const usersContract = c.router(
                 nResult: z.number().positive().int().max(30).default(10)
             }),
             responses: {
-                200: z.array(
-                    z.object({
-                        userName: zUserName
-                    })
-                )
+                200: z.array(zUserProfilePreviewReturn)
+            }
+        },
+        getUser: {
+            method: "GET",
+            path: "/:userName",
+            pathParams: z.strictObject({
+                userName: zUserName
+            }),
+            responses: {
+                200: zUserProfileReturn
             }
         },
 		getMe: {
 			method: "GET",
 			path: "/@me",
 			responses: {
-				200: z.object({
-					name: zUserName,
-				}),
-			},
+				200: zMyProfileReturn
+            },
 		},
+        updateMe: {
+            method: "PATCH",
+            path: "/@me",
+            body: zMyProfileReturn.partial(),
+            responses: {
+                200: zMyProfileReturn
+            }
+        },
 		signUp: {
 			method: "POST",
 			path: "/",
@@ -59,3 +85,11 @@ export const usersContract = c.router(
 		pathPrefix: "/users",
 	},
 )
+
+export type UserEvent = {
+    type: "UPDATED_USER_PROFILE",
+    data: {
+        userName: z.infer<typeof zUserName>,
+        userProfile: z.infer<typeof zPartialUserProfileReturn>
+    }
+}

@@ -17,6 +17,7 @@ import { z } from "zod"
 @Injectable()
 export class ChanInvitationsService {
 	constructor(
+        @Inject(forwardRef(() => UserService))
 		private readonly usersService: UserService,
         private readonly prisma: PrismaService,
 		private readonly dmsService: DmsService,

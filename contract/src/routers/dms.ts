@@ -26,6 +26,7 @@ const zDmDiscussionMessageReturn = z.strictObject({
     author: zUserName,
 	content: z.string(),
 	relatedTo: z.string().uuid().nullable(),
+    hasBeenEdited: z.boolean()
 })
 
 const zDmDiscussionBaseElement = z.strictObject({
@@ -42,8 +43,10 @@ export const zDmDiscussionElementReturn = z.discriminatedUnion("type", [
 	zDmDiscussionBaseElement
         .merge(zDmDiscussionMessageReturn)
         .extend({ type: z.literal("message") }),
+    // peut-être pas fou en terme de lisibilité mais le type inféré est exactement celui que je veux
     zDmDiscussionBaseEvent.extend({
 		eventType: zClassicDmEventType,
+        otherName: zUserName // if we really need it
 	}),
     zDmDiscussionBaseEvent.extend({
         eventType: z.literal("DELETED_MESSAGE"),
@@ -52,7 +55,7 @@ export const zDmDiscussionElementReturn = z.discriminatedUnion("type", [
 	zDmDiscussionBaseEvent.extend({
 		eventType: z.literal("CHAN_INVITATION"),
         author: zUserName,
-        chanTitle: zChanTitle.optional() // peut-être plus tard complexifier avec chan preview qui du coup serait à J
+        chanTitle: zChanTitle.optional() // peut-être plus tard complexifier avec chan preview
 	})
 ])
 

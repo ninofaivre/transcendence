@@ -159,8 +159,7 @@ model User {
   deletedMessageChanDiscussionEvent DeletedMessageChanDiscussionEvent[]
   chanDiscussionMessage ChanDiscussionMessage[]
 
-  dmDiscussionElement DmDiscussionElement[]
-  dmDiscussionMessage DmDiscussionMessage[]
+  dmDiscussionMesssage DmDiscussionMessage[]
 
   mutedUserChan MutedUserChan[]
 
@@ -222,11 +221,7 @@ model DmDiscussionElement {
 
   relatedOf DmDiscussionMessage[] @relation(name: "related")
 
-  authorRelation User   @relation(fields: [author], references: [name], onDelete: Cascade)
-  author         String
-
   creationDate     DateTime  @default(now())
-  modificationDate DateTime? @updatedAt
 
   directMessage   DirectMessage @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
   directMessageId String
@@ -237,10 +232,14 @@ model DmDiscussionMessage {
 
   content String
 
-  relatedUsers        User[]
+  authorRelation User   @relation(fields: [author], references: [name], onDelete: Cascade)
+  author         String
+
   related             DmDiscussionElement? @relation(name: "related", fields: [relatedTo], references: [id])
   relatedTo           String?
   discussionElement   DmDiscussionElement?  @relation(name: "message")
+
+  modificationDate DateTime? @updatedAt
 }
 
 model DmDiscussionEvent {
@@ -277,7 +276,6 @@ model ClassicDmDiscussionEvent {
 enum ClassicDmEventType {
   CREATED_FRIENDSHIP
   DELETED_FRIENDSHIP
-  DELETED_MESSAGE
   DISABLED_DM
   ENABLED_DM
 }

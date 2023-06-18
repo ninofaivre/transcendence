@@ -160,6 +160,8 @@ model User {
   chanDiscussionMessage ChanDiscussionMessage[]
 
   dmDiscussionMesssage DmDiscussionMessage[]
+  deletedMessageDmDiscussionEvent DeletedMessageDmDiscussionEvent[]
+
 
   mutedUserChan MutedUserChan[]
 
@@ -175,6 +177,7 @@ enum StatusVisibilityLevel {
 }
 
 enum DmPolicyLevelType {
+    // DO_NOT_DISTURB (NO_ONE) ???
 	ONLY_FRIEND
 	IN_COMMON_CHAN	
 	ANYONE
@@ -245,15 +248,24 @@ model DmDiscussionMessage {
 model DmDiscussionEvent {
   id String @id @default(uuid())
 
-  // CUSTOM MIGRATION ==> classicEvent | chanInvitationEvent
-  // ==>	{ classicEvent: null, chanInvitationEvent: ChanInvitationEvent } |
-  //		{ classicEvent: ClassicEvent, chanInvitationEvent: null }
+  // CUSTOM MIGRATION ==> classicEvent | chanInvitationEvent | 
   classicDmDiscussionEvent ClassicDmDiscussionEvent? @relation(fields: [classicDmDiscussionEventId], references: [id])
   classicDmDiscussionEventId String? @unique
   chanInvitationDmDiscussionEvent ChanInvitationDmDiscussionEvent? @relation(fields: [chanInvitationDmDiscussionEventId], references: [id])
   chanInvitationDmDiscussionEventId String? @unique
+  deletedMessageDmDiscussionEvent DeletedMessageDmDiscussionEvent? @relation(fields: [deletedMessageDmDiscussionEventId], references: [id])
+  deletedMessageDmDiscussionEventId String? @unique
 
   discussionElement   DmDiscussionElement?
+}
+
+model DeletedMessageDmDiscussionEvent {
+    id String @id @default(uuid())
+
+    authorRelation User   @relation(fields: [author], references: [name], onDelete: Cascade)
+    author         String
+
+    dmDiscussionEvent DmDiscussionEvent?
 }
 
 model ChanInvitationDmDiscussionEvent {

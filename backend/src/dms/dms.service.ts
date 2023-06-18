@@ -1,11 +1,10 @@
 import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common"
-import { ClassicDmEventType, DirectMessageStatus, Prisma } from "prisma-client"
+import { ClassicDmEventType, DirectMessageStatus, DmDiscussionEvent, Prisma } from "prisma-client"
 import { SseService } from "src/sse/sse.service"
 import { z } from "zod"
 import {
 	DmEvent,
 	zDmDiscussionElementReturn,
-	zDmDiscussionEventReturn,
 	zDmReturn,
 } from "contract"
 import { Tx } from "src/types"
@@ -20,14 +19,8 @@ export class DmsService {
 
 	private directMessageSelect = {
 		id: true,
-
 		requestedUserName: true,
-		requestedUserStatus: true,
-		requestedUserStatusMutedUntil: true,
-
 		requestingUserName: true,
-		requestingUserStatus: true,
-		requestingUserStatusMutedUntil: true,
 		creationDate: true,
 		status: true,
 	} satisfies Prisma.DirectMessageSelect
@@ -38,7 +31,8 @@ export class DmsService {
 
 	private dmDiscussionEventSelect = {
 		classicDmDiscussionEvent: { select: { eventType: true } },
-		chanInvitationDmDiscussionEvent: { select: { chanInvitation: { select: { id: true } } } },
+		chanInvitationDmDiscussionEvent: { select: { chanInvitation: { select: { invitingUserName: true, chanTitle: true } } } },
+        deletedMessageDmDiscussionEvent: { select: { author: true } }
 	} satisfies Prisma.DmDiscussionEventSelect
 
 	private dmDiscussionEventGetPayload = {
@@ -48,11 +42,16 @@ export class DmsService {
 	private dmDiscussionMessageSelect = {
 		content: true,
 		relatedTo: true,
+        author: true,
+        modificationDate: true
 	} satisfies Prisma.DmDiscussionMessageSelect
+
+    private dmDiscussionMessageGetPayload = {
+        select: this.dmDiscussionMessageSelect
+    } satisfies Prisma.DmDiscussionMessageArgs
 
 	private dmDiscussionElementSelect = {
 		id: true,
-		author: true,
 		creationDate: true,
 		message: { select: this.dmDiscussionMessageSelect },
 		event: { select: this.dmDiscussionEventSelect },
@@ -68,22 +67,14 @@ export class DmsService {
 	): z.infer<typeof zDmReturn> {
 		const {
 			requestedUserName,
-			requestedUserStatus,
-			requestedUserStatusMutedUntil,
 			requestingUserName,
-			requestingUserStatus,
-			requestingUserStatusMutedUntil,
 			...rest
 		} = dm
 
 		const requested: boolean = requestedUserName === username
 		const formattedDirectMessage = {
 			...rest,
-			friendName: requested ? requestingUserName : requestedUserName,
-			myDmStatus: requested ? requestedUserStatus : requestingUserStatus,
-			myDmMutedUntil: requested
-				? requestedUserStatusMutedUntil
-				: requestingUserStatusMutedUntil,
+			otherName: requested ? requestingUserName : requestedUserName,
 		}
 		return formattedDirectMessage
 	}
@@ -95,44 +86,67 @@ export class DmsService {
 		return dms.map((dm) => this.formatDirectMessage(dm, username))
 	}
 
-	private formatDmEvent(
-		event: Prisma.DmDiscussionEventGetPayload<typeof this.dmDiscussionEventGetPayload>,
-	): z.infer<typeof zDmDiscussionEventReturn> {
+	private formatDmEventForUser(event: Prisma.DmDiscussionEventGetPayload<typeof this.dmDiscussionEventGetPayload>, username: string, context: Prisma.DirectMessageGetPayload<typeof this.directMessageGetPayload>) {
 		type RetypedEvent =
 			| (Omit<
 					typeof event,
-					"classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent"
+					"classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent" | "deletedMessageDmDiscussionEvent"
 			  > & {
 					classicDmDiscussionEvent: Exclude<typeof event.classicDmDiscussionEvent, null>
-					chanInvitationDmDiscussionEvent: null
+					chanInvitationDmDiscussionEvent: null,
+                    deletedMessageDmDiscussionEvent: null
 			  })
 			| (Omit<
 					typeof event,
-					"classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent"
+					"classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent" | "deletedMessageDmDiscussionEvent"
 			  > & {
 					classicDmDiscussionEvent: null
 					chanInvitationDmDiscussionEvent: Exclude<
 						typeof event.chanInvitationDmDiscussionEvent,
 						null
-					>
+					>,
+                    deletedMessageDmDiscussionEvent: null
 			  })
+            | (Omit<
+                    typeof event,
+                    "classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent" | "deletedMessageDmDiscussionEvent"
+              > & {
+                    classicDmDiscussionEvent: null,
+                    chanInvitationDmDiscussionEvent: null,
+                    deletedMessageDmDiscussionEvent: Exclude<typeof event.deletedMessageDmDiscussionEvent, null>
+              })
 		const retypedEvent = event as RetypedEvent
 
-		const { chanInvitationDmDiscussionEvent, classicDmDiscussionEvent, ...rest } = retypedEvent
+		const { chanInvitationDmDiscussionEvent, classicDmDiscussionEvent, deletedMessageDmDiscussionEvent } = retypedEvent
 
 		if (chanInvitationDmDiscussionEvent) {
-			if (!chanInvitationDmDiscussionEvent.chanInvitation?.id)
-				throw new InternalServerErrorException("invalid dm discussion event")
 			return {
-				...rest,
-				eventType: "CHAN_INVITATION",
-				chanInvitationId: chanInvitationDmDiscussionEvent.chanInvitation.id,
+				eventType: "CHAN_INVITATION" as "CHAN_INVITATION",
+                author: chanInvitationDmDiscussionEvent.chanInvitation.invitingUserName,
+                chanTitle: chanInvitationDmDiscussionEvent.chanInvitation.chanTitle
 			}
-		} else return { ...rest, ...classicDmDiscussionEvent }
+		} else if (deletedMessageDmDiscussionEvent)
+            return {
+                eventType: "DELETED_MESSAGE" as "DELETED_MESSAGE",
+                author: deletedMessageDmDiscussionEvent.author
+            }
+        else {
+            return {
+                ...classicDmDiscussionEvent,
+                otherName: (username === context.requestedUserName) ? context.requestingUserName : context.requestedUserName
+            }
+        }
 	}
 
-	private formatDmElement(
+    private formatDmMessage(message: Prisma.DmDiscussionMessageGetPayload<typeof this.dmDiscussionMessageGetPayload>) {
+        const { modificationDate, ...rest } = message
+        return { ...rest, hasBeenEdited: !!modificationDate }
+    }
+
+	private formatDmElementForUser(
 		element: Prisma.DmDiscussionElementGetPayload<typeof this.dmDiscussionElementGetPayload>,
+        username: string,
+        context: Prisma.DirectMessageGetPayload<typeof this.directMessageGetPayload>
 	): z.infer<typeof zDmDiscussionElementReturn> {
 		type RetypedElement =
 			| (Omit<typeof element, "event" | "message"> & {
@@ -145,14 +159,16 @@ export class DmsService {
 			  })
 		const { event, message, ...rest } = element as RetypedElement
 
-		if (event) return { ...rest, type: "event", event: this.formatDmEvent(event) }
-		else return { ...rest, type: "message", message }
+		if (event) return { ...rest, type: "event", ...this.formatDmEventForUser(event, username, context) }
+		else return { ...rest, type: "message", ...this.formatDmMessage(message) }
 	}
 
 	private formatDmElementArray(
 		elements: Prisma.DmDiscussionElementGetPayload<typeof this.dmDiscussionElementGetPayload>[],
+        otherName: string,
+        context: Prisma.DirectMessageGetPayload<typeof this.directMessageGetPayload>
 	): z.infer<typeof zDmDiscussionElementReturn>[] {
-		return elements.map((el) => this.formatDmElement(el))
+		return elements.map((el) => this.formatDmElementForUser(el, otherName, context))
 	}
 
 	public async findDmBetweenUsers<T extends Prisma.DirectMessageSelect>(
@@ -184,7 +200,6 @@ export class DmsService {
 			data: {
 				discussionElement: {
 					create: {
-						authorRelation: { connect: { name: author } },
 						directMessage: { connect: { id: dmId } },
 					},
 				},
@@ -203,7 +218,7 @@ export class DmsService {
 		const newEvent = (await this.prisma.dmDiscussionEvent.create(createArgs)).discussionElement
 		if (!newEvent?.event?.classicDmDiscussionEvent)
 			throw new InternalServerErrorException("a discussion event has failed to be created")
-		return this.formatDmElement(newEvent)
+		return this.formatDmElementForUser(newEvent, author)
 	}
 
 	public async createChanInvitationDmEvent(
@@ -224,17 +239,17 @@ export class DmsService {
 			.discussionElement
 		if (!newEvent?.event?.chanInvitationDmDiscussionEvent)
 			throw new InternalServerErrorException("a discussion event has failed to be created")
-		return this.formatDmElement(newEvent)
+		return this.formatDmElementForUser(newEvent, author)
 	}
 
-	public async findOneDmElement(dmElementId: string, prismaInstance: Tx = this.prisma) {
+	public async findOneDmElement(dmElementId: string, prismaInstance: Tx = this.prisma, username: string) {
 		const dmDiscussionElement = await prismaInstance.dmDiscussionElement.findUnique({
 			where: { id: dmElementId },
 			select: this.dmDiscussionElementSelect,
 		})
 		if (!dmDiscussionElement)
 			throw new NotFoundException(`not found DmDiscussionElement ${dmElementId}`)
-		return this.formatDmElement(dmDiscussionElement)
+		return this.formatDmElementForUser(dmDiscussionElement, username)
 	}
 
 	public async createAndNotifyDm(requestingUserName: string, requestedUserName: string) {

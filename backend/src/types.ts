@@ -3,41 +3,18 @@ import { PrismaService } from "./prisma/prisma.service"
 
 export type Tx = Omit<PrismaService, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use">
 
-//TODO: automation with union of string generic type
-export type RetypedElement<T extends { message: any, event: any }> =
-			| (Omit<T, "event" | "message"> & {
-					event: null
-					message: Exclude<T['message'], null>
-			  })
-			| (Omit<T, "event" | "message"> & {
-					event: Exclude<T['event'], null>
-					message: null
-			  })
+type ExcludeProperty<T, K extends keyof T, V> = Omit<T, K> & { [P in K]: Exclude<T[K], V> };
 
-//TODO: automation with union of string generic type
-export type RetypedEvent<T extends { classicDmDiscussionEvent: any, chanInvitationDmDiscussionEvent: any, deletedMessageDmDiscussionEvent: any, blockedDmDiscussionEvent: any }> =
-			| (Omit<T, "classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent" | "deletedMessageDmDiscussionEvent" | "blockedDmDiscussionEvent"> & {
-					classicDmDiscussionEvent: Exclude<T['classicDmDiscussionEvent'], null>
-					chanInvitationDmDiscussionEvent: null,
-                    deletedMessageDmDiscussionEvent: null,
-                    blockedDmDiscussionEvent: null
-			  })
-			| (Omit<T, "classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent" | "deletedMessageDmDiscussionEvent" | "blockedDmDiscussionEvent"> & {
-					classicDmDiscussionEvent: null
-					chanInvitationDmDiscussionEvent: Exclude<T['chanInvitationDmDiscussionEvent'], null>,
-                    deletedMessageDmDiscussionEvent: null,
-                    blockedDmDiscussionEvent: null
-			  })
-            | (Omit<T, "classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent" | "deletedMessageDmDiscussionEvent" | "blockedDmDiscussionEvent"> & {
-                    classicDmDiscussionEvent: null,
-                    chanInvitationDmDiscussionEvent: null,
-                    deletedMessageDmDiscussionEvent: Exclude<T['deletedMessageDmDiscussionEvent'], null>,
-                    blockedDmDiscussionEvent: null
-              })
-            | (Omit<T, "classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent" | "deletedMessageDmDiscussionEvent" | "blockedDmDiscussionEvent"> & {
-                    classicDmDiscussionEvent: null,
-                    chanInvitationDmDiscussionEvent: null,
-                    deletedMessageDmDiscussionEvent: null,
-                    blockedDmDiscussionEvent: Exclude<T['blockedDmDiscussionEvent'], null>
-              })
+export type IdontKnowHowToNameThisShit<T extends Object, K extends keyof T> = {
+    [k in K]: Omit<T, K> & (Record<Exclude<K, k>, null> & ExcludeProperty<Pick<T, k>, k, null>);
+}[K];
 
+type EventUnion = "classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent" | "deletedMessageDmDiscussionEvent" | "blockedDmDiscussionEvent"
+
+export type RetypedEvent<T extends Record<EventUnion, any>> =
+    IdontKnowHowToNameThisShit<T, EventUnion>
+
+type ElementUnion = "event" | "message"
+
+export type RetypedElement<T extends Record<ElementUnion, any>> =
+    IdontKnowHowToNameThisShit<T, ElementUnion>

@@ -4,7 +4,7 @@
 
 	export let from = ""
 	export let from_me = false
-	export let sent = true
+	export let is_sent = true
 	export let data_id: string
 
 	// from_me = false
@@ -26,7 +26,7 @@
 			<div id="from-field" class="font-medium">{from}</div>
 		{/if}
 		<div id="message-container" class="grid grid-cols-[auto_1fr]">
-			{#if sent}
+			{#if !is_sent}
 				<div
 					id="spinner-container"
 					class="self-center"
@@ -34,9 +34,10 @@
 				>
 					<ProgressRadial
 						width="w-3"
-						stroke={130}
-						meter={from_me ? "stroke-secondary-600" : "stroke-tertiary-500"}
-						track={from_me ? "stroke-secondary-500/30" : "stroke-tertiary-500/30"}
+						stroke={140}
+                        value={undefined}
+                        meter="stroke-error-500"
+                        track="stroke-error-500/30"
 					/>
 				</div>
 			{/if}
@@ -82,8 +83,7 @@
 		font-size: 0.8em;
 	}
 
-	/* To test transition */
-	/* #spinner-container { */
-	/* 	padding-right: 50px; */
-	/* } */
+	#spinner-container {
+		padding-right: 3px;
+	}
 </style>

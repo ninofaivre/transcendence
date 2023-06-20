@@ -34,7 +34,7 @@
 				...messages,
 				{
 					type: "message",
-					id: "none",
+					id: "",
                     content,
 					creationDate: new Date(),
 					author: $my_name,
@@ -129,11 +129,11 @@
 			{#if message.type === "message"}
 				<ChatBubble
 					data_id={message.id}
-					from_me={message.author === $my_name}
 					from={message.author}
-					sent={message.id !== "none"}
+					from_me={message.author === $my_name}
+                    is_sent={message.id !== ""}
 				>
-					{message.content}
+                    {message.content}
 				</ChatBubble>
 			{:else if message.type === "event"}
                 {#if message.eventType == "CREATED_FRIENDSHIP"}

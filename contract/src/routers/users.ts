@@ -44,14 +44,14 @@ export const usersContract = c.router(
         },
 		getMe: {
 			method: "GET",
-			path: "/@me/",
+			path: "/@me",
 			responses: {
 				200: zMyProfileReturn
             },
 		},
         getUser: {
             method: "GET",
-            path: "/:userName/",
+            path: "/:userName",
             pathParams: z.strictObject({
                 userName: zUserName
             }),

@@ -32,7 +32,6 @@ export class UserController implements NestControllerInterface<typeof c> {
     @UseGuards(JwtAuthGuard)
 	@TsRest(c.getMe)
 	async getMe(@Request() req: EnrichedRequest) {
-        console.log("getMe")
 		const body = await this.userService.getMe(req.user.username)
 		return { status: 200 as const, body }
 	}
@@ -40,7 +39,6 @@ export class UserController implements NestControllerInterface<typeof c> {
     @UseGuards(JwtAuthGuard)
     @TsRest(c.getUser)
     async getUser(@Request() req: EnrichedRequest, @TsRestRequest(){ params: { userName } }: RequestShapes['getUser']) {
-        console.log("getUser")
         const body = await this.userService.getUser(req.user.username, userName)
         return { status: 200 as const, body }
     }

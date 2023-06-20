@@ -7,7 +7,7 @@ import {
 	zDmDiscussionElementReturn,
 	zDmReturn,
 } from "contract"
-import { RetypedElement, RetypedEvent, Tx } from "src/types"
+import { IdontKnowHowToNameThisShit, RetypedElement, RetypedEvent, Tx } from "src/types"
 import { PrismaService } from "src/prisma/prisma.service"
 
 @Injectable()

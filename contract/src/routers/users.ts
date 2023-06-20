@@ -42,9 +42,16 @@ export const usersContract = c.router(
                 200: z.array(zUserProfilePreviewReturn)
             }
         },
+		getMe: {
+			method: "GET",
+			path: "/@me/",
+			responses: {
+				200: zMyProfileReturn
+            },
+		},
         getUser: {
             method: "GET",
-            path: "/:userName",
+            path: "/:userName/",
             pathParams: z.strictObject({
                 userName: zUserName
             }),
@@ -52,13 +59,6 @@ export const usersContract = c.router(
                 200: zUserProfileReturn
             }
         },
-		getMe: {
-			method: "GET",
-			path: "/@me",
-			responses: {
-				200: zMyProfileReturn
-            },
-		},
         updateMe: {
             method: "PATCH",
             path: "/@me",

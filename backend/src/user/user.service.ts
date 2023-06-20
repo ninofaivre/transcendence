@@ -193,7 +193,6 @@ export class UserService {
         return this.formatMe(await this.getUserByNameOrThrow(username, this.myProfileSelect))
     }
 
-    // TODO: take and notify all actions (example disable / enable dms)
     // remember to notify online status when status visibilityChange and to notify invisible
     async updateMe(username: string, dto: RequestShapes['updateMe']['body']) {
         return this.formatMe(await this.prisma.user.update({ where: { name: username },

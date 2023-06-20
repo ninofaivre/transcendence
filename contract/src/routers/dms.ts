@@ -44,6 +44,11 @@ const zDmDiscussionEventReturn = z.discriminatedUnion("eventType", [
         otherName: zUserName // if we really need it
 	}),
     zDmDiscussionBaseEvent.extend({
+        eventType: z.literal("BLOCKED"),
+        blockedUserName: zUserName,
+        blockingUserName: zUserName
+    }),
+    zDmDiscussionBaseEvent.extend({
         eventType: z.literal("DELETED_MESSAGE"),
         author: zUserName
     }),

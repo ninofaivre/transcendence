@@ -161,6 +161,8 @@ model User {
 
   dmDiscussionMesssage DmDiscussionMessage[]
   deletedMessageDmDiscussionEvent DeletedMessageDmDiscussionEvent[]
+  blockedDmDiscussionEvent_Blocked BlockedDmDiscussionEvent[] @relation(name: "blocked")
+  blockedDmDiscussionEvent_Blocking BlockedDmDiscussionEvent[] @relation(name: "blocking")
 
 
   mutedUserChan MutedUserChan[]
@@ -197,7 +199,7 @@ model DirectMessage {
   // requestingUserStatusMutedUntil DateTime? // à faire plus tard si on a le temps/l'envie
   requestedUser                  User                @relation("directMessageOf", fields: [requestedUserName], references: [name])
   requestedUserName              String
-  // requestedUserStatusMutedUntil  DateTime? // à farie plus tard si on a le temps/l'envie
+  // requestedUserStatusMutedUntil  DateTime? // à faire plus tard si on a le temps/l'envie
 
   status					DirectMessageStatus @default(ENABLED)
 
@@ -242,7 +244,7 @@ model DmDiscussionMessage {
   relatedTo           String?
   discussionElement   DmDiscussionElement?  @relation(name: "message")
 
-  modificationDate DateTime? @updatedAt
+  modificationDate DateTime @updatedAt
 }
 
 model DmDiscussionEvent {
@@ -255,6 +257,8 @@ model DmDiscussionEvent {
   chanInvitationDmDiscussionEventId String? @unique
   deletedMessageDmDiscussionEvent DeletedMessageDmDiscussionEvent? @relation(fields: [deletedMessageDmDiscussionEventId], references: [id])
   deletedMessageDmDiscussionEventId String? @unique
+  blockedDmDiscussionEvent BlockedDmDiscussionEvent? @relation(fields: [blockedDmDiscussionEventId], references: [id])
+  blockedDmDiscussionEventId String? @unique
 
   discussionElement   DmDiscussionElement?
 }
@@ -277,6 +281,18 @@ model ChanInvitationDmDiscussionEvent {
 	dmDiscussionEvent DmDiscussionEvent?
 }
 
+model BlockedDmDiscussionEvent {
+    id String @id @default(uuid())
+
+    blockingUser    User @relation(name:"blocking", fields: [blockingUserName], references: [name])
+    blockingUserName String
+
+    blockedUser User @relation(name: "blocked", fields: [blockedUserName], references: [name])
+    blockedUserName String
+
+    dmDiscussionEvent DmDiscussionEvent?
+}
+
 model ClassicDmDiscussionEvent {
   id String @id @default(uuid())
 
@@ -288,8 +304,6 @@ model ClassicDmDiscussionEvent {
 enum ClassicDmEventType {
   CREATED_FRIENDSHIP
   DELETED_FRIENDSHIP
-  DISABLED_DM
-  ENABLED_DM
 }
 
 

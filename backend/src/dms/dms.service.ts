@@ -7,7 +7,7 @@ import {
 	zDmDiscussionElementReturn,
 	zDmReturn,
 } from "contract"
-import { Tx } from "src/types"
+import { RetypedElement, RetypedEvent, Tx } from "src/types"
 import { PrismaService } from "src/prisma/prisma.service"
 
 @Injectable()
@@ -32,7 +32,8 @@ export class DmsService {
 	private dmDiscussionEventSelect = {
 		classicDmDiscussionEvent: { select: { eventType: true } },
 		chanInvitationDmDiscussionEvent: { select: { chanInvitation: { select: { invitingUserName: true, chanTitle: true } } } },
-        deletedMessageDmDiscussionEvent: { select: { author: true } }
+        deletedMessageDmDiscussionEvent: { select: { author: true } },
+        blockedDmDiscussionEvent: { select: { blockedUserName: true, blockingUserName: true } }
 	} satisfies Prisma.DmDiscussionEventSelect
 
 	private dmDiscussionEventGetPayload = {
@@ -91,37 +92,9 @@ export class DmsService {
         username: string,
         dm: Prisma.DirectMessageGetPayload<typeof this.directMessageGetPayload>
     ) {
-		type RetypedEvent =
-			| (Omit<
-					typeof event,
-					"classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent" | "deletedMessageDmDiscussionEvent"
-			  > & {
-					classicDmDiscussionEvent: Exclude<typeof event.classicDmDiscussionEvent, null>
-					chanInvitationDmDiscussionEvent: null,
-                    deletedMessageDmDiscussionEvent: null
-			  })
-			| (Omit<
-					typeof event,
-					"classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent" | "deletedMessageDmDiscussionEvent"
-			  > & {
-					classicDmDiscussionEvent: null
-					chanInvitationDmDiscussionEvent: Exclude<
-						typeof event.chanInvitationDmDiscussionEvent,
-						null
-					>,
-                    deletedMessageDmDiscussionEvent: null
-			  })
-            | (Omit<
-                    typeof event,
-                    "classicDmDiscussionEvent" | "chanInvitationDmDiscussionEvent" | "deletedMessageDmDiscussionEvent"
-              > & {
-                    classicDmDiscussionEvent: null,
-                    chanInvitationDmDiscussionEvent: null,
-                    deletedMessageDmDiscussionEvent: Exclude<typeof event.deletedMessageDmDiscussionEvent, null>
-              })
-		const retypedEvent = event as RetypedEvent
+		const retypedEvent = event as RetypedEvent<typeof event>
 
-		const { chanInvitationDmDiscussionEvent, classicDmDiscussionEvent, deletedMessageDmDiscussionEvent } = retypedEvent
+		const { chanInvitationDmDiscussionEvent, classicDmDiscussionEvent, deletedMessageDmDiscussionEvent, blockedDmDiscussionEvent } = retypedEvent
 
 		if (chanInvitationDmDiscussionEvent) {
 			return {
@@ -129,11 +102,17 @@ export class DmsService {
                 author: chanInvitationDmDiscussionEvent.chanInvitation.invitingUserName,
                 chanTitle: chanInvitationDmDiscussionEvent.chanInvitation.chanTitle
 			}
-		} else if (deletedMessageDmDiscussionEvent)
+		} else if (deletedMessageDmDiscussionEvent) {
             return {
                 eventType: "DELETED_MESSAGE" as "DELETED_MESSAGE",
                 author: deletedMessageDmDiscussionEvent.author
             }
+        } else if (blockedDmDiscussionEvent) {
+            return  {
+                eventType: "BLOCKED" as "BLOCKED",
+                ...blockedDmDiscussionEvent
+            }
+        }
         else {
             return {
                 ...classicDmDiscussionEvent,
@@ -143,24 +122,14 @@ export class DmsService {
 	}
 
     private formatDmMessage(message: Prisma.DmDiscussionMessageGetPayload<typeof this.dmDiscussionMessageGetPayload>) {
-        const { modificationDate, ...rest } = message
-        return { ...rest, hasBeenEdited: !!modificationDate }
+        return message
     }
 
 	private async formatDmElementForUser(
 		element: Prisma.DmDiscussionElementGetPayload<typeof this.dmDiscussionElementGetPayload>,
         username: string
 	): Promise<z.infer<typeof zDmDiscussionElementReturn>> {
-		type RetypedElement =
-			| (Omit<typeof element, "event" | "message"> & {
-					event: null
-					message: Exclude<typeof element.message, null>
-			  })
-			| (Omit<typeof element, "event" | "message"> & {
-					event: Exclude<typeof element.event, null>
-					message: null
-			  })
-		const { event, message, ...rest } = element as RetypedElement
+		const { event, message, ...rest } = element as RetypedElement<typeof element>
 
 		if (event) {
             const dm = await this.getDmOrThrow({ elements: { some: { id: element.id } } }, this.directMessageSelect)
@@ -170,7 +139,14 @@ export class DmsService {
                 ...this.formatDmEventForUser(event, username, dm)
             }
         }
-		else return { ...rest, type: "message", ...this.formatDmMessage(message) }
+		else {
+            return {
+                ...rest,
+                type: "message",
+                hasBeenEdited: rest.creationDate.getTime() !== message.modificationDate.getTime(),
+                ...this.formatDmMessage(message)
+            }
+        }
 	}
 
 	private async formatDmElementArray(
@@ -302,17 +278,6 @@ export class DmsService {
 				data: this.formatDirectMessage(updatedDm, updatedDm.requestedUserName),
 			}),
 		])
-		const newEvent = await this.createClassicDmEvent(
-			dmId,
-			newStatus === DirectMessageStatus.ENABLED
-				? ClassicDmEventType.ENABLED_DM
-				: ClassicDmEventType.DISABLED_DM,
-			username,
-		)
-		await this.sse.pushEventMultipleUser(
-			[updatedDm.requestedUserName, updatedDm.requestingUserName],
-			{ type: "CREATED_DM_ELEMENT", data: { dmId, element: newEvent } },
-		)
 	}
 
 	async getDms(username: string) {
@@ -322,6 +287,7 @@ export class DmsService {
 					OR: [{ requestedUserName: username }, { requestingUserName: username }],
 				},
 				select: this.directMessageSelect,
+                orderBy: { modificationDate: 'desc' }
 			}),
 			username,
 		)

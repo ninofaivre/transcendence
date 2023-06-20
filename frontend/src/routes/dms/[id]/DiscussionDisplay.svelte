@@ -29,14 +29,17 @@
 		if (_init) return
 		if (_new_message) {
 			let [content, msg_promise] = _new_message
+            let tmp: typeof messages[number]
 			messages = [
 				...messages,
 				{
 					type: "message",
-					message: { content, relatedTo: null },
 					id: "none",
+                    content,
 					creationDate: new Date(),
 					author: $my_name,
+                    hasBeenEdited: false,
+                    relatedTo: null,
 				},
 			]
 			msg_promise.then(({ status, body }) => {
@@ -119,7 +122,7 @@
 	})
 </script>
 
-<div class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
+<div class="flex overflow-y-auto flex-col-reverse p-4 space-y-4">
 	<div class="flex flex-col scroll-smooth">
 		<div bind:this={canary} />
 		{#each messages as message}
@@ -128,19 +131,20 @@
 					data_id={message.id}
 					from_me={message.author === $my_name}
 					from={message.author}
-					sent={message.id ? false : message.id !== "none"}
+					sent={message.id !== "none"}
 				>
-					{message.message.content}
+					{message.content}
 				</ChatBubble>
-			{:else if message.event.eventType == "CREATED_FRIENDSHIP"}
-				<div class="text-center text-gray-500">
-					<!-- Hehe this is wrong -->
-					{`You are now friend with ${"Achetez cet emplacement publicitaire"}`}
-				</div>
-			{:else}
-				<div class="text-center text-gray-500">
-					{`${message.event.eventType}`}
-				</div>
+			{:else if message.type === "event"}
+                {#if message.eventType == "CREATED_FRIENDSHIP"}
+                    <div class="text-center text-gray-500">
+                        {`You are now friend with ${message.otherName}`}
+                    </div>
+                {:else}
+                    <div class="text-center text-gray-500">
+                        {`${message.eventType}`}
+                    </div>
+                {/if}
 			{/if}
 		{/each}
 	</div>

@@ -41,7 +41,7 @@
 		<form method="POST" on:submit|preventDefault={formSubmit}>
 			<label class="label text-black">
 				Username
-				<input bind:value={username} type="text" required class="input" />
+				<input bind:value={username} type="text" required autocomplete="current-password" class="input" />
 				<label class="label text-black">
 					Password
 					<input bind:value={password} type="password" required class="input" />

@@ -35,14 +35,14 @@
 			href={`/dms/${d.id}`}
 			class="hover:variant-soft-secondary p-4 font-medium rounded-container-token hover:font-semibold"
 		>
-			{d.friendName}
+			{d.otherName}
 		</a>
 	{:else}
 		<a
 			href={`/dms/${d.id}`}
 			class="variant-ghost-secondary p-4 font-semibold rounded-container-token"
 		>
-			{d.friendName}
+			{d.otherName}
 		</a>
 	{/if}
 {/each}

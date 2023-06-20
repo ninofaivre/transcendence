@@ -16,13 +16,13 @@ export const my_name = derived(
 		async function getter(logged: typeof $logged_in) {
 			if (logged === true) {
 				const { body, status } = await usersClient.getMe()
-				if (status == 200) return body.name
+				if (status == 200) return body.userName
 			}
 		}
 
-		Promise.resolve(getter($logged_in)).then((name) => {
-			if (name) {
-				set(name)
+		Promise.resolve(getter($logged_in)).then((userName) => {
+			if (userName) {
+				set(userName)
 			} else set("Error")
 		})
 	},

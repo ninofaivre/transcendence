@@ -7,7 +7,7 @@ import {
 	zDmDiscussionElementReturn,
 	zDmReturn,
 } from "contract"
-import { IdontKnowHowToNameThisShit, RetypedElement, RetypedEvent, Tx } from "src/types"
+import { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx } from "src/types"
 import { PrismaService } from "src/prisma/prisma.service"
 
 @Injectable()
@@ -34,7 +34,7 @@ export class DmsService {
 		chanInvitationDmDiscussionEvent: { select: { chanInvitation: { select: { invitingUserName: true, chanTitle: true } } } },
         deletedMessageDmDiscussionEvent: { select: { author: true } },
         blockedDmDiscussionEvent: { select: { blockedUserName: true, blockingUserName: true } }
-	} satisfies Prisma.DmDiscussionEventSelect
+	} satisfies Prisma.DmDiscussionEventSelect & Record<EventUnion, true | object>
 
 	private dmDiscussionEventGetPayload = {
 		select: this.dmDiscussionEventSelect,
@@ -56,7 +56,7 @@ export class DmsService {
 		creationDate: true,
 		message: { select: this.dmDiscussionMessageSelect },
 		event: { select: this.dmDiscussionEventSelect },
-	} satisfies Prisma.DmDiscussionElementSelect
+	} satisfies Prisma.DmDiscussionElementSelect & Record<ElementUnion, true | object>
 
 	private dmDiscussionElementGetPayload = {
 		select: this.dmDiscussionElementSelect,

@@ -16,8 +16,8 @@ export class SseService {
 	async addSubject(username: string) {
 		let tmp = this.eventSource.get(username)
 		if (!tmp) {
-			console.log(`creating subject for ${username}`)
             await this.usersService.notifyStatus(username, "ONLINE")
+			console.log(`creating subject for ${username}`)
             tmp = new Subject<MessageEvent>()
 			this.eventSource.set(username, tmp)
 		}

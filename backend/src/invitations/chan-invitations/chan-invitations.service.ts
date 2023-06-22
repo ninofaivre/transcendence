@@ -134,20 +134,12 @@ export class ChanInvitationsService {
 			)
 			const dmEvent = await this.dmsService.createChanInvitationDmEvent(
 				directMessageId,
-				invitingUserName,
 				chanInv.id,
 				tx,
 			)
 			return { chanInv, dmEvent }
 		})
-		// to notify the dmEvent after the invitation (probably easier to render the event in this order for the front)
-		// TODO: type setTimeout extra args (mb I'm not using the right setTimeout)
-		setTimeout(
-			this.sse.pushEventMultipleUser.bind(this.sse),
-			0,
-			[invitingUserName, invitedUserName],
-			{ type: "CREATED_DM_EVENT", data: { dmId: directMessageId, element: dmEvent } },
-		)
+		await this.dmsService.formatAntNotifyDmElement(invitingUserName, invitedUserName, directMessageId, dmEvent)
 		await this.sse.pushEvent(invitedUserName, {
 			type: "CREATED_CHAN_INVITATION",
 			data: chanInv,

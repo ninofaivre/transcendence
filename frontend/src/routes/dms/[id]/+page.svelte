@@ -1,11 +1,10 @@
 <script lang="ts">
-
-    /*  This page is responsible for displaying the current conversation with a friend.
+	/*  This page is responsible for displaying the current conversation with a friend.
         and the associated input box. While the Chatbox could have been part of the layout
         it was deemed too complex for little benefit */
 
 	/* types */
-    import type { PageData } from "./$types"
+	import type { PageData } from "./$types"
 
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"
@@ -23,13 +22,13 @@
 	}
 
 	// Get our discussions
-	export let data: PageData; // This almost always complains about data being "unknown"
-	const messages = $page.data.messages 
+	export let data: PageData // This almost always complains about data being "unknown"
+	const messages = $page.data.messages
 
 	let header: HTMLElement | null
 	let header_height: number
 
-    // Calculate the NavBar height in order to adapt the layout
+	// Calculate the NavBar height in order to adapt the layout
 	onMount(() => {
 		header = document.getElementById("shell-header")
 		if (header) {
@@ -50,27 +49,23 @@
 	})
 </script>
 
-	<!--Column layout -->
-		<!-- Rows for Column 2-->
-		<div
-			class="grid grid-rows-[1fr_auto]"
-			id="col2"
-			style="height: calc(100vh - {header_height}px);"
-	>
-<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
-{#if $page.data.messages.length > 1}
-			<!-- Messages -->
-			<DiscussionDisplay messages={$page.data.messages} {new_message} currentDiscussionId={$page.params.id} />
-{:else}
-	<div class="flex flex-col justify-center my-10 h-full">
-		<div class="mx-auto text-2xl font-bold text-center">
-			This conversation has not started
-		</div>
-	</div>
-{/if}
-		<section id="input-row" class="p-4">
-				<ChatBox on:message_sent={messageSentHandler} currentDiscussionId={$page.params.id} maxRows={20} />
-		</section>
+<!--Column layout -->
+<!-- Rows for Column 2-->
+<div class="grid grid-rows-[1fr_auto]" id="col2" style="height: calc(100vh - {header_height}px);">
+	<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
+	<!-- Messages -->
+	<DiscussionDisplay
+		messages={$page.data.messages}
+		{new_message}
+		currentDiscussionId={$page.params.id}
+	/>
+	<section id="input-row" class="p-4">
+		<ChatBox
+			on:message_sent={messageSentHandler}
+			currentDiscussionId={$page.params.id}
+			maxRows={20}
+		/>
+	</section>
 </div>
 
 <style>

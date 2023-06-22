@@ -1,19 +1,12 @@
 <script lang="ts">
 	/* types */
-    import type { LayoutData } from "./$types"
+	import type { LayoutData } from "./$types"
 
 	/* Components */
 	import CreateDiscussion from "./CreateDiscussion.svelte"
 	import DiscussionList from "./DiscussionList.svelte"
 	import { onMount } from "svelte"
-    import { page } from "$app/stores"
-
-	// let new_message: [string, Promise<ClientInferResponses<typeof contract.chans.createChan>>]
-	let new_message: [string, Promise<Response>]
-	function messageSentHandler(e: CustomEvent<typeof new_message>) {
-		console.log("You sent a message:", e.detail[0])
-		new_message = e.detail
-	}
+	import { page } from "$app/stores"
 
 	// Get our discussions
 	export let data: LayoutData
@@ -39,7 +32,6 @@
 			return () => resizeObserver.unobserve(header as HTMLElement)
 		}
 	})
-
 </script>
 
 {#if $page.data.dmList.length}
@@ -56,25 +48,23 @@
 			style="height: calc(100vh - {header_height}px);"
 		>
 			<section class="p-4">
-				<CreateDiscussion friendList={data.friendList}/>
+				<CreateDiscussion friendList={data.friendList} />
 			</section>
 			<section id="discussions" class="overflow-y-auto">
-				<DiscussionList discussions={$page.data.dmList} currentDiscussionId={$page.params.id} />
+				<DiscussionList
+					discussions={$page.data.dmList}
+					currentDiscussionId={$page.params.id}
+				/>
 			</section>
 		</div>
 
 		<!-- Rows for Column 2-->
-        <slot/>
-
+		<slot />
 	</div>
 {:else}
-	<div id="convo" class="flex flex-col justify-center my-10 h-full">
-		<div class="mx-auto text-3xl font-bold text-center">
-			You don't have any friends yet
-		</div>
-		<div class="my-10 mx-auto">
-            Thingie form to make forms
-		</div>
+	<div id="convo" class="my-10 flex h-full flex-col justify-center">
+		<div class="mx-auto text-center text-3xl font-bold">You don't have any friends yet</div>
+		<div class="mx-auto my-10">Thingie form to make forms</div>
 	</div>
 {/if}
 

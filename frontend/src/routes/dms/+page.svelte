@@ -1,3 +1,6 @@
-<p class="text-red-50">
-    Select a conversation
-</p>
+<script>
+	import { goto } from "$app/navigation"
+	import { page } from "$app/stores"
+
+	goto($page.url + "/" + $page.data.dmList[0].id)
+</script>

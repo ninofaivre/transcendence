@@ -39,20 +39,25 @@
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
 	<div class="rounded-lg bg-gray-50 p-8 sm:px-10">
 		<form method="POST" on:submit|preventDefault={formSubmit}>
-			<label class="label text-black">
-				Username
-				<input bind:value={username} type="text" required autocomplete="current-password" class="input" />
-				<label class="label text-black">
-					Password
-					<input bind:value={password} type="password" required class="input" />
-				</label>
-				<button id="login" type="submit" class="variant-filled-success btn">
-					Log in
-				</button>
-				<button id="signup" type="submit" class="btn variant-filled-primary">
-					Sign up
-				</button>
-			</label>
+			<label class="label text-black" for="username"> Username </label>
+			<input
+				bind:value={username}
+				type="text"
+				name="username"
+				class="input"
+				autocomplete="on"
+			/>
+			<label class="label text-black" for="password"> Password </label>
+			<input
+				bind:value={password}
+				type="password"
+				name="password"
+				class="input"
+				autocomplete="current-password"
+				required
+			/>
+			<button id="login" type="submit" class="btn variant-filled-success"> Log in </button>
+			<button id="signup" type="submit" class="btn variant-filled-primary"> Sign up </button>
 		</form>
 	</div>
 </div>

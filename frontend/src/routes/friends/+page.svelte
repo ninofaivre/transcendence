@@ -7,6 +7,7 @@
 	import { dmsClient, invitationsClient } from "$clients"
 	import { toastStore } from "@skeletonlabs/skeleton"
 	import SendFriendRequest from "./SendFriendRequest.svelte"
+	import { invalidate } from "$app/navigation"
 
 	async function acceptInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
 		const id = e.currentTarget.dataset.id
@@ -23,7 +24,7 @@
 					message,
 				})
 				console.error(message)
-			}
+			} else invalidate(":friendships")
 		}
 	}
 
@@ -42,13 +43,13 @@
 					message,
 				})
 				console.error(message)
-			}
+			} else invalidate(":friendships")
 		}
 	}
 
-    function messageFriend(e: Event) {
-        // dmsClient.getDmIdWithName(e.detail)
-    }
+	function messageFriend(e: Event) {
+		// dmsClient.getDmIdWithName(e.detail)
+	}
 
 	console.log("Your friendships are:", $page.data.friendships)
 	console.log(tableMapperValues($page.data.friendships, ["friendName"]))
@@ -57,12 +58,8 @@
 		// A list of heading labels.
 		head: ["Friends"],
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues(
-			$page.data.friendships,
-			["friendName"],
-		),
+		body: tableMapperValues($page.data.friendships, ["friendName"]),
 	}
-
 </script>
 
 <SendFriendRequest />
@@ -77,22 +74,22 @@
 				</span>
 				<button
 					data-id={request.id}
-					class="variant-ghost-primary chip"
+					class="chip variant-ghost-primary"
 					on:click={acceptInvitation}>✅</button
 				>
 				<button
 					data-id={request.id}
-					class="variant-ghost-error chip"
+					class="chip variant-ghost-error"
 					on:click={declineInvitation}>❌</button
 				>
 			</li>
 		{/each}
 	{:else}
-		<div class="text-center text-2xl font-bold pb-8">You have no pending invitations</div>
+		<div class="pb-8 text-center text-2xl font-bold">You have no pending invitations</div>
 	{/if}
 </ul>
 
-<Table source={friendTableSource} interactive={true} on:selected={messageFriend}/>
+<Table source={friendTableSource} interactive={true} on:selected={messageFriend} />
 
 <style>
 </style>

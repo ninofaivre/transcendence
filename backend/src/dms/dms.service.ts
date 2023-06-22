@@ -194,6 +194,28 @@ export class DmsService {
 		return args
 	}
 
+    public async searchDms(username: string, take: number, contains: string) {
+        return (await this.prisma.directMessage.findMany({
+            where: {
+                OR: [{
+                        requestingUserName: username,
+                        requestedUserName: { contains }
+                    },
+                    {
+                        requestedUserName: username,
+                        requestingUserName: { contains }
+                }]
+            },
+            take,
+            select: { id: true, requestingUserName: true, requestedUserName: true }
+        })).map(dm => ({
+                dmId: dm.id,
+                otherUserName: (username === dm.requestedUserName
+                    ? dm.requestingUserName
+                    : dm.requestedUserName)
+            }))
+    }
+
 	public async createClassicDmEvent(dmId: string, eventType: ClassicDmEventType) {
 		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId)
 		const createArgs = {

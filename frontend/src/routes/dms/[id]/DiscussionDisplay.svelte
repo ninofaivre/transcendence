@@ -12,6 +12,7 @@
 	import { dmsClient } from "$clients"
 	import { page } from "$app/stores"
 	import { addEventSourceListener } from "$lib/global"
+	import { get } from "svelte/store"
 
 	export let messages: DirectMessage[] = []
 	// export let new_message: [string, Promise<Response>]
@@ -60,6 +61,7 @@
 		console.log("intersectionHandler has been called", entry)
 		const oldest_message = canary.nextElementSibling as HTMLElement
 		const start = oldest_message?.dataset?.id
+		// const start = oldest_message.getAttribute("id")
 		if (start && entry.isIntersecting) {
 			const { status, body } = await dmsClient.getDmElements({
 				params: { dmId: currentDiscussionId.toString() },
@@ -82,36 +84,35 @@
 		handleOwnMessage(new_message)
 	}
 
-	// This should be ok as this route is only accessible to logged in users
-	$: {
-		if ($sse_store) {
-			addEventSourceListener($sse_store, "CREATED_DM_ELEMENT", (data) => {
-				console.log("Server message: New message", data)
-				if (data?.dmId === $page.params.id) {
-					messages = [...messages, data.element]
-				}
-			})
-
-			addEventSourceListener($sse_store, "UPDATED_DM_ELEMENT", (data) => {
-				console.log("Server message: Message was modified", data)
-				if (data.dmId === $page.params.id) {
-				}
-			})
-		} else console.log("$sse_store is empty ! Grrrr", sse_store, $sse_store)
-	}
-
-	_init = false
-
 	onMount(() => {
+		console.log("Mounting DiscussionDisplay")
 		//Set up observer
 		observer = new IntersectionObserver(intersectionHandler, {
 			threshold,
 			rootMargin: `${reactivity}px`,
 		})
 		// This causes a call to intersectionHandler to fetch messages even though oldest_message.getAttribute("id") returns nothing
-		// Also this is not necessary because switchMessages handles observing
-		// observer.observe(canary)
-		console.log("Mounting DiscussionDisplay")
+
+		observer.observe(canary)
+
+		const sse = get(sse_store)
+		if (sse) {
+			addEventSourceListener(sse, "CREATED_DM_ELEMENT", (data) => {
+				console.log("Server message: New message", data)
+				if (data?.dmId === $page.params.id) {
+					messages = [...messages, data.element]
+				}
+			})
+
+			addEventSourceListener(sse, "UPDATED_DM_ELEMENT", (data) => {
+				console.log("Server message: Message was modified", data)
+				if (data.dmId === $page.params.id) {
+					// update my message
+				}
+			})
+		} else throw new Error("sse_store is empty ! Grrrr", sse)
+
+		_init = false
 	})
 </script>
 

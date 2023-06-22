@@ -67,6 +67,7 @@ export const zDmDiscussionElementReturn = z.union([
     zDmDiscussionEventReturn
 ])
 
+// TODO: mb find better path to be more REST compliant or fuck REST ???
 export const dmsContract = c.router(
 	{
 		getDms: {
@@ -76,6 +77,20 @@ export const dmsContract = c.router(
 				200: z.array(zDmReturn),
 			},
 		},
+        searchDms: {
+            method: "GET",
+            path: "/search",
+            query: z.strictObject({
+                otherUserNameContains: z.string().nonempty(),
+                nResult: z.number().positive().int().max(15).default(5)
+            }),
+            responses: {
+                200: z.strictObject({
+                    otherUserName: zUserName,
+                    dmId: z.string().uuid()
+                }).array()
+            }
+        },
 		//
 		// stay commented because rn we can only have dm with friends (autocreated dms)
 		//

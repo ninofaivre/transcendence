@@ -7,7 +7,7 @@ import {
 	zDmDiscussionElementReturn,
 	zDmReturn,
 } from "contract"
-import { IdontKnowHowToNameThisShit, RetypedElement, RetypedEvent, Tx } from "src/types"
+import { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx } from "src/types"
 import { PrismaService } from "src/prisma/prisma.service"
 
 @Injectable()
@@ -34,7 +34,7 @@ export class DmsService {
 		chanInvitationDmDiscussionEvent: { select: { chanInvitation: { select: { invitingUserName: true, chanTitle: true } } } },
         deletedMessageDmDiscussionEvent: { select: { author: true } },
         blockedDmDiscussionEvent: { select: { blockedUserName: true, blockingUserName: true } }
-	} satisfies Prisma.DmDiscussionEventSelect
+	} satisfies Prisma.DmDiscussionEventSelect & Record<EventUnion, true | object>
 
 	private dmDiscussionEventGetPayload = {
 		select: this.dmDiscussionEventSelect,
@@ -56,7 +56,7 @@ export class DmsService {
 		creationDate: true,
 		message: { select: this.dmDiscussionMessageSelect },
 		event: { select: this.dmDiscussionEventSelect },
-	} satisfies Prisma.DmDiscussionElementSelect
+	} satisfies Prisma.DmDiscussionElementSelect & Record<ElementUnion, true | object>
 
 	private dmDiscussionElementGetPayload = {
 		select: this.dmDiscussionElementSelect,
@@ -180,7 +180,7 @@ export class DmsService {
 		})
 	}
 
-	private getDmDiscussionEventCreateArgs(dmId: string, author: string) {
+	private getDmDiscussionEventCreateArgs(dmId: string) {
 		const args = {
 			data: {
 				discussionElement: {
@@ -194,8 +194,8 @@ export class DmsService {
 		return args
 	}
 
-	public async createClassicDmEvent(dmId: string, eventType: ClassicDmEventType, author: string) {
-		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId, author)
+	public async createClassicDmEvent(dmId: string, eventType: ClassicDmEventType) {
+		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId)
 		const createArgs = {
 			...rest,
 			data: { classicDmDiscussionEvent: { create: { eventType: eventType } }, ...data },
@@ -203,16 +203,15 @@ export class DmsService {
 		const newEvent = (await this.prisma.dmDiscussionEvent.create(createArgs)).discussionElement
 		if (!newEvent?.event?.classicDmDiscussionEvent)
 			throw new InternalServerErrorException("a discussion event has failed to be created")
-		return this.formatDmElementForUser(newEvent, author)
+		return newEvent
 	}
 
 	public async createChanInvitationDmEvent(
 		dmId: string,
-		author: string,
 		chanId: string,
 		prismaInstance: Tx = this.prisma,
 	) {
-		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId, author)
+		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId)
 		const createArgs = {
 			...rest,
 			data: {
@@ -224,7 +223,7 @@ export class DmsService {
 			.discussionElement
 		if (!newEvent?.event?.chanInvitationDmDiscussionEvent)
 			throw new InternalServerErrorException("a discussion event has failed to be created")
-		return this.formatDmElementForUser(newEvent, author)
+		return newEvent
 	}
 
 	public async findOneDmElement(dmElementId: string, prismaInstance: Tx = this.prisma, username: string) {
@@ -457,6 +456,13 @@ export class DmsService {
 		})
 		return formattedRes
 	}
+
+    async formatAntNotifyDmElement(usernameA: string, usernameB: string, dmId: string, element: Prisma.DmDiscussionElementGetPayload<typeof this.dmDiscussionElementGetPayload>) {
+        return Promise.all([
+            this.sse.pushEvent(usernameA, { type: "UPDATED_DM_ELEMENT", data: { dmId, element: await this.formatDmElementForUser(element, usernameA) } }),
+            this.sse.pushEvent(usernameB, { type: "UPDATED_DM_ELEMENT", data: { dmId, element: await this.formatDmElementForUser(element, usernameB) } })
+        ])
+    }
 
 	async notifyOtherMemberOfDm(username: string, dmId: string, event: DmEvent) {
 		const { requestedUserName, requestingUserName } = await this.getDmOfUserOrThrow(username, dmId, {

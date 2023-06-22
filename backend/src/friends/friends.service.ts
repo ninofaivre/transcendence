@@ -77,12 +77,8 @@ export class FriendsService {
 		const newEvent = await this.dmsService.createClassicDmEvent(
 			dmId,
 			ClassicDmEventType.CREATED_FRIENDSHIP,
-			requestedUserName,
 		)
-		await this.sse.pushEventMultipleUser([requestingUserName, requestedUserName], {
-			type: "CREATED_DM_ELEMENT",
-			data: { dmId: dmId, element: newEvent },
-		})
+        await this.dmsService.formatAntNotifyDmElement(requestingUserName, requestedUserName, dmId, newEvent)
 		if (directMessage && directMessage.status === DirectMessageStatus.DISABLED)
 			await this.dmsService.updateAndNotifyDmStatus(
 				directMessage.id,
@@ -113,14 +109,6 @@ export class FriendsService {
 				},
 				select: { requestingUserName: true, requestedUserName: true },
 			})
-			const { dmPolicyLevel: requestingUserDmPolicyLevel } =
-				await this.usersService.getUserByNameOrThrow(requestingUserName, {
-					dmPolicyLevel: true,
-				})
-			const { dmPolicyLevel: requestedUserDmPolicyLevel } =
-				await this.usersService.getUserByNameOrThrow(requestedUserName, {
-					dmPolicyLevel: true,
-				})
 			await this.sse.pushEventMultipleUser([requestingUserName, requestedUserName], {
 				type: "DELETED_FRIENDSHIP",
 				data: { friendShipId: friendShipId },
@@ -138,27 +126,8 @@ export class FriendsService {
 			const newEvent = await this.dmsService.createClassicDmEvent(
 				dmId,
 				ClassicDmEventType.DELETED_FRIENDSHIP,
-				username,
 			)
-			await this.sse.pushEventMultipleUser([requestingUserName, requestedUserName], {
-				type: "CREATED_DM_ELEMENT",
-				data: { dmId, element: newEvent },
-			})
-			if (
-				requestingUserDmPolicyLevel === "ONLY_FRIEND" ||
-				requestedUserDmPolicyLevel === "ONLY_FRIEND" ||
-				((requestingUserDmPolicyLevel === "IN_COMMON_CHAN" ||
-					requestedUserDmPolicyLevel === "IN_COMMON_CHAN") &&
-					!(await this.chansService.doesUsersHasCommonChan(
-						requestingUserName,
-						requestedUserName,
-					)))
-			)
-				await this.dmsService.updateAndNotifyDmStatus(
-					dmId,
-					DirectMessageStatus.DISABLED,
-					username,
-				) // mb not username
+			await this.dmsService.formatAntNotifyDmElement(requestingUserName, requestedUserName, dmId, newEvent)
 		} catch (e) {
 			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025")
 				throw new NotFoundException(`not found friendShip ${friendShipId}`)

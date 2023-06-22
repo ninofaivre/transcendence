@@ -22,8 +22,8 @@
 	}
 
 	// Get our discussions
-	export let data: PageData // This almost always complains about data being "unknown"
-	const messages = $page.data.messages
+	// export let data: PageData // This almost always complains about data being "unknown"
+	// const messages = $page.data.messages
 
 	let header: HTMLElement | null
 	let header_height: number

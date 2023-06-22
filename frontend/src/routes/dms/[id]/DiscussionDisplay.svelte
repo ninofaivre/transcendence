@@ -10,8 +10,8 @@
 	import { onMount } from "svelte"
 	import { sse_store } from "$stores"
 	import { dmsClient } from "$clients"
-    import { page } from "$app/stores"
-    import { appendEventSourceListener } from "$lib/global"
+	import { page } from "$app/stores"
+	import { addEventSourceListener } from "$lib/global"
 
 	export let messages: DirectMessage[] = []
 	// export let new_message: [string, Promise<Response>]
@@ -29,17 +29,17 @@
 		if (_init) return
 		if (_new_message) {
 			let [content, msg_promise] = _new_message
-            let tmp: typeof messages[number]
+			let tmp: (typeof messages)[number]
 			messages = [
 				...messages,
 				{
 					type: "message",
 					id: "",
-                    content,
+					content,
 					creationDate: new Date(),
 					author: $my_name,
-                    hasBeenEdited: false,
-                    relatedTo: null,
+					hasBeenEdited: false,
+					relatedTo: null,
 				},
 			]
 			msg_promise.then(({ status, body }) => {
@@ -84,27 +84,20 @@
 
 	// This should be ok as this route is only accessible to logged in users
 	$: {
-        if ($sse_store) {
-            appendEventSourceListener($sse_store, "CREATED_DM_ELEMENT",  (data) => {
-            console.log("Server message: New message", data)
-            // if (data?.dmId != $page.params.id)
-            //     console.log("... but this message is not for the current conversation", data)
-		})
+		if ($sse_store) {
+			addEventSourceListener($sse_store, "CREATED_DM_ELEMENT", (data) => {
+				console.log("Server message: New message", data)
+				if (data?.dmId === $page.params.id) {
+					messages = [...messages, data.element]
+				}
+			})
 
-		$sse_store?.addEventListener("CREATED_DM_ELEMENT", ({ data }: MessageEvent) => {
-			const parsedData = JSON.parse(data)
-			console.log("Server message: New message", parsedData)
-            if (parsedData?.dmId != $page.params.id)
-                console.log("... but this message is not for the current conversation", parsedData)
-		})
-		$sse_store?.addEventListener("UPDATED_DM_ELEMENT", ({ data }: MessageEvent) => {
-			const parsedData = JSON.parse(data)
-			console.log("Server message: Update the DM message:", parsedData)
-            if (parsedData?.dmId != $page.params.id)
-                console.log("... but this message is not for the current conversation", parsedData)
-		})
-
-        }
+			addEventSourceListener($sse_store, "UPDATED_DM_ELEMENT", (data) => {
+				console.log("Server message: Message was modified", data)
+				if (data.dmId === $page.params.id) {
+				}
+			})
+		} else console.log("$sse_store is empty ! Grrrr", sse_store, $sse_store)
 	}
 
 	_init = false
@@ -122,7 +115,7 @@
 	})
 </script>
 
-<div class="flex overflow-y-auto flex-col-reverse p-4 space-y-4">
+<div class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
 	<div class="flex flex-col scroll-smooth">
 		<div bind:this={canary} />
 		{#each messages as message}
@@ -131,20 +124,20 @@
 					data_id={message.id}
 					from={message.author}
 					from_me={message.author === $my_name}
-                    is_sent={message.id !== ""}
+					is_sent={message.id !== ""}
 				>
-                    {message.content}
+					{message.content}
 				</ChatBubble>
 			{:else if message.type === "event"}
-                {#if message.eventType == "CREATED_FRIENDSHIP"}
-                    <div class="text-center text-gray-500">
-                        {`You are now friend with ${message.otherName}`}
-                    </div>
-                {:else}
-                    <div class="text-center text-gray-500">
-                        {`${message.eventType}`}
-                    </div>
-                {/if}
+				{#if message.eventType == "CREATED_FRIENDSHIP"}
+					<div class="text-center text-gray-500">
+						{`You are now friend with ${message.otherName}`}
+					</div>
+				{:else}
+					<div class="text-center text-gray-500">
+						{`${message.eventType}`}
+					</div>
+				{/if}
 			{/if}
 		{/each}
 	</div>

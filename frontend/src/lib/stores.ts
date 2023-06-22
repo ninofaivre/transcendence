@@ -32,17 +32,17 @@ export const my_name = derived(
 let eventSource: EventSource | undefined
 export const sse_store = derived(logged_in, ($logged_in) => {
 	if ($logged_in === true) {
-		let new_es = new EventSource("/api/sse")
-		new_es.onopen = function (_evt) {
+		eventSource = new EventSource("/api/sse")
+		eventSource.onopen = function (_evt) {
 			console.log("Successfully established sse connection")
-			eventSource = new_es
 		}
-		new_es.onerror = function (evt) {
+		eventSource.onerror = function (_evt) {
 			console.log("Error while openning new sse connection: Probably already in use")
 		}
 	} else {
-		console.log("Closing eventSource...")
+		console.log("Closing eventSource...", eventSource)
 		eventSource?.close()
+		console.log("Is eventSource closed? ", eventSource)
 	}
 	return eventSource
 })

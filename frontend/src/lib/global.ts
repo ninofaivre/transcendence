@@ -119,13 +119,15 @@ export async function signup(name: string, password: string) {
 	})
 }
 
-type GetDataFromEventType<T extends SseEvent['type']> = Extract<SseEvent, { type: T}>['data']
-export function appendEventSourceListener <EventType extends SseEvent['type']> (
-    es: EventSource,
-    eventType: EventType, 
-    callback: (data: GetDataFromEventType<EventType>, event: MessageEvent) => void)
-{
-    es.addEventListener(eventType, (ev: MessageEvent) => {
-        callback(JSON.parse(ev.data), ev)
-    })
+type GetDataFromEventType<T extends SseEvent["type"]> = Extract<SseEvent, { type: T }>["data"]
+
+export function addEventSourceListener<EventType extends SseEvent["type"]>(
+	es: EventSource,
+	eventType: EventType,
+	callback: (data: GetDataFromEventType<EventType>, event: MessageEvent) => void,
+) {
+	es.addEventListener(eventType, (ev: MessageEvent) => {
+		console.log("Adding event listener...")
+		callback(JSON.parse(ev.data), ev)
+	})
 }

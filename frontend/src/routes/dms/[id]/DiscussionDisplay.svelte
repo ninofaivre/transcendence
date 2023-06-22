@@ -80,6 +80,8 @@
 		}
 	}
 
+	let conversation_container: HTMLDivElement
+
 	$: {
 		handleOwnMessage(new_message)
 	}
@@ -107,7 +109,9 @@
 			addEventSourceListener(sse, "UPDATED_DM_ELEMENT", (data) => {
 				console.log("Server message: Message was modified", data)
 				if (data.dmId === $page.params.id) {
-					// update my message
+					const to_update = document.querySelector(`[data-id="${data.element.id}"]`)! // Has to exist
+					new ChatBubble({ target: conversation_container, anchor: to_update })
+					to_update.remove()
 				}
 			})
 		} else throw new Error("sse_store is empty ! Grrrr", sse)
@@ -117,7 +121,7 @@
 </script>
 
 <div class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
-	<div class="flex flex-col scroll-smooth">
+	<div bind:this={conversation_container} class="flex flex-col scroll-smooth">
 		<div bind:this={canary} />
 		{#each messages as message}
 			{#if message.type === "message"}

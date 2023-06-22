@@ -16,7 +16,7 @@
         "@ts-rest/core": "^3.26.0",
         "typescript": "^5.1.3",
         "zod": "^3.21.4",
-        "@prisma-generated/enums": "link:../prisma/enums"
+        "@prisma-generated/enums": "file:../prisma/enums"
     },
     "devDependencies": {
         "@types/node": "^20.3.0"

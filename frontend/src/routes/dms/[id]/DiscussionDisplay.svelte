@@ -109,7 +109,7 @@
 				if (data.dmId === $page.params.id) {
 					const to_update = document.getElementById(data.element.id)
                     if (to_update && data.element.type === "message") {
-                        new ChatBubble({target: to_update.parentElement!, anchor: to_update, props: data.element})
+                        new ChatBubble({target: to_update.parentElement!, anchor: to_update, props: {message: data.element}})
                         to_update.remove()
                     }
 				}

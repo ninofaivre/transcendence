@@ -3,7 +3,7 @@
 
 	console.log("Running DiscussionDisplay")
 
-	import type { DirectMessage } from "$types"
+	import type { DirectMessageOrEvent } from "$types"
 
 	import ChatBubble from "./ChatBubble.svelte"
 	import { my_name } from "$lib/stores"
@@ -14,7 +14,7 @@
 	import { addEventSourceListener } from "$lib/global"
 	import { get } from "svelte/store"
 
-	export let messages: DirectMessage[] = []
+	export let messages: DirectMessageOrEvent[] = []
 	// export let new_message: [string, Promise<Response>]
 	export let new_message: [string, ReturnType<typeof dmsClient.createDmMessage>]
 	export let currentDiscussionId: string
@@ -30,7 +30,6 @@
 		if (_init) return
 		if (_new_message) {
 			let [content, msg_promise] = _new_message
-			let tmp: (typeof messages)[number]
 			messages = [
 				...messages,
 				{
@@ -57,8 +56,8 @@
 	}
 
 	async function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
-		if (_init) return
 		console.log("intersectionHandler has been called", entry)
+		if (_init) return
 		const oldest_message = canary.nextElementSibling as HTMLElement
 		const start = oldest_message?.dataset?.id
 		// const start = oldest_message.getAttribute("id")
@@ -93,8 +92,6 @@
 			threshold,
 			rootMargin: `${reactivity}px`,
 		})
-		// This causes a call to intersectionHandler to fetch messages even though oldest_message.getAttribute("id") returns nothing
-
 		observer.observe(canary)
 
 		const sse = get(sse_store)
@@ -109,9 +106,11 @@
 			addEventSourceListener(sse, "UPDATED_DM_ELEMENT", (data) => {
 				console.log("Server message: Message was modified", data)
 				if (data.dmId === $page.params.id) {
-					const to_update = document.querySelector(`[data-id="${data.element.id}"]`)! // Has to exist
-					new ChatBubble({ target: conversation_container, anchor: to_update })
-					to_update.remove()
+					const to_update = document.getElementById(data.element.id)
+                    if (to_update && data.element.type === "message") {
+                        new ChatBubble({target: to_update.parentElement!, anchor: to_update, props: {message: data.element}})
+                        to_update.remove()
+                    }
 				}
 			})
 		} else throw new Error("sse_store is empty ! Grrrr", sse)
@@ -125,14 +124,7 @@
 		<div bind:this={canary} />
 		{#each messages as message}
 			{#if message.type === "message"}
-				<ChatBubble
-					data_id={message.id}
-					from={message.author}
-					from_me={message.author === $my_name}
-					is_sent={message.id !== ""}
-				>
-					{message.content}
-				</ChatBubble>
+				<ChatBubble {message}/>
 			{:else if message.type === "event"}
 				{#if message.eventType == "CREATED_FRIENDSHIP"}
 					<div class="text-center text-gray-500">

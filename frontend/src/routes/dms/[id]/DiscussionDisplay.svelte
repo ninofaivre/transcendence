@@ -112,6 +112,11 @@
                         new ChatBubble({target: to_update.parentElement!, anchor: to_update, props: {message}})
                         to_update.remove()
                     }
+                    // if (to_update && message.type === "message") {
+                    //     const fragment = new DocumentFragment()
+                    //     new ChatBubble({target: fragment as unknown as Element, props: {message, ...to_update}})
+                    //     to_update.replaceWith(fragment)
+                    // }
 				}
 			})
 		} else throw new Error("sse_store is empty ! Grrrr", sse)

@@ -7,9 +7,10 @@
     export let message: DirectMessage;
 
 	let from = message.author
-	let from_me = ( message.author !== $my_name)
-	let is_sent = ( message?.id !== "" )
+	let from_me = ( message.author === $my_name)
 	let threeDotsVisible = false
+
+	$: is_sent = ( message?.id !== "" )
 </script>
 
 <div

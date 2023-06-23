@@ -13,8 +13,9 @@ export type ChanMessage = Flatten<ChanMessages>
 export type DirectConversations = ClientInferResponseBody<typeof contract.dms.getDms, 200>
 export type DirectConversation = Flatten<DirectConversations>
 
-export type DirectMessages = ClientInferResponseBody<typeof contract.dms.getDmElements, 200>
-export type DirectMessage = Flatten<DirectMessages>
+export type DirectMessagesOrEvents = ClientInferResponseBody<typeof contract.dms.getDmElements, 200>
+export type DirectMessageOrEvent = Flatten<DirectMessagesOrEvents>
+export type DirectMessage = Extract<DirectMessageOrEvent, {type: "message"}>
 
 export type Friendships = ClientInferResponseBody<typeof contract.friends.getFriends, 200>
 export type Friendship = Flatten<Friendships>

@@ -1,17 +1,19 @@
 <script lang="ts">
 	import { Avatar, ProgressRadial } from "@skeletonlabs/skeleton"
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
+    import type { DirectMessage } from "$types";
+	import { my_name } from "$stores"
 
-	export let from = ""
-	export let from_me = false
-	export let is_sent = true
-	export let data_id: string
+    export let message: DirectMessage;
 
+	let from = message.author
+	let from_me = ( message.author !== $my_name)
+	let is_sent = ( message?.id !== "" )
 	let threeDotsVisible = false
 </script>
 
 <div
-	data-id={data_id}
+    id={message.id}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
 	class={`message-row ${from_me ? "space-x-2 space-x-reverse" : "space-x-2"}`}
 	on:mouseenter={() => (threeDotsVisible = true)}

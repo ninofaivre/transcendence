@@ -40,7 +40,7 @@
 				</div>
 			{/if}
 			<div class="message-content">
-				<slot />
+                {message.content}
 			</div>
 		</div>
 	</div>

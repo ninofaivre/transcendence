@@ -3,7 +3,7 @@
 
 	console.log("Running DiscussionDisplay")
 
-	import type { DirectMessage, DirectMessageOrEvent } from "$types"
+	import type { DirectMessageOrEvent } from "$types"
 
 	import ChatBubble from "./ChatBubble.svelte"
 	import { my_name } from "$lib/stores"
@@ -30,7 +30,6 @@
 		if (_init) return
 		if (_new_message) {
 			let [content, msg_promise] = _new_message
-			let tmp: (typeof messages)[number]
 			messages = [
 				...messages,
 				{
@@ -125,11 +124,7 @@
 		<div bind:this={canary} />
 		{#each messages as message}
 			{#if message.type === "message"}
-				<ChatBubble
-                    {message}
-				>
-					{message.content}
-				</ChatBubble>
+				<ChatBubble {message}/>
 			{:else if message.type === "event"}
 				{#if message.eventType == "CREATED_FRIENDSHIP"}
 					<div class="text-center text-gray-500">

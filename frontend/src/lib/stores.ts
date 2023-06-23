@@ -42,7 +42,7 @@ export const sse_store = derived(logged_in, ($logged_in) => {
 	} else {
 		console.log("Closing eventSource...", eventSource)
 		eventSource?.close()
-		console.log("Is eventSource closed? ", eventSource)
+		console.log("Is eventSource closed? ", eventSource?.readyState === 2)
 	}
 	return eventSource
 })

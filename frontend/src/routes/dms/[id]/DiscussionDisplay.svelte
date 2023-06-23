@@ -106,9 +106,10 @@
 			addEventSourceListener(sse, "UPDATED_DM_ELEMENT", (data) => {
 				console.log("Server message: Message was modified", data)
 				if (data.dmId === $page.params.id) {
-					const to_update = document.getElementById(data.element.id)
-                    if (to_update && data.element.type === "message") {
-                        new ChatBubble({target: to_update.parentElement!, anchor: to_update, props: {message: data.element}})
+                    const message = data.element
+					const to_update = document.getElementById(message.id)
+                    if (to_update && message.type === "message") {
+                        new ChatBubble({target: to_update.parentElement!, anchor: to_update, props: {message}})
                         to_update.remove()
                     }
 				}

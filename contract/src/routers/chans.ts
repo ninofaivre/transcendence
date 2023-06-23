@@ -4,13 +4,13 @@ import { unique } from "../zod/global.zod"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
 import { ChanType, ClassicChanEventType, PermissionList, RoleApplyingType } from "@prisma-generated/enums"
-
 const c = initContract()
 
 const zClassicChanEventType = z.nativeEnum(ClassicChanEventType)
 export const zChanType = z.nativeEnum(ChanType)
 
-const zPermissionList = z.nativeEnum(PermissionList)
+const zPermissionList = z.enum(["SEND_MESSAGE", "DELETE_MESSAGE", "EDIT", "INVITE", "KICK", "BAN", "MUTE", "DESTROY"])
+;(zEnum: z.infer<typeof zPermissionList>, nativeEnum: PermissionList) => zEnum satisfies typeof nativeEnum && nativeEnum satisfies typeof zEnum;
 const zRoleApplyingType = z.nativeEnum(RoleApplyingType)
 
 export const zChanTitle = z
@@ -46,6 +46,7 @@ const zChanReturn = z.object({
 	ownerName: z.string(),
 	id: z.string().uuid(),
 	users: z.array(zUserName).min(1),
+    selfPerms: z.array(zPermissionList.extract(["EDIT", "DESTROY", "INVITE", "SEND_MESSAGE"])),
 	roles: z.array(zRoleReturn),
 })
 
@@ -257,7 +258,7 @@ export const chansContract = c.router(
 				chanId: z.string().uuid(),
 				elementId: z.string().uuid(),
 			}),
-			body: c.body<null>(),
+			body: c.type<null>(),
 			responses: {
 				202: zChanDiscussionElementReturn,
 			},
@@ -269,11 +270,25 @@ export const chansContract = c.router(
 				chanId: z.string().uuid(),
 				username: zUserName,
 			}),
-			body: c.body<null>(),
+			body: c.type<null>(),
 			responses: {
-				202: c.response<null>(),
+				202: c.type<null>(),
 			},
 		},
+        getChanUser: {
+            method: "GET",
+            path: "/:chanId/:username",
+            pathParams: z.strictObject({
+                chanId: z.string().uuid(),
+                username: zUserName
+            }),
+            responses: {
+                200: z.strictObject({
+                    roles: z.string().array(),
+                    myPermissionOverHim: z.array(zPermissionList.extract(["BAN", "KICK", "MUTE", "DELETE_MESSAGE"]))
+                })
+            }
+        }
 	},
 	{
 		pathPrefix: "/chans",

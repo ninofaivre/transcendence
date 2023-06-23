@@ -56,11 +56,10 @@
 	}
 
 	async function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
-		console.log("intersectionHandler has been called", entry)
 		if (_init) return
+		console.log("intersectionHandler has been called", entry)
 		const oldest_message = canary.nextElementSibling as HTMLElement
-		const start = oldest_message?.dataset?.id
-		// const start = oldest_message.getAttribute("id")
+		const start = oldest_message?.getAttribute("id")
 		if (start && entry.isIntersecting) {
 			const { status, body } = await dmsClient.getDmElements({
 				params: { dmId: currentDiscussionId.toString() },

@@ -168,6 +168,15 @@ export class UserService {
         return "ANYONE"
     }
 
+    public getUserStatus(username: string, proximityLevel: "FRIEND" | "COMMON_CHAN" | "ANYONE", statusVisibilityLevel: StatusVisibilityLevel)
+    : "ONLINE" | "OFFLINE" | "INVISIBLE" {
+        if (statusVisibilityLevel === "NO_ONE"
+            || (statusVisibilityLevel === "ONLY_FRIEND" && proximityLevel !== "FRIEND")
+            || (statusVisibilityLevel === "IN_COMMON_CHAN" && proximityLevel === "ANYONE"))
+            return "INVISIBLE"
+        return (this.sse.isUserOnline(username)) ? "ONLINE" : "OFFLINE"
+    }
+
     async searchUsers(username: string, contains: string, nRes: number) {
         const res = await this.prisma.user.findMany({
             where: { name: { contains } },

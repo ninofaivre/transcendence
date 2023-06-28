@@ -24,29 +24,38 @@ export class FriendsService {
 		creationDate: true,
 		requestingUserName: true,
 		requestedUserName: true,
+        requestingUser: { select: { statusVisibilityLevel: true } },
+        requestedUser: { select: { statusVisibilityLevel: true } }
 	} satisfies Prisma.FriendShipSelect
 
 	private friendShipGetPayload = {
 		select: this.friendShipSelect,
 	} satisfies Prisma.FriendShipArgs
 
-	private formatFriendShip(
+	private async formatFriendShip(
 		friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,
 		username: string,
-	): z.infer<typeof zFriendShipReturn> {
-		const { requestedUserName, requestingUserName, ...rest } = friendShip
+	): Promise<z.infer<typeof zFriendShipReturn>> {
+		const { requestedUserName, requestingUserName,
+            requestingUser: { statusVisibilityLevel: requestingVisi },
+            requestedUser: { statusVisibilityLevel: requestedVisi }, ...rest
+        } = friendShip
+        const friend = (requestedUserName === username)
+            ? { name: requestingUserName, visibility: requestingVisi }
+            : { name: requestedUserName, visibility: requestedVisi }
 		const formattedFriendShip = {
 			...rest,
-			friendName: requestedUserName === username ? requestingUserName : requestedUserName,
-		}
+			friendName: friend.name,
+            friendStatus: this.usersService.getUserStatus(friend.name, "FRIEND", friend.visibility)
+        }
 		return formattedFriendShip
 	}
 
-	private formatFriendShipArray(
+	private async formatFriendShipArray(
 		friendShips: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>[],
 		username: string,
-	): z.infer<typeof zFriendShipReturn>[] {
-		return friendShips.map((friendShip) => this.formatFriendShip(friendShip, username))
+	): Promise<z.infer<typeof zFriendShipReturn>[]> {
+		return Promise.all(friendShips.map((friendShip) => this.formatFriendShip(friendShip, username)))
 	}
 
 	public async createFriend(requestingUserName: string, requestedUserName: string) {
@@ -64,11 +73,11 @@ export class FriendsService {
 		})
 		await this.sse.pushEvent(requestingUserName, {
 			type: "CREATED_FRIENDSHIP",
-			data: this.formatFriendShip(newFriendShip, requestingUserName),
+			data: await this.formatFriendShip(newFriendShip, requestingUserName),
 		})
 		await this.sse.pushEvent(requestedUserName, {
 			type: "CREATED_FRIENDSHIP",
-			data: this.formatFriendShip(newFriendShip, requestedUserName),
+			data: await this.formatFriendShip(newFriendShip, requestedUserName),
 		})
 		let newDmId: string = "" // a bit dirty
 		if (!directMessage)

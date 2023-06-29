@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException, forwardRef } from "@nestjs/common"
-import { ClassicDmEventType, DirectMessageStatus, DmPolicyLevelType, Prisma } from "prisma-client"
+import { ClassicDmEventType, DirectMessageStatus, DmPolicyLevelType, Prisma, StatusVisibilityLevel } from "prisma-client"
 import { zFriendShipReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
@@ -15,11 +15,10 @@ export class FriendsService {
 		private readonly sse: SseService,
 		private readonly dmsService: DmsService,
         @Inject(forwardRef(() => UserService))
-		private readonly usersService: UserService,
-		private readonly chansService: ChansService,
+		private readonly usersService: UserService
 	) {}
 
-	private friendShipSelect = {
+	public friendShipSelect = {
 		id: true,
 		creationDate: true,
 		requestingUserName: true,
@@ -32,10 +31,13 @@ export class FriendsService {
 		select: this.friendShipSelect,
 	} satisfies Prisma.FriendShipArgs
 
-	private async formatFriendShip(
-		friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,
-		username: string,
-	): Promise<z.infer<typeof zFriendShipReturn>> {
+	public formatFriendShip(
+        friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,
+        username: string,
+	)
+    // why the fuck can't I use z.infer here ? (can't find 'this')
+    //: z.infer<typeof zFriendShipReturn>
+    {
 		const { requestedUserName, requestingUserName,
             requestingUser: { statusVisibilityLevel: requestingVisi },
             requestedUser: { statusVisibilityLevel: requestedVisi }, ...rest
@@ -43,7 +45,7 @@ export class FriendsService {
         const friend = (requestedUserName === username)
             ? { name: requestingUserName, visibility: requestingVisi }
             : { name: requestedUserName, visibility: requestedVisi }
-		const formattedFriendShip = {
+		const formattedFriendShip: z.infer<typeof zFriendShipReturn> = {
 			...rest,
 			friendName: friend.name,
             friendStatus: this.usersService.getUserStatus(friend.name, "FRIEND", friend.visibility)
@@ -51,11 +53,11 @@ export class FriendsService {
 		return formattedFriendShip
 	}
 
-	private async formatFriendShipArray(
+	private formatFriendShipArray(
 		friendShips: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>[],
 		username: string,
-	): Promise<z.infer<typeof zFriendShipReturn>[]> {
-		return Promise.all(friendShips.map((friendShip) => this.formatFriendShip(friendShip, username)))
+	): z.infer<typeof zFriendShipReturn>[] {
+		return friendShips.map((friendShip) => this.formatFriendShip(friendShip, username))
 	}
 
 	public async createFriend(requestingUserName: string, requestedUserName: string) {
@@ -73,11 +75,11 @@ export class FriendsService {
 		})
 		await this.sse.pushEvent(requestingUserName, {
 			type: "CREATED_FRIENDSHIP",
-			data: await this.formatFriendShip(newFriendShip, requestingUserName),
+			data: this.formatFriendShip(newFriendShip, requestingUserName),
 		})
 		await this.sse.pushEvent(requestedUserName, {
 			type: "CREATED_FRIENDSHIP",
-			data: await this.formatFriendShip(newFriendShip, requestedUserName),
+			data: this.formatFriendShip(newFriendShip, requestedUserName),
 		})
 		let newDmId: string = "" // a bit dirty
 		if (!directMessage)

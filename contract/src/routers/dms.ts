@@ -3,6 +3,7 @@ import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
 import { ClassicDmEventType, DirectMessageStatus } from "@prisma-generated/enums"
 import { zChanTitle } from "./chans"
+import { zUserStatus } from "./users"
 
 const c = initContract()
 
@@ -17,6 +18,7 @@ type t = z.infer<typeof test>
 export const zDmReturn = z.strictObject({
 	id: z.string().uuid(),
 	otherName: zUserName,
+    otherStatus: zUserStatus,
 	// myDmMutedUntil: z.date().nullable(), // à implémenter si on veux et qu'on a le temps
 	creationDate: z.date(),
 	status: zDirectMessageStatus,

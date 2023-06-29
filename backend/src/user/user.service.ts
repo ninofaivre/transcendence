@@ -11,6 +11,7 @@ import { zMyProfileReturn, zUserProfilePreviewReturn, zUserStatus } from "contra
 import { SseService } from "src/sse/sse.service"
 import { ChansService } from "src/chans/chans.service"
 import { FriendsService } from "src/friends/friends.service"
+import { DmsService } from "src/dms/dms.service"
 
 const c = nestControllerContract(contract.users)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -24,7 +25,9 @@ export class UserService {
                 @Inject(forwardRef(() => ChansService))
                 private readonly chansService: ChansService,
                 @Inject(forwardRef(() => FriendsService))
-                private readonly friendsService: FriendsService) {}
+                private readonly friendsService: FriendsService,
+                @Inject(forwardRef(() => DmsService))
+                private readonly dmsService: DmsService) {}
 
     private getUserProfilePreviewSelectForUser(username: string) {
         return {
@@ -67,57 +70,6 @@ export class UserService {
         select: this.myProfileSelect
     } satisfies Prisma.UserArgs
 
-
-	// async getBlockedUsers(username: string, filter: blockedFilterType)
-	// {
-	// 	const tmp = await this.getUserByName(username,
-	// 		{
-	// 			blockedUserList: filter == blockedFilterType['ALL'] || filter == blockedFilterType['BLOCKED'],
-	// 			blockedByUserList: filter == blockedFilterType['ALL'] || filter == blockedFilterType['BLOCKEDBY'],
-	// 		})
-	// 	switch(filter)
-	// 	{
-	// 		case (blockedFilterType['ALL']):
-	// 			return { blocked: tmp.blockedUserList.map(el => el.name),
-	// 				blockedBy: tmp.blockedByUserList.map(el => el.name) }
-	// 		case (blockedFilterType['BLOCKED']):
-	// 			return tmp.blockedUserList.map(el => el.name)
-	// 		case (blockedFilterType['BLOCKEDBY']):
-	// 			return tmp.blockedByUserList.map(el => el.name)
-	// 	}
-	// }
-	//
-	// async deleteBlocked(myUsername: string, blockedUsername: string)
-	// {
-	// 	await this.testUtils(myUsername,
-	// 		{ blockedUserList: new NotFoundException(`${blockedUsername} is not in blockedUserList`) },
-	// 		(usersArray: User[]) => !usersArray.some((el: User) => el.name === blockedUsername))
-	// 	const updatePromise = this.prisma.user.update({ where: { name: myUsername },
-	// 		data:
-	// 		{
-	// 			blockedUserList: { disconnect: { name: blockedUsername } }
-	// 		}})
-	// 	const addEventPromise = this.pushEvent(blockedUsername, { data: { user: myUsername }, type: "deletedBlocked" })
-	// 	await Promise.all([updatePromise, addEventPromise])
-	// }
-
-	// async blockUser(blockingUsername: string, blockedUsername: string)
-	// {
-	// 	const checkBlockedUserExistance = this.getUserByNameOrThrow(blockedUsername)
-	// 	const checkBlockingUserRequirements = this.testUtils(blockingUsername,
-	// 		{ blockedUserList: new ConflictException(`you already blocked ${blockedUsername}`) },
-	// 		(userArray: User[]) => userArray.some((el: User) => el.name === blockedUsername))
-	//
-	// 	await Promise.all([checkBlockedUserExistance, checkBlockingUserRequirements])
-	// 	const updatePromise = this.prisma.user.update({ where: { name: blockingUsername },
-	// 		data:
-	// 		{
-	// 			blockedUserList: { connect: { name: blockedUsername } },
-	// 		}})
-	// 	const addEventPromise = this.pushEvent(blockedUsername, { data: { user: blockingUsername }, type: "createdBlocked" })
-	// 	await Promise.all([updatePromise, addEventPromise])
-	// }
-    
     private formatUserProfilePreviewForUser(username: string, toFormat: Prisma.UserGetPayload<typeof this.userProfilePreviewSelectGetPayload>)
     : z.infer<typeof zUserProfilePreviewReturn> {
         const { name, ...rest } = toFormat
@@ -159,7 +111,7 @@ export class UserService {
     //     return Promise.all(toFormat.map(el => this.formatUserProfileForUser(username, el)))
     // }
 
-    async getProximityLevelBetweenUsers(usernameA: string, usernameB: string)
+    public async getProximityLevelBetweenUsers(usernameA: string, usernameB: string)
     : Promise<"FRIEND" | "COMMON_CHAN" | "ANYONE"> {
         if (await this.friendsService.areUsersFriend(usernameA, usernameB))
             return "FRIEND"
@@ -204,9 +156,30 @@ export class UserService {
 
     // remember to notify online status when status visibilityChange and to notify invisible
     async updateMe(username: string, dto: RequestShapes['updateMe']['body']) {
-        return this.formatMe(await this.prisma.user.update({ where: { name: username },
-            data: dto,
-        select: this.myProfileSelect}))
+        const oldData = await this.getNotifyStatusData(username)
+
+        const { dmsIds: oldDmsIds, friendShipsIds: oldFriendShipsIds } = this.getToNotifyIds(oldData)
+
+        const updatedMe = await this.prisma.user
+            .update({
+                where: { name: username },
+                data: dto,
+                select: this.myProfileSelect
+            })
+
+        const newData = await this.getNotifyStatusData(username)
+
+        const { dmsIds: newDmsIds, friendShipsIds: newFriendShipsIds } = this.getToNotifyIds(newData)
+        
+        const friendShipsIds = newFriendShipsIds.filter(el => !oldFriendShipsIds.includes(el))
+            .concat(oldFriendShipsIds.filter(el => !newFriendShipsIds.includes(el)))
+        await this.notifyUpdateFriendShips(username, friendShipsIds)
+
+        const dmsIds = newDmsIds.filter(el => !oldDmsIds.includes(el))
+            .concat(oldDmsIds.filter(el => !newDmsIds.includes(el)))
+        await this.notifyUpdateDms(username, dmsIds)
+
+        return this.formatMe(updatedMe)
     }
 
 	async getUserByName(name: string, select: Prisma.UserSelect) {
@@ -233,24 +206,99 @@ export class UserService {
 		return result
 	}
 
+    public getProximitySelect(username: string) {
+        return {
+            friend: { where: { requestedUserName: username } },
+            friendOf: { where: { requestingUserName: username } },
+            chans: {
+                where: { users: { some: { name: username } } },
+                take: 1
+            }
+        } satisfies Prisma.UserSelect
+    }
+
+    public formatProximity(arg: { friend: {}[], friendOf: {}[], chans: {}[] }) {
+        const { friend, friendOf, chans } = arg
+        if (friend.length || friendOf.length)
+            return "FRIEND"
+        if (chans.length)
+            return "COMMON_CHAN"
+        return "ANYONE"
+    }
+
+    private async getNotifyStatusData(username: string) {
+        return this.getUserByNameOrThrow(username, {
+            statusVisibilityLevel: true,
+            friend: { select: { id: true } },
+            friendOf: { select: { id: true } },
+            directMessage: {
+                select: {
+                    id: true,
+                    requestedUser: { select: this.getProximitySelect(username) }
+                }
+            },
+            directMessageOf: {
+                select: {
+                    id: true,
+                    requestingUser: { select: this.getProximitySelect(username) }
+                }
+            }
+        })
+    }
+
+    private async notifyUpdateFriendShips(username: string, ids: string[]) {
+        const friendShips = await this.prisma.friendShip.findMany({
+            where: { id: { in: ids } },
+            select: this.friendsService.friendShipSelect
+        })
+        return Promise.all(friendShips.map(friendShip => {
+            const friendName = (friendShip.requestedUserName === username)
+                ? friendShip.requestingUserName
+                : friendShip.requestedUserName
+            const data = this.friendsService.formatFriendShip(friendShip, friendName)
+            return this.sse.pushEvent(friendName, { type: 'UPDATED_FRIENDSHIP', data })
+        }))
+    }
+
+    private async notifyUpdateDms(username: string, ids: string[]) {
+        const dms = await this.prisma.directMessage.findMany({
+            where: { id: { in: ids } },
+            select: this.dmsService.getDirectMessageSelect(username)
+        })
+        return Promise.all(dms.map(dm => {
+            const otherName = (dm.requestedUser.name === username)
+                ? dm.requestingUser.name
+                : dm.requestedUser.name
+            const data = this.dmsService.formatDirectMessage(dm, otherName)
+            return this.sse.pushEvent(otherName, { type: 'UPDATED_DM', data })
+        }))
+    }
+
+    private getToNotifyIds(data: Awaited<ReturnType<typeof this.getNotifyStatusData>>) {
+        const statusVisi = data.statusVisibilityLevel
+
+        const friendShipsIds = data.friend.map(el => el.id)
+            .concat(data.friendOf.map(el => el.id))
+
+        const dmsIds = data.directMessage.map(el => ({ id: el.id, prox: el.requestedUser }))
+            .concat(data.directMessageOf.map(el => ({ id: el.id, prox: el.requestingUser })))
+            .filter(el => {
+                const proximityLevel = this.formatProximity(el.prox)
+                return !((statusVisi === "ONLY_FRIEND" && proximityLevel !== "FRIEND")
+                    || (statusVisi === "IN_COMMON_CHAN" && proximityLevel === "ANYONE"))
+            })
+            .map(el => el.id)
+        return { friendShipsIds, dmsIds }
+    }
+
     public async notifyStatus(username: string, status: z.infer<typeof zUserStatus>) {
-        const { statusVisibilityLevel: statusVisi, ...res } = await this.getUserByNameOrThrow(username, {
-            chans: { select: { users: { select: { name: true } } } },
-            friend: { select: { requestedUserName: true } },
-            friendOf: { select: { requestingUserName: true } },
-            directMessage: { select: { requestedUserName: true } },
-            directMessageOf: { select: { requestingUserName: true } },
-            statusVisibilityLevel: true })
-        const friends = res.friend.map(el => el.requestedUserName)
-            .concat(res.friendOf.map(el => el.requestingUserName))
-        const dms = res.directMessage.map(el => el.requestedUserName)
-            .concat(res.directMessageOf.map(el => el.requestingUserName))
-        const chansUsers = res.chans.map(el => el.users.map(user => user.name)).flat()
-        if (statusVisi === "NO_ONE")
+        const data = await this.getNotifyStatusData(username)
+        if (data.statusVisibilityLevel === 'NO_ONE')
             return
-        const toNotify = friends
-            .concat((statusVisi !== "ONLY_FRIEND") ? chansUsers : [],
-                    (statusVisi === "ANYONE") ? dms : [])
-        return this.sse.pushEventMultipleUser([...new Set(toNotify)], { type: "UPDATED_USER_PROFILE", data: { userName: username, userProfile: { status } } })
+
+        const { friendShipsIds, dmsIds } = this.getToNotifyIds(data)
+
+        await this.notifyUpdateFriendShips(username, friendShipsIds)
+        await this.notifyUpdateDms(username, dmsIds)
     }
 }

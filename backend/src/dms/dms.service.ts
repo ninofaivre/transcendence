@@ -22,31 +22,16 @@ export class DmsService {
 
 	private directMessageSelect = {
 		id: true,
-		requestedUserName: true,
-		requestingUserName: true,
 		creationDate: true,
 		status: true,
 	} satisfies Prisma.DirectMessageSelect
 
-    private getDirectMessageSelect(username: string) {
+    public getDirectMessageSelect(username: string) {
         const userArg = {
             select: {
                 statusVisibilityLevel: true,
-                friend: {
-                    where: { requestedUserName: username },
-                    take: 1,
-                    select: { id: true }
-                },
-                friendOf: {
-                    where: { requestingUserName: username },
-                    take: 1,
-                    select: { id: true }
-                },
-                chans: {
-                    where: { users: { some: { name: username } } },
-                    take: 1,
-                    select: { id: true }
-                }
+                ...this.usersService.getProximitySelect(username),
+                name: true
             }
         } satisfies Prisma.UserArgs
         return {
@@ -54,6 +39,16 @@ export class DmsService {
             requestingUser: userArg,
             ...this.directMessageSelect
         } satisfies Prisma.DirectMessageSelect
+    }
+
+    private directMessageContextSelect = {
+        ...this.directMessageSelect,
+        requestingUserName: true,
+        requestedUserName: true
+    } satisfies Prisma.DirectMessageSelect
+
+    private directMessageContextGetPayload = {
+        select: this.directMessageContextSelect
     }
 
 	private directMessageGetPayload = {
@@ -93,30 +88,26 @@ export class DmsService {
 		select: this.dmDiscussionElementSelect,
 	} satisfies Prisma.DmDiscussionElementArgs
 
-	private formatDirectMessage(
+	public formatDirectMessage(
 		dm: Prisma.DirectMessageGetPayload<typeof this.directMessageGetPayload>,
 		username: string,
-	): z.infer<typeof zDmReturn> {
+	)//: z.infer<typeof zDmReturn> // BUG
+    {
 		const {
-			requestedUserName,
-			requestingUserName,
             requestingUser,
             requestedUser,
 			...rest
 		} = dm
 
-        const friend = !!(requestingUser.friendOf.length || requestingUser.friend.length
-            || requestedUser.friendOf.length || requestedUser.friend.length)
-        const commonChan = !!(requestingUser.chans.length && requestedUser.chans.length)
-        const proximityLevel = (friend) ? "FRIEND" : (commonChan) ? "COMMON_CHAN" : "ANYONE"
-        
-        const other = requestedUserName === username
-            ? { name: requestingUserName, visibility: requestingUser.statusVisibilityLevel }
-            : { name: requestedUserName, visibility: requestedUser.statusVisibilityLevel }
-		const formattedDirectMessage = {
+        const other = username === requestedUser.name
+            ? requestingUser : requestedUser
+
+        const proximityLevel = this.usersService.formatProximity(other)
+
+		const formattedDirectMessage: z.infer<typeof zDmReturn> = {
 			...rest,
 			otherName: other.name,
-            otherStatus: this.usersService.getUserStatus(other.name, proximityLevel, other.visibility)
+            otherStatus: this.usersService.getUserStatus(other.name, proximityLevel, other.statusVisibilityLevel)
 		}
 		return formattedDirectMessage
 	}
@@ -128,13 +119,10 @@ export class DmsService {
 		return dms.map((dm) => this.formatDirectMessage(dm, username))
 	}
 
-    // :( sad sad sad
-    private jkldjff = { select: this.directMessageSelect }
-
 	private formatDmEventForUser(
         event: Prisma.DmDiscussionEventGetPayload<typeof this.dmDiscussionEventGetPayload>,
         username: string,
-        dm: Prisma.DirectMessageGetPayload<typeof this.jkldjff>
+        dm: Prisma.DirectMessageGetPayload<typeof this.directMessageContextGetPayload>
     ) {
 		const retypedEvent = event as RetypedEvent<typeof event>
 
@@ -176,7 +164,7 @@ export class DmsService {
 		const { event, message, ...rest } = element as RetypedElement<typeof element>
 
 		if (event) {
-            const dm = await this.getDmOrThrow({ elements: { some: { id: element.id } } }, this.directMessageSelect)
+            const dm = await this.getDmOrThrow({ elements: { some: { id: element.id } } }, this.directMessageContextSelect)
             return {
                 ...rest,
                 type: "event",
@@ -334,13 +322,13 @@ export class DmsService {
 			select: this.getDirectMessageSelect(username),
 		})
 		await Promise.all([
-			this.sse.pushEvent(updatedDm.requestingUserName, {
+			this.sse.pushEvent(updatedDm.requestingUser.name, {
 				type: "UPDATED_DM",
-				data: this.formatDirectMessage(updatedDm, updatedDm.requestingUserName),
+				data: this.formatDirectMessage(updatedDm, updatedDm.requestingUser.name),
 			}),
-			this.sse.pushEvent(updatedDm.requestedUserName, {
+			this.sse.pushEvent(updatedDm.requestedUser.name, {
 				type: "UPDATED_DM",
-				data: this.formatDirectMessage(updatedDm, updatedDm.requestedUserName),
+				data: this.formatDirectMessage(updatedDm, updatedDm.requestedUser.name),
 			}),
 		])
 	}

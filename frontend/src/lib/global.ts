@@ -132,3 +132,25 @@ export function addEventSourceListener<EventType extends SseEvent["type"]>(
 		callback(JSON.parse(ev.data), ev)
 	})
 }
+
+// use: function
+export function listenOutsideClick(node: HTMLElement) {
+	// So we add an event listener that will dispatch a custom event to our node
+	const handleClick = (event: MouseEvent) => {
+		if (node && !node.contains(event.target as Node)) {
+			node.dispatchEvent(new CustomEvent("outsideclick")) // Send event to specific element
+		}
+	}
+
+	document.addEventListener(
+		"click",
+		handleClick,
+		true, // Because you don't want bubbling here, it needs to go *toward* the element
+	)
+
+	return {
+		destroy: () => {
+			node.removeEventListener("click", handleClick, true)
+		},
+	}
+}

@@ -1,69 +1,76 @@
 <script lang="ts">
 	import { Avatar, ProgressRadial, Toast, toastStore } from "@skeletonlabs/skeleton"
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
-    import type { DirectMessage } from "$types";
+	import type { DirectMessage } from "$types"
 	import { my_name } from "$stores"
-    import { createEventDispatcher } from "svelte/internal";
+	import { createEventDispatcher } from "svelte/internal"
 	import { dmsClient } from "$clients"
 	import { page } from "$app/stores"
 	import Page from "../../+page.svelte"
-    import ChatBox from "./ChatBox.svelte";
+	import ChatBox from "./ChatBox.svelte"
+	import { listenOutsideClick } from "$lib/global"
 
-    export let message: DirectMessage;
+	export let message: DirectMessage
 
 	let from = message.author
-	let from_me = ( message.author === $my_name)
-    let is_menu_open = false
-    let message_container: HTMLElement
-    let message_row: HTMLDivElement
-    let contenteditable = false
+	let from_me = message.author === $my_name
+	let is_menu_open = false
+	let message_container: HTMLElement
+	let message_row: HTMLDivElement
+	let contenteditable = false
 
-	$: is_sent = ( message?.id !== "" )
+	$: is_sent = message?.id !== ""
 
-    async function deleteHandler() {
-        is_menu_open = false
-        is_sent = false
-        const {status, body} = await dmsClient.deleteDmMessage({ body: null, params: {
-            messageId: message_row.id,
-            dmId: $page.params.dmId,
-        }})
-        is_sent = true
-        if (status === 202) {
-            message_container.innerHTML = "<i>This message has been deleted</i>"
-        }
-        else {
-            console.error(`Message deletion denied. Server returned code ${status}\n with message \"${
-                (body as any)?.message
-            }\"`)
-        }
-    }
+	async function deleteHandler() {
+		is_menu_open = false
+		is_sent = false
+		const { status, body } = await dmsClient.deleteDmMessage({
+			body: null,
+			params: {
+				messageId: message_row.id,
+				dmId: $page.params.dmId,
+			},
+		})
+		is_sent = true
+		if (status === 202) {
+			message_container.innerHTML = "<i>This message has been deleted</i>"
+		} else {
+			console.error(
+				`Message deletion denied. Server returned code ${status}\n with message \"${
+					(body as any)?.message
+				}\"`,
+			)
+		}
+	}
 
-    async function updateMessage(e: CustomEvent<string>) {
-        contenteditable = false
-        is_sent = false
-        const {status, body} = await dmsClient.updateMessage({ body: { content: e.detail }, params: {
-            elementId: message_row.id,
-            dmId: $page.params.dmId,
-        }})
-        is_sent = true
-        if (status === 200) {
-            message = body as DirectMessage
-        }
-        else {
-            console.error(`Server refused to edit message, returned code ${status}\n with message \"${
-                (body as any)?.message
-            }\"`)
-        }
-
-    }
-
+	async function updateMessage(e: CustomEvent<string>) {
+		contenteditable = false
+		is_sent = false
+		const { status, body } = await dmsClient.updateMessage({
+			body: { content: e.detail },
+			params: {
+				elementId: message_row.id,
+				dmId: $page.params.dmId,
+			},
+		})
+		is_sent = true
+		if (status === 200) {
+			message = body as DirectMessage
+		} else {
+			console.error(
+				`Server refused to edit message, returned code ${status}\n with message \"${
+					(body as any)?.message
+				}\"`,
+			)
+		}
+	}
 </script>
 
 <div
-    id={message.id}
+	id={message.id}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
 	class={`message-row ${from_me ? "space-x-2 space-x-reverse" : "space-x-2"}`}
-    bind:this={message_row}
+	bind:this={message_row}
 >
 	<div class="message-spacer" />
 	<Avatar src="https://i.pravatar.cc/?img=42" width="w-8 h-8" rounded="rounded-full" />
@@ -71,11 +78,11 @@
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}
 	>
 		{#if !from_me}
-			<div class="font-medium from-field">{from}</div>
+			<div class="from-field font-medium">{from}</div>
 		{/if}
 		<div class="grid grid-cols-[auto_1fr]">
 			{#if !is_sent}
-				<div class="self-center spinner-container" out:slide={{ axis: "x", duration: 800 }}>
+				<div class="spinner-container self-center" out:slide={{ axis: "x", duration: 800 }}>
 					<ProgressRadial
 						width="w-3"
 						stroke={140}
@@ -85,37 +92,44 @@
 					/>
 				</div>
 			{/if}
-            {#if !contenteditable}
-                <div bind:this={message_container} class="message-container">
-                    {message.content}
-                </div>
-            <!-- {:else} -->
-            <!--     <form bind:this={message_container} class="message-container" on:submit|preventDefault={updateMessage}> -->
-            <!--         <input bind:value={content} type="text" on:blur={() => {contenteditable = false}}> -->
-            <!--     </form> -->
-            {:else}
-                <ChatBox
-                    on:message_sent={updateMessage}
-                />
-            {/if}
+			{#if !contenteditable}
+				<div bind:this={message_container} class="message-container">
+					{message.content}
+				</div>
+			{:else}
+				<ChatBox on:message_sent={updateMessage} />
+			{/if}
 		</div>
 	</div>
-{#if is_menu_open }
-    <!-- on:blur does not work on any of those -->
-    <div class="grid grid-rows-2 menu">
-            <div on:click={() => {is_menu_open = false; contenteditable = true;} }>Edit</div>
-            <div on:click={deleteHandler}>Delete</div>
-        </div>
-{:else}
-	<div
-		on:click={() => {
-            is_menu_open = true
-		}}
-		class="self-center text-xl kebab"
-	>
-		&#xFE19;
-	</div>
-{/if}
+	{#if is_menu_open}
+		<!-- on:blur does not work on any of those -->
+		<div
+			class="menu grid grid-rows-2"
+			use:listenOutsideClick
+			on:outsideclick={() => {
+				is_menu_open = false
+			}}
+		>
+			<div
+				on:click={() => {
+					is_menu_open = false
+					contenteditable = true
+				}}
+			>
+				Edit
+			</div>
+			<div on:click={deleteHandler}>Delete</div>
+		</div>
+	{:else}
+		<div
+			on:click={() => {
+				is_menu_open = true
+			}}
+			class="kebab self-center text-xl"
+		>
+			&#xFE19;
+		</div>
+	{/if}
 </div>
 
 <style>

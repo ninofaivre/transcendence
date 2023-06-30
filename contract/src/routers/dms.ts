@@ -3,6 +3,7 @@ import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
 import { ClassicDmEventType, DirectMessageStatus } from "@prisma-generated/enums"
 import { zChanTitle } from "./chans"
+import { zUserStatus } from "./users"
 
 const c = initContract()
 
@@ -17,6 +18,7 @@ type t = z.infer<typeof test>
 export const zDmReturn = z.strictObject({
 	id: z.string().uuid(),
 	otherName: zUserName,
+    otherStatus: zUserStatus,
 	// myDmMutedUntil: z.date().nullable(), // à implémenter si on veux et qu'on a le temps
 	creationDate: z.date(),
 	status: zDirectMessageStatus,
@@ -31,26 +33,35 @@ const zDmDiscussionBaseEvent = zDmDiscussionBaseElement
     .extend({
         type: z.literal("event")
     })
-const zDmDiscussionMessageReturn = z.strictObject({
-    author: zUserName,
-	content: z.string(),
-	relatedTo: z.string().uuid().nullable(),
-    hasBeenEdited: z.boolean()
-})
 
-const zDmDiscussionEventReturn = z.discriminatedUnion("eventType", [
+const zDmDiscussionBaseMessage = zDmDiscussionBaseElement
+    .extend({
+        type: z.literal("message"),
+        author: zUserName,
+    })
+
+export const zDmDiscussionMessageReturn = z.union([
+    zDmDiscussionBaseMessage.extend({
+        content: z.string().nonempty(),
+        hasBeenEdited: z.boolean(),
+        isDeleted: z.literal(false),
+        relatedTo: z.string().uuid().nullable(),
+    }),
+    zDmDiscussionBaseMessage.extend({
+        content: z.literal(""),
+        isDeleted: z.literal(true)
+    })
+])
+
+export const zDmDiscussionEventReturn = z.discriminatedUnion("eventType", [
     zDmDiscussionBaseEvent.extend({
 		eventType: zClassicDmEventType,
-        otherName: zUserName // if we really need it
+        otherName: zUserName, // if we really need it
 	}),
     zDmDiscussionBaseEvent.extend({
         eventType: z.literal("BLOCKED"),
         blockedUserName: zUserName,
-        blockingUserName: zUserName
-    }),
-    zDmDiscussionBaseEvent.extend({
-        eventType: z.literal("DELETED_MESSAGE"),
-        author: zUserName
+        blockingUserName: zUserName,
     }),
 	zDmDiscussionBaseEvent.extend({
 		eventType: z.literal("CHAN_INVITATION"),
@@ -61,9 +72,7 @@ const zDmDiscussionEventReturn = z.discriminatedUnion("eventType", [
 ])
 
 export const zDmDiscussionElementReturn = z.union([
-	zDmDiscussionBaseElement
-        .merge(zDmDiscussionMessageReturn)
-        .extend({ type: z.literal("message") }),
+    zDmDiscussionMessageReturn,
     zDmDiscussionEventReturn
 ])
 
@@ -132,7 +141,7 @@ export const dmsContract = c.router(
 				relatedTo: z.string().uuid().optional(),
 			}),
 			responses: {
-				201: zDmDiscussionElementReturn,
+				201: zDmDiscussionMessageReturn,
 			},
 		},
 		getDmElementById: {
@@ -157,7 +166,7 @@ export const dmsContract = c.router(
 				content: z.string().nonempty(),
 			}),
 			responses: {
-				200: zDmDiscussionElementReturn,
+				200: zDmDiscussionMessageReturn,
 			},
 		},
 		deleteDmMessage: {
@@ -169,7 +178,7 @@ export const dmsContract = c.router(
 			}),
 			body: c.type<null>(),
 			responses: {
-				202: zDmDiscussionElementReturn,
+				202: zDmDiscussionMessageReturn,
 			},
 		},
 	},

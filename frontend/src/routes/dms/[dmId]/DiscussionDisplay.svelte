@@ -28,6 +28,7 @@
 
 	function handleOwnMessage(_new_message: typeof new_message) {
 		if (_init) return
+		conversation_container.scrollTop = conversation_container.scrollHeight
 		if (_new_message) {
 			let [content, msg_promise] = _new_message
 			messages = [
@@ -58,7 +59,7 @@
 	async function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
 		if (_init) return
 		console.log("intersectionHandler has been called", entry)
-		const oldest_message = canary.nextElementSibling 
+		const oldest_message = canary.nextElementSibling
 		const start = oldest_message?.getAttribute("id")
 		if (start && entry.isIntersecting) {
 			const { status, body } = await dmsClient.getDmElements({
@@ -105,17 +106,21 @@
 			addEventSourceListener(sse, "UPDATED_DM_ELEMENT", (data) => {
 				console.log("Server message: Message was modified", data)
 				if (data.dmId === currentDiscussionId) {
-                    const message = data.element
+					const message = data.element
 					const to_update = document.getElementById(message.id)
-                    if (to_update && message.type === "message") {
-                        new ChatBubble({target: to_update.parentElement!, anchor: to_update, props: {message}})
-                        to_update.remove()
-                    }
-                    // if (to_update && message.type === "message") {
-                    //     const fragment = new DocumentFragment()
-                    //     new ChatBubble({target: fragment as unknown as Element, props: {message, ...to_update}})
-                    //     to_update.replaceWith(fragment)
-                    // }
+					if (to_update && message.type === "message") {
+						new ChatBubble({
+							target: to_update.parentElement!,
+							anchor: to_update,
+							props: { message },
+						})
+						to_update.remove()
+					}
+					// if (to_update && message.type === "message") {
+					//     const fragment = new DocumentFragment()
+					//     new ChatBubble({target: fragment as unknown as Element, props: {message, ...to_update}})
+					//     to_update.replaceWith(fragment)
+					// }
 				}
 			})
 		} else throw new Error("sse_store is empty ! Grrrr", sse)
@@ -124,12 +129,12 @@
 	})
 </script>
 
-<div class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
-	<div bind:this={conversation_container} class="flex flex-col scroll-smooth">
+<div bind:this={conversation_container} class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
+	<div class="flex flex-col scroll-smooth">
 		<div bind:this={canary} />
 		{#each messages as message}
 			{#if message.type === "message"}
-				<ChatBubble {message}/>
+				<ChatBubble {message} />
 			{:else if message.type === "event"}
 				{#if message.eventType == "CREATED_FRIENDSHIP"}
 					<div class="text-center text-gray-500">

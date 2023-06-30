@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException, forwardRef } from "@nestjs/common"
-import { ClassicDmEventType, DirectMessageStatus, DmPolicyLevelType, Prisma } from "prisma-client"
+import { ClassicDmEventType, DirectMessageStatus, DmPolicyLevelType, Prisma, StatusVisibilityLevel } from "prisma-client"
 import { zFriendShipReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
@@ -15,30 +15,41 @@ export class FriendsService {
 		private readonly sse: SseService,
 		private readonly dmsService: DmsService,
         @Inject(forwardRef(() => UserService))
-		private readonly usersService: UserService,
-		private readonly chansService: ChansService,
+		private readonly usersService: UserService
 	) {}
 
-	private friendShipSelect = {
+	public friendShipSelect = {
 		id: true,
 		creationDate: true,
 		requestingUserName: true,
 		requestedUserName: true,
+        requestingUser: { select: { statusVisibilityLevel: true } },
+        requestedUser: { select: { statusVisibilityLevel: true } }
 	} satisfies Prisma.FriendShipSelect
 
 	private friendShipGetPayload = {
 		select: this.friendShipSelect,
 	} satisfies Prisma.FriendShipArgs
 
-	private formatFriendShip(
-		friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,
-		username: string,
-	): z.infer<typeof zFriendShipReturn> {
-		const { requestedUserName, requestingUserName, ...rest } = friendShip
-		const formattedFriendShip = {
+	public formatFriendShip(
+        friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,
+        username: string,
+	)
+    // why the fuck can't I use z.infer here ? (can't find 'this')
+    //: z.infer<typeof zFriendShipReturn>
+    {
+		const { requestedUserName, requestingUserName,
+            requestingUser: { statusVisibilityLevel: requestingVisi },
+            requestedUser: { statusVisibilityLevel: requestedVisi }, ...rest
+        } = friendShip
+        const friend = (requestedUserName === username)
+            ? { name: requestingUserName, visibility: requestingVisi }
+            : { name: requestedUserName, visibility: requestedVisi }
+		const formattedFriendShip: z.infer<typeof zFriendShipReturn> = {
 			...rest,
-			friendName: requestedUserName === username ? requestingUserName : requestedUserName,
-		}
+			friendName: friend.name,
+            friendStatus: this.usersService.getUserStatus(friend.name, "FRIEND", friend.visibility)
+        }
 		return formattedFriendShip
 	}
 

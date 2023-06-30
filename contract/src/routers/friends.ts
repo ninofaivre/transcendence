@@ -1,6 +1,7 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
+import { zUserStatus } from "./users"
 
 const c = initContract()
 
@@ -8,6 +9,7 @@ export const zFriendShipReturn = z.strictObject({
 	id: z.string().uuid(),
 	creationDate: z.date(),
 	friendName: zUserName,
+    friendStatus: zUserStatus
 })
 
 export const friendsContract = c.router(

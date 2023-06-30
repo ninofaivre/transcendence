@@ -16,10 +16,10 @@ export class SseService {
 	async addSubject(username: string) {
 		let tmp = this.eventSource.get(username)
 		if (!tmp) {
-            await this.usersService.notifyStatus(username, "ONLINE")
 			console.log(`creating subject for ${username}`)
             tmp = new Subject<MessageEvent>()
 			this.eventSource.set(username, tmp)
+            await this.usersService.notifyStatus(username)
 		}
 		console.log(`open SSE for ${username}`)
 		return tmp
@@ -42,7 +42,7 @@ export class SseService {
 		if (!tmp.observed) {
 			this.eventSource.delete(username)
 			console.log(`deleting subject for ${username}`)
-            await this.usersService.notifyStatus(username, "OFFLINE")
+            await this.usersService.notifyStatus(username)
 		}
 	}
 

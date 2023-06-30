@@ -3,10 +3,8 @@
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
 	import type { DirectMessage } from "$types"
 	import { my_name } from "$stores"
-	import { createEventDispatcher } from "svelte/internal"
 	import { dmsClient } from "$clients"
 	import { page } from "$app/stores"
-	import Page from "../../+page.svelte"
 	import ChatBox from "./ChatBox.svelte"
 	import { listenOutsideClick } from "$lib/global"
 

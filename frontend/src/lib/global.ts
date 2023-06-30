@@ -132,9 +132,11 @@ export function addEventSourceListener<EventType extends SseEvent["type"]>(
 		callback(JSON.parse(ev.data), ev)
 	})
 }
-
+import type { ActionReturn } from "svelte/action"
 // use: function
-export function listenOutsideClick(node: HTMLElement) {
+export function listenOutsideClick(
+	node: HTMLElement,
+): ActionReturn<{}, { "on:outsideclick": (e: CustomEvent<void>) => void }> {
 	// So we add an event listener that will dispatch a custom event to our node
 	const handleClick = (event: MouseEvent) => {
 		if (node && !node.contains(event.target as Node)) {

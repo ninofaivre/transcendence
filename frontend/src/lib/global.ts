@@ -132,10 +132,3 @@ export function addEventSourceListener<EventType extends SseEvent["type"]>(
 		callback(JSON.parse(ev.data), ev)
 	})
 }
-
-export function toastMessage(message: string) {
-    toastStore.trigger({
-        message
-    })
-}
-

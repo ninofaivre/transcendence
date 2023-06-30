@@ -4,10 +4,10 @@ import { dmsClient } from "$lib/clients"
 
 export const load = async ({ depends, params }: PageLoadEvent) => {
 
-	depends(`:dms${params.id}`)
+	depends(`:dms${params.dmId}`)
 	const { status, body: messages } = await dmsClient.getDmElements({
         params: {
-            dmId: params.id as string
+            dmId: params.dmId as string
         }
     })
 	if (status !== 200) {

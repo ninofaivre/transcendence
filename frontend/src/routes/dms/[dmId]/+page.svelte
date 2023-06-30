@@ -57,12 +57,12 @@
 	<DiscussionDisplay
 		messages={$page.data.messages}
 		{new_message}
-		currentDiscussionId={$page.params.id}
+		currentDiscussionId={$page.params.dmId}
 	/>
 	<section id="input-row" class="p-4">
 		<ChatBox
 			on:message_sent={messageSentHandler}
-			currentDiscussionId={$page.params.id}
+			currentDiscussionId={$page.params.dmId}
 			maxRows={20}
 		/>
 	</section>

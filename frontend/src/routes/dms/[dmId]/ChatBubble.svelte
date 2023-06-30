@@ -7,15 +7,16 @@
 	import { dmsClient } from "$clients"
 	import { page } from "$app/stores"
 	import Page from "../../+page.svelte"
-    import { toastMessage }from "$lib/global"
 
     export let message: DirectMessage;
 
 	let from = message.author
 	let from_me = ( message.author === $my_name)
     let is_menu_open = false
-    let message_container: HTMLDivElement
+    let message_container: HTMLElement
     let message_row: HTMLDivElement
+    let contenteditable = false
+    let content: string
 
 	$: is_sent = ( message?.id !== "" )
 
@@ -34,13 +35,29 @@
             console.error(`Message deletion denied. Server returned code ${status}\n with message \"${
                 (body as any)?.message
             }\"`)
-            toastMessage("Server denied deletion of message")
         }
     }
 
-    function editHandler() {
+    async function updateMessage() {
+        contenteditable = false
         is_menu_open = false
+        is_sent = false
+        const {status, body} = await dmsClient.updateMessage({ body: { content }, params: {
+            elementId: message_row.id,
+            dmId: $page.params.dmId,
+        }})
+        is_sent = true
+        if (status === 200) {
+            message = body as DirectMessage
+        }
+        else {
+            console.error(`Server refused to edit message, returned code ${status}\n with message \"${
+                (body as any)?.message
+            }\"`)
+        }
+
     }
+
 </script>
 
 <div
@@ -55,11 +72,11 @@
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}
 	>
 		{#if !from_me}
-			<div class="from-field font-medium">{from}</div>
+			<div class="font-medium from-field">{from}</div>
 		{/if}
 		<div class="grid grid-cols-[auto_1fr]">
 			{#if !is_sent}
-				<div class="spinner-container self-center" out:slide={{ axis: "x", duration: 800 }}>
+				<div class="self-center spinner-container" out:slide={{ axis: "x", duration: 800 }}>
 					<ProgressRadial
 						width="w-3"
 						stroke={140}
@@ -69,14 +86,21 @@
 					/>
 				</div>
 			{/if}
-			<div bind:this={message_container} class="message-container">
-                {message.content}
-			</div>
+            {#if !contenteditable}
+                <div bind:this={message_container} class="message-container">
+                    {message.content}
+                </div>
+            {:else}
+                <form bind:this={message_container} class="message-container" on:submit|preventDefault={updateMessage}>
+                    <input bind:value={content} type="text" on:blur={updateMessage}>
+                </form>
+            {/if}
 		</div>
 	</div>
 {#if is_menu_open }
-    <div class="menu grid grid-rows-2">
-            <div on:click={editHandler}>Edit</div>
+    <!-- on:blur does not work on any of those -->
+    <div class="grid grid-rows-2 menu">
+            <div on:click={() => contenteditable = true }>Edit</div>
             <div on:click={deleteHandler}>Delete</div>
         </div>
 {:else}
@@ -84,7 +108,7 @@
 		on:click={() => {
             is_menu_open = true
 		}}
-		class="kebab self-center text-xl"
+		class="self-center text-xl kebab"
 	>
 		&#xFE19;
 	</div>

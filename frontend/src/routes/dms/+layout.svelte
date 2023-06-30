@@ -53,7 +53,7 @@
 			<section id="discussions" class="overflow-y-auto">
 				<DiscussionList
 					discussions={$page.data.dmList}
-					currentDiscussionId={$page.params.id}
+					currentDiscussionId={$page.params.dmId}
 				/>
 			</section>
 		</div>

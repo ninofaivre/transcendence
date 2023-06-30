@@ -103,7 +103,15 @@ export class DmsService {
         const other = username === requestedUser.name
             ? requestingUser : requestedUser
 
-        const proximityLevel = this.usersService.formatProximity(other)
+        const requestingProximityLevel = this.usersService.formatProximity(requestingUser)
+        const requestedProximityLevel = this.usersService.formatProximity(requestedUser)
+        const proximityLevel = (requestingProximityLevel === "FRIEND"
+                || requestedProximityLevel === "FRIEND")
+            ? "FRIEND"
+            : (requestingProximityLevel === "COMMON_CHAN"
+                    && requestedProximityLevel === "COMMON_CHAN")
+                ? "COMMON_CHAN"
+                : "ANYONE"
 
 		const formattedDirectMessage: z.infer<typeof zDmReturn> = {
 			...rest,

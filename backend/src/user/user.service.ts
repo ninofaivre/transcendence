@@ -291,7 +291,7 @@ export class UserService {
         return { friendShipsIds, dmsIds }
     }
 
-    public async notifyStatus(username: string, status: z.infer<typeof zUserStatus>) {
+    public async notifyStatus(username: string) {
         const data = await this.getNotifyStatusData(username)
         if (data.statusVisibilityLevel === 'NO_ONE')
             return

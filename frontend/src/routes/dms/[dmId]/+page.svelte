@@ -11,14 +11,29 @@
 	import ChatBox from "./ChatBox.svelte"
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
-	import type { dmsClient } from "$clients"
+	import { dmsClient } from "$clients"
 
 	// let new_message: [string, Promise<ClientInferResponses<typeof contract.chans.createChan>>]
 	// let new_message: [string, Promise<Response>]
+	// let new_message: [string, ReturnType<typeof dmsClient.createDmMessage>]
+	// function messageSentHandler(e: CustomEvent<typeof new_message>) {
+	// 	console.log("You sent a message:", e.detail[0])
+	// 	new_message = e.detail
+	// }
 	let new_message: [string, ReturnType<typeof dmsClient.createDmMessage>]
-	function messageSentHandler(e: CustomEvent<typeof new_message>) {
-		console.log("You sent a message:", e.detail[0])
-		new_message = e.detail
+	function messageSentHandler(e: CustomEvent<string>) {
+		console.log("You sent a message:", e.detail)
+		new_message = [
+           e.detail,
+           dmsClient.createDmMessage({
+					params: {
+						dmId: $page.params.dmId,
+					},
+					body: {
+						content: e.detail,
+					},
+            })
+        ]
 	}
 
 	// Get our discussions
@@ -62,7 +77,6 @@
 	<section id="input-row" class="p-4">
 		<ChatBox
 			on:message_sent={messageSentHandler}
-			currentDiscussionId={$page.params.dmId}
 			maxRows={20}
 		/>
 	</section>

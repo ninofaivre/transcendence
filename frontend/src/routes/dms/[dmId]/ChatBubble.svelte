@@ -7,6 +7,7 @@
 	import { dmsClient } from "$clients"
 	import { page } from "$app/stores"
 	import Page from "../../+page.svelte"
+    import ChatBox from "./ChatBox.svelte";
 
     export let message: DirectMessage;
 
@@ -90,10 +91,16 @@
                 <div bind:this={message_container} class="message-container">
                     {message.content}
                 </div>
+            <!-- {:else} -->
+            <!--     <form bind:this={message_container} class="message-container" on:submit|preventDefault={updateMessage}> -->
+            <!--         <input bind:value={content} type="text" on:blur={updateMessage}> -->
+            <!--     </form> -->
             {:else}
-                <form bind:this={message_container} class="message-container" on:submit|preventDefault={updateMessage}>
-                    <input bind:value={content} type="text" on:blur={updateMessage}>
-                </form>
+                <ChatBox
+                    on:message_sent={messageSentHandler}
+                    currentDiscussionId={$page.params.dmId}
+                    maxRows={20}
+                />
             {/if}
 		</div>
 	</div>

@@ -1,33 +1,20 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte"
-	import { dmsClient } from "$lib/clients"
 
 	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
 
-	export let currentDiscussionId: string
 	export let minRows = 1
 	export let maxRows: number | undefined
-	export let disabled = false
 	export let line_height = 1.2
+	export let placeholder = "Shift + Enter for a new line"
 
 	const dispatch = createEventDispatcher()
-	let placeholder = "Shift + Enter for a new line"
 	let value: string = ""
 
 	async function sendMessage() {
 		value = value.trim()
 		if (value) {
-			dispatch("message_sent", [
-				value,
-                dmsClient.createDmMessage({
-					params: {
-						dmId: currentDiscussionId.toString(),
-					},
-					body: {
-						content: value,
-					},
-				}),
-			])
+			dispatch("message_sent", value)
 			value = ""
 		}
 	}
@@ -37,7 +24,7 @@
 			switch (event.key) {
 				case "Enter":
 					sendMessage()
-					event.preventDefault() // Prevent news line from being entered in the textarea
+					event.preventDefault() // Prevent actual input of the newline that triggered sending
 			}
 		}
 	}
@@ -59,7 +46,6 @@
 			aria-label="Type your message here"
 			on:keypress={handleKeypress}
 			{placeholder}
-			{disabled}
 		/>
 	</div>
 	<button id="button" on:click={sendMessage} class="variant-filled-primary hover:font-medium">

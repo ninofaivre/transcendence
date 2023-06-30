@@ -97,14 +97,14 @@
 		if (sse) {
 			addEventSourceListener(sse, "CREATED_DM_ELEMENT", (data) => {
 				console.log("Server message: New message", data)
-				if (data?.dmId === $page.params.dmId) {
+				if (data?.dmId === currentDiscussionId) {
 					messages = [...messages, data.element]
 				}
 			})
 
 			addEventSourceListener(sse, "UPDATED_DM_ELEMENT", (data) => {
 				console.log("Server message: Message was modified", data)
-				if (data.dmId === $page.params.dmId) {
+				if (data.dmId === currentDiscussionId) {
                     const message = data.element
 					const to_update = document.getElementById(message.id)
                     if (to_update && message.type === "message") {

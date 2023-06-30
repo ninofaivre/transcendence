@@ -4,7 +4,7 @@
 	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
 
 	export let minRows = 1
-	export let maxRows: number | undefined
+	export let maxRows: number | undefined = undefined
 	export let line_height = 1.2
 	export let placeholder = "Shift + Enter for a new line"
 
@@ -33,7 +33,7 @@
 	$: maxHeight = maxRows ? `${1 + maxRows * line_height}em` : `auto`
 </script>
 
-<div id="grid" class="grid grid-cols-[1fr_auto]">
+<div id="grid" class="grid grid-cols-[1fr_auto] min-w-[50vw]">
 	<div id="container">
 		<pre
 			aria-hidden="true"

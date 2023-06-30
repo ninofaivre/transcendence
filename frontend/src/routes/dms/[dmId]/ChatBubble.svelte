@@ -17,7 +17,6 @@
     let message_container: HTMLElement
     let message_row: HTMLDivElement
     let contenteditable = false
-    let content: string
 
 	$: is_sent = ( message?.id !== "" )
 
@@ -39,11 +38,10 @@
         }
     }
 
-    async function updateMessage() {
+    async function updateMessage(e: CustomEvent<string>) {
         contenteditable = false
-        is_menu_open = false
         is_sent = false
-        const {status, body} = await dmsClient.updateMessage({ body: { content }, params: {
+        const {status, body} = await dmsClient.updateMessage({ body: { content: e.detail }, params: {
             elementId: message_row.id,
             dmId: $page.params.dmId,
         }})
@@ -93,13 +91,11 @@
                 </div>
             <!-- {:else} -->
             <!--     <form bind:this={message_container} class="message-container" on:submit|preventDefault={updateMessage}> -->
-            <!--         <input bind:value={content} type="text" on:blur={updateMessage}> -->
+            <!--         <input bind:value={content} type="text" on:blur={() => {contenteditable = false}}> -->
             <!--     </form> -->
             {:else}
                 <ChatBox
-                    on:message_sent={messageSentHandler}
-                    currentDiscussionId={$page.params.dmId}
-                    maxRows={20}
+                    on:message_sent={updateMessage}
                 />
             {/if}
 		</div>
@@ -107,7 +103,7 @@
 {#if is_menu_open }
     <!-- on:blur does not work on any of those -->
     <div class="grid grid-rows-2 menu">
-            <div on:click={() => contenteditable = true }>Edit</div>
+            <div on:click={() => {is_menu_open = false; contenteditable = true;} }>Edit</div>
             <div on:click={deleteHandler}>Delete</div>
         </div>
 {:else}

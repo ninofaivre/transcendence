@@ -1,24 +1,53 @@
 <script lang="ts">
-	import { Avatar, ProgressRadial } from "@skeletonlabs/skeleton"
+	import { Avatar, ProgressRadial, Toast, toastStore } from "@skeletonlabs/skeleton"
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
     import type { DirectMessage } from "$types";
 	import { my_name } from "$stores"
+    import { createEventDispatcher } from "svelte/internal";
+	import { dmsClient } from "$clients"
+	import { page } from "$app/stores"
+	import Page from "../../+page.svelte"
+    import { toastMessage }from "$lib/global"
 
     export let message: DirectMessage;
 
 	let from = message.author
 	let from_me = ( message.author === $my_name)
-	let threeDotsVisible = false
+    let is_menu_open = false
+    let message_container: HTMLDivElement
+    let message_row: HTMLDivElement
 
 	$: is_sent = ( message?.id !== "" )
+
+    async function deleteHandler() {
+        is_menu_open = false
+        is_sent = false
+        const {status, body} = await dmsClient.deleteDmMessage({ body: null, params: {
+            messageId: message_row.id,
+            dmId: $page.params.dmId,
+        }})
+        is_sent = true
+        if (status === 202) {
+            message_container.innerHTML = "<i>This message has been deleted</i>"
+        }
+        else {
+            console.error(`Message deletion denied. Server returned code ${status}\n with message \"${
+                (body as any)?.message
+            }\"`)
+            toastMessage("Server denied deletion of message")
+        }
+    }
+
+    function editHandler() {
+        is_menu_open = false
+    }
 </script>
 
 <div
     id={message.id}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
 	class={`message-row ${from_me ? "space-x-2 space-x-reverse" : "space-x-2"}`}
-	on:mouseenter={() => (threeDotsVisible = true)}
-	on:mouseleave={() => (threeDotsVisible = false)}
+    bind:this={message_row}
 >
 	<div class="message-spacer" />
 	<Avatar src="https://i.pravatar.cc/?img=42" width="w-8 h-8" rounded="rounded-full" />
@@ -28,7 +57,7 @@
 		{#if !from_me}
 			<div class="from-field font-medium">{from}</div>
 		{/if}
-		<div class="message-container grid grid-cols-[auto_1fr]">
+		<div class="grid grid-cols-[auto_1fr]">
 			{#if !is_sent}
 				<div class="spinner-container self-center" out:slide={{ axis: "x", duration: 800 }}>
 					<ProgressRadial
@@ -40,25 +69,26 @@
 					/>
 				</div>
 			{/if}
-			<div class="message-content">
+			<div bind:this={message_container} class="message-container">
                 {message.content}
 			</div>
 		</div>
 	</div>
+{#if is_menu_open }
+    <div class="menu grid grid-rows-2">
+            <div on:click={editHandler}>Edit</div>
+            <div on:click={deleteHandler}>Delete</div>
+        </div>
+{:else}
 	<div
 		on:click={() => {
-			alert("Menu opened!")
+            is_menu_open = true
 		}}
-		on:focus={() => {
-			alert("Menu opened!")
-		}}
-		on:keypress={() => {
-			alert("Menu opened!")
-		}}
-		class="menu self-center text-xl"
+		class="kebab self-center text-xl"
 	>
 		&#xFE19;
 	</div>
+{/if}
 </div>
 
 <style>
@@ -73,11 +103,11 @@
 	/* #message-container :global(> :last-child) { */
 	/* } */
 
-	div.menu {
+	div.kebab {
 		visibility: hidden;
 	}
 
-	div:hover > div.menu {
+	div:hover > div.kebab {
 		visibility: visible;
 	}
 
@@ -95,7 +125,7 @@
 	}
 
 	.from-field,
-	.message-content {
+	.message-container {
 		margin-left: 0.5rem;
 		margin-right: 0.5rem;
 	}

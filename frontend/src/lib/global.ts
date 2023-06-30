@@ -2,6 +2,7 @@ import { PUBLIC_BACKEND_URL } from "$env/static/public"
 import { logged_in } from "$lib/stores"
 import { authClient, usersClient } from "$clients"
 import type { SseEvent } from "contract"
+import { toastStore } from "@skeletonlabs/skeleton"
 
 export function getCookie(cname: string) {
 	const name = cname + "="
@@ -131,3 +132,10 @@ export function addEventSourceListener<EventType extends SseEvent["type"]>(
 		callback(JSON.parse(ev.data), ev)
 	})
 }
+
+export function toastMessage(message: string) {
+    toastStore.trigger({
+        message
+    })
+}
+

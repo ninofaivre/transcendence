@@ -18,7 +18,7 @@
 
 	$: {
 		if ($logged_in == true) {
-			goto("/friends")
+			goto("/dms")
 		} else if ($logged_in == false) {
 			goto("/auth")
 		}
@@ -50,25 +50,25 @@
 			</svelte:fragment>
 			{#if $logged_in}
 				<a
-					class="variant-filled-success btn btn-sm mx-4 mb-1 text-2xl font-semibold"
+					class="btn btn-sm variant-filled-success mx-4 mb-1 text-2xl font-semibold"
 					href="/pong"
 				>
 					🏓
 				</a>
 				<a
-					class="variant-filled-success btn btn-sm mx-4 text-2xl font-semibold"
+					class="btn btn-sm variant-filled-success mx-4 text-2xl font-semibold"
 					href="/chat"
 				>
 					💬
 				</a>
 				<a
-					class="variant-filled-success btn btn-sm mx-4 mt-1 text-2xl font-semibold"
+					class="btn btn-sm variant-filled-success mx-4 mt-1 text-2xl font-semibold"
 					href="/dms"
 				>
 					✉️
 				</a>
 				<a
-					class="variant-filled-success btn btn-sm mx-4 mt-1 text-2xl font-semibold"
+					class="btn btn-sm variant-filled-success mx-4 mt-1 text-2xl font-semibold"
 					href="/friends"
 				>
 					🤝

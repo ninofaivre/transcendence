@@ -33,9 +33,10 @@
 	{#if d.id != currentDiscussionId}
 		<a
 			href={`/dms/${d.id}`}
-			class="hover:variant-soft-secondary p-4 font-medium rounded-container-token hover:font-semibold"
+			class="p-4 font-medium rounded-container-token hover:variant-soft-secondary hover:font-semibold"
 		>
 			{d.otherName}
+			<span class="online-dot text-2xl text-green-700">&#8226</span>
 		</a>
 	{:else}
 		<a
@@ -43,6 +44,7 @@
 			class="variant-ghost-secondary p-4 font-semibold rounded-container-token"
 		>
 			{d.otherName}
+			<span class="online-dot text-2xl text-green-700">&#8226</span>
 		</a>
 	{/if}
 {/each}
@@ -53,5 +55,8 @@
 	}
 	a::first-letter {
 		text-transform: capitalize;
+	}
+	.online-dot {
+		padding: 5px;
 	}
 </style>

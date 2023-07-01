@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Avatar, ProgressRadial, Toast, toastStore } from "@skeletonlabs/skeleton"
+	import { Avatar, ProgressRadial } from "@skeletonlabs/skeleton"
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
 	import type { DirectMessage } from "$types"
 	import { my_name } from "$stores"

@@ -2506,7 +2506,6 @@ packages:
     resolution: {directory: ../contract, type: directory}
     id: file:../contract
     name: contract
-    version: 1.0.0
     dependencies:
       '@anatine/zod-openapi': 1.14.2(openapi3-ts@3.2.0)(zod@3.21.4)
       '@nestjs/common': 9.4.3(reflect-metadata@0.1.13)(rxjs@7.8.1)
@@ -2526,7 +2525,6 @@ packages:
   file:../prisma/enums:
     resolution: {directory: ../prisma/enums, type: directory}
     name: '@prisma-generated/enums'
-    version: 1.0.0
     dependencies:
       typescript: 5.1.6
     dev: false

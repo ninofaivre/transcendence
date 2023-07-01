@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Avatar, ProgressRadial } from "@skeletonlabs/skeleton"
+	import { Avatar, ProgressRadial, Toast, toastStore } from "@skeletonlabs/skeleton"
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
 	import type { DirectMessage } from "$types"
 	import { my_name } from "$stores"
@@ -13,15 +13,20 @@
 	let from = message.author
 	let from_me = message.author === $my_name
 	let is_menu_open = false
+	let message_container: HTMLElement
+	let message_row: HTMLDivElement
+	let contenteditable = false
 	let openMenu = () => {
 		is_menu_open = true
 	}
 	let closeMenu = () => {
 		is_menu_open = false
 	}
-	let message_container: HTMLElement
-	let message_row: HTMLDivElement
-	let contenteditable = false
+	let editHandler = () => {
+		closeMenu()
+		contenteditable = true
+	}
+	let replyHandler = () => {}
 
 	$: is_sent = message?.id !== ""
 
@@ -106,30 +111,46 @@
 		</div>
 	</div>
 	{#if is_menu_open}
-		<!-- on:blur does not work on any of those -->
-		<ul class="list" use:listenOutsideClick on:outsideclick={closeMenu}>
-			<li
-				class="list"
-				on:click={() => {
-					closeMenu()
-					contenteditable = true
-				}}
-			>
-				<span>Edit</span>
-			</li>
-			<li on:click={deleteHandler}>
-				<span>Delete</span>
-			</li>
-		</ul>
+		<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
+			<ul class="card mx-1 px-1 text-token">
+				{#if from_me}
+					<li
+						class="card my-1 px-2 hover:variant-filled-secondary"
+						on:click={editHandler}
+					>
+						Edit
+					</li>
+					<li
+						class="card my-1 px-2 hover:variant-filled-secondary"
+						on:click={deleteHandler}
+					>
+						Delete
+					</li>
+				{:else}
+					<li
+						class="card my-1 px-2 hover:variant-filled-secondary"
+						on:click={replyHandler}
+					>
+						Reply
+					</li>
+				{/if}
+			</ul>
+		</div>
 	{:else}
 		<div on:click={openMenu} class="kebab self-center text-xl">&#xFE19;</div>
 	{/if}
 </div>
 
 <style>
-	/* Does not work when element is removed*/
-	/* .message-container { */
+	/* Does not work  when element is removed*/
+	/* #message-container { */
 	/* 	transition: 1s ease-in-out; */
+	/* } */
+
+	/**
+     * Applies to slotted element. Don't do nothing if it's just text inside. (No child)
+     */
+	/* #message-container :global(> :last-child) { */
 	/* } */
 
 	div.kebab {

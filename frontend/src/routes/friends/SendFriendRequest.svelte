@@ -27,26 +27,17 @@
 	}
 </script>
 
-<div class="m-14">
-	<form
-		method="POST"
-		on:submit|preventDefault={sendFriendRequest}
-		bind:this={friend_request_form}
-	>
-		<label for="invitee" class="label mx-3"> Send friendship request </label>
-		<input
-			bind:value={invitee}
-			name="invitee"
-			id="invitee"
-			type="text"
-			required
-			class="input m-3"
-		/>
-		<button id="login" type="submit" class="btn variant-filled-success m-3">
-			Send friend request
-		</button>
-	</form>
-</div>
+<form
+	method="POST"
+	on:submit|preventDefault={sendFriendRequest}
+	bind:this={friend_request_form}
+	class="form-input grid grid-rows-2 gap-2 rounded-xl"
+>
+	<input bind:value={invitee} name="invitee" type="text" required class="input" />
+	<button type="submit" class="btn btn-sm variant-filled-success justify-self-center">
+		Send friend request
+	</button>
+</form>
 
 <style>
 </style>

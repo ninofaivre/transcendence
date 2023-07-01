@@ -3,10 +3,11 @@
 	import type { LayoutData } from "./$types"
 
 	/* Components */
-	import CreateDiscussion from "./CreateDiscussion.svelte"
 	import DiscussionList from "./DiscussionList.svelte"
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
+	import SendFriendRequest from "../friends/SendFriendRequest.svelte"
+	import { listenOutsideClick } from "$lib/global"
 
 	// Get our discussions
 	export let data: LayoutData
@@ -32,6 +33,8 @@
 			return () => resizeObserver.unobserve(header as HTMLElement)
 		}
 	})
+
+	let sending_friend_request = false
 </script>
 
 {#if $page.data.dmList.length}
@@ -47,8 +50,21 @@
 			id="col1"
 			style="height: calc(100vh - {header_height}px);"
 		>
-			<section class="p-4">
-				<CreateDiscussion friendList={data.friendList} />
+			<section
+				class=""
+				use:listenOutsideClick
+				on:outsideclick={() => (sending_friend_request = false)}
+			>
+				{#if sending_friend_request}
+					<SendFriendRequest />
+				{:else}
+					<button
+						class="btn btn-sm variant-filled-tertiary rounded-md"
+						on:click={() => (sending_friend_request = true)}
+					>
+						Send friend request
+					</button>
+				{/if}
 			</section>
 			<section id="discussions" class="overflow-y-auto">
 				<DiscussionList

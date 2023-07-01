@@ -46,12 +46,12 @@
 	>
 		<!-- Rows for Column 1-->
 		<div
-			class="grid grid-rows-[auto_1fr]"
+			class="grid grid-rows-[auto_1fr] gap-3"
 			id="col1"
 			style="height: calc(100vh - {header_height}px);"
 		>
 			<section
-				class=""
+				class="mt-2"
 				use:listenOutsideClick
 				on:outsideclick={() => (sending_friend_request = false)}
 			>
@@ -59,7 +59,7 @@
 					<SendFriendRequest />
 				{:else}
 					<button
-						class="btn btn-sm variant-filled-tertiary rounded-md"
+						class="btn btn-sm variant-filled-tertiary mt-1 rounded-md"
 						on:click={() => (sending_friend_request = true)}
 					>
 						Send friend request

@@ -102,9 +102,15 @@
 				</div>
 			{/if}
 			{#if !contenteditable}
-				<div bind:this={message_container} class="message-container">
-					{message.content}
-				</div>
+				{#if !message.isDeleted}
+					<div bind:this={message_container} class="message-container">
+						{message.content}
+					</div>
+				{:else}
+					<div bind:this={message_container} class="message-container">
+						<i>This message has been deleted</i>
+					</div>
+				{/if}
 			{:else}
 				<ChatBox on:message_sent={updateMessage} />
 			{/if}

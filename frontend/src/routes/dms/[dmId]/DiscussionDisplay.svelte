@@ -41,6 +41,7 @@
 					author: $my_name,
 					hasBeenEdited: false,
 					relatedTo: null,
+					isDeleted: false,
 				},
 			]
 			msg_promise.then(({ status, body }) => {

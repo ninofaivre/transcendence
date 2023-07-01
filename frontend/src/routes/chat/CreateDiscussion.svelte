@@ -72,9 +72,6 @@
 	</button>
 {:else}
 	<!-- TODO: Try width: min-content; on the form's parent or display: inline-block; on the form element to see if it fixes unwantd widening  -->
-    <pre>
-        {JSON.stringify(friendList)}
-    </pre>
 	<form
 		bind:this={form}
 		on:submit|preventDefault|stopPropagation={handleDiscussionCreation}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Avatar, ProgressRadial, Toast, toastStore } from "@skeletonlabs/skeleton"
+	import { Avatar, ProgressRadial } from "@skeletonlabs/skeleton"
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
 	import type { DirectMessage } from "$types"
 	import { my_name } from "$stores"
@@ -13,6 +13,12 @@
 	let from = message.author
 	let from_me = message.author === $my_name
 	let is_menu_open = false
+	let openMenu = () => {
+		is_menu_open = true
+	}
+	let closeMenu = () => {
+		is_menu_open = false
+	}
 	let message_container: HTMLElement
 	let message_row: HTMLDivElement
 	let contenteditable = false
@@ -101,45 +107,29 @@
 	</div>
 	{#if is_menu_open}
 		<!-- on:blur does not work on any of those -->
-		<div
-			class="menu grid grid-rows-2"
-			use:listenOutsideClick
-			on:outsideclick={() => {
-				is_menu_open = false
-			}}
-		>
-			<div
+		<ul class="list" use:listenOutsideClick on:outsideclick={closeMenu}>
+			<li
+				class="list"
 				on:click={() => {
-					is_menu_open = false
+					closeMenu()
 					contenteditable = true
 				}}
 			>
-				Edit
-			</div>
-			<div on:click={deleteHandler}>Delete</div>
-		</div>
+				<span>Edit</span>
+			</li>
+			<li on:click={deleteHandler}>
+				<span>Delete</span>
+			</li>
+		</ul>
 	{:else}
-		<div
-			on:click={() => {
-				is_menu_open = true
-			}}
-			class="kebab self-center text-xl"
-		>
-			&#xFE19;
-		</div>
+		<div on:click={openMenu} class="kebab self-center text-xl">&#xFE19;</div>
 	{/if}
 </div>
 
 <style>
-	/* Does not work  when element is removed*/
-	/* #message-container { */
+	/* Does not work when element is removed*/
+	/* .message-container { */
 	/* 	transition: 1s ease-in-out; */
-	/* } */
-
-	/**
-	 * Applies to slotted element. Don't do nothing if it's just text inside. (No child)
-	 */
-	/* #message-container :global(> :last-child) { */
 	/* } */
 
 	div.kebab {

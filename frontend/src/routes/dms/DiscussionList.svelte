@@ -42,7 +42,16 @@
 			})
 
 			addEventSourceListener(sse, "UPDATED_DM", (data) => {
-				console.log("a dm was update ???")
+				console.log("a dm was updated ???")
+				invalidate(":discussions")
+				const dot_to_update = document.querySelector(
+					`.online-dot[data-relatedto=${data.otherName}]`,
+				) as HTMLElement
+				console.log(dot_to_update)
+				if (dot_to_update) {
+					if (data.otherStatus !== "ONLINE") dot_to_update.style.display = "none"
+					else dot_to_update.style.display = "unset"
+				}
 			})
 		} else throw new Error("sse_store is empty ! Grrrr", sse)
 		return () => {}
@@ -50,27 +59,19 @@
 </script>
 
 {#each discussions as d}
-	{#if d.id != currentDiscussionId}
-		<a
-			href={`/dms/${d.id}`}
-			class="p-4 font-medium rounded-container-token hover:variant-soft-secondary hover:font-semibold"
-		>
-			{d.otherName}
-			{#if d.otherStatus === "ONLINE"}
-				<span class="online-dot text-2xl text-green-700">&#8226</span>
-			{/if}
-		</a>
-	{:else}
-		<a
-			href={`/dms/${d.id}`}
-			class="variant-ghost-secondary p-4 font-semibold rounded-container-token"
-		>
-			{d.otherName}
-			{#if d.otherStatus === "ONLINE"}
-				<span class="online-dot text-2xl text-green-700">&#8226</span>
-			{/if}
-		</a>
-	{/if}
+	<a
+		href={`/dms/${d.id}`}
+		class={d.id != currentDiscussionId
+			? "p-4 font-medium rounded-container-token hover:variant-soft-secondary hover:font-semibold"
+			: "variant-ghost-secondary p-4 font-semibold rounded-container-token"}
+	>
+		{d.otherName}
+		{#if d.otherStatus === "ONLINE"}
+			<span data-relatedto={d.otherName} class="online-dot text-2xl text-green-700"
+				>&#8226</span
+			>
+		{/if}
+	</a>
 {/each}
 
 <style>

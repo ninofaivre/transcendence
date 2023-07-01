@@ -126,10 +126,11 @@ export function addEventSourceListener<EventType extends SseEvent["type"]>(
 	eventType: EventType,
 	callback: (data: GetDataFromEventType<EventType>, event: MessageEvent) => void,
 ) {
-	es.addEventListener(eventType, (ev: MessageEvent) => {
+	const call_callback_on_event_data = (ev: MessageEvent) => {
 		console.log("Adding event listener...")
 		callback(JSON.parse(ev.data), ev)
-	})
+	}
+	es.addEventListener(eventType, call_callback_on_event_data)
 }
 import type { ActionReturn } from "svelte/action"
 // use: function

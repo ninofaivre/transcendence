@@ -2,7 +2,6 @@ import { PUBLIC_BACKEND_URL } from "$env/static/public"
 import { logged_in } from "$lib/stores"
 import { authClient, usersClient } from "$clients"
 import type { SseEvent } from "contract"
-import { toastStore } from "@skeletonlabs/skeleton"
 
 export function getCookie(cname: string) {
 	const name = cname + "="

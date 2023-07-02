@@ -131,7 +131,9 @@ export function addEventSourceListener<EventType extends SseEvent["type"]>(
 		callback(JSON.parse(ev.data), ev)
 	}
 	es.addEventListener(eventType, call_callback_on_event_data)
+	return () => es.removeEventListener(eventType, call_callback_on_event_data)
 }
+
 import type { ActionReturn } from "svelte/action"
 // use: function
 export function listenOutsideClick(

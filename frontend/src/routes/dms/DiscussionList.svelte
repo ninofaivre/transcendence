@@ -36,25 +36,28 @@
 	onMount(() => {
 		const sse = get(sse_store)
 		if (sse) {
-			addEventSourceListener(sse, "CREATED_DM", (data) => {
-				console.log("A new dm was created!")
-				invalidate(":discussions")
-			})
-
-			addEventSourceListener(sse, "UPDATED_DM", (data) => {
-				console.log("a dm was updated ???")
-				invalidate(":discussions")
-				const dot_to_update = document.querySelector(
-					`.online-dot[data-relatedto=${data.otherName}]`,
-				) as HTMLElement
-				console.log(dot_to_update)
-				if (dot_to_update) {
-					if (data.otherStatus !== "ONLINE") dot_to_update.style.display = "none"
-					else dot_to_update.style.display = "inline"
-				}
-			})
+			const destroyer = new Array(
+				addEventSourceListener(sse, "CREATED_DM", (data) => {
+					console.log("A new dm was created!")
+					invalidate(":discussions")
+				}),
+				addEventSourceListener(sse, "UPDATED_DM", (data) => {
+					console.log("a dm was updated ???")
+					invalidate(":discussions")
+					const dot_to_update = document.querySelector(
+						`.online-dot[data-relatedto=${data.otherName}]`,
+					) as HTMLElement
+					console.log(dot_to_update)
+					if (dot_to_update) {
+						if (data.otherStatus !== "ONLINE") dot_to_update.style.display = "none"
+						else dot_to_update.style.display = "inline"
+					}
+				}),
+			)
+			return () => {
+				destroyer.forEach((func: () => any) => func())
+			}
 		} else throw new Error("sse_store is empty ! Grrrr", sse)
-		return () => {}
 	})
 </script>
 

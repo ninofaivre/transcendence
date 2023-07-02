@@ -4,7 +4,7 @@
 	import { page } from "$app/stores"
 	import { onMount } from "svelte"
 	import { addEventSourceListener } from "$lib/global"
-	import { invalidate } from "$app/navigation"
+	import { invalidate, invalidateAll } from "$app/navigation"
 
 	export let currentDiscussionId: string
 	export let discussions: DirectConversation[]
@@ -27,21 +27,19 @@
 					invalidate(":discussions")
 				}),
 				addEventSourceListener($sse_store, "UPDATED_DM", (data) => {
-					console.log("a dm was updated ???")
-					invalidate(":discussions")
+					console.log("Got a event about a dm")
+					// invalidate(":discussions")
+					// invalidateAll()
 					const dot_to_update = document.querySelector(
 						`span.online-dot[data-relatedto=${data.otherName}]`,
 					) as HTMLElement
-					console.log(dot_to_update)
-					console.log(data.otherStatus)
 					if (dot_to_update) {
 						console.log(`${data.otherName} is now ${data.otherStatus} !`)
 						if (data.otherStatus !== "ONLINE") {
+							// Only works if the element has a style tag onto itself
 							dot_to_update.style.visibility = "hidden"
-							console.log("Now is ", dot_to_update.style.visibility)
 						} else {
 							dot_to_update.style.visibility = "visible"
-							console.log("Now is ", dot_to_update.style.visibility)
 						}
 					} else console.log("IT WAS NULL !")
 				}),

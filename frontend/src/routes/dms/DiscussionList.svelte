@@ -50,7 +50,7 @@
 				console.log(dot_to_update)
 				if (dot_to_update) {
 					if (data.otherStatus !== "ONLINE") dot_to_update.style.display = "none"
-					else dot_to_update.style.display = "unset"
+					else dot_to_update.style.display = "inline"
 				}
 			})
 		} else throw new Error("sse_store is empty ! Grrrr", sse)

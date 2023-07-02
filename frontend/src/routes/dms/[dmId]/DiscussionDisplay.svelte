@@ -95,38 +95,36 @@
 		})
 		observer.observe(canary)
 
+		_init = false
+
 		const sse = get(sse_store)
 		if (sse) {
-			addEventSourceListener(sse, "CREATED_DM_ELEMENT", (data) => {
-				console.log("Server message: New message", data)
-				if (data?.dmId === currentDiscussionId) {
-					messages = [...messages, data.element]
-				}
-			})
-
-			addEventSourceListener(sse, "UPDATED_DM_ELEMENT", (data) => {
-				console.log("Server message: Message was modified", data)
-				if (data.dmId === currentDiscussionId) {
-					const message = data.element
-					const to_update = document.getElementById(message.id)
-					if (to_update && message.type === "message") {
-						new ChatBubble({
-							target: to_update.parentElement!,
-							anchor: to_update,
-							props: { message },
-						})
-						to_update.remove()
+			const destroyer = new Array(
+				addEventSourceListener(sse, "CREATED_DM_ELEMENT", (data) => {
+					console.log("Server message: New message", data)
+					if (data?.dmId === currentDiscussionId) {
+						messages = [...messages, data.element]
 					}
-					// if (to_update && message.type === "message") {
-					//     const fragment = new DocumentFragment()
-					//     new ChatBubble({target: fragment as unknown as Element, props: {message, ...to_update}})
-					//     to_update.replaceWith(fragment)
-					// }
-				}
-			})
-		} else throw new Error("sse_store is empty ! Grrrr", sse)
+				}),
 
-		_init = false
+				addEventSourceListener(sse, "UPDATED_DM_ELEMENT", (data) => {
+					console.log("Server message: Message was modified", data)
+					if (data.dmId === currentDiscussionId) {
+						const message = data.element
+						const to_update = document.getElementById(message.id)
+						if (to_update && message.type === "message") {
+							new ChatBubble({
+								target: to_update.parentElement!,
+								anchor: to_update,
+								props: { message },
+							})
+							to_update.remove()
+						}
+					}
+				}),
+			)
+			return () => destroyer.forEach((func: () => any) => func())
+		} else throw new Error("sse_store is empty ! Grrrr", sse)
 	})
 </script>
 

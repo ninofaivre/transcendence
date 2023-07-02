@@ -12,7 +12,6 @@
 	import { dmsClient } from "$clients"
 	import { page } from "$app/stores"
 	import { addEventSourceListener } from "$lib/global"
-	import { get } from "svelte/store"
 
 	export let messages: DirectMessageOrEvent[] = []
 	// export let new_message: [string, Promise<Response>]
@@ -97,17 +96,16 @@
 
 		_init = false
 
-		const sse = get(sse_store)
-		if (sse) {
+		if ($sse_store) {
 			const destroyer = new Array(
-				addEventSourceListener(sse, "CREATED_DM_ELEMENT", (data) => {
+				addEventSourceListener($sse_store, "CREATED_DM_ELEMENT", (data) => {
 					console.log("Server message: New message", data)
 					if (data?.dmId === currentDiscussionId) {
 						messages = [...messages, data.element]
 					}
 				}),
 
-				addEventSourceListener(sse, "UPDATED_DM_ELEMENT", (data) => {
+				addEventSourceListener($sse_store, "UPDATED_DM_ELEMENT", (data) => {
 					console.log("Server message: Message was modified", data)
 					if (data.dmId === currentDiscussionId) {
 						const message = data.element
@@ -124,7 +122,7 @@
 				}),
 			)
 			return () => destroyer.forEach((func: () => any) => func())
-		} else throw new Error("sse_store is empty ! Grrrr", sse)
+		} else throw new Error("sse_store is empty ! Grrrr", $sse_store)
 	})
 </script>
 

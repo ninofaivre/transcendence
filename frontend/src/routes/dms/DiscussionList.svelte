@@ -3,7 +3,6 @@
 	import { sse_store } from "$lib/stores"
 	import { page } from "$app/stores"
 	import { onMount } from "svelte"
-	import { get } from "svelte/store"
 	import { addEventSourceListener } from "$lib/global"
 	import { invalidate } from "$app/navigation"
 
@@ -21,30 +20,36 @@
 	}
 
 	onMount(() => {
-		const sse = get(sse_store)
-		if (sse) {
+		if ($sse_store) {
 			const destroyer = new Array(
-				addEventSourceListener(sse, "CREATED_DM", (data) => {
+				addEventSourceListener($sse_store, "CREATED_DM", (data) => {
 					console.log("A new dm was created!")
 					invalidate(":discussions")
 				}),
-				addEventSourceListener(sse, "UPDATED_DM", (data) => {
+				addEventSourceListener($sse_store, "UPDATED_DM", (data) => {
 					console.log("a dm was updated ???")
 					invalidate(":discussions")
 					const dot_to_update = document.querySelector(
-						`.online-dot[data-relatedto=${data.otherName}]`,
+						`span.online-dot[data-relatedto=${data.otherName}]`,
 					) as HTMLElement
 					console.log(dot_to_update)
+					console.log(data.otherStatus)
 					if (dot_to_update) {
-						if (data.otherStatus !== "ONLINE") dot_to_update.style.display = "none"
-						else dot_to_update.style.display = "inline"
-					}
+						console.log(`${data.otherName} is now ${data.otherStatus} !`)
+						if (data.otherStatus !== "ONLINE") {
+							dot_to_update.style.visibility = "hidden"
+							console.log("Now is ", dot_to_update.style.visibility)
+						} else {
+							dot_to_update.style.visibility = "visible"
+							console.log("Now is ", dot_to_update.style.visibility)
+						}
+					} else console.log("IT WAS NULL !")
 				}),
 			)
 			return () => {
 				destroyer.forEach((func: () => any) => func())
 			}
-		} else throw new Error("sse_store is empty ! Grrrr", sse)
+		} else throw new Error("sse_store is empty ! Grrrr", $sse_store)
 	})
 </script>
 
@@ -56,11 +61,11 @@
 			: "variant-ghost-secondary p-4 font-semibold rounded-container-token"}
 	>
 		{d.otherName}
-		{#if d.otherStatus === "ONLINE"}
-			<span data-relatedto={d.otherName} class="online-dot text-2xl text-green-700"
-				>&#8226</span
-			>
-		{/if}
+		<span
+			data-relatedto={d.otherName}
+			class="online-dot text-2xl text-green-700"
+			style:visibility={d.otherStatus === "ONLINE" ? "visible" : "hidden"}>&#8226</span
+		>
 	</a>
 {/each}
 

@@ -20,19 +20,6 @@
 		}
 	}
 
-	// This should be ok as this route is only accessible to logged in users
-	$: {
-		$sse_store?.addEventListener("CREATED_DM", ({ data }: MessageEvent) => {
-			const parsedData: DirectConversation = JSON.parse(data)
-			console.log("Server message: New DM conversation", parsedData)
-		})
-
-		$sse_store?.addEventListener("UPDATED_DM", ({ data }: MessageEvent) => {
-			const parsedData: DirectConversation = JSON.parse(data)
-			console.log("Server message: Update the DM conversation", parsedData)
-		})
-	}
-
 	onMount(() => {
 		const sse = get(sse_store)
 		if (sse) {

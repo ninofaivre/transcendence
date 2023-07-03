@@ -2,7 +2,7 @@
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
 	import { createEventDispatcher } from "svelte"
 	const dispatch = createEventDispatcher()
-	export let input = void 0
+	export let input: string
 	export let options: AutocompleteOption[] = []
 	export let limit = void 0
 	export let allowlist: unknown[] = []
@@ -13,52 +13,49 @@
 	export let regionItem = ""
 	export let regionButton = "w-full"
 	export let regionEmpty = "text-center"
-	export let whitelist: string[] = []
-	export let blacklist: string[] = []
-	export let duration = 200
-	let listedOptions: AutocompleteOption[]
-	$: listedOptions = options
-	const deprecated = [whitelist, blacklist, duration]
-	function filterByAllowed() {
-		if (allowlist.length) {
-			listedOptions = [...options].filter((option: AutocompleteOption) => {
+	// export let duration = 200
+
+	function filterByAllowed(options: AutocompleteOption[]) {
+		if (allowlist?.length) {
+			return options.filter((option: AutocompleteOption) => {
 				return allowlist.includes(option.value)
 			})
 		} else {
-			listedOptions = [...options]
+			return [...options] // Expected that a function name filter returns a copy
 		}
 	}
-	function filterByDenied() {
-		if (denylist.length) {
+
+	function filterByDenied(options: AutocompleteOption[]) {
+        console.log(denylist)
+		if (denylist?.length) {
 			const denySet = new Set(denylist)
-			listedOptions = [...options].filter(
+			return options.filter(
 				(option: AutocompleteOption) => !denySet.has(option.value),
 			)
 		} else {
-			listedOptions = [...options]
+			return [...options] // Expected that a function name filter returns a copy
 		}
 	}
-	function filterOptions() {
-		let _options = [...listedOptions]
-		_options = _options.filter((option) => {
-			const inputFormatted = String(input).toLowerCase().trim()
-			let optionFormatted = JSON.stringify([
-				option.label,
-				option.value,
-				option.keywords,
-			]).toLowerCase()
-			if (optionFormatted.includes(inputFormatted)) return option
-		})
-		return _options
+
+	function filterOptions(options: AutocompleteOption[]) {
+        if (denylist?.length && allowlist?.length)
+            throw new Error("Autocomplete component can't both an allowlist and denylist")
+        else if (denylist?.length)
+            return filterByDenied(options)
+        else
+            return filterByAllowed(options)
 	}
+
 	function onSelection(option: AutocompleteOption) {
 		dispatch("selection", option)
 	}
+
 	let optionsFiltered: AutocompleteOption[]
-	$: if (allowlist) filterByAllowed()
-	$: if (denylist) filterByDenied()
-	$: optionsFiltered = input ? filterOptions() : listedOptions
-	$: sliceLimit = limit !== void 0 ? limit : optionsFiltered.length
+	$: optionsFiltered = filterOptions(options)
+
+	$: sliceLimit = limit ? limit : optionsFiltered.length
+
+    // Styling
 	$: classesBase = `${$$props.class ?? ""}`
 	$: classesNav = `${regionNav}`
 	$: classesList = `${regionList}`

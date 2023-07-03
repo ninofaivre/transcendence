@@ -129,9 +129,49 @@ export class UserService {
         return (this.sse.isUserOnline(username)) ? "ONLINE" : "OFFLINE"
     }
 
-    async searchUsers(username: string, contains: string, nRes: number) {
+    test(username: string) {
+        return {
+            friends: [
+                { friend: { some: { requestedUserName: username } } },
+                { friendOf: { some: { requestingUserName: username } } }
+            ],
+            mySelf: [{ name: username }],
+            hasDm: [
+                { directMessage: { some: { requestedUserName: username } } },
+                { directMessageOf: { some: { requestingUserName: username } } }
+            ],
+            blocked: [
+                { blockedUser: { some: { blockedUserName: username } } },
+                { blockedByUser: { some: { blockingUserName: username } } }
+            ]
+        } satisfies 
+            Record<
+                keyof Omit<Extract<RequestShapes['searchUsers']['query']['obj']['filter'], { type: "inc" }>, "type">,
+                Prisma.Enumerable<Prisma.UserWhereInput>
+            > & Record<
+                keyof Omit<Extract<RequestShapes['searchUsers']['query']['obj']['filter'], { type: "only" }>, "type">,
+                Prisma.Enumerable<Prisma.UserWhereInput>
+            >
+    }
+
+    getTest(arg: Omit<RequestShapes['searchUsers']['query']['obj']['filter'], "type">, type: "inc" | "only",username: string) {
+        let res: Prisma.Enumerable<Prisma.UserWhereInput> = []
+        let k: keyof typeof arg
+        for (k in arg) {
+            if (arg[k] === (type !== "inc"))
+                res.push(...(this.test(username)[k]))
+        }
+        return ((type === "inc") ? { NOT: res } : { OR: res }) satisfies Prisma.UserWhereInput
+    }
+
+    async searchUsers(username: string, contains: string, nRes: number, filter: RequestShapes['searchUsers']['query']['obj']['filter']) {
+        const where = {
+            name: { contains },
+            ...this.getTest(filter, filter.type, username)
+        } satisfies Prisma.UserWhereInput
+        console.log(where)
         const res = await this.prisma.user.findMany({
-            where: { name: { contains } },
+            where,
             take: nRes,
             orderBy: { name: "asc" },
             select: this.getUserProfilePreviewSelectForUser(username)

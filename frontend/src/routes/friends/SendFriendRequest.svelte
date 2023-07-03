@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Autocomplete } from "@skeletonlabs/skeleton"
+	// import { Autocomplete } from "@skeletonlabs/skeleton"
+	import { Autocomplete } from "./Autocomplete.svelte"
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
 
 	import { invitationsClient, usersClient } from "$clients"
@@ -51,14 +52,12 @@
 <input class="input" type="search" bind:value={search_input} placeholder="Search user..." />
 
 <div class="card max-h-48 w-full max-w-sm overflow-y-auto p-4" tabindex="-1">
-	{#key $page.data.friendList}
-		<Autocomplete
-			bind:input={search_input}
-			bind:options={users}
-			denylist={$page.data.friendList}
-			on:selection={onUserSelection}
-		/>
-	{/key}
+	<Autocomplete
+		bind:input={search_input}
+		bind:options={users}
+		denylist={$page.data.friendList}
+		on:selection={onUserSelection}
+	/>
 </div>
 
 <style>

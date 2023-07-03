@@ -46,6 +46,7 @@
 				name="username"
 				class="input"
 				autocomplete="on"
+				minlength="3"
 			/>
 			<label class="label text-black" for="password"> Password </label>
 			<input
@@ -55,6 +56,7 @@
 				class="input"
 				autocomplete="current-password"
 				required
+				minlength="3"
 			/>
 			<button id="login" type="submit" class="btn variant-filled-success"> Log in </button>
 			<button id="signup" type="submit" class="btn variant-filled-primary"> Sign up </button>

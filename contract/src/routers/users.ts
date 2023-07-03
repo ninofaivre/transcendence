@@ -35,7 +35,7 @@ export const usersContract = c.router(
             summary: "search for users",
             description: "not finished yet (beta)",
             query: z.strictObject({
-                userNameContains: zUserName,
+                userNameContains: z.string().nonempty(),
                 nResult: z.number().positive().int().max(30).default(10)
             }),
             responses: {

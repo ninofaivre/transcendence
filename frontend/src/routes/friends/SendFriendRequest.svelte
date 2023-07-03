@@ -28,8 +28,7 @@
         sendFriendRequest(event.detail.label)
     }
 
-    function getUsernames(input: string) {
-        if (input.length > 2) {
+    async function getUsernames(input: string) {
             return usersClient
             .searchUsers({
                     query: {
@@ -42,7 +41,6 @@
                         users = body.map((obj) => ({ label: obj.userName, value: obj.userName }))
                     } else reportUnexpectedCode(status, "create friend request", body)
             })
-        }
     }
 
     console.log($page.data.friendList)

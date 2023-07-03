@@ -1,13 +1,16 @@
 <script lang="ts">
-	import { invitationsClient } from "$clients"
+	import { Autocomplete } from "@skeletonlabs/skeleton"
+	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
+
+	import { invitationsClient, usersClient } from "$clients"
 	import { toastStore } from "@skeletonlabs/skeleton"
 	import { invalidate } from "$app/navigation"
+	import { reportUnexpectedCode } from "$lib/global"
 
-	let invitee: string
+	let search_input: string
+	let users: AutocompleteOption[] = []
 
-	let friend_request_form: HTMLFormElement
-	async function sendFriendRequest() {
-		const username = new FormData(friend_request_form).get("invitee")! as string
+	async function sendFriendRequest(username: string) {
 		const { status, body } = await invitationsClient.friend.createFriendInvitation({
 			body: { invitedUserName: username },
 		})
@@ -25,19 +28,36 @@
 			message,
 		})
 	}
+
+	async function onUserSelection(event: any) {
+		sendFriendRequest(event.detail.label)
+	}
+
+	function getUsernames(input: string) {
+		return usersClient
+			.searchUsers({
+				query: {
+					userNameContains: input,
+				},
+			})
+			.then(({ status, body }) => {
+				console.log(body)
+				if (status === 200) {
+					users = body.map((obj) => {
+						return { label: obj.userName, value: obj.userName }
+					})
+				} else reportUnexpectedCode(status, "create friend request", body)
+			})
+	}
+
+	$: getUsernames(search_input)
 </script>
 
-<form
-	method="POST"
-	on:submit|preventDefault={sendFriendRequest}
-	bind:this={friend_request_form}
-	class="form-input grid grid-rows-2 gap-2 rounded-xl"
->
-	<input bind:value={invitee} name="invitee" type="text" required class="input" />
-	<button type="submit" class="btn btn-sm variant-filled-success justify-self-center">
-		Send friend request
-	</button>
-</form>
+<input class="input" type="search" bind:value={search_input} placeholder="Search user..." />
+
+<div class="card max-h-48 w-full max-w-sm overflow-y-auto p-4" tabindex="-1">
+	<Autocomplete bind:input={search_input} bind:options={users} on:selection={onUserSelection} />
+</div>
 
 <style>
 </style>

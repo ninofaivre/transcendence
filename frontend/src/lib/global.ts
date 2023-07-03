@@ -134,20 +134,8 @@ export function addEventSourceListener<EventType extends SseEvent["type"]>(
 	return () => es.removeEventListener(eventType, call_callback_on_event_data)
 }
 
-// export function addListenerToEventSourceStore<EventType extends SseEvent["type"]>(
-// 	es: EventSource,
-// 	eventType: EventType,
-// 	callback: (data: GetDataFromEventType<EventType>, event: MessageEvent) => void,
-// ) {
-// 	const call_callback_on_event_data = (ev: MessageEvent) => {
-// 		console.log("Adding event listener...")
-// 		callback(JSON.parse(ev.data), ev)
-// 	}
-// 	es.addEventListener(eventType, call_callback_on_event_data)
-// 	return () => es.removeEventListener(eventType, call_callback_on_event_data)
-// }
-
 import type { ActionReturn } from "svelte/action"
+import { toastStore } from "@skeletonlabs/skeleton"
 // use: function
 export function listenOutsideClick(
 	node: HTMLElement,
@@ -170,4 +158,19 @@ export function listenOutsideClick(
 			node.removeEventListener("click", handleClick, true)
 		},
 	}
+}
+
+export function reportUnexpectedCode(code: Number, what: string, ret: any) {
+	const message = ret?.message
+		? `Could not ${what}. Server returned ${code}\n with message \"${ret?.message}\"`
+		: `Could not ${what}. Server returned ${code}\n with the following data: ${ret}`
+	console.error(message)
+	return message
+}
+
+export function makeToast(message: string) {
+	toastStore.trigger({
+		message,
+	})
+	return message
 }

@@ -160,11 +160,25 @@ export function listenOutsideClick(
 	}
 }
 
-export function reportUnexpectedCode(code: Number, what: string, ret: any) {
+export function reportUnexpectedCode(code: Number, what: string, ret: any, level?: string) {
 	const message = ret?.message
 		? `Could not ${what}. Server returned ${code}\n with message \"${ret?.message}\"`
-		: `Could not ${what}. Server returned ${code}\n with the following data: ${ret}`
-	console.error(message)
+		: `Could not ${what}. Server returned ${code}\n with the following data: ${JSON.stringify(
+				ret,
+		  )}`
+	switch (level) {
+		case "log":
+			console.log(message)
+			break
+		case "warning":
+			console.warn(message)
+			break
+		case "error":
+			console.error(message)
+			break
+		default:
+			console.log(message)
+	}
 	return message
 }
 

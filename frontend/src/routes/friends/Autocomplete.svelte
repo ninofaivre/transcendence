@@ -2,7 +2,6 @@
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
 	import { createEventDispatcher } from "svelte"
 	const dispatch = createEventDispatcher()
-	export let input: string
 	export let options: AutocompleteOption[] = []
 	export let limit = void 0
 	export let allowlist: unknown[] = []

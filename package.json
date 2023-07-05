@@ -1,4 +1,4 @@
-  {
+{
   "name": "transcendance",
   "version": "1.0.0",
   "description": "A webapp to play pong and chat with your friends",
@@ -17,5 +17,8 @@
     "patchedDependencies": {
       "http-proxy@1.18.1": "patches/http-proxy@1.18.1.patch"
     }
+  },
+  "dependencies": {
+    "@ts-rest/core": "^3.26.3"
   }
 }

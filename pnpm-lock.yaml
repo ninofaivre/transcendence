@@ -11,7 +11,11 @@ patchedDependencies:
 
 importers:
 
-  .: {}
+  .:
+    dependencies:
+      '@ts-rest/core':
+        specifier: ^3.26.3
+        version: 3.26.3(zod@3.21.4)
 
   backend:
     dependencies:
@@ -19,14 +23,14 @@ importers:
         specifier: ^9.4.3
         version: 9.4.3(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/config':
-        specifier: ^2.3.3
-        version: 2.3.3(@nestjs/common@9.4.3)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+        specifier: ^2.3.4
+        version: 2.3.4(@nestjs/common@9.4.3)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/core':
         specifier: ^9.4.3
         version: 9.4.3(@nestjs/common@9.4.3)(@nestjs/platform-express@9.4.3)(@nestjs/websockets@9.4.3)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/jwt':
-        specifier: ^10.0.3
-        version: 10.0.3(@nestjs/common@9.4.3)
+        specifier: ^10.1.0
+        version: 10.1.0(@nestjs/common@9.4.3)
       '@nestjs/passport':
         specifier: ^9.0.3
         version: 9.0.3(@nestjs/common@9.4.3)(passport@0.6.0)
@@ -46,17 +50,17 @@ importers:
         specifier: ^9.4.3
         version: 9.4.3(@nestjs/common@9.4.3)(@nestjs/core@9.4.3)(@nestjs/platform-socket.io@9.4.3)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@prisma/client':
-        specifier: ^4.15.0
-        version: 4.15.0
+        specifier: ^4.16.2
+        version: 4.16.2
       '@ts-rest/core':
-        specifier: ^3.26.0
+        specifier: ^3.26.3
         version: 3.26.3(zod@3.21.4)
       '@ts-rest/nest':
-        specifier: ^3.26.0
-        version: 3.26.0(@nestjs/common@9.4.3)(@nestjs/core@9.4.3)(@ts-rest/core@3.26.3)(rxjs@7.8.1)(zod@3.21.4)
+        specifier: ^3.26.3
+        version: 3.26.3(@nestjs/common@9.4.3)(@nestjs/core@9.4.3)(@ts-rest/core@3.26.3)(rxjs@7.8.1)(zod@3.21.4)
       '@ts-rest/open-api':
-        specifier: ^3.26.0
-        version: 3.26.0(@ts-rest/core@3.26.3)(zod@3.21.4)
+        specifier: ^3.26.3
+        version: 3.26.3(@ts-rest/core@3.26.3)(zod@3.21.4)
       bcrypt:
         specifier: ^5.1.0
         version: 5.1.0
@@ -70,8 +74,8 @@ importers:
         specifier: ^1.4.6
         version: 1.4.6
       dotenv:
-        specifier: ^16.1.4
-        version: 16.1.4
+        specifier: ^16.3.1
+        version: 16.3.1
       express:
         specifier: ^4.18.2
         version: 4.18.2
@@ -97,8 +101,8 @@ importers:
         specifier: ^0.5.21
         version: 0.5.21
       swagger-themes:
-        specifier: ^1.2.28
-        version: 1.2.28
+        specifier: ^1.2.29
+        version: 1.2.29
       zod:
         specifier: ^3.21.4
         version: 3.21.4
@@ -116,8 +120,8 @@ importers:
         specifier: ^4.17.17
         version: 4.17.17
       '@types/node':
-        specifier: ^20.3.1
-        version: 20.3.1
+        specifier: ^20.3.3
+        version: 20.3.3
       '@types/passport-jwt':
         specifier: ^3.0.8
         version: 3.0.8
@@ -133,12 +137,12 @@ importers:
       '@nestjs/common':
         specifier: ^9.4.2
         version: 9.4.3(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@prisma-generated/enums':
-        specifier: file:../prisma/enums
-        version: file:prisma/enums
       '@ts-rest/core':
         specifier: ^3.26.0
         version: 3.26.3(zod@3.21.4)
+      prisma-db-client:
+        specifier: workspace:*
+        version: link:../prisma-db-client
       typescript:
         specifier: ^5.1.3
         version: 5.1.6
@@ -149,16 +153,6 @@ importers:
       '@types/node':
         specifier: ^20.3.0
         version: 20.3.1
-
-  db:
-    dependencies:
-      '@prisma/client':
-        specifier: latest
-        version: 4.16.2(prisma@4.16.2)
-    devDependencies:
-      prisma:
-        specifier: ^4.16.2
-        version: 4.16.2
 
   frontend:
     dependencies:
@@ -171,9 +165,6 @@ importers:
       socket.io-client:
         specifier: ^4.7.1
         version: 4.7.1
-      zod:
-        specifier: ^3.21.4
-        version: 3.21.4
     devDependencies:
       '@floating-ui/dom':
         specifier: ^1.4.3
@@ -247,6 +238,16 @@ importers:
       vite:
         specifier: ^4.3.9
         version: 4.3.9
+
+  prisma-db-client:
+    dependencies:
+      '@prisma/client':
+        specifier: ^4.15.0
+        version: 4.15.0(prisma@4.16.2)
+    devDependencies:
+      prisma:
+        specifier: ^4.15.0
+        version: 4.16.2
 
 packages:
 
@@ -638,8 +639,8 @@ packages:
       uid: 2.0.2
     dev: false
 
-  /@nestjs/config@2.3.3(@nestjs/common@9.4.3)(reflect-metadata@0.1.13)(rxjs@7.8.1):
-    resolution: {integrity: sha512-WcBA+0sv8euzKoYpxsCAdMzADxZEeUq8ulD+T+7QBNF0Yha6KC9edkXzk5xTJcanrKL9qnP0kboAXONscHb/Kw==}
+  /@nestjs/config@2.3.4(@nestjs/common@9.4.3)(reflect-metadata@0.1.13)(rxjs@7.8.1):
+    resolution: {integrity: sha512-IGdSF+0F9MJO6dCRTEahdxPz4iVijjtolcFBxnY+2QYM3bXYQvAgzskGZi+WkAFJN/VzR3TEp60gN5sI74GxPA==}
     peerDependencies:
       '@nestjs/common': ^7.0.0 || ^8.0.0 || ^9.0.0
       reflect-metadata: ^0.1.13
@@ -687,13 +688,13 @@ packages:
       - encoding
     dev: false
 
-  /@nestjs/jwt@10.0.3(@nestjs/common@9.4.3):
-    resolution: {integrity: sha512-WO8MI3uEMOFKpbO+SAg6l4aRCr+9KvaL+raFMZaXuEUDphXek6pqdox+4tex9242pNSJUA0trfAMaiy/yVrXQg==}
+  /@nestjs/jwt@10.1.0(@nestjs/common@9.4.3):
+    resolution: {integrity: sha512-iLwCGS25ybUxGS7i5j/Mwuyzvp/WxJftHlm8aLEBv5GV92apz6L1QVjxLdZrqXbzo++C8gdJauhzil8qitY+6w==}
     peerDependencies:
-      '@nestjs/common': ^8.0.0 || ^9.0.0
+      '@nestjs/common': ^8.0.0 || ^9.0.0 || ^10.0.0
     dependencies:
       '@nestjs/common': 9.4.3(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@types/jsonwebtoken': 9.0.1
+      '@types/jsonwebtoken': 9.0.2
       jsonwebtoken: 9.0.0
     dev: false
 
@@ -867,7 +868,7 @@ packages:
     resolution: {integrity: sha512-a5Sab1C4/icpTZVzZc5Ghpz88yQtGOyNqYXcZgOssB2uuAr+wF/MvN6bgtW32q7HHrvBki+BsZ0OuNv6EV3K9g==}
     dev: true
 
-  /@prisma/client@4.15.0:
+  /@prisma/client@4.15.0(prisma@4.16.2):
     resolution: {integrity: sha512-xnROvyABcGiwqRNdrObHVZkD9EjkJYHOmVdlKy1yGgI+XOzvMzJ4tRg3dz1pUlsyhKxXGCnjIQjWW+2ur+YXuw==}
     engines: {node: '>=14.17'}
     requiresBuild: true
@@ -878,9 +879,10 @@ packages:
         optional: true
     dependencies:
       '@prisma/engines-version': 4.15.0-28.8fbc245156db7124f997f4cecdd8d1219e360944
+      prisma: 4.16.2
     dev: false
 
-  /@prisma/client@4.16.2(prisma@4.16.2):
+  /@prisma/client@4.16.2:
     resolution: {integrity: sha512-qCoEyxv1ZrQ4bKy39GnylE8Zq31IRmm8bNhNbZx7bF2cU5aiCCnSa93J2imF88MBjn7J9eUQneNxUQVJdl/rPQ==}
     engines: {node: '>=14.17'}
     requiresBuild: true
@@ -891,7 +893,6 @@ packages:
         optional: true
     dependencies:
       '@prisma/engines-version': 4.16.1-1.4bc8b6e1b66cb932731fb1bdbbc550d1e010de81
-      prisma: 4.16.2
     dev: false
 
   /@prisma/engines-version@4.15.0-28.8fbc245156db7124f997f4cecdd8d1219e360944:
@@ -1008,12 +1009,12 @@ packages:
       zod: 3.21.4
     dev: false
 
-  /@ts-rest/nest@3.26.0(@nestjs/common@9.4.3)(@nestjs/core@9.4.3)(@ts-rest/core@3.26.3)(rxjs@7.8.1)(zod@3.21.4):
-    resolution: {integrity: sha512-lJMWD6p+whz/meaLJ0wb4RbRAjvr/PP73XWofGh1kWKVLiteTleP3/dNTF3o+pe2ptseufiwv2NZXFIkrtP1mA==}
+  /@ts-rest/nest@3.26.3(@nestjs/common@9.4.3)(@nestjs/core@9.4.3)(@ts-rest/core@3.26.3)(rxjs@7.8.1)(zod@3.21.4):
+    resolution: {integrity: sha512-36BWFFrOZoj8b4afb6SZaoXt9SPBgT5cY292+C2htKKeaV8uNK0IjMR9h4IqU063YZ16pwoXuJBwQIHEolMj/w==}
     peerDependencies:
       '@nestjs/common': ^9.0.0
       '@nestjs/core': ^9.0.0
-      '@ts-rest/core': 3.26.0
+      '@ts-rest/core': 3.26.3
       rxjs: ^7.1.0
       zod: ^3.0.0
     peerDependenciesMeta:
@@ -1027,10 +1028,10 @@ packages:
       zod: 3.21.4
     dev: false
 
-  /@ts-rest/open-api@3.26.0(@ts-rest/core@3.26.3)(zod@3.21.4):
-    resolution: {integrity: sha512-ye00YDQeCRcOZjhwOOCO/uX7aXzkwRzcsZg62Uscqvc0MTqzCH47opLJkIhvJ4fEUYEKN4IW9W9YgjUr6c3E1w==}
+  /@ts-rest/open-api@3.26.3(@ts-rest/core@3.26.3)(zod@3.21.4):
+    resolution: {integrity: sha512-XJrHf5mgvRcZ0XIm1W4dX/jUMwRRO19+pbIF4Gnpyhrq4xyCfydfRwy0DnuEhLW7Ipm0EwLrW1xZXEQTjM/a3g==}
     peerDependencies:
-      '@ts-rest/core': 3.26.0
+      '@ts-rest/core': 3.26.3
       zod: ^3.0.0
     dependencies:
       '@anatine/zod-openapi': 1.14.2(openapi3-ts@2.0.2)(zod@3.21.4)
@@ -1042,20 +1043,20 @@ packages:
   /@types/bcrypt@5.0.0:
     resolution: {integrity: sha512-agtcFKaruL8TmcvqbndlqHPSJgsolhf/qPWchFlgnW1gECTN/nKbFcoFnvKAQRFfKbh+BO6A3SWdJu9t+xF3Lw==}
     dependencies:
-      '@types/node': 20.3.1
+      '@types/node': 20.3.3
     dev: true
 
   /@types/body-parser@1.19.2:
     resolution: {integrity: sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g==}
     dependencies:
       '@types/connect': 3.4.35
-      '@types/node': 20.3.1
+      '@types/node': 20.3.3
     dev: true
 
   /@types/connect@3.4.35:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
     dependencies:
-      '@types/node': 20.3.1
+      '@types/node': 20.3.3
     dev: true
 
   /@types/cookie-parser@1.4.3:
@@ -1075,7 +1076,7 @@ packages:
   /@types/cors@2.8.13:
     resolution: {integrity: sha512-RG8AStHlUiV5ysZQKq97copd2UmVYw3/pRMLefISZ3S1hK104Cwm7iLQ3fTKx+lsUH2CE8FlLaYeEA2LSeqYUA==}
     dependencies:
-      '@types/node': 20.3.1
+      '@types/node': 20.3.3
     dev: false
 
   /@types/estree@1.0.1:
@@ -1085,7 +1086,7 @@ packages:
   /@types/express-serve-static-core@4.17.35:
     resolution: {integrity: sha512-wALWQwrgiB2AWTT91CB62b6Yt0sNHpznUXeZEcnPU3DRdlDIz74x8Qg1UUYKSVFi+va5vKOLYRBI1bRKiLLKIg==}
     dependencies:
-      '@types/node': 20.3.1
+      '@types/node': 20.3.3
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
       '@types/send': 0.17.1
@@ -1108,17 +1109,10 @@ packages:
     resolution: {integrity: sha512-Hr5Jfhc9eYOQNPYO5WLDq/n4jqijdHNlDXjuAQkkt+mWdQR+XJToOHrsD4cPaMXpn6KO7y2+wM8AZEs8VpBLVA==}
     dev: true
 
-  /@types/jsonwebtoken@9.0.1:
-    resolution: {integrity: sha512-c5ltxazpWabia/4UzhIoaDcIza4KViOQhdbjRlfcIGVnsE3c3brkz9Z+F/EeJIECOQP7W7US2hNE930cWWkPiw==}
-    dependencies:
-      '@types/node': 20.3.1
-    dev: false
-
   /@types/jsonwebtoken@9.0.2:
     resolution: {integrity: sha512-drE6uz7QBKq1fYqqoFKTDRdFCPHd5TCub75BM+D+cMx7NU9hUz7SESLfC2fSCXVFMO5Yj8sOWHuGqPgjc+fz0Q==}
     dependencies:
-      '@types/node': 20.3.1
-    dev: true
+      '@types/node': 20.3.3
 
   /@types/mime@1.3.2:
     resolution: {integrity: sha512-YATxVxgRqNH6nHEIsvg6k2Boc1JHI9ZbH5iWFFv/MTkchz3b1ieGDa5T0a9RznNdI0KhVbdbWSN+KWWrQZRxTw==}
@@ -1130,6 +1124,10 @@ packages:
 
   /@types/node@20.3.1:
     resolution: {integrity: sha512-EhcH/wvidPy1WeML3TtYFGR83UzjxeWRen9V402T8aUGYsCHOmfoisV3ZSg03gAFIbLq8TnWOJ0f4cALtnSEUg==}
+    dev: true
+
+  /@types/node@20.3.3:
+    resolution: {integrity: sha512-wheIYdr4NYML61AjC8MKj/2jrR/kDQri/CIpVoZwldwhnIrD/j9jIU5bJ8yBKuB2VhpFV7Ab6G2XkBjv9r9Zzw==}
 
   /@types/passport-jwt@3.0.8:
     resolution: {integrity: sha512-VKJZDJUAHFhPHHYvxdqFcc5vlDht8Q2pL1/ePvKAgqRThDaCc84lSYOTQmnx3+JIkDlN+2KfhFhXIzlcVT+Pcw==}
@@ -1180,7 +1178,7 @@ packages:
     resolution: {integrity: sha512-Cwo8LE/0rnvX7kIIa3QHCkcuF21c05Ayb0ZfxPiv0W8VRiZiNW/WuRupHKpqqGVGf7SUA44QSOUKaEd9lIrd/Q==}
     dependencies:
       '@types/mime': 1.3.2
-      '@types/node': 20.3.1
+      '@types/node': 20.3.3
     dev: true
 
   /@types/serve-static@1.15.2:
@@ -1188,7 +1186,7 @@ packages:
     dependencies:
       '@types/http-errors': 2.0.1
       '@types/mime': 3.0.1
-      '@types/node': 20.3.1
+      '@types/node': 20.3.3
     dev: true
 
   /@typescript-eslint/eslint-plugin@5.60.1(@typescript-eslint/parser@5.60.1)(eslint@8.44.0)(typescript@5.1.6):
@@ -1819,6 +1817,11 @@ packages:
     engines: {node: '>=12'}
     dev: false
 
+  /dotenv@16.3.1:
+    resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
+    engines: {node: '>=12'}
+    dev: false
+
   /ecdsa-sig-formatter@1.0.11:
     resolution: {integrity: sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==}
     dependencies:
@@ -1872,7 +1875,7 @@ packages:
     dependencies:
       '@types/cookie': 0.4.1
       '@types/cors': 2.8.13
-      '@types/node': 20.3.1
+      '@types/node': 20.3.3
       accepts: 1.3.8
       base64id: 2.0.0
       cookie: 0.4.2
@@ -3703,8 +3706,8 @@ packages:
     engines: {node: '>= 8'}
     dev: true
 
-  /swagger-themes@1.2.28:
-    resolution: {integrity: sha512-CO+SMazfG0k6VmJ+Tr/BjuTs5GzIupnY9QHLVh2rqCbKI9iKB9Nyu2UnfJ160iD4N6kYKOOhiJrL2s5JHxw6rA==}
+  /swagger-themes@1.2.29:
+    resolution: {integrity: sha512-+9ZxKGs/dnSXaaiKL2JrwQ1uodqXyVTfZYXAVf22FG5LRVcUk5CeuGwZOS5LrTK2KlIwZ0xaTOv6etozUOX05Q==}
     dev: false
 
   /swagger-ui-dist@4.18.2:
@@ -4030,6 +4033,7 @@ packages:
       '@nestjs/common': 9.4.3(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@prisma-generated/enums': file:prisma/enums
       '@ts-rest/core': 3.26.3(zod@3.21.4)
+      prisma-db-client: link:prisma-db-client
       typescript: 5.1.6
       zod: 3.21.4
     transitivePeerDependencies:

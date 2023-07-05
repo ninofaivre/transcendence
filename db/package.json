@@ -1,0 +1,11 @@
+{
+  "name": "db",
+  "description": "This is an *internal* package following the internal package pattern: https://turbo.build/repo/docs/handbook/sharing-code/internal-packages",
+  "version": "0.0.0",
+  "dependencies": {
+    "@prisma/client": "latest"
+  },
+  "devDependencies": {
+    "prisma": "^4.16.2"
+  }
+}

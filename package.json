@@ -10,5 +10,10 @@
   },
   "keywords": [],
   "author": "6e696e6f+cassepipe",
-  "license": "MIT"
+  "license": "MIT",
+  "pnpm": {
+    "patchedDependencies": {
+      "http-proxy@1.18.1": "patches/http-proxy@1.18.1.patch"
+    }
+  }
 }

@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  http-proxy@1.18.1:
+    hash: aq3thkjkntv4znsfw6nkinp4fi
+    path: patches/http-proxy@1.18.1.patch
+
 importers:
 
   .: {}
@@ -205,7 +210,7 @@ importers:
         version: 4.0.0(eslint@8.44.0)(svelte@3.59.2)
       http-proxy:
         specifier: ^1.18.1
-        version: 1.18.1
+        version: 1.18.1(patch_hash=aq3thkjkntv4znsfw6nkinp4fi)
       postcss:
         specifier: ^8.4.24
         version: 8.4.24
@@ -2375,7 +2380,7 @@ packages:
       toidentifier: 1.0.1
     dev: false
 
-  /http-proxy@1.18.1:
+  /http-proxy@1.18.1(patch_hash=aq3thkjkntv4znsfw6nkinp4fi):
     resolution: {integrity: sha512-7mz/721AbnJwIVbnaSv1Cz3Am0ZLT/UBwkC92VlxhXv/k/BBQfM2fXElQNC27BVGr0uwUpplYPQM9LnaBMR5NQ==}
     engines: {node: '>=8.0.0'}
     dependencies:
@@ -2385,6 +2390,7 @@ packages:
     transitivePeerDependencies:
       - debug
     dev: true
+    patched: true
 
   /https-proxy-agent@5.0.1:
     resolution: {integrity: sha512-dFcAjpTQFgoLMzC2VwU+C/CbS7uRL0lWmxDITmqm7C+7F0Odmj6s9l6alZc6AELXhrnggM2CeWSXHGOdX2YtwA==}

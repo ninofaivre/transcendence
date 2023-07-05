@@ -45,10 +45,5 @@
     "contract": "file:../contract",
     "socket.io-client": "^4.7.1",
     "zod": "^3.21.4"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "http-proxy@1.18.1": "patches/http-proxy@1.18.1.patch"
-    }
   }
 }

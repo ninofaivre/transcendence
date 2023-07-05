@@ -1,0 +1,445 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["extendedWhereUnique"]
+  output = "./client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PermissionList {
+  SEND_MESSAGE
+  DELETE_MESSAGE
+  EDIT
+  INVITE
+  KICK
+  BAN
+  MUTE
+  DESTROY
+}
+
+enum RoleApplyingType {
+  NONE
+  ROLES
+  ROLES_AND_SELF
+}
+
+model Role {
+  id String @id @default(uuid())
+
+  name        String
+  permissions PermissionList[]
+
+  roleApplyOn RoleApplyingType
+  roles       Role[]           @relation("roles")
+  rolesSym    Role[]           @relation("roles")
+
+  users User[]
+
+  chan   Chan @relation(fields: [chanId], references: [id], onDelete: Cascade)
+  chanId String
+
+  relatedDiscussionMessage ChanDiscussionMessage[]
+
+  @@unique(fields: [chanId, name], name: "chanId_name")
+}
+
+enum FriendInvitationStatus {
+	PENDING
+	ACCEPTED
+	REFUSED
+	CANCELED
+	BLOCKED_USER
+}
+
+model FriendInvitation {
+  id String @id @default(uuid())
+
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
+  invitingUser     User   @relation(name: "outcomingFriendInvitation", fields: [invitingUserName], references: [name])
+  invitingUserName String
+  invitedUser      User   @relation("incomingFriendInvitation", fields: [invitedUserName], references: [name])
+  invitedUserName  String
+
+  status FriendInvitationStatus @default(PENDING)
+}
+
+enum ChanInvitationStatus {
+	PENDING
+	ACCEPTED
+	REFUSED
+	CANCELED
+	DELETED_CHAN
+	BLOCKED_USER
+	BANNED_FROM_CHAN
+}
+
+model ChanInvitation {
+  id String @id @default(uuid())
+
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
+  chan              Chan            @relation(fields: [chanId, chanTitle], references: [id, title], onDelete: Cascade)
+  chanId           String 
+  chanTitle			String
+
+  discussionEvent   ChanInvitationDmDiscussionEvent?
+  invitingUser	User @relation(name: "outcomingChanInvitation", fields: [invitingUserName], references: [name])
+  invitingUserName	String
+  invitedUser	User @relation(name: "incomingChanInvitation", fields: [invitedUserName], references: [name])
+  invitedUserName	String
+
+  status ChanInvitationStatus @default(PENDING)
+}
+
+// TODO: let one of the users disconnect without deleting FriendShip to display removed friend notification to the other
+// user at connexion and not only by sse
+model FriendShip {
+  id String @id @default(uuid())
+
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
+  requestingUser     User   @relation(name: "friend", fields: [requestingUserName], references: [name])
+  requestingUserName String
+  requestedUser      User   @relation("friendOf", fields: [requestedUserName], references: [name])
+  requestedUserName  String
+
+  @@unique([requestingUserName, requestedUserName])
+}
+
+model BlockedShip {
+  id String @id @default(uuid())
+
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
+  blockingUser     User   @relation(name: "blocked", fields: [blockingUserName], references: [name])
+  blockingUserName String
+  blockedUser      User   @relation("blockedBy", fields: [blockedUserName], references: [name])
+  blockedUserName  String
+
+  @@unique([blockingUserName, blockedUserName])
+}
+
+model User {
+  name String @id
+
+  password String
+
+  roles Role[]
+
+  directMessage   DirectMessage[] @relation(name: "directMessage")
+  directMessageOf DirectMessage[] @relation(name: "directMessageOf")
+  chans           Chan[]
+  ownedChans      Chan[]          @relation("owner")
+
+  friend   FriendShip[] @relation("friend")
+  friendOf FriendShip[] @relation("friendOf")
+
+  outcomingFriendInvitation FriendInvitation[] @relation("outcomingFriendInvitation")
+  incomingFriendInvitation  FriendInvitation[] @relation("incomingFriendInvitation")
+
+  outcomingChanInvitation	ChanInvitation[] @relation("outcomingChanInvitation")
+  incomingChanInvitation	ChanInvitation[] @relation("incomingChanInvitation")
+
+  blockedUser   BlockedShip[] @relation("blocked")
+  blockedByUser BlockedShip[] @relation("blockedBy")
+
+  chanDiscussionElement ChanDiscussionElement[]
+  chanDiscussionEvent   ChanDiscussionEvent[]
+  deletedMessageChanDiscussionEvent DeletedMessageChanDiscussionEvent[]
+  chanDiscussionMessage ChanDiscussionMessage[]
+
+  dmDiscussionMesssage DmDiscussionMessage[]
+  deletedMessageDmDiscussionEvent DeletedMessageDmDiscussionEvent[]
+  blockedDmDiscussionEvent_Blocked BlockedDmDiscussionEvent[] @relation(name: "blocked")
+  blockedDmDiscussionEvent_Blocking BlockedDmDiscussionEvent[] @relation(name: "blocking")
+
+
+  mutedUserChan MutedUserChan[]
+
+  dmPolicyLevel	DmPolicyLevelType @default(ONLY_FRIEND)
+  statusVisibilityLevel StatusVisibilityLevel @default(ONLY_FRIEND)
+}
+
+enum StatusVisibilityLevel {
+    NO_ONE
+    ONLY_FRIEND
+    IN_COMMON_CHAN
+    ANYONE
+}
+
+enum DmPolicyLevelType {
+    // DO_NOT_DISTURB (NO_ONE) ???
+	ONLY_FRIEND
+	IN_COMMON_CHAN	
+	ANYONE
+}
+
+
+// DM
+
+model DirectMessage {
+  id String @id @default(uuid())
+
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
+  requestingUser                 User                @relation(name: "directMessage", fields: [requestingUserName], references: [name])
+  requestingUserName             String
+  // requestingUserStatusMutedUntil DateTime? // à faire plus tard si on a le temps/l'envie
+  requestedUser                  User                @relation("directMessageOf", fields: [requestedUserName], references: [name])
+  requestedUserName              String
+  // requestedUserStatusMutedUntil  DateTime? // à faire plus tard si on a le temps/l'envie
+
+  status					DirectMessageStatus @default(ENABLED)
+
+  @@unique([requestingUserName, requestedUserName])
+
+  elements DmDiscussionElement[]
+}
+
+enum DirectMessageStatus {
+	ENABLED
+	DISABLED
+}
+
+model DmDiscussionElement {
+  id String @id @default(uuid())
+
+  // CUSTOM MIGRATION ==> message | event
+  // ==>	{ message: null, event: Event } |
+  //		{ message: Message, event: null }
+  message   DmDiscussionMessage?  @relation(name: "message", fields: [messageId], references: [id])
+  messageId String? @unique
+  event     DmDiscussionEvent? @relation(fields: [eventId], references: [id])
+  eventId	String? @unique
+
+  relatedOf DmDiscussionMessage[] @relation(name: "related")
+
+  creationDate     DateTime  @default(now())
+
+  directMessage   DirectMessage @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
+  directMessageId String
+}
+
+model DmDiscussionMessage {
+  id String @id @default(uuid())
+
+  content String
+
+  authorRelation User   @relation(fields: [author], references: [name], onDelete: Cascade)
+  author         String
+
+  related             DmDiscussionElement? @relation(name: "related", fields: [relatedTo], references: [id])
+  relatedTo           String?
+  discussionElement   DmDiscussionElement?  @relation(name: "message")
+
+  modificationDate DateTime @updatedAt
+}
+
+model DmDiscussionEvent {
+  id String @id @default(uuid())
+
+  // CUSTOM MIGRATION ==> classicEvent | chanInvitationEvent | 
+  classicDmDiscussionEvent ClassicDmDiscussionEvent? @relation(fields: [classicDmDiscussionEventId], references: [id])
+  classicDmDiscussionEventId String? @unique
+  chanInvitationDmDiscussionEvent ChanInvitationDmDiscussionEvent? @relation(fields: [chanInvitationDmDiscussionEventId], references: [id])
+  chanInvitationDmDiscussionEventId String? @unique
+  deletedMessageDmDiscussionEvent DeletedMessageDmDiscussionEvent? @relation(fields: [deletedMessageDmDiscussionEventId], references: [id])
+  deletedMessageDmDiscussionEventId String? @unique
+  blockedDmDiscussionEvent BlockedDmDiscussionEvent? @relation(fields: [blockedDmDiscussionEventId], references: [id])
+  blockedDmDiscussionEventId String? @unique
+
+  discussionElement   DmDiscussionElement?
+}
+
+model DeletedMessageDmDiscussionEvent {
+    id String @id @default(uuid())
+
+    authorRelation User   @relation(fields: [author], references: [name], onDelete: Cascade)
+    author         String
+
+    dmDiscussionEvent DmDiscussionEvent?
+}
+
+model ChanInvitationDmDiscussionEvent {
+	id String @id @default(uuid())
+
+	chanInvitation	ChanInvitation @relation(fields: [chanInvitationId], references: [id])
+	chanInvitationId String @unique
+
+	dmDiscussionEvent DmDiscussionEvent?
+}
+
+model BlockedDmDiscussionEvent {
+    id String @id @default(uuid())
+
+    blockingUser    User @relation(name:"blocking", fields: [blockingUserName], references: [name])
+    blockingUserName String
+
+    blockedUser User @relation(name: "blocked", fields: [blockedUserName], references: [name])
+    blockedUserName String
+
+    dmDiscussionEvent DmDiscussionEvent?
+}
+
+model ClassicDmDiscussionEvent {
+  id String @id @default(uuid())
+
+  eventType ClassicDmEventType
+
+  dmDiscussionEvent DmDiscussionEvent?
+}
+
+enum ClassicDmEventType {
+  CREATED_FRIENDSHIP
+  DELETED_FRIENDSHIP
+}
+
+
+// CHAN
+
+model Chan {
+  id String @id @default(uuid())
+
+  type     ChanType
+  title    String?  @unique
+  password String?
+
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
+  users     User[]
+  roles     Role[]
+  owner     User   @relation("owner", fields: [ownerName], references: [name])
+  ownerName String
+
+  mutedUsers MutedUserChan[]
+
+  invitations ChanInvitation[]
+
+  elements ChanDiscussionElement[]
+
+	@@unique([id, title])
+}
+
+model MutedUserChan {
+  id String @id @default(uuid())
+
+  creationDate DateTime  @default(now())
+  untilDate    DateTime?
+
+  mutedUser     User   @relation(fields: [mutedUserName], references: [name])
+  mutedUserName String
+
+  chan   Chan @relation(fields: [chanId], references: [id])
+  chanId String
+
+  @@unique([chanId, mutedUserName])
+}
+
+enum ChanType {
+  PUBLIC
+  PRIVATE
+}
+
+
+model ChanDiscussionElement {
+  id String @id @default(uuid())
+
+  // CUSTOM MIGRATION ==> message | event
+  // ==>	{ message: null, event: Event } |
+  //		{ message: Message, event: null }
+  message   ChanDiscussionMessage?  @relation(name: "message", fields: [messageId], references: [id])
+  messageId String? @unique
+  event     ChanDiscussionEvent? @relation(fields: [eventId], references: [id])
+  eventId 	String? @unique
+
+  relatedOf ChanDiscussionMessage[] @relation(name: "related") // other side
+
+  author User   @relation(fields: [authorName], references: [name], onDelete: Cascade)
+  authorName         String
+
+  creationDate     DateTime  @default(now())
+  modificationDate DateTime? @updatedAt
+
+  chan            Chan		@relation(fields: [chanId], references: [id], onDelete: Cascade)
+  chanId          String
+
+  @@index(fields: [creationDate(sort: Asc)])
+}
+
+model ChanDiscussionMessage {
+  id String @id @default(uuid())
+
+  content String
+
+  relatedUsers        User[]
+  relatedRoles        Role[]
+  related             ChanDiscussionElement? @relation(name: "related", fields: [relatedTo], references: [id])
+  relatedTo           String?
+  discussionElement   ChanDiscussionElement? @relation(name: "message")
+}
+
+model ChanDiscussionEvent {
+  id String @id @default(uuid())
+
+  concernedUser				User?   @relation(fields: [concernedUserName], references: [name])
+  concernedUserName         String?
+
+  // CUSTOM MIGRATION ==> classicEvent | changedTitleEvent | deletedMessageChanDiscussionEvent
+  // ==>	{ classicEvent: null, deletedMessageChanDiscussionEvent: null, changedTitleEvent: ChangedTitleEvent } |
+  //		{ classicEvent: ClassicEvent, deletedMessageChanDiscussionEvent: null, changedTitleEvent: null } |
+  //		{ classicEvent: null, deletedMessageChanDiscussionEvent: DeletedMessageChanDiscussionEvent, changedTitleEvent: null }
+  classicChanDiscussionEvent ClassicChanDiscussionEvent? @relation(fields: [classicChanDiscussionEventId], references: [id])
+  classicChanDiscussionEventId	String? @unique
+  changedTitleChanDiscussionEvent ChangedTitleChanDiscussionEvent? @relation(fields: [changedTitleChanDiscussionEventId], references: [id])
+  changedTitleChanDiscussionEventId String? @unique
+  deletedMessageChanDiscussionEvent DeletedMessageChanDiscussionEvent? @relation(fields: [deletedMessageChanDiscussionEventId], references: [id])
+  deletedMessageChanDiscussionEventId String? @unique
+
+  discussionElement   ChanDiscussionElement?
+}
+
+model ChangedTitleChanDiscussionEvent {
+	id String @id @default(uuid())
+
+	oldTitle String
+	newTitle String
+
+	chanDiscussionEvent ChanDiscussionEvent?
+}
+
+model DeletedMessageChanDiscussionEvent {
+	id String @id @default(uuid())
+
+	deletingUsers User @relation(fields: [deletingUserName], references: [name])
+	deletingUserName String @unique
+
+	chanDiscussionEvent ChanDiscussionEvent?
+}
+
+model ClassicChanDiscussionEvent {
+	id String @id @default(uuid())
+
+	eventType ClassicChanEventType
+
+	chanDiscussionEvent ChanDiscussionEvent?
+}
+
+enum ClassicChanEventType {
+  AUTHOR_LEAVED
+  AUTHOR_KICKED_CONCERNED
+  AUTHOR_JOINED
+  AUTHOR_MUTED_CONCERNED
+}

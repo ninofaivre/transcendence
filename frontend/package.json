@@ -43,7 +43,6 @@
   "dependencies": {
     "@ts-rest/core": "^3.26.3",
     "contract": "file:../contract",
-    "socket.io-client": "^4.7.1",
-    "zod": "^3.21.4"
+    "socket.io-client": "^4.7.1"
   }
 }

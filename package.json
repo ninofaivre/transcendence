@@ -7,6 +7,7 @@
     "start": "pnpm --stream -r start",
     "start:dev": "pnpm --parallel --stream -r run start:dev",
     "build": "pnpm --stream -r run build"
+    "preinstall": "npx only-allow pnpm"
   },
   "keywords": [],
   "author": "6e696e6f+cassepipe",

@@ -1,7 +1,7 @@
 import { Prisma } from "prisma-db-client"
 import { PrismaService } from "./prisma/prisma.service"
 
-export type Tx = Omit<PrismaService, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use">
+export type Tx = Omit<PrismaService, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "onModuleInit" | "enableShutdownHooks" | "$extends">
 
 // Example :
 // transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<{a: string, b: number, random: Date}, "a" | "b">

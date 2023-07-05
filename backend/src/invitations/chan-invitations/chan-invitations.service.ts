@@ -5,7 +5,7 @@ import {
 	NotFoundException,
 	forwardRef,
 } from "@nestjs/common"
-import { Prisma, ChanInvitationStatus, PermissionList } from "prisma-client"
+import { Prisma, ChanInvitationStatus, PermissionList } from "prisma-db-client"
 import { zChanInvitationReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
@@ -17,9 +17,9 @@ import { z } from "zod"
 @Injectable()
 export class ChanInvitationsService {
 	constructor(
-        @Inject(forwardRef(() => UserService))
+		@Inject(forwardRef(() => UserService))
 		private readonly usersService: UserService,
-        private readonly prisma: PrismaService,
+		private readonly prisma: PrismaService,
 		private readonly dmsService: DmsService,
 		private readonly sse: SseService,
 		@Inject(forwardRef(() => ChansService))
@@ -139,7 +139,12 @@ export class ChanInvitationsService {
 			)
 			return { chanInv, dmEvent }
 		})
-		await this.dmsService.formatAntNotifyDmElement(invitingUserName, invitedUserName, directMessageId, dmEvent)
+		await this.dmsService.formatAntNotifyDmElement(
+			invitingUserName,
+			invitedUserName,
+			directMessageId,
+			dmEvent,
+		)
 		await this.sse.pushEvent(invitedUserName, {
 			type: "CREATED_CHAN_INVITATION",
 			data: chanInv,

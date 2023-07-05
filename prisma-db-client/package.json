@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "description": "A *internal* package that re-exports the generated prisma-generated database client. About the internal package pattern: https://turbo.build/repo/docs/handbook/sharing-code/internal-packages#6-configuring-your-app",
     "scripts": {
-        "build": "pnpm db push"
+        "build": "pnpm prisma db push"
     },
     "main": "./index.ts",
     "type": "./index.ts",

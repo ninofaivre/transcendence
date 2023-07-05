@@ -1,7 +1,7 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import { ClassicDmEventType, DirectMessageStatus } from "@prisma-generated/enums"
+import { ClassicDmEventType, DirectMessageStatus } from "prisma-db-client"
 import { zChanTitle } from "./chans"
 import { zUserStatus } from "./users"
 

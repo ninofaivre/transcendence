@@ -3,7 +3,7 @@ import { initContract } from "@ts-rest/core"
 import { unique } from "../zod/global.zod"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import { ChanType, ClassicChanEventType, PermissionList, RoleApplyingType } from "@prisma-generated/enums"
+import { ChanType, ClassicChanEventType, PermissionList, RoleApplyingType } from "prisma-db-client"
 const c = initContract()
 
 const zClassicChanEventType = z.nativeEnum(ClassicChanEventType)

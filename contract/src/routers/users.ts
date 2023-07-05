@@ -2,7 +2,7 @@ import { initContract } from "@ts-rest/core"
 import { zUserName, zUserPassword } from "../zod/user.zod"
 import { z } from "zod"
 import { zChanTitle, zChanType } from "./chans"
-import { DmPolicyLevelType, StatusVisibilityLevel } from "@prisma-generated/enums"
+import { DmPolicyLevelType, StatusVisibilityLevel } from "prisma-db-client"
 
 const c = initContract()
 

@@ -1,0 +1,5 @@
+hash -d worspace="."
+hash -d backend="./backend"
+hash -d frontend="./frontend"
+hash -d contract="./contract"
+hash -d db="./prisma-db-client"

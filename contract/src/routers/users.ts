@@ -39,7 +39,7 @@ export const usersContract = c.router(
             path: "/",
             summary: "search for users",
             description: "not finished yet (beta)",
-            query: z.object({ obj: z.union([
+            query: z.union([
                 zSearchUsersQueryBase.extend({
                     filter: z.strictObject({
                         type: z.literal("inc").default("inc"),
@@ -58,8 +58,7 @@ export const usersContract = c.router(
                         // canStartDm: z.boolean().default(false)
                     })
                 }),
-            ])
-            }),
+            ]),
             responses: {
                 200: z.array(zUserProfilePreviewReturn)
             }

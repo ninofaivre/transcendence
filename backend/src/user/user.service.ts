@@ -146,15 +146,15 @@ export class UserService {
             ]
         } satisfies 
             Record<
-                keyof Omit<Extract<RequestShapes['searchUsers']['query']['obj']['filter'], { type: "inc" }>, "type">,
+                keyof Omit<Extract<RequestShapes['searchUsers']['query']['filter'], { type: "inc" }>, "type">,
                 Prisma.Enumerable<Prisma.UserWhereInput>
             > & Record<
-                keyof Omit<Extract<RequestShapes['searchUsers']['query']['obj']['filter'], { type: "only" }>, "type">,
+                keyof Omit<Extract<RequestShapes['searchUsers']['query']['filter'], { type: "only" }>, "type">,
                 Prisma.Enumerable<Prisma.UserWhereInput>
             >
     }
 
-    getTest(arg: Omit<RequestShapes['searchUsers']['query']['obj']['filter'], "type">, type: "inc" | "only",username: string) {
+    getTest(arg: Omit<RequestShapes['searchUsers']['query']['filter'], "type">, type: "inc" | "only",username: string) {
         let res: Prisma.Enumerable<Prisma.UserWhereInput> = []
         let k: keyof typeof arg
         for (k in arg) {
@@ -164,7 +164,7 @@ export class UserService {
         return ((type === "inc") ? { NOT: res } : { OR: res }) satisfies Prisma.UserWhereInput
     }
 
-    async searchUsers(username: string, contains: string, nRes: number, filter: RequestShapes['searchUsers']['query']['obj']['filter']) {
+    async searchUsers(username: string, contains: string, nRes: number, filter: RequestShapes['searchUsers']['query']['filter']) {
         const where = {
             name: { contains },
             ...this.getTest(filter, filter.type, username)

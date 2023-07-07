@@ -27,6 +27,11 @@ export const zMyProfileReturn = z.strictObject({
     statusVisibilityLevel: z.nativeEnum(StatusVisibilityLevel),
 })
 
+const zSearchUsersQueryBase = z.strictObject({
+    userNameContains: z.string().nonempty(),
+    nResult: z.number().positive().int().max(30).default(10)
+})
+
 export const usersContract = c.router(
 	{
         searchUsers: {
@@ -34,9 +39,26 @@ export const usersContract = c.router(
             path: "/",
             summary: "search for users",
             description: "not finished yet (beta)",
-            query: z.strictObject({
-                userNameContains: z.string().nonempty(),
-                nResult: z.number().positive().int().max(30).default(10)
+            query: z.object({ obj: z.union([
+                zSearchUsersQueryBase.extend({
+                    filter: z.strictObject({
+                        type: z.literal("inc").default("inc"),
+                        friends: z.boolean().default(true),
+                        mySelf: z.boolean().default(false),
+                        blocked: z.boolean().default(true),
+                        // canStartDm: z.boolean().default(true)
+                    })
+                }),
+                zSearchUsersQueryBase.extend({
+                    filter: z.strictObject({
+                        type: z.literal("only"),
+                        friends: z.boolean().default(false),
+                        hasDm: z.boolean().default(false),
+                        blocked: z.boolean().default(false),
+                        // canStartDm: z.boolean().default(false)
+                    })
+                }),
+            ])
             }),
             responses: {
                 200: z.array(zUserProfilePreviewReturn)

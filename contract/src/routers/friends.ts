@@ -39,5 +39,5 @@ export const friendsContract = c.router(
 )
 
 export type FriendEvent =
-	| { type: "CREATED_FRIENDSHIP" | "UPDATED_FRIENDSHIP"; data: z.infer<typeof zFriendShipReturn> }
+	| { type: "CREATED_FRIENDSHIP"; data: z.infer<typeof zFriendShipReturn> }
 	| { type: "DELETED_FRIENDSHIP"; data: { friendShipId: string } }

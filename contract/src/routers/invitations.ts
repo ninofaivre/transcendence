@@ -146,14 +146,24 @@ export const invitationsContract = c.router(
 	},
 )
 
-type FriendInvitationEvent = {
-	type: "CREATED_FRIEND_INVITATION" | "UPDATED_FRIEND_INVITATION"
-	data: z.infer<typeof zFriendInvitationReturn>
-}
+type FriendInvitationEvent =
+    | {
+            type: "CREATED_FRIEND_INVITATION"
+            data: z.infer<typeof zFriendInvitationReturn>
+      }
+    | {
+            type: "UPDATED_FRIEND_INVITATION_STATUS",
+            data: { friendInvitationId: string, status: z.infer<typeof zFriendInvitationStatus> }
+      }
 
-type ChanInvitationEvent = {
-	type: "CREATED_CHAN_INVITATION" | "UPDATED_CHAN_INVITATION"
-	data: z.infer<typeof zChanInvitationReturn>
-}
+type ChanInvitationEvent =
+    | {
+            type: "CREATED_CHAN_INVITATION"
+            data: z.infer<typeof zChanInvitationReturn>
+      }
+    | {
+            type: "UPDATED_CHAN_INVITATION_STATUS",
+            data: { chanInvitationId: string, status: z.infer<typeof zChanInvitationStatus> }
+      }
 
 export type InvitationEvent = FriendInvitationEvent | ChanInvitationEvent

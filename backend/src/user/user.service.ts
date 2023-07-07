@@ -194,7 +194,6 @@ export class UserService {
         return this.formatMe(await this.getUserByNameOrThrow(username, this.myProfileSelect))
     }
 
-    // remember to notify online status when status visibilityChange and to notify invisible
     async updateMe(username: string, dto: RequestShapes['updateMe']['body']) {
         const oldData = await this.getNotifyStatusData(username)
 
@@ -272,6 +271,9 @@ export class UserService {
             friend: { select: { id: true } },
             friendOf: { select: { id: true } },
             directMessage: {
+                where: {
+                    
+                },
                 select: {
                     id: true,
                     requestedUser: { select: this.getProximitySelect(username) }

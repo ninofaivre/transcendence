@@ -189,10 +189,18 @@ export const dmsContract = c.router(
 
 export type DmEvent =
 	| {
-			type: "CREATED_DM" | "UPDATED_DM"
+			type: "CREATED_DM"
 			data: z.infer<typeof zDmReturn>
 	  }
 	| {
-			type: "CREATED_DM_ELEMENT" | "UPDATED_DM_ELEMENT"
+			type: "CREATED_DM_ELEMENT"
 			data: { dmId: string; element: z.infer<typeof zDmDiscussionElementReturn> }
 	  }
+    | {
+        type: "DELETED_DM_MESSAGE",
+        data: { dmId: string, messageId: string }
+      }
+    | {
+        type: "UPDATED_DM_MESSAGE",
+        data: { dmId: string, message: z.infer<typeof zDmDiscussionMessageReturn> }
+      }

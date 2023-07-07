@@ -108,9 +108,7 @@ export const usersContract = c.router(
 )
 
 export type UserEvent = {
-    type: "UPDATED_USER_PROFILE",
-    data: {
-        userName: z.infer<typeof zUserName>,
-        userProfile: z.infer<typeof zPartialUserProfileReturn>
-    }
+    type: "UPDATED_USER_STATUS",
+    userName: z.infer<typeof zUserName>,
+    data: z.infer<typeof zUserStatus>
 }

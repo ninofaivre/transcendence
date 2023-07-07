@@ -1,8 +1,8 @@
 for dir in $(echo */)
 do
-    if [ -f $dir/.env ]
+    if [ -f ${dir}.env ]
     then
-        cp -v -n $dir/.env.example $dir/.env
+        cp -v -n ${dir}.env.example $dir/.env
     fi
 done
 echo Building... \

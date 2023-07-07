@@ -53,8 +53,7 @@
 
 <div class="card max-h-48 w-full max-w-sm overflow-y-auto p-4" tabindex="-1">
     <Autocomplete
-        bind:input={search_input}
-        bind:options={users}
+        options={users}
         {denylist}
         on:selection={onUserSelection}
     />

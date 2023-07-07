@@ -10,11 +10,13 @@
     "license": "ISC",
     "main": "./prisma/client/index.js",
     "type": "./prisma/client/index.d.ts",
-    "files": ["./prisma/client"],
+    "files": [
+        "./prisma/client"
+    ],
     "devDependencies": {
-        "prisma": "^4.15.0"
+        "prisma": "^4.16.2"
     },
     "dependencies": {
-        "@prisma/client": "^4.15.0"
+        "@prisma/client": "^4.16.2"
     }
 }

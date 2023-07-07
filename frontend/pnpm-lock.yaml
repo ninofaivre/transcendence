@@ -15,7 +15,7 @@ dependencies:
     version: 3.26.3(zod@3.21.4)
   contract:
     specifier: file:../contract
-    version: file:../contract(openapi3-ts@3.2.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+    version: file:../contract(openapi3-ts@4.1.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
   socket.io-client:
     specifier: ^4.7.1
     version: 4.7.1
@@ -117,13 +117,13 @@ packages:
       '@jridgewell/trace-mapping': 0.3.18
     dev: true
 
-  /@anatine/zod-openapi@1.14.2(openapi3-ts@3.2.0)(zod@3.21.4):
-    resolution: {integrity: sha512-q0qHfnuNYVKu0Swrnnvfj9971AEyW7c8v9jCOZGCl5ZbyGMNG4RPyJkRcMi/JC8CRfdOe0IDfNm1nNsi2avprg==}
+  /@anatine/zod-openapi@2.0.1(openapi3-ts@4.1.2)(zod@3.21.4):
+    resolution: {integrity: sha512-ks13oMq3wKFobQ6W+C9h893b2kYAff4Giqwmr5gxgP1HyoBhM4Iub1Z/Q3x5EsAfqfTi8qEOBuqTf0Tnv10D2w==}
     peerDependencies:
-      openapi3-ts: ^2.0.0 || ^3.0.0
+      openapi3-ts: ^4.1.2
       zod: ^3.20.0
     dependencies:
-      openapi3-ts: 3.2.0
+      openapi3-ts: 4.1.2
       ts-deepmerge: 6.1.0
       zod: 3.21.4
     dev: false
@@ -1766,8 +1766,8 @@ packages:
       os-homedir: 1.0.2
     dev: true
 
-  /openapi3-ts@3.2.0:
-    resolution: {integrity: sha512-/ykNWRV5Qs0Nwq7Pc0nJ78fgILvOT/60OxEmB3v7yQ8a8Bwcm43D4diaYazG/KBn6czA+52XYy931WFLMCUeSg==}
+  /openapi3-ts@4.1.2:
+    resolution: {integrity: sha512-B7gOkwsYMZO7BZXwJzXCuVagym2xhqsrilVvV0dnq2Di4+iLUXKVX9gOK23ZqaAHZOwABXN0QTdW8QnkUTX6DA==}
     dependencies:
       yaml: 2.3.1
     dev: false
@@ -2665,12 +2665,12 @@ packages:
     resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
     dev: false
 
-  file:../contract(openapi3-ts@3.2.0)(reflect-metadata@0.1.13)(rxjs@7.8.1):
+  file:../contract(openapi3-ts@4.1.2)(reflect-metadata@0.1.13)(rxjs@7.8.1):
     resolution: {directory: ../contract, type: directory}
     id: file:../contract
     name: contract
     dependencies:
-      '@anatine/zod-openapi': 1.14.2(openapi3-ts@3.2.0)(zod@3.21.4)
+      '@anatine/zod-openapi': 2.0.1(openapi3-ts@4.1.2)(zod@3.21.4)
       '@nestjs/common': 9.4.3(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@prisma-generated/enums': file:../prisma/enums
       '@ts-rest/core': 3.26.3(zod@3.21.4)

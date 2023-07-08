@@ -28,16 +28,58 @@ export class DmsService {
 	} satisfies Prisma.DirectMessageSelect
 
     public getDirectMessageSelect(username: string) {
-        const userArg = {
-            select: {
-                statusVisibilityLevel: true,
-                ...this.usersService.getProximitySelect(username),
-                name: true
-            }
-        } satisfies Prisma.UserArgs
+        // const userArg = {
+        //     select: {
+        //         statusVisibilityLevel: true,
+        //         ...this.usersService.getProximitySelect(username),
+        //         name: true
+        //     }
+        // } satisfies Prisma.UserArgs
         return {
-            requestedUser: userArg,
-            requestingUser: userArg,
+            requestedUser: {
+                select: {
+                    friend: {
+                        where: {
+                            requestedUserName: username,
+                            requestedUser: { statusVisibilityLevel: { not: "NO_ONE" } }
+                        }, select: { id: true }
+                    },
+                    friendOf: {
+                        where: {
+                            requestingUserName: username,
+                            requestingUser: { statusVisibilityLevel: { not: "NO_ONE" } }
+                        }, select: { id: true }
+                    },
+                    chans: {
+                        where: { users: { some: { name: username } } },
+                        take: 1
+                    },
+                    name: true,
+                    statusVisibilityLevel: true
+                }
+            },
+            requestingUser: {
+                select: {
+                    friend: {
+                        where: {
+                            requestedUserName: username,
+                            requestedUser: { statusVisibilityLevel: { not: "NO_ONE" } }
+                        }, select: { id: true }
+                    },
+                    friendOf: {
+                        where: {
+                            requestingUserName: username,
+                            requestingUser: { statusVisibilityLevel: { not: "NO_ONE" } }
+                        }, select: { id: true }
+                    },
+                    chans: {
+                        where: { users: { some: { name: username } } },
+                        take: 1
+                    },
+                    name: true,
+                    statusVisibilityLevel: true
+                }
+            },
             ...this.directMessageSelect
         } satisfies Prisma.DirectMessageSelect
     }
@@ -103,20 +145,21 @@ export class DmsService {
         const other = username === requestedUser.name
             ? requestingUser : requestedUser
 
-        const requestingProximityLevel = this.usersService.formatProximity(requestingUser)
-        const requestedProximityLevel = this.usersService.formatProximity(requestedUser)
-        const proximityLevel = (requestingProximityLevel === "FRIEND"
-                || requestedProximityLevel === "FRIEND")
+        const proximityLevel = (other.friend.length || other.friendOf.length)
             ? "FRIEND"
-            : (requestingProximityLevel === "COMMON_CHAN"
-                    && requestedProximityLevel === "COMMON_CHAN")
+            : (other.chans.length)
                 ? "COMMON_CHAN"
                 : "ANYONE"
 
 		const formattedDirectMessage: z.infer<typeof zDmReturn> = {
 			...rest,
 			otherName: other.name,
-            otherStatus: this.usersService.getUserStatus(other.name, proximityLevel, other.statusVisibilityLevel)
+            otherStatus: this.usersService.getUserStatusFromVisibilityAndProximityLevel(
+                {
+                    name: other.name,
+                    visibility: other.statusVisibilityLevel
+                },
+                proximityLevel)
 		}
 		return formattedDirectMessage
 	}
@@ -337,23 +380,17 @@ export class DmsService {
 		newStatus: DirectMessageStatus,
 		username: string,
 	) {
-		const updatedDm = await this.prisma.directMessage.update({
+		const { requestingUserName,
+            requestedUserName } = await this.prisma.directMessage.update({
 			where: { id: dmId },
 			data: {
 				status: newStatus,
 			},
-			select: this.getDirectMessageSelect(username),
-		})
-		await Promise.all([
-			this.sse.pushEvent(updatedDm.requestingUser.name, {
-				type: "UPDATED_DM",
-				data: this.formatDirectMessage(updatedDm, updatedDm.requestingUser.name),
-			}),
-			this.sse.pushEvent(updatedDm.requestedUser.name, {
-				type: "UPDATED_DM",
-				data: this.formatDirectMessage(updatedDm, updatedDm.requestedUser.name),
-			}),
-		])
+            select: { requestedUserName: true, requestingUserName: true }})
+		await this.sse.pushEventMultipleUser([requestingUserName, requestedUserName], {
+				type: "UPDATED_DM_STATUS",
+				data: { dmId, status: newStatus },
+			})
 	}
 
 	async getDms(username: string) {
@@ -496,8 +533,8 @@ export class DmsService {
         const { message, ...rest } = updatedElement
         const formattedUpdatedElement = this.formatDmMessage(rest, { ...message, isDeleted: false })
 		await this.notifyOtherMemberOfDm(username, dmId, {
-			type: "UPDATED_DM_ELEMENT",
-			data: { dmId: dmId, element: formattedUpdatedElement },
+			type: "UPDATED_DM_MESSAGE",
+			data: { dmId: dmId, message: formattedUpdatedElement },
 		})
 		return formattedUpdatedElement
 	}
@@ -536,16 +573,16 @@ export class DmsService {
         const retypedEvent = event as Extract<RetypedEvent<typeof event>, { deletedMessageDmDiscussionEvent: {} }>
 		const formattedRes = this.formatDmMessage(rest, { ...retypedEvent, isDeleted: true })
 		await this.notifyOtherMemberOfDm(username, dmId, {
-			type: "UPDATED_DM_ELEMENT",
-			data: { dmId: dmId, element: formattedRes },
+			type: "UPDATED_DM_MESSAGE",
+			data: { dmId: dmId, message: formattedRes },
 		})
 		return formattedRes
 	}
 
-    async formatAntNotifyDmElement(usernameA: string, usernameB: string, dmId: string, element: Prisma.DmDiscussionElementGetPayload<typeof this.dmDiscussionElementGetPayload>) {
+    async formatAndNotifyDmElement(usernameA: string, usernameB: string, dmId: string, element: Prisma.DmDiscussionElementGetPayload<typeof this.dmDiscussionElementGetPayload>) {
         return Promise.all([
-            this.sse.pushEvent(usernameA, { type: "UPDATED_DM_ELEMENT", data: { dmId, element: await this.formatDmElementForUser(element, usernameA) } }),
-            this.sse.pushEvent(usernameB, { type: "UPDATED_DM_ELEMENT", data: { dmId, element: await this.formatDmElementForUser(element, usernameB) } })
+            this.sse.pushEvent(usernameA, { type: "CREATED_DM_ELEMENT", data: { dmId, element: await this.formatDmElementForUser(element, usernameA) } }),
+            this.sse.pushEvent(usernameB, { type: "CREATED_DM_ELEMENT", data: { dmId, element: await this.formatDmElementForUser(element, usernameB) } })
         ])
     }
 

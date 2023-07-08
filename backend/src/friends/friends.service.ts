@@ -48,7 +48,8 @@ export class FriendsService {
 		const formattedFriendShip: z.infer<typeof zFriendShipReturn> = {
 			...rest,
 			friendName: friend.name,
-            friendStatus: this.usersService.getUserStatus(friend.name, "FRIEND", friend.visibility)
+            friendStatus: this.usersService
+                .getUserStatusFromVisibilityAndProximityLevel(friend, "FRIEND")
         }
 		return formattedFriendShip
 	}
@@ -89,7 +90,7 @@ export class FriendsService {
 			dmId,
 			ClassicDmEventType.CREATED_FRIENDSHIP,
 		)
-        await this.dmsService.formatAntNotifyDmElement(requestingUserName, requestedUserName, dmId, newEvent)
+        await this.dmsService.formatAndNotifyDmElement(requestingUserName, requestedUserName, dmId, newEvent)
 		if (directMessage && directMessage.status === DirectMessageStatus.DISABLED)
 			await this.dmsService.updateAndNotifyDmStatus(
 				directMessage.id,
@@ -138,7 +139,7 @@ export class FriendsService {
 				dmId,
 				ClassicDmEventType.DELETED_FRIENDSHIP,
 			)
-			await this.dmsService.formatAntNotifyDmElement(requestingUserName, requestedUserName, dmId, newEvent)
+			await this.dmsService.formatAndNotifyDmElement(requestingUserName, requestedUserName, dmId, newEvent)
 		} catch (e) {
 			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025")
 				throw new NotFoundException(`not found friendShip ${friendShipId}`)

@@ -146,12 +146,13 @@ export class FriendInvitationsService {
 		const updatedFriendInvitation = await this.prisma.friendInvitation.update({
 			where: { id },
 			data: { status: newStatus },
-			select: this.friendInvitationSelect,
+            select: this.friendInvitationSelect 
 		})
-		await this.sse.pushEvent(
-			invitingUserName !== username ? invitingUserName : invitedUserName,
-			{ type: "UPDATED_FRIEND_INVITATION", data: updatedFriendInvitation },
-		)
+		this.sse.pushEvent(
+			invitingUserName !== username ? invitingUserName : invitedUserName, {
+                type: "UPDATED_FRIEND_INVITATION_STATUS",
+                data: { friendInvitationId: id, status: newStatus }
+            })
 		return updatedFriendInvitation
 	}
 }

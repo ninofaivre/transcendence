@@ -145,21 +145,14 @@ export class DmsService {
         const other = username === requestedUser.name
             ? requestingUser : requestedUser
 
-        const proximityLevel = (other.friend.length || other.friendOf.length)
-            ? "FRIEND"
-            : (other.chans.length)
-                ? "COMMON_CHAN"
-                : "ANYONE"
-
 		const formattedDirectMessage: z.infer<typeof zDmReturn> = {
 			...rest,
 			otherName: other.name,
-            otherStatus: this.usersService.getUserStatusFromVisibilityAndProximityLevel(
-                {
+            otherStatus: this.usersService.getUserStatusFromVisibilityAndProximityLevel({
                     name: other.name,
                     visibility: other.statusVisibilityLevel
                 },
-                proximityLevel)
+                this.usersService.getProximityLevel(other))
 		}
 		return formattedDirectMessage
 	}

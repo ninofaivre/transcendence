@@ -114,11 +114,22 @@ export class UserService {
                 }, select: { id: true },
                 take: 1
             }})
-        if (data.friend.length || data.friendOf.length
-            || data.chans.length || data.statusVisibilityLevel === "ANYONE") {
-            return this.getUserStatus(toGetStatusUserName)
-        }
-        return "INVISIBLE"
+        return this.getUserStatusFromVisibilityAndProximityLevel({
+                name: toGetStatusUserName,
+                visibility: data.statusVisibilityLevel
+            }, this.getProximityLevel(data))
+    }
+
+    public getProximityLevel({friend, friendOf, chans} : {
+        friend: {}[],
+        friendOf: {}[],
+        chans: {}[]
+    }) {
+        return (friend.length || friendOf.length)
+            ? "FRIEND"
+            : (chans.length)
+                ? "COMMON_CHAN"
+                : "ANYONE"
     }
     
     private async formatUserProfileForUser(username: string, toFormat: Prisma.UserGetPayload<typeof this.userProfileSelectGetPayload>)
@@ -133,24 +144,6 @@ export class UserService {
             blockedShipId: (blockedUser.length) ? blockedUser[0].id : undefined
         }
     }
-
-    // public async getProximityLevelBetweenUsers(usernameA: string, usernameB: string)
-    // : Promise<"FRIEND" | "COMMON_CHAN" | "ANYONE"> {
-    //     if (await this.friendsService.areUsersFriend(usernameA, usernameB))
-    //         return "FRIEND"
-    //     if (await this.chansService.doesUsersHasCommonChan(usernameA, usernameB))
-    //         return "COMMON_CHAN"
-    //     return "ANYONE"
-    // }
-
-    // public getUserStatusOld(username: string, proximityLevel: "FRIEND" | "COMMON_CHAN" | "ANYONE", statusVisibilityLevel: StatusVisibilityLevel)
-    // : "ONLINE" | "OFFLINE" | "INVISIBLE" {
-    //     if (statusVisibilityLevel === "NO_ONE"
-    //         || (statusVisibilityLevel === "ONLY_FRIEND" && proximityLevel !== "FRIEND")
-    //         || (statusVisibilityLevel === "IN_COMMON_CHAN" && proximityLevel === "ANYONE"))
-    //         return "INVISIBLE"
-    //     return (this.sse.isUserOnline(username)) ? "ONLINE" : "OFFLINE"
-    // }
 
     test(username: string) {
         return {
@@ -275,26 +268,6 @@ export class UserService {
 		const { password, ...result } = await this.prisma.user.create({ data: user })
 		return result
 	}
-
-    public getProximitySelect(username: string) {
-        return {
-            friend: { where: { requestedUserName: username } },
-            friendOf: { where: { requestingUserName: username } },
-            chans: {
-                where: { users: { some: { name: username } } },
-                take: 1
-            }
-        } satisfies Prisma.UserSelect
-    }
-
-    public formatProximity(arg: { friend: {}[], friendOf: {}[], chans: {}[] }) {
-        const { friend, friendOf, chans } = arg
-        if (friend.length || friendOf.length)
-            return "FRIEND"
-        if (chans.length)
-            return "COMMON_CHAN"
-        return "ANYONE"
-    }
 
     private async getNotifyStatusData(username: string) {
         return this.getUserByNameOrThrow(username, {

@@ -46,8 +46,6 @@
 			})
 	}
 
-	console.log($page.data.friendList)
-
 	$: if (search_input) getUsernames(search_input)
 	$: denylist = [...$page.data.friendList, $my_name]
 </script>

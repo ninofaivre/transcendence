@@ -6,7 +6,7 @@
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { toastStore } from "@skeletonlabs/skeleton"
-	import SendFriendRequest from "./SendFriendRequest.svelte"
+	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { invalidate } from "$app/navigation"
 
 	async function acceptInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {

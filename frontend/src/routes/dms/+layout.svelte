@@ -6,7 +6,7 @@
 	import DiscussionList from "./DiscussionList.svelte"
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
-	import SendFriendRequest from "../friends/SendFriendRequest.svelte"
+	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { listenOutsideClick } from "$lib/global"
 
 	// Get our discussions

@@ -1,33 +1,23 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte"
-	import { client }  from "$lib/clients"
 
 	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
 
-	export let currentDiscussionId: string
 	export let minRows = 1
-	export let maxRows: number | undefined
-	export let disabled = false
+	export let maxRows: number | undefined = undefined
 	export let line_height = 1.2
+	export let placeholder = "Shift + Enter for a new line"
+	export let disabled = false
+	export let disabled_placeholder = "The sending of messages is disabled for the moment"
+	$: placeholder = disabled ? disabled_placeholder : placeholder
 
 	const dispatch = createEventDispatcher()
-	let placeholder = "Shift + Enter for a new line"
 	let value: string = ""
 
 	async function sendMessage() {
 		value = value.trim()
 		if (value) {
-			dispatch("message_sent", [
-				value,
-				client.chans.createChanMessage({
-					params: {
-						chanId: currentDiscussionId.toString(),
-					},
-					body: {
-						content: value,
-					},
-				}),
-			])
+			dispatch("message_sent", value)
 			value = ""
 		}
 	}
@@ -37,7 +27,7 @@
 			switch (event.key) {
 				case "Enter":
 					sendMessage()
-					event.preventDefault() // Prevent news line from being entered in the textarea
+					event.preventDefault() // Prevent actual input of the newline that triggered sending
 			}
 		}
 	}
@@ -46,7 +36,7 @@
 	$: maxHeight = maxRows ? `${1 + maxRows * line_height}em` : `auto`
 </script>
 
-<div id="grid" class="grid grid-cols-[1fr_auto]">
+<div id="grid" class="grid min-w-[50vw] grid-cols-[1fr_auto]">
 	<div id="container">
 		<pre
 			aria-hidden="true"
@@ -58,8 +48,8 @@
 			class="textarea rounded-none"
 			aria-label="Type your message here"
 			on:keypress={handleKeypress}
-			{placeholder}
 			{disabled}
+			{placeholder}
 		/>
 	</div>
 	<button id="button" on:click={sendMessage} class="variant-filled-primary hover:font-medium">

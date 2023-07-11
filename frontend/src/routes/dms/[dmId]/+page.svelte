@@ -11,7 +11,9 @@
 	import ChatBox from "./ChatBox.svelte"
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
-	import { client }  from "$clients"
+	import { client } from "$clients"
+	import { addEventSourceListener } from "$lib/global"
+	import { sse_store } from "$stores"
 
 	// let new_message: [string, Promise<ClientInferResponses<typeof contract.chans.createChan>>]
 	// let new_message: [string, Promise<Response>]
@@ -24,16 +26,16 @@
 	function messageSentHandler(e: CustomEvent<string>) {
 		console.log("You sent a message:", e.detail)
 		new_message = [
-           e.detail,
-           client.dms.createDmMessage({
-					params: {
-						dmId: $page.params.dmId,
-					},
-					body: {
-						content: e.detail,
-					},
-            })
-        ]
+			e.detail,
+			client.dms.createDmMessage({
+				params: {
+					dmId: $page.params.dmId,
+				},
+				body: {
+					content: e.detail,
+				},
+			}),
+		]
 	}
 
 	// Get our discussions
@@ -42,24 +44,29 @@
 
 	let header: HTMLElement | null
 	let header_height: number
+	let disabled: boolean = false
+	let disabled_placeholder = "This user blocked you"
 
 	// Calculate the NavBar height in order to adapt the layout
 	onMount(() => {
 		header = document.getElementById("shell-header")
-		if (header) {
-			header_height = header.offsetHeight || 0
+		header_height = header?.offsetHeight || 0
+		const resizeObserver = new ResizeObserver((entries) => {
+			// We're only watching one element
+			const new_height = entries.at(0)?.contentRect.height
+			if (new_height && new_height !== header_height) {
+				header_height = new_height
+			}
+		})
+		resizeObserver.observe(header!)
 
-			const resizeObserver = new ResizeObserver((entries) => {
-				// We're only watching one element
-				const new_height = entries.at(0)?.contentRect.height
-				if (new_height && new_height !== header_height) {
-					header_height = new_height
-				}
-			})
+		const removeListener = addEventSourceListener($sse_store!, "UPDATED_DM_STATUS", (data) => {
+			disabled = data.status === "DISABLED" ? true : false
+		})
 
-			resizeObserver.observe(header)
-			// This callback cleans up the observer
-			return () => resizeObserver.unobserve(header as HTMLElement)
+		return () => {
+			removeListener()
+			resizeObserver.unobserve(header as HTMLElement)
 		}
 	})
 </script>
@@ -78,6 +85,8 @@
 		<ChatBox
 			on:message_sent={messageSentHandler}
 			maxRows={20}
+			{disabled}
+			{disabled_placeholder}
 		/>
 	</section>
 </div>

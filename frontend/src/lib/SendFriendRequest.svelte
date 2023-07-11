@@ -1,6 +1,5 @@
 <script lang="ts">
-	// import { Autocomplete } from "@skeletonlabs/skeleton"
-	import Autocomplete from "./Autocomplete.svelte"
+	import Autocomplete from "$lib/Autocomplete.svelte"
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
 
 	import { client } from "$clients"

@@ -11,21 +11,21 @@
 	import ChatBox from "./ChatBox.svelte"
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
-	import { dmsClient } from "$clients"
+	import { client }  from "$clients"
 
 	// let new_message: [string, Promise<ClientInferResponses<typeof contract.chans.createChan>>]
 	// let new_message: [string, Promise<Response>]
-	// let new_message: [string, ReturnType<typeof dmsClient.createDmMessage>]
+	// let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
 	// function messageSentHandler(e: CustomEvent<typeof new_message>) {
 	// 	console.log("You sent a message:", e.detail[0])
 	// 	new_message = e.detail
 	// }
-	let new_message: [string, ReturnType<typeof dmsClient.createDmMessage>]
+	let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
 	function messageSentHandler(e: CustomEvent<string>) {
 		console.log("You sent a message:", e.detail)
 		new_message = [
            e.detail,
-           dmsClient.createDmMessage({
+           client.dms.createDmMessage({
 					params: {
 						dmId: $page.params.dmId,
 					},

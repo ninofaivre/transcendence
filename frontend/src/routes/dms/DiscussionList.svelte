@@ -24,24 +24,28 @@
 			const destroyer = new Array(
 				addEventSourceListener($sse_store, "CREATED_DM", (data) => {
 					console.log("A new dm was created!")
-					invalidate(":discussions")
+					invalidate(":discussions") // Does this work ?
 				}),
-				addEventSourceListener($sse_store, "UPDATED_DM", (data) => {
+				addEventSourceListener($sse_store, "UPDATED_USER_STATUS", (data) => {
 					console.log("Got a event about a dm")
 					// invalidate(":discussions")
 					// invalidateAll()
 					const dot_to_update = document.querySelector(
-						`span.online-dot[data-relatedto=${data.otherName}]`,
+						`span.online-dot[data-relatedto=${data.userName}]`,
 					) as HTMLElement
 					if (dot_to_update) {
-						console.log(`${data.otherName} is now ${data.otherStatus} !`)
-						if (data.otherStatus !== "ONLINE") {
+						console.log(`${data.userName} is now ${data.status} !`)
+						if (data.status !== "ONLINE") {
 							// Only works if the element has a style tag onto itself
 							dot_to_update.style.visibility = "hidden"
 						} else {
 							dot_to_update.style.visibility = "visible"
 						}
 					} else console.log("IT WAS NULL !")
+				}),
+				addEventSourceListener($sse_store, "UPDATED_DM_MESSAGE", (data) => {
+                    // Mark unread the discussion that corresponds to the discussion who got a new message
+                    // How to I differentiate a modified message from a new message
 				}),
 			)
 			return () => {

@@ -1,9 +1,9 @@
 import type { LayoutLoad , LayoutLoadEvent} from "./$types"
-import { dmsClient, friendsClient } from "$lib/clients"
+import { client } from "$lib/clients"
 
 export const load = async ({ depends }: LayoutLoadEvent) => {
 	depends(":discussions")
-	const { status, body: dmList } = await dmsClient.getDms()
+	const { status, body: dmList } = await client.dms.getDms()
 	if (status !== 200) {
 		console.log(
 			`Failed to load channel list. Server returned code ${status} with message \"${
@@ -13,7 +13,7 @@ export const load = async ({ depends }: LayoutLoadEvent) => {
 	}
 
 	depends(":friends")
-	const { status: status2, body: friendships} = await friendsClient.getFriends() 
+	const { status: status2, body: friendships} = await client.friends.getFriends() 
     let friendList: string[] = []
 	if (status2 === 200) {
         friendList = friendships.map((friendship) => friendship.friendName)

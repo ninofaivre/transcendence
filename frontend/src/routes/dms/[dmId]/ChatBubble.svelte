@@ -3,7 +3,7 @@
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
 	import type { DirectMessage } from "$types"
 	import { my_name } from "$stores"
-	import { dmsClient } from "$clients"
+	import { client }  from "$clients"
 	import { page } from "$app/stores"
 	import ChatBox from "./ChatBox.svelte"
 	import { listenOutsideClick } from "$lib/global"
@@ -33,7 +33,7 @@
 	async function deleteHandler() {
 		is_menu_open = false
 		is_sent = false
-		const { status, body } = await dmsClient.deleteDmMessage({
+		const { status, body } = await client.dms.deleteDmMessage({
 			body: null,
 			params: {
 				messageId: message_row.id,
@@ -55,7 +55,7 @@
 	async function updateMessage(e: CustomEvent<string>) {
 		contenteditable = false
 		is_sent = false
-		const { status, body } = await dmsClient.updateMessage({
+		const { status, body } = await client.dms.updateMessage({
 			body: { content: e.detail },
 			params: {
 				elementId: message_row.id,

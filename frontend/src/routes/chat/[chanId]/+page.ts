@@ -1,10 +1,10 @@
 import type { PageLoadEvent } from "./$types"
 import type { PageLoad } from "./$types"
-import { chansClient } from "$clients"
+import { client }  from "$clients"
 
 export const load = async ({ depends, params }: PageLoadEvent) => {
 	depends(`:dms${params.chanId}`)
-	const { status, body: messages } = await chansClient.getChanElements({
+	const { status, body: messages } = await client.chans.getChanElements({
 		params: {
 			chanId: params.chanId as string,
 		},

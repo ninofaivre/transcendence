@@ -1,11 +1,11 @@
 import type { PageLoadEvent } from "./$types"
 import type { PageLoad } from "./$types"
-import { dmsClient } from "$lib/clients"
+import { client }  from "$lib/clients"
 
 export const load = async ({ depends, params }: PageLoadEvent) => {
 
 	depends(`:dms${params.dmId}`)
-	const { status, body: messages } = await dmsClient.getDmElements({
+	const { status, body: messages } = await client.dms.getDmElements({
         params: {
             dmId: params.dmId as string
         }

@@ -1,7 +1,7 @@
 import { derived } from "svelte/store"
 
 import { localStorageStore } from "@skeletonlabs/skeleton"
-import { usersClient } from "$clients"
+import { client }  from "$clients"
 import { get } from "svelte/store"
 
 console.log("The stores module is being executed...")
@@ -15,7 +15,7 @@ export const my_name = derived(
 	($logged_in, set) => {
 		async function getter(logged: typeof $logged_in) {
 			if (logged === true) {
-				const { body, status } = await usersClient.getMe()
+				const { body, status } = await client.users.getMe()
 				if (status == 200) return body.userName
 			}
 		}

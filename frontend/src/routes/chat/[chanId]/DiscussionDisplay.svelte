@@ -8,11 +8,11 @@
 	import ChatBubble from "./ChatBubble.svelte"
 	import { my_name } from "$lib/stores"
 	import { onMount } from "svelte"
-	import { chansClient, dmsClient } from "$clients"
+	import { client } from "$clients"
 
 	export let messages: ChanMessageOrEvent[] = []
 	// export let new_message: [string, Promise<Response>]
-	export let new_message: [string, ReturnType<typeof dmsClient.createDmMessage>]
+	export let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
 	export let currentDiscussionId: string
 
 	let observer: IntersectionObserver
@@ -32,12 +32,9 @@
 				{
 					type: "message",
 					id: "",
-					content,
+					message: { content, relatedTo: null, relatedRoles: [], relatedUsers: [],},
 					creationDate: new Date(),
-					author: $my_name,
-					hasBeenEdited: false,
-					relatedTo: null,
-					isDeleted: false,
+					authorName: $my_name,
 				},
 			]
 			msg_promise.then(({ status, body }) => {
@@ -59,7 +56,7 @@
 		const oldest_message = canary.nextElementSibling
 		const start = oldest_message?.getAttribute("id")
 		if (start && entry.isIntersecting) {
-			const { status, body } = await chansClient.getChanElements({
+			const { status, body } = await client.chans.getChanElements({
 				params: { chanId: currentDiscussionId.toString() },
 				query: { nElements: loading_greediness, cursor: start },
 			})

@@ -1,11 +1,11 @@
 import type { LoadEvent } from "@sveltejs/kit"
-import { friendsClient, invitationsClient } from "$lib/clients"
+import { client } from "$lib/clients"
 
 export const load = async ({ depends }: LoadEvent) => {
 	depends(":friendships")
 	depends(":invitations")
 
-	const { status: retcode1, body: friendships } = await friendsClient.getFriends()
+	const { status: retcode1, body: friendships } = await client.friends.getFriends()
 	if (retcode1 !== 200) {
 		console.log(
 			`Failed to load friendship list. Server returned code ${retcode1} with message \"${
@@ -15,7 +15,7 @@ export const load = async ({ depends }: LoadEvent) => {
 	} else console.log("Loaded friendship list")
 
 	const { status: retcode2, body: friend_requests } =
-		await invitationsClient.friend.getFriendInvitations({
+		await client.invitations.friend.getFriendInvitations({
 			query: { status: ["PENDING"] },
 		})
 	if (retcode2 !== 200) {

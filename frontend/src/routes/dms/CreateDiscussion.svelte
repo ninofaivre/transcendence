@@ -3,7 +3,7 @@
 
 	import { Autocomplete, InputChip, toastStore } from "@skeletonlabs/skeleton"
 	import { invalidate } from "$app/navigation"
-	import { chansClient, invitationsClient } from "$clients"
+	import { client } from "$clients"
 	import { page } from "$app/stores"
 
     export let friendList: string[]
@@ -21,13 +21,13 @@
 		const title: string = formdata.get("title") as string
 		const type = priv ? "PRIVATE" : "PUBLIC"
 		const usernames: string[] = formdata.getAll("users") as string[]
-		const { status, body } = await chansClient.createChan({
+		const { status, body } = await client.chans.createChan({
 			body: { type, title },
 		})
 		if (status == 201) {
 			console.log("Server returned:", status, body)
 			for (let invitedUserName in usernames) {
-				invitationsClient.chan.createChanInvitation({
+				client.invitations.chan.createChanInvitation({
 					body: { chanId: body.id, invitedUserName },
 				})
 			}

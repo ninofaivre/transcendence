@@ -9,13 +9,13 @@
 	import { my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { sse_store } from "$stores"
-	import { dmsClient } from "$clients"
+	import { client }  from "$clients"
 	import { page } from "$app/stores"
 	import { addEventSourceListener } from "$lib/global"
 
 	export let messages: DirectMessageOrEvent[] = []
 	// export let new_message: [string, Promise<Response>]
-	export let new_message: [string, ReturnType<typeof dmsClient.createDmMessage>]
+	export let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
 	export let currentDiscussionId: string
 
 	let observer: IntersectionObserver
@@ -62,7 +62,7 @@
 		const oldest_message = canary?.nextElementSibling
 		const start = oldest_message?.getAttribute("id")
 		if (start && entry.isIntersecting) {
-			const { status, body } = await dmsClient.getDmElements({
+			const { status, body } = await client.dms.getDmElements({
 				params: { dmId: currentDiscussionId.toString() },
 				query: { nElements: loading_greediness, cursor: start },
 			})
@@ -105,10 +105,10 @@
 					}
 				}),
 
-				addEventSourceListener($sse_store, "UPDATED_DM_ELEMENT", (data) => {
+				addEventSourceListener($sse_store, "UPDATED_DM_MESSAGE", (data) => {
 					console.log("Server message: Message was modified", data)
 					if (data.dmId === currentDiscussionId) {
-						const message = data.element
+						const { message } = data
 						const to_update = document.getElementById(message.id)
 						if (to_update && message.type === "message") {
 							new ChatBubble({

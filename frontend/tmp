@@ -1,0 +1,95 @@
+ts: Type '
+{ type: "message";
+id: string;
+content: string;
+relatedTo: string | null;
+creationDate: Date;
+author: string;
+hasBeenEdited: boolean;
+is Deleted: false;
+}
+|
+{ type: "message";
+id: string;
+content: "";
+creationDate: Date;
+author: string;
+isDeleted: true;
+}'
+is not assignable to type 
+
+'{ type: "message";
+message: { content: string;
+relatedUsers: string[];
+relatedRoles: string[];
+relatedTo: string | null;
+};
+id: string;
+creationDate: Date;
+authorName: string;
+} | { type: "event";
+id: string;
+event: { ...;
+} | ... 1 more ... | { ...;
+};
+creationDate: Date;
+authorName: string;
+}'.                                                                                                                                            │
+
+Type '
+
+{ type: "message";
+id: string;
+content: string;
+relatedTo: string | null;
+creationDate: Date;
+author: string;
+hasBeenEdited: boolean;
+isDeleted: false;
+}'
+
+is not assignable to type
+
+'{ type: "message";
+message: { content: string;
+relatedUsers: string[];
+relatedRoles: string[];
+relatedTo: string | null;
+};
+id: string;
+creationDate: Date;
+authorName: string;
+} | { type: "event";
+id: string;
+event: { ...;
+} | ... 1 more ... | { ...;
+};
+creationDate: Date;
+authorName: string;
+}'.                                                                                                 │
+
+Type '
+
+{ type: "message";
+id: string;
+content: string;
+relatedTo: string | null;
+creationDate: Date;
+author: string;
+hasBeenEdited: boolean;
+isDeleted: false; }'
+
+is missing the following properties from type '
+
+{ type: "message";
+message: { content: string;
+relatedUsers: string[];
+relatedRoles: string[];
+relatedTo: string | null;
+};
+id: string;
+creationDate: Date;
+authorName: string;
+}'
+
+: message, authorName

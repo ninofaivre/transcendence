@@ -13,13 +13,15 @@
 	let users: AutocompleteOption[] = []
 
 	async function sendFriendRequest(username: string) {
-		const { status, body } = await client.invitations.friend.createFriendInvitation({
-			body: { invitedUserName: username },
-		})
-		if (status != 201) {
-			reportUnexpectedCode(status, "create friend request", body, "error")
-		} else {
-			invalidate(":friendships")
+		if (username) {
+			const { status, body } = await client.invitations.friend.createFriendInvitation({
+				body: { invitedUserName: username },
+			})
+			if (status != 201) {
+				reportUnexpectedCode(status, "create friend request", body, "error")
+			} else {
+				invalidate(":friendships")
+			}
 			console.log("Sent friendship request to " + username)
 		}
 	}
@@ -29,13 +31,14 @@
 	}
 
 	async function getUsernames(input: string) {
-		return client.users.searchUsers({
+		return client.users
+			.searchUsers({
 				query: {
 					userNameContains: input,
 					filter: {
-                        type: "inc",
-                        friends: false, 
-                    },
+						type: "inc",
+						friends: false,
+					},
 				},
 			})
 			.then(({ status, body }) => {

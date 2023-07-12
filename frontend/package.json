@@ -42,7 +42,6 @@
   "type": "module",
   "dependencies": {
     "@ts-rest/core": "^3.26.3",
-    "contract": "workspace:*",
     "socket.io-client": "^4.7.1"
   }
 }

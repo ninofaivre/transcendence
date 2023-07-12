@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common"
-import { FriendInvitationStatus, Prisma } from "prisma-db-client"
+import { FriendInvitationStatus, Prisma } from "@prisma/client"
 import { FriendsService } from "src/friends/friends.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { SseService } from "src/sse/sse.service"

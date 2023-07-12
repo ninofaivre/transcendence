@@ -1,21 +1,18 @@
 {
     "name": "contract",
-    "version": "0.0.0",
-    "description": "A ts-rest based contract",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "scripts": {
-        "build": "pnpm tsc -p ."
-    },
-    "main": "src/index.ts",
-    "types": "src/index.ts",
-    "dependencies": {
-        "@anatine/zod-openapi": "^1.14.0",
-        "@ts-rest/core": "^3.26.0",
-        "zod": "^3.21.4",
-        "prisma-db-client": "workspace:*"
+        "build": "tsup src/index.ts --format cjs --dts",
+        "dev": "pnpm run build -- --watch"
     },
     "devDependencies": {
-        "typescript": "^5.1.3",
-        "@types/node": "^20.3.0",
-        "@nestjs/common": "^9.4.2"
+        "@nestjs/common": "^10.0.5",
+        "tsup": "^7.1.0"
+    },
+    "dependencies": {
+        "@anatine/zod-openapi": "^2.0.1",
+        "prisma-generated": "workspace:*",
+        "zod": "^3.21.4"
     }
 }

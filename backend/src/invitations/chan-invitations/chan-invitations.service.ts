@@ -5,7 +5,7 @@ import {
 	NotFoundException,
 	forwardRef,
 } from "@nestjs/common"
-import { Prisma, ChanInvitationStatus, PermissionList } from "prisma-db-client"
+import { Prisma, ChanInvitationStatus, PermissionList } from "@prisma/client"
 import { zChanInvitationReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"

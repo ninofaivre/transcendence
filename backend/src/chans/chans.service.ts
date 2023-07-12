@@ -15,7 +15,7 @@ import {
 	RoleApplyingType,
 	ChanInvitationStatus,
 	ClassicChanEventType,
-} from "prisma-db-client"
+} from "@prisma/client"
 import { compareSync, hash } from "bcrypt"
 import { SseService } from "src/sse/sse.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"

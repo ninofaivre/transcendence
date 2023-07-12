@@ -1,7 +1,17 @@
-import { Prisma } from "prisma-db-client"
+import { Prisma } from "@prisma/client"
 import { PrismaService } from "./prisma/prisma.service"
 
-export type Tx = Omit<PrismaService, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "onModuleInit" | "enableShutdownHooks" | "$extends">
+export type Tx = Omit<
+	PrismaService,
+	| "$connect"
+	| "$disconnect"
+	| "$on"
+	| "$transaction"
+	| "$use"
+	| "onModuleInit"
+	| "enableShutdownHooks"
+	| "$extends"
+>
 
 // Example :
 // transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<{a: string, b: number, random: Date}, "a" | "b">
@@ -10,8 +20,7 @@ type transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<
 	T extends object,
 	K extends keyof T,
 > = {
-	[k in K]: Omit<T, K> &
-		(Record<Exclude<K, k>, null> & { [index in k]: Exclude<T[k], null> }) // could remove that line but null is more in the prisma spirit than undefined
+	[k in K]: Omit<T, K> & (Record<Exclude<K, k>, null> & { [index in k]: Exclude<T[k], null> }) // could remove that line but null is more in the prisma spirit than undefined
 }[K]
 
 export type EventUnion =

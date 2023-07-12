@@ -2,4 +2,4 @@ packages:
   - 'backend'
   - 'frontend'
   - 'contract'
-  - 'prisma-db-client'
+  - 'prisma-generated'

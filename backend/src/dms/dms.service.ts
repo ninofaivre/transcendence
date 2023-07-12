@@ -19,7 +19,7 @@ import { DmEvent, zDmDiscussionElementReturn, zDmReturn } from "contract"
 import { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx } from "src/types"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
-import { zDmDiscussionEventReturn, zDmDiscussionMessageReturn } from "contract/dist/routers/dms"
+import { zDmDiscussionEventReturn, zDmDiscussionMessageReturn } from "contract"
 
 @Injectable()
 export class DmsService {

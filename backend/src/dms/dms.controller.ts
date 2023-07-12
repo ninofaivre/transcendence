@@ -9,7 +9,7 @@ import {
 	nestControllerContract,
 } from "@ts-rest/nest"
 import { contract } from "contract"
-import { EnrichedRequest } from "src/auth/auth.service"
+import type { EnrichedRequest } from "src/auth/auth.service"
 
 const c = nestControllerContract(contract.dms)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -19,12 +19,19 @@ type RequestShapes = NestRequestShapes<typeof c>
 export class DmsController implements NestControllerInterface<typeof c> {
 	constructor(private readonly dmsService: DmsService) {}
 
-    @UseGuards(JwtAuthGuard)
-    @TsRest(c.searchDms)
-    async searchDms(@Request() req: EnrichedRequest, @TsRestRequest(){ query }: RequestShapes['searchDms']) {
-        const body = await this.dmsService.searchDms(req.user.username, query.nResult, query.otherUserNameContains)
-        return { status: 200 as const, body }
-    }
+	@UseGuards(JwtAuthGuard)
+	@TsRest(c.searchDms)
+	async searchDms(
+		@Request() req: EnrichedRequest,
+		@TsRestRequest() { query }: RequestShapes["searchDms"],
+	) {
+		const body = await this.dmsService.searchDms(
+			req.user.username,
+			query.nResult,
+			query.otherUserNameContains,
+		)
+		return { status: 200 as const, body }
+	}
 
 	@UseGuards(JwtAuthGuard)
 	@TsRest(c.getDms)

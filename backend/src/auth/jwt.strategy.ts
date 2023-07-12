@@ -1,7 +1,7 @@
 import { ExtractJwt, Strategy } from "passport-jwt"
 import { PassportStrategy } from "@nestjs/passport"
 import { Injectable } from "@nestjs/common"
-import { Request as RequestType } from "express"
+import type { Request as RequestType } from "express"
 import * as cookie from "cookie"
 import { EnvService } from "src/env/env.service"
 

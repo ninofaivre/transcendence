@@ -1,6 +1,4 @@
-import {
-	UseGuards,
-} from "@nestjs/common"
+import { UseGuards } from "@nestjs/common"
 import { Controller, Request } from "@nestjs/common"
 import { JwtAuthGuard } from "../auth/jwt-auth.guard"
 import { UserService } from "./user.service"
@@ -12,44 +10,58 @@ import {
 	nestControllerContract,
 } from "@ts-rest/nest"
 import { contract } from "contract"
-import { EnrichedRequest } from "src/auth/auth.service"
+import type { EnrichedRequest } from "src/auth/auth.service"
 
 const c = nestControllerContract(contract.users)
 type RequestShapes = NestRequestShapes<typeof c>
 
-@TsRest({jsonQuery: true})
+@TsRest({ jsonQuery: true })
 @Controller()
 export class UserController implements NestControllerInterface<typeof c> {
 	constructor(private userService: UserService) {}
 
-    @UseGuards(JwtAuthGuard)
-    @TsRest(c.searchUsers)
-    async searchUsers(@Request() req: EnrichedRequest, @TsRestRequest(){ query }: RequestShapes["searchUsers"]) {
-        const body = await this.userService.searchUsers(req.user.username, query.userNameContains, query.nResult, query.filter)
-        // console.log(query)
-        return { status: 200 as const, body }
-    }
+	@UseGuards(JwtAuthGuard)
+	@TsRest(c.searchUsers)
+	async searchUsers(
+		@Request() req: EnrichedRequest,
+		@TsRestRequest() { query }: RequestShapes["searchUsers"],
+	) {
+		const body = await this.userService.searchUsers(
+			req.user.username,
+			query.userNameContains,
+			query.nResult,
+			query.filter,
+		)
+		// console.log(query)
+		return { status: 200 as const, body }
+	}
 
-    @UseGuards(JwtAuthGuard)
+	@UseGuards(JwtAuthGuard)
 	@TsRest(c.getMe)
 	async getMe(@Request() req: EnrichedRequest) {
 		const body = await this.userService.getMe(req.user.username)
 		return { status: 200 as const, body }
 	}
 
-    @UseGuards(JwtAuthGuard)
-    @TsRest(c.getUser)
-    async getUser(@Request() req: EnrichedRequest, @TsRestRequest(){ params: { userName } }: RequestShapes['getUser']) {
-        const body = await this.userService.getUser(req.user.username, userName)
-        return { status: 200 as const, body }
-    }
+	@UseGuards(JwtAuthGuard)
+	@TsRest(c.getUser)
+	async getUser(
+		@Request() req: EnrichedRequest,
+		@TsRestRequest() { params: { userName } }: RequestShapes["getUser"],
+	) {
+		const body = await this.userService.getUser(req.user.username, userName)
+		return { status: 200 as const, body }
+	}
 
-    @UseGuards(JwtAuthGuard)
-    @TsRest(c.updateMe)
-    async updateMe(@Request()req: EnrichedRequest, @TsRestRequest(){ body: requestBody }: RequestShapes['updateMe']) {
-        const body = await this.userService.updateMe(req.user.username, requestBody)
-        return { status: 200 as const, body }
-    }
+	@UseGuards(JwtAuthGuard)
+	@TsRest(c.updateMe)
+	async updateMe(
+		@Request() req: EnrichedRequest,
+		@TsRestRequest() { body: requestBody }: RequestShapes["updateMe"],
+	) {
+		const body = await this.userService.updateMe(req.user.username, requestBody)
+		return { status: 200 as const, body }
+	}
 
 	@TsRest(c.signUp)
 	async signUp(@TsRestRequest() { body: requestBody }: RequestShapes["signUp"]) {

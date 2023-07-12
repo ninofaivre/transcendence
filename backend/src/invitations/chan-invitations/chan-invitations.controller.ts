@@ -9,7 +9,7 @@ import {
 } from "@ts-rest/nest"
 import { ChanInvitationsService } from "./chan-invitations.service"
 import { contract } from "contract"
-import { EnrichedRequest } from "src/auth/auth.service"
+import type { EnrichedRequest } from "src/auth/auth.service"
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard"
 
 const c = nestControllerContract(contract.invitations.chan)

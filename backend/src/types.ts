@@ -1,5 +1,5 @@
-import { Prisma } from "prisma-generated"
-import { PrismaService } from "./prisma/prisma.service"
+import type { Prisma } from "prisma-generated"
+import type { PrismaService } from "./prisma/prisma.service"
 
 export type Tx = Omit<
 	PrismaService,
@@ -20,8 +20,7 @@ type transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<
 	T extends object,
 	K extends keyof T,
 > = {
-	[k in K]: Omit<T, K> &
-		(Record<Exclude<K, k>, null> & { [index in k]: Exclude<T[k], null> }) // could remove that line but null is more in the prisma spirit than undefined
+	[k in K]: Omit<T, K> & (Record<Exclude<K, k>, null> & { [index in k]: Exclude<T[k], null> }) // could remove that line but null is more in the prisma spirit than undefined
 }[K]
 
 export type EventUnion =

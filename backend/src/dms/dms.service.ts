@@ -7,19 +7,19 @@ import {
 	forwardRef,
 } from "@nestjs/common"
 import {
-	ClassicDmEventType,
+	type ClassicDmEventType,
 	DeletedMessageDmDiscussionEvent,
 	DirectMessageStatus,
 	DmDiscussionEvent,
-	Prisma,
+	type Prisma,
 } from "prisma-generated"
 import { SseService } from "src/sse/sse.service"
-import { z } from "zod"
-import { DmEvent, zDmDiscussionElementReturn, zDmReturn } from "contract"
-import { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx } from "src/types"
+import type { z } from "zod"
+import type { DmEvent, zDmDiscussionElementReturn, zDmReturn } from "contract"
+import type { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx } from "src/types"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
-import { zDmDiscussionEventReturn, zDmDiscussionMessageReturn } from "contract"
+import type { zDmDiscussionEventReturn, zDmDiscussionMessageReturn } from "contract"
 
 @Injectable()
 export class DmsService {
@@ -341,7 +341,7 @@ export class DmsService {
 				take,
 				select: { id: true, requestingUserName: true, requestedUserName: true },
 			})
-		).map((dm) => ({
+		).map((dm: any) => ({
 			dmId: dm.id,
 			otherUserName:
 				username === dm.requestedUserName ? dm.requestingUserName : dm.requestedUserName,

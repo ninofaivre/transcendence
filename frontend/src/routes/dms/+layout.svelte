@@ -89,4 +89,8 @@
 		scrollbar-gutter: stable; /* This doesn't seem to do anything */
 		scrollbar-width: thin;
 	}
+
+	#col1 {
+		margin: 0px 3px;
+	}
 </style>

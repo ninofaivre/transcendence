@@ -4,15 +4,15 @@
 	import { page } from "$app/stores"
 	import { Table } from "@skeletonlabs/skeleton"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
-	import { dmsClient, invitationsClient } from "$clients"
+	import { client } from "$clients"
 	import { toastStore } from "@skeletonlabs/skeleton"
-	import SendFriendRequest from "./SendFriendRequest.svelte"
+	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { invalidate } from "$app/navigation"
 
 	async function acceptInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
 		const id = e.currentTarget.dataset.id
 		if (id) {
-			const { status, body } = await invitationsClient.friend.updateFriendInvitation({
+			const { status, body } = await client.invitations.friend.updateFriendInvitation({
 				params: { id },
 				body: { status: "ACCEPTED" },
 			})
@@ -31,7 +31,7 @@
 	async function declineInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
 		const id = e.currentTarget.dataset.id
 		if (id) {
-			const { status, body } = await invitationsClient.friend.updateFriendInvitation({
+			const { status, body } = await client.invitations.friend.updateFriendInvitation({
 				params: { id },
 				body: { status: "REFUSED" },
 			})
@@ -48,7 +48,7 @@
 	}
 
 	function messageFriend(e: Event) {
-		// dmsClient.getDmIdWithName(e.detail)
+		// client.dms.getDmIdWithName(e.detail)
 	}
 
 	console.log("Your friendships are:", $page.data.friendships)

@@ -22,7 +22,7 @@ import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"
 import { ChanEvent, zChanDiscussionElementReturn, zChanDiscussionEventReturn } from "contract"
 import { z } from "zod"
-import { PrismaClientKnownRequestError } from "prisma-generated/runtime"
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
 import { PrismaService } from "src/prisma/prisma.service"
 
@@ -284,18 +284,18 @@ export class ChansService {
 		}
 	}
 
-	async getAllPendingInvitationsIdsForChan(chanId: string) {
+	async getAllPendingInvitationsForChan(chanId: string) {
 		return (
 			await this.prisma.chan.findUniqueOrThrow({
 				where: { id: chanId },
 				select: {
 					invitations: {
 						where: { status: ChanInvitationStatus.PENDING },
-						select: { id: true },
+						select: { id: true, invitedUserName: true, invitingUserName: true },
 					},
 				},
 			})
-		).invitations.map((el) => el.id)
+		).invitations
 	}
 
 	public async throwIfUserNotAuthorizedInChan(
@@ -379,10 +379,10 @@ export class ChansService {
 		// a bit dangerous, need to think about what need to be in a transaction or something like that in case something fail
 		Promise.all([
 			// check if need to await in .then
-			this.getAllPendingInvitationsIdsForChan(chanId).then((invsId) =>
+			this.getAllPendingInvitationsForChan(chanId).then((invs) =>
 				this.chanInvitationsService.updateAndNotifyManyInvs(
 					ChanInvitationStatus.DELETED_CHAN,
-					invsId,
+					invs,
 				),
 			),
 			this.notifyChan(chanId, { type: "DELETED_CHAN", data: { chanId } }, null),

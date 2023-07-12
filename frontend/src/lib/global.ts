@@ -1,6 +1,6 @@
 import { PUBLIC_BACKEND_URL } from "$env/static/public"
 import { logged_in } from "$lib/stores"
-import { authClient, usersClient } from "$clients"
+import { client } from "$clients"
 import type { SseEvent } from "contract"
 
 export function getCookie(cname: string) {
@@ -78,7 +78,7 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: object, urlArgs
 
 export async function login(username: string, password: string) {
 	await logout()
-	const { status } = await authClient.login({
+	const { status } = await client.auth.login({
 		body: {
 			username,
 			password,
@@ -94,7 +94,7 @@ export async function login(username: string, password: string) {
 }
 
 export async function logout() {
-	return authClient
+	return client.auth
 		.logout()
 		.catch(({ status, message }) => {
 			console.warn(
@@ -111,7 +111,7 @@ export async function logout() {
 }
 
 export async function signup(name: string, password: string) {
-	return usersClient.signUp({
+	return client.users.signUp({
 		body: {
 			name,
 			password,
@@ -160,7 +160,12 @@ export function listenOutsideClick(
 	}
 }
 
-export function reportUnexpectedCode(code: Number, what: string, ret: any, level?: string) {
+export function reportUnexpectedCode(
+	code: Number,
+	what: string,
+	ret: any,
+	level?: "error" | "warning" | "log",
+) {
 	const message = ret?.message
 		? `Could not ${what}. Server returned ${code}\n with message \"${ret?.message}\"`
 		: `Could not ${what}. Server returned ${code}\n with the following data: ${JSON.stringify(

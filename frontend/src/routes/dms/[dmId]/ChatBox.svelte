@@ -7,6 +7,9 @@
 	export let maxRows: number | undefined = undefined
 	export let line_height = 1.2
 	export let placeholder = "Shift + Enter for a new line"
+	export let disabled = false
+	export let disabled_placeholder = "The sending of messages is disabled for the moment"
+	$: placeholder = disabled ? disabled_placeholder : placeholder
 
 	const dispatch = createEventDispatcher()
 	let value: string = ""
@@ -33,7 +36,7 @@
 	$: maxHeight = maxRows ? `${1 + maxRows * line_height}em` : `auto`
 </script>
 
-<div id="grid" class="grid grid-cols-[1fr_auto] min-w-[50vw]">
+<div id="grid" class="grid min-w-[50vw] grid-cols-[1fr_auto]">
 	<div id="container">
 		<pre
 			aria-hidden="true"
@@ -45,6 +48,7 @@
 			class="textarea rounded-none"
 			aria-label="Type your message here"
 			on:keypress={handleKeypress}
+			{disabled}
 			{placeholder}
 		/>
 	</div>

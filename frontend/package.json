@@ -7,41 +7,43 @@
     "build": "pnpm vite build",
     "build:watch": "find src -type f | entr -c -r pnpm vite build #pnpm vite build --watch ",
     "preview": "pnpm vite preview",
-    "check": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --compiler-warnings \"a11y-click-events-have-key-events:ignore,\"",
     "check:watch": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test:unit": "pnpm vitest",
     "lint": "pnpm prettier --plugin-search-dir . --check . && eslint .",
     "format": "pnpm prettier --plugin-search-dir . --write ."
   },
+  "dependencies": {
+    "@ts-rest/core": "^3.26.3",
+    "contract": "workspace:*",
+    "socket.io-client": "^4.7.1",
+    "zod": "^3.21.4"
+  },
   "devDependencies": {
-    "@floating-ui/dom": "^1.4.3",
+    "@floating-ui/dom": "^1.4.4",
     "@skeletonlabs/skeleton": "^1.9.0",
     "@sveltejs/adapter-static": "^2.0.2",
-    "@sveltejs/kit": "^1.22.0",
+    "@sveltejs/kit": "^1.22.2",
     "@tailwindcss/forms": "^0.5.3",
-    "@typescript-eslint/eslint-plugin": "^5.61.0",
-    "@typescript-eslint/parser": "^5.61.0",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
     "autoprefixer": "^10.4.14",
     "eslint": "^8.44.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-svelte": "^2.32.2",
     "http-proxy": "^1.18.1",
-    "postcss": "^8.4.24",
-    "prettier": "^2.0.0",
+    "postcss": "^8.4.25",
+    "prettier": "^2.8.8",
     "prettier-plugin-svelte": "^2.10.1",
     "prettier-plugin-tailwindcss": "^0.3.0",
-    "svelte": "^4.0.4",
-    "svelte-check": "^3.4.4",
+    "svelte": "^4.0.5",
+    "svelte-check": "^3.4.6",
     "svelte-inspector": "^0.0.3",
     "svelte-reactive-preprocessor": "^0.8.3",
     "tailwindcss": "^3.3.2",
     "tslib": "^2.6.0",
     "typescript": "^5.1.6",
-    "vite": "^4.3.9"
+    "vite": "^4.4.3"
   },
-  "type": "module",
-  "dependencies": {
-    "@ts-rest/core": "^3.26.3",
-    "socket.io-client": "^4.7.1"
-  }
+  "type": "module"
 }

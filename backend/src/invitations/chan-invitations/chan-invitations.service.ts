@@ -139,7 +139,7 @@ export class ChanInvitationsService {
 			)
 			return { chanInv, dmEvent }
 		})
-		await this.dmsService.formatAntNotifyDmElement(
+		await this.dmsService.formatAndNotifyDmElement(
 			invitingUserName,
 			invitedUserName,
 			directMessageId,
@@ -152,24 +152,21 @@ export class ChanInvitationsService {
 		return chanInv
 	}
 
-	public async updateAndNotifyManyInvs(newStatus: ChanInvitationStatus, invsId: string[]) {
+	public async updateAndNotifyManyInvs(
+		newStatus: ChanInvitationStatus,
+		invs: { id: string; invitedUserName: string; invitingUserName: string }[],
+	) {
 		await this.prisma.chanInvitation.updateMany({
-			where: { id: { in: invsId } },
+			where: { id: { in: invs.map((el) => el.id) } },
 			data: {
 				status: newStatus,
 			},
 		})
-		const res = this.formatChanInvitationArray(
-			await this.prisma.chanInvitation.findMany({
-				where: { id: { in: invsId } },
-				select: this.chanInvitationSelect,
-			}),
-		)
 		return Promise.all(
-			res.map(async (el) => {
+			invs.map(async (el) => {
 				return this.sse.pushEventMultipleUser([el.invitingUserName, el.invitedUserName], {
-					type: "UPDATED_CHAN_INVITATION",
-					data: el,
+					type: "UPDATED_CHAN_INVITATION_STATUS",
+					data: { chanInvitationId: el.id, status: newStatus },
 				})
 			}),
 		)
@@ -188,10 +185,14 @@ export class ChanInvitationsService {
 						chanId: chanId,
 						...(!!exceptionInvitationId ? { id: { not: exceptionInvitationId } } : {}),
 					},
-					select: { id: true },
+					select: {
+						id: true,
+						invitedUserName: true,
+						invitingUserName: true,
+					},
 				},
 			})
-		).incomingChanInvitation.map((el) => el.id)
+		).incomingChanInvitation
 		await this.updateAndNotifyManyInvs(ChanInvitationStatus.ACCEPTED, invs)
 	}
 
@@ -230,7 +231,10 @@ export class ChanInvitationsService {
 		)
 		await this.sse.pushEvent(
 			invitingUserName !== username ? invitingUserName : invitedUserName,
-			{ type: "UPDATED_CHAN_INVITATION", data: updatedChanInvitation },
+			{
+				type: "UPDATED_CHAN_INVITATION_STATUS",
+				data: { chanInvitationId: id, status: newStatus },
+			},
 		)
 		return updatedChanInvitation
 	}

@@ -24,8 +24,9 @@ export class UserController implements NestControllerInterface<typeof c> {
 
     @UseGuards(JwtAuthGuard)
     @TsRest(c.searchUsers)
-    async searchUsers(@Request() req: EnrichedRequest, @TsRestRequest(){ query: { nResult, userNameContains } }: RequestShapes["searchUsers"]) {
-        const body = await this.userService.searchUsers(req.user.username, userNameContains, nResult)
+    async searchUsers(@Request() req: EnrichedRequest, @TsRestRequest(){ query }: RequestShapes["searchUsers"]) {
+        const body = await this.userService.searchUsers(req.user.username, query.userNameContains, query.nResult, query.filter)
+        // console.log(query)
         return { status: 200 as const, body }
     }
 

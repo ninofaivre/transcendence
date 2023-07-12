@@ -6,7 +6,7 @@
 	import DiscussionList from "./DiscussionList.svelte"
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
-	import SendFriendRequest from "../friends/SendFriendRequest.svelte"
+	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { listenOutsideClick } from "$lib/global"
 
 	// Get our discussions
@@ -88,5 +88,9 @@
 	#discussions {
 		scrollbar-gutter: stable; /* This doesn't seem to do anything */
 		scrollbar-width: thin;
+	}
+
+	#col1 {
+		margin: 0px 3px;
 	}
 </style>

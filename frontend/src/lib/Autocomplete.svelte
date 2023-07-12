@@ -25,24 +25,20 @@
 	}
 
 	function filterByDenied(options: AutocompleteOption[]) {
-        console.log(denylist)
+		console.log(denylist)
 		if (denylist?.length) {
 			const denySet = new Set(denylist)
-			return options.filter(
-				(option: AutocompleteOption) => !denySet.has(option.value),
-			)
+			return options.filter((option: AutocompleteOption) => !denySet.has(option.value))
 		} else {
 			return [...options] // Expected that a function name filter returns a copy
 		}
 	}
 
 	function filterOptions(options: AutocompleteOption[]) {
-        if (denylist?.length && allowlist?.length)
-            throw new Error("Autocomplete component can't both an allowlist and denylist")
-        else if (denylist?.length)
-            return filterByDenied(options)
-        else
-            return filterByAllowed(options)
+		if (denylist?.length && allowlist?.length)
+			throw new Error("Autocomplete component can't both an allowlist and denylist")
+		else if (denylist?.length) return filterByDenied(options)
+		else return filterByAllowed(options)
 	}
 
 	function onSelection(option: AutocompleteOption) {
@@ -54,7 +50,7 @@
 
 	$: sliceLimit = limit ? limit : optionsFiltered.length
 
-    // Styling
+	// Styling
 	$: classesBase = `${$$props.class ?? ""}`
 	$: classesNav = `${regionNav}`
 	$: classesList = `${regionList}`

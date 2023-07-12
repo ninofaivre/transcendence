@@ -20,7 +20,8 @@ type transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<
 	T extends object,
 	K extends keyof T,
 > = {
-	[k in K]: Omit<T, K> & (Record<Exclude<K, k>, null> & { [index in k]: Exclude<T[k], null> }) // could remove that line but null is more in the prisma spirit than undefined
+	[k in K]: Omit<T, K> &
+		(Record<Exclude<K, k>, null> & { [index in k]: Exclude<T[k], null> }) // could remove that line but null is more in the prisma spirit than undefined
 }[K]
 
 export type EventUnion =

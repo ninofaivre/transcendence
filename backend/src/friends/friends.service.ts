@@ -39,8 +39,10 @@ export class FriendsService {
 
 	public formatFriendShip(
 		friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,
-		username: string, // why the fuck can't I use z.infer here ? (can't find 'this') //: z.infer<typeof zFriendShipReturn>
-	) {
+		username: string,
+	) // why the fuck can't I use z.infer here ? (can't find 'this')
+	//: z.infer<typeof zFriendShipReturn>
+	{
 		const {
 			requestedUserName,
 			requestingUserName,
@@ -55,7 +57,10 @@ export class FriendsService {
 		const formattedFriendShip: z.infer<typeof zFriendShipReturn> = {
 			...rest,
 			friendName: friend.name,
-			friendStatus: this.usersService.getUserStatus(friend.name, "FRIEND", friend.visibility),
+			friendStatus: this.usersService.getUserStatusFromVisibilityAndProximityLevel(
+				friend,
+				"FRIEND",
+			),
 		}
 		return formattedFriendShip
 	}
@@ -96,7 +101,7 @@ export class FriendsService {
 			dmId,
 			ClassicDmEventType.CREATED_FRIENDSHIP,
 		)
-		await this.dmsService.formatAntNotifyDmElement(
+		await this.dmsService.formatAndNotifyDmElement(
 			requestingUserName,
 			requestedUserName,
 			dmId,
@@ -154,7 +159,7 @@ export class FriendsService {
 				dmId,
 				ClassicDmEventType.DELETED_FRIENDSHIP,
 			)
-			await this.dmsService.formatAntNotifyDmElement(
+			await this.dmsService.formatAndNotifyDmElement(
 				requestingUserName,
 				requestedUserName,
 				dmId,

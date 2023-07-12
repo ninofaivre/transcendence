@@ -28,6 +28,13 @@
 	}
 
 	onMount(() => console.log("Layout mounted"))
+
+	const menuItems = [
+		{ inner: "🏓", href: "/pong" },
+		{ inner: "💬", href: "/chat" },
+		{ inner: "✉️", href: "/dms" },
+		{ inner: "🤝", href: "/friends" },
+	]
 </script>
 
 <!-- App Shell -->
@@ -49,30 +56,14 @@
 				</strong>
 			</svelte:fragment>
 			{#if $logged_in}
-				<a
-					class="btn btn-sm variant-filled-success mx-4 mb-1 text-2xl font-semibold"
-					href="/pong"
-				>
-					🏓
-				</a>
-				<a
-					class="btn btn-sm variant-filled-success mx-4 text-2xl font-semibold"
-					href="/chat"
-				>
-					💬
-				</a>
-				<a
-					class="btn btn-sm variant-filled-success mx-4 mt-1 text-2xl font-semibold"
-					href="/dms"
-				>
-					✉️
-				</a>
-				<a
-					class="btn btn-sm variant-filled-success mx-4 mt-1 text-2xl font-semibold"
-					href="/friends"
-				>
-					🤝
-				</a>
+				{#each menuItems as menuItem}
+					<a
+						class="btn btn-sm variant-filled-success mx-4 mb-1 text-2xl font-semibold"
+						href={menuItem.href}
+					>
+						{menuItem.inner}
+					</a>
+				{/each}
 			{/if}
 			<svelte:fragment slot="trail">
 				{#if $logged_in}

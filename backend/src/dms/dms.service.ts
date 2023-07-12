@@ -12,7 +12,7 @@ import {
 	DirectMessageStatus,
 	DmDiscussionEvent,
 	Prisma,
-} from "@prisma/client"
+} from "prisma-generated"
 import { SseService } from "src/sse/sse.service"
 import { z } from "zod"
 import { DmEvent, zDmDiscussionElementReturn, zDmReturn } from "contract"

@@ -1,7 +1,7 @@
 import { Inject, Injectable, forwardRef } from "@nestjs/common"
 import { NotFoundException, ConflictException } from "@nestjs/common"
 import { hash } from "bcrypt"
-import { Prisma, StatusVisibilityLevel } from "@prisma/client"
+import { Prisma, StatusVisibilityLevel } from "prisma-generated"
 import { PrismaService } from "src/prisma/prisma.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"

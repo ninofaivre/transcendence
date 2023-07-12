@@ -15,14 +15,14 @@ import {
 	RoleApplyingType,
 	ChanInvitationStatus,
 	ClassicChanEventType,
-} from "@prisma/client"
+} from "prisma-generated"
 import { compareSync, hash } from "bcrypt"
 import { SseService } from "src/sse/sse.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"
 import { ChanEvent, zChanDiscussionElementReturn, zChanDiscussionEventReturn } from "contract"
 import { z } from "zod"
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime"
+import { PrismaClientKnownRequestError } from "prisma-generated/runtime"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
 import { PrismaService } from "src/prisma/prisma.service"
 

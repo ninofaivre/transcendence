@@ -5,7 +5,7 @@ import {
 	DmPolicyLevelType,
 	Prisma,
 	StatusVisibilityLevel,
-} from "@prisma/client"
+} from "prisma-generated"
 import { zFriendShipReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"

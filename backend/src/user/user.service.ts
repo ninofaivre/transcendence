@@ -7,11 +7,7 @@ import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"
 import { z } from "zod"
 import { zUserProfileReturn } from "contract"
-import {
-	zMyProfileReturn,
-	zUserProfilePreviewReturn,
-	zUserStatus,
-} from "contract/dist/routers/users"
+import { zMyProfileReturn, zUserProfilePreviewReturn, zUserStatus } from "contract"
 import { SseService } from "src/sse/sse.service"
 import { ChansService } from "src/chans/chans.service"
 import { FriendsService } from "src/friends/friends.service"

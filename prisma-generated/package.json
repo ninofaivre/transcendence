@@ -17,9 +17,10 @@
         "prepublishOnly": "npm run build"
     },
     "devDependencies": {
+        "@gabrola/zod-prisma": "^0.11.0",
         "prisma": "^5.0.0",
         "tsup": "^7.1.0",
-        "@gabrola/zod-prisma": "^0.11.0"
+        "zod": "^3.21.4"
     },
     "dependencies": {
         "@prisma/client": "^5.0.0"

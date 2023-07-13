@@ -22,7 +22,7 @@ import { type NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"
 import type { ChanEvent, zChanDiscussionElementReturn, zChanDiscussionEventReturn } from "contract"
 import type { z } from "zod"
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime"
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
 import type { PrismaService } from "src/prisma/prisma.service"
 

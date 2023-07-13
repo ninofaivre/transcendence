@@ -14,7 +14,6 @@
 		"@nestjs/serve-static": "^3.0.1",
 		"@nestjs/swagger": "^6.3.0",
 		"@nestjs/websockets": "^9.4.3",
-		"@prisma/client": "^4.16.2",
 		"@ts-rest/core": "^3.26.3",
 		"@ts-rest/nest": "^3.26.3",
 		"@ts-rest/open-api": "^3.26.3",

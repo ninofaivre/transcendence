@@ -13,6 +13,7 @@
     "lint": "pnpm prettier --plugin-search-dir . --check . && eslint .",
     "format": "pnpm prettier --plugin-search-dir . --write ."
   },
+  "type": "module",
   "dependencies": {
     "@ts-rest/core": "^3.26.3",
     "contract": "workspace:*",
@@ -44,6 +45,5 @@
     "tslib": "^2.6.0",
     "typescript": "^5.1.6",
     "vite": "^4.4.3"
-  },
-  "type": "module"
+  }
 }

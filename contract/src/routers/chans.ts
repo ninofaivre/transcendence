@@ -3,7 +3,12 @@ import { initContract } from "@ts-rest/core"
 import { unique } from "../zod/global.zod"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import { ChanType, ClassicChanEventType, PermissionList, RoleApplyingType } from "prisma-generated"
+import {
+	ChanType,
+	ClassicChanEventType,
+	type PermissionList,
+	RoleApplyingType,
+} from "prisma-generated"
 const c = initContract()
 
 const zClassicChanEventType = z.nativeEnum(ClassicChanEventType)
@@ -20,8 +25,9 @@ const zPermissionList = z.enum([
 	"DESTROY",
 ])
 
-;(zEnum: z.infer<typeof zPermissionList>, nativeEnum: typeof PermissionList) =>
-	(zEnum satisfies typeof nativeEnum) && (nativeEnum satisfies typeof zEnum)
+;(zEnum: z.infer<typeof zPermissionList>, readonlyObject: typeof PermissionList) =>
+	(zEnum satisfies typeof readonlyObject) && (readonlyObject satisfies typeof zEnum)
+
 const zRoleApplyingType = z.nativeEnum(RoleApplyingType)
 
 export const zChanTitle = z

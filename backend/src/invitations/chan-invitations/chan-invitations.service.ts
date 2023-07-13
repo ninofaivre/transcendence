@@ -39,7 +39,9 @@ export class ChanInvitationsService {
 		select: this.chanInvitationSelect,
 	} satisfies Prisma.ChanInvitationArgs
 
-	private getChanInvitationArgViaUser(status: ChanInvitationStatus[]) {
+	private getChanInvitationArgViaUser(
+		status: (typeof ChanInvitationStatus)[keyof typeof ChanInvitationStatus][],
+	) {
 		const arg = {
 			where: { status: { in: status } },
 			select: this.chanInvitationSelect,
@@ -62,7 +64,10 @@ export class ChanInvitationsService {
 		return chanInvitationsArray.map((inv) => this.formatChanInvitation(inv))
 	}
 
-	async getChanInvitations(username: string, status: ChanInvitationStatus[]) {
+	async getChanInvitations(
+		username: string,
+		status: (typeof ChanInvitationStatus)[keyof typeof ChanInvitationStatus][],
+	) {
 		const res = await this.usersService.getUserByNameOrThrow(username, {
 			incomingChanInvitation: this.getChanInvitationArgViaUser(status),
 			outcomingChanInvitation: this.getChanInvitationArgViaUser(status),
@@ -153,7 +158,7 @@ export class ChanInvitationsService {
 	}
 
 	public async updateAndNotifyManyInvs(
-		newStatus: ChanInvitationStatus,
+		newStatus: (typeof ChanInvitationStatus)[keyof typeof ChanInvitationStatus],
 		invs: { id: string; invitedUserName: string; invitingUserName: string }[],
 	) {
 		await this.prisma.chanInvitation.updateMany({
@@ -196,7 +201,11 @@ export class ChanInvitationsService {
 		await this.updateAndNotifyManyInvs(ChanInvitationStatus.ACCEPTED, invs)
 	}
 
-	async updateChanInvitation(username: string, newStatus: ChanInvitationStatus, id: string) {
+	async updateChanInvitation(
+		username: string,
+		newStatus: (typeof ChanInvitationStatus)[keyof typeof ChanInvitationStatus],
+		id: string,
+	) {
 		const {
 			status: oldStatus,
 			chanId,

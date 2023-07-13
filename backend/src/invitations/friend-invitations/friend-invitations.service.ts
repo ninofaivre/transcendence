@@ -22,7 +22,9 @@ export class FriendInvitationsService {
 		status: true,
 	} satisfies Prisma.FriendInvitationSelect
 
-	private getFriendInvitationArgViaUser(status: FriendInvitationStatus[]) {
+	private getFriendInvitationArgViaUser(
+		status: (typeof FriendInvitationStatus)[keyof typeof FriendInvitationStatus][],
+	) {
 		const arg = {
 			where: { status: { in: status } },
 			select: this.friendInvitationSelect,
@@ -31,7 +33,10 @@ export class FriendInvitationsService {
 		return arg
 	}
 
-	async getFriendInvitations(username: string, status: FriendInvitationStatus[]) {
+	async getFriendInvitations(
+		username: string,
+		status: (typeof FriendInvitationStatus)[keyof typeof FriendInvitationStatus][],
+	) {
 		const res = await this.userService.getUserByNameOrThrow(username, {
 			incomingFriendInvitation: this.getFriendInvitationArgViaUser(status),
 			outcomingFriendInvitation: this.getFriendInvitationArgViaUser(status),
@@ -123,7 +128,11 @@ export class FriendInvitationsService {
 		return newFriendInvitation
 	}
 
-	async updateFriendInvitation(username: string, newStatus: FriendInvitationStatus, id: string) {
+	async updateFriendInvitation(
+		username: string,
+		newStatus: (typeof FriendInvitationStatus)[keyof typeof FriendInvitationStatus],
+		id: string,
+	) {
 		const {
 			invitedUserName,
 			invitingUserName,

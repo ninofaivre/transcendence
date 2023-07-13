@@ -8,9 +8,9 @@ import {
 } from "@nestjs/common"
 import {
 	ClassicDmEventType,
-	DeletedMessageDmDiscussionEvent,
+	DeletedMessageDmDiscussionEventModel,
 	DirectMessageStatus,
-	DmDiscussionEvent,
+	DmDiscussionEventModel,
 	Prisma,
 } from "prisma-generated"
 import { SseService } from "src/sse/sse.service"
@@ -348,7 +348,10 @@ export class DmsService {
 		}))
 	}
 
-	public async createClassicDmEvent(dmId: string, eventType: ClassicDmEventType) {
+	public async createClassicDmEvent(
+		dmId: string,
+		eventType: (typeof ClassicDmEventType)[keyof typeof ClassicDmEventType],
+	) {
 		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId)
 		const createArgs = {
 			...rest,
@@ -415,7 +418,7 @@ export class DmsService {
 
 	public async updateAndNotifyDmStatus(
 		dmId: string,
-		newStatus: DirectMessageStatus,
+		newStatus: (typeof DirectMessageStatus)[keyof typeof DirectMessageStatus],
 		username: string,
 	) {
 		const { requestingUserName, requestedUserName } = await this.prisma.directMessage.update({

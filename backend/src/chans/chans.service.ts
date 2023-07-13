@@ -102,9 +102,18 @@ export class ChansService {
 		select: this.chanDiscussionElementsSelect,
 	} satisfies Prisma.ChanDiscussionElementArgs
 
-	private defaultPermissions: PermissionList[] = ["INVITE", "SEND_MESSAGE", "DELETE_MESSAGE"]
+	private defaultPermissions: (typeof PermissionList)[keyof typeof PermissionList][] = [
+		"INVITE",
+		"SEND_MESSAGE",
+		"DELETE_MESSAGE",
+	]
 
-	private adminPermissions: PermissionList[] = ["KICK", "BAN", "MUTE", "DELETE_MESSAGE"]
+	private adminPermissions: (typeof PermissionList)[keyof typeof PermissionList][] = [
+		"KICK",
+		"BAN",
+		"MUTE",
+		"DELETE_MESSAGE",
+	]
 
 	private namesArrayToStringArray(users: { name: string }[]) {
 		return users.map((el) => el.name)
@@ -301,7 +310,7 @@ export class ChansService {
 	public async throwIfUserNotAuthorizedInChan(
 		username: string,
 		chanId: string,
-		perm: PermissionList,
+		perm: (typeof PermissionList)[keyof typeof PermissionList],
 	) {
 		const { roles, ownerName } = await this.getChanOrThrow(
 			{ id: chanId, users: { some: { name: username } } },
@@ -325,7 +334,7 @@ export class ChansService {
 		username: string,
 		otherUserName: string,
 		chanId: string,
-		perm: PermissionList,
+		perm: (typeof PermissionList)[keyof typeof PermissionList],
 	) {
 		const { ownerName, roles, users } = await this.getChanOrThrow(
 			{ id: chanId, users: { some: { name: username } } },
@@ -690,7 +699,7 @@ export class ChansService {
 		author: string,
 		concerned: string | null,
 		chanId: string,
-		event: ClassicChanEventType,
+		event: (typeof ClassicChanEventType)[keyof typeof ClassicChanEventType],
 	) {
 		const newEvent = (
 			await this.prisma.chanDiscussionEvent.create({

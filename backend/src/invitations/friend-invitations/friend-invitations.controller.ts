@@ -9,7 +9,7 @@ import {
 import { contract } from "contract"
 import { FriendInvitationsService } from "./friend-invitations.service"
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard"
-import type { EnrichedRequest } from "src/auth/auth.service"
+import { EnrichedRequest } from "src/auth/auth.service"
 
 const c = nestControllerContract(contract.invitations.friend)
 type RequestShapes = NestRequestShapes<typeof c>

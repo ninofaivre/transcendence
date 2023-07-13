@@ -9,7 +9,7 @@ import {
 	TsRest,
 	TsRestRequest,
 } from "@ts-rest/nest"
-import type { EnrichedRequest } from "src/auth/auth.service"
+import { EnrichedRequest } from "src/auth/auth.service"
 
 const c = nestControllerContract(contract.chans)
 type RequestShapes = NestRequestShapes<typeof c>

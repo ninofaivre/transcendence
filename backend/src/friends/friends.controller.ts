@@ -9,7 +9,7 @@ import {
 	nestControllerContract,
 } from "@ts-rest/nest"
 import { contract } from "contract"
-import type { EnrichedRequest } from "src/auth/auth.service"
+import { EnrichedRequest } from "src/auth/auth.service"
 
 const c = nestControllerContract(contract.friends)
 type RequestShapes = NestRequestShapes<typeof c>

@@ -6,13 +6,13 @@ import {
 	forwardRef,
 } from "@nestjs/common"
 import { Prisma, ChanInvitationStatus, PermissionList } from "prisma-generated"
-import type { zChanInvitationReturn } from "contract"
+import { zChanInvitationReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { SseService } from "src/sse/sse.service"
 import { UserService } from "src/user/user.service"
-import type { z } from "zod"
+import { z } from "zod"
 
 @Injectable()
 export class ChanInvitationsService {
@@ -121,7 +121,7 @@ export class ChanInvitationsService {
 		if (users.length)
 			throw new ForbiddenException(`${invitedUserName} already in chan ${chanId}`)
 		// TODO: check if user is ban when ban user in chan added to schema
-		const { chanInv, dmEvent } = await this.prisma.$transaction(async (tx: any) => {
+		const { chanInv, dmEvent } = await this.prisma.$transaction(async (tx) => {
 			const chanInv = this.formatChanInvitation(
 				await tx.chanInvitation.create({
 					data: {

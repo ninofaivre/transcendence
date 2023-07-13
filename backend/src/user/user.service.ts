@@ -1,13 +1,13 @@
 import { Inject, Injectable, forwardRef } from "@nestjs/common"
 import { NotFoundException, ConflictException } from "@nestjs/common"
 import { hash } from "bcrypt"
-import type { Prisma, StatusVisibilityLevel } from "prisma-generated"
+import { Prisma, StatusVisibilityLevel } from "prisma-generated"
 import { PrismaService } from "src/prisma/prisma.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"
-import type { z } from "zod"
-import type { zUserProfileReturn } from "contract"
-import type { zMyProfileReturn, zUserProfilePreviewReturn, zUserStatus } from "contract"
+import { z } from "zod"
+import { zUserProfileReturn } from "contract"
+import { zMyProfileReturn, zUserProfilePreviewReturn, zUserStatus } from "contract"
 import { SseService } from "src/sse/sse.service"
 import { ChansService } from "src/chans/chans.service"
 import { FriendsService } from "src/friends/friends.service"
@@ -250,10 +250,10 @@ export class UserService {
 		return [
 			...new Set<string>(
 				data.friend
-					.map((el: any) => el.requestedUserName)
-					.concat(data.friendOf.map((el: any) => el.requestingUserName))
-					.concat(data.directMessage.map((el: any) => el.requestedUserName))
-					.concat(data.directMessageOf.map((el: any) => el.requestingUserName)),
+					.map((el) => el.requestedUserName)
+					.concat(data.friendOf.map((el) => el.requestingUserName))
+					.concat(data.directMessage.map((el) => el.requestedUserName))
+					.concat(data.directMessageOf.map((el) => el.requestingUserName)),
 			),
 		]
 	}

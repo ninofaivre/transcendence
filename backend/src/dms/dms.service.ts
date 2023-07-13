@@ -7,16 +7,16 @@ import {
 	forwardRef,
 } from "@nestjs/common"
 import {
-	type ClassicDmEventType,
+	ClassicDmEventType,
 	DeletedMessageDmDiscussionEvent,
 	DirectMessageStatus,
 	DmDiscussionEvent,
-	type Prisma,
+	Prisma,
 } from "prisma-generated"
 import { SseService } from "src/sse/sse.service"
-import type { z } from "zod"
-import type { DmEvent, zDmDiscussionElementReturn, zDmReturn } from "contract"
-import type { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx } from "src/types"
+import { z } from "zod"
+import { DmEvent, zDmDiscussionElementReturn, zDmReturn } from "contract"
+import { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx } from "src/types"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
 import type { zDmDiscussionEventReturn, zDmDiscussionMessageReturn } from "contract"
@@ -341,7 +341,7 @@ export class DmsService {
 				take,
 				select: { id: true, requestingUserName: true, requestedUserName: true },
 			})
-		).map((dm: any) => ({
+		).map((dm) => ({
 			dmId: dm.id,
 			otherUserName:
 				username === dm.requestedUserName ? dm.requestingUserName : dm.requestedUserName,

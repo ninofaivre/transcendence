@@ -2,29 +2,29 @@ import {
 	BadRequestException,
 	ConflictException,
 	ForbiddenException,
-	InternalServerErrorException,
-	NotFoundException,
 	Inject,
 	Injectable,
+	InternalServerErrorException,
+	NotFoundException,
 	forwardRef,
 } from "@nestjs/common"
 import {
-	type Prisma,
 	ChanType,
 	PermissionList,
+	Prisma,
 	RoleApplyingType,
 	ChanInvitationStatus,
 	ClassicChanEventType,
 } from "prisma-generated"
 import { compareSync, hash } from "bcrypt"
-import type { SseService } from "src/sse/sse.service"
-import { type NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
+import { SseService } from "src/sse/sse.service"
+import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"
-import type { ChanEvent, zChanDiscussionElementReturn, zChanDiscussionEventReturn } from "contract"
-import type { z } from "zod"
+import { ChanEvent, zChanDiscussionElementReturn, zChanDiscussionEventReturn } from "contract"
+import { z } from "zod"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
-import type { PrismaService } from "src/prisma/prisma.service"
+import { PrismaService } from "src/prisma/prisma.service"
 
 const c = nestControllerContract(contract.chans)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -275,7 +275,7 @@ export class ChansService {
 					roles: { connect: { chanId_name: { chanId: res.id, name: "DEFAULT" } } },
 				},
 			})
-			res.roles.find((el: any) => el.name === "ADMIN")?.roles.push({ name: "DEFAULT" })
+			res.roles.find((el) => el.name === "ADMIN")?.roles.push({ name: "DEFAULT" })
 			return this.formatChan(res)
 		} catch (e) {
 			if (e instanceof PrismaClientKnownRequestError && e.code === "P2002")
@@ -646,9 +646,9 @@ export class ChansService {
 				where: { chanId, users: { some: { name: toKickUserName } } },
 				select: { id: true },
 			})
-		).map((role: any) => role.id)
+		).map((role) => role.id)
 		await Promise.all(
-			roles.map(async (id: any) =>
+			roles.map(async (id) =>
 				this.prisma.role.update({
 					where: { id },
 					data: { users: { disconnect: { name: toKickUserName } } },
@@ -807,7 +807,7 @@ export class ChansService {
 			take: nRes,
 			orderBy: { title: "asc" },
 		})
-		return res.map((el: any) => {
+		return res.map((el) => {
 			const passwordProtected: boolean = !!el.password
 			const { password, _count, title, ...trimmedEl } = el
 			return { passwordProtected, nUsers: _count.users, title: title as string, ...trimmedEl }

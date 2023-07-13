@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common"
 import { UserService } from "../user/user.service"
 import { compare } from "bcrypt"
 import { JwtService } from "@nestjs/jwt"
-import type { Request } from "express"
+import { Request } from "express"
 
 export type EnrichedRequest = Request & { user: { username: string } }
 

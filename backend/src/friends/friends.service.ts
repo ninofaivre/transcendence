@@ -6,12 +6,12 @@ import {
 	Prisma,
 	StatusVisibilityLevel,
 } from "prisma-generated"
-import type { zFriendShipReturn } from "contract"
+import { zFriendShipReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
 import { SseService } from "src/sse/sse.service"
 import { UserService } from "src/user/user.service"
-import type { z } from "zod"
+import { z } from "zod"
 import { PrismaService } from "src/prisma/prisma.service"
 
 @Injectable()
@@ -39,8 +39,10 @@ export class FriendsService {
 
 	public formatFriendShip(
 		friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,
-		username: string, // why the fuck can't I use z.infer here ? (can't find 'this') //: z.infer<typeof zFriendShipReturn>
-	) {
+		username: string,
+	) // why the fuck can't I use z.infer here ? (can't find 'this')
+	//: z.infer<typeof zFriendShipReturn>
+	{
 		const {
 			requestedUserName,
 			requestingUserName,

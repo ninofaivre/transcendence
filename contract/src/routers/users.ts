@@ -1,16 +1,24 @@
-import { initContract } from '@ts-rest/core';
-import { zUserName, zUserPassword } from '../zod/user.zod';
-import { z } from 'zod';
-import { zChanTitle, zChanType } from './chans';
-import { DmPolicyLevelType, StatusVisibilityLevel } from 'prisma-generated';
+import { initContract } from "@ts-rest/core";
+import { zUserName, zUserPassword } from "../zod/user.zod";
+import { z } from "zod";
+import { zChanTitle, zChanType } from "./chans";
+import { DmPolicyLevelType, StatusVisibilityLevel } from "prisma-generated";
+
+export type UserEvent = {
+  type: "UPDATED_USER_STATUS";
+  data: {
+    userName: z.infer<typeof zUserName>;
+    status: z.infer<typeof zUserStatus>;
+  };
+};
 
 const c = initContract();
 
 export const zUserProfilePreviewReturn = z.strictObject({
-  userName: zUserName
+  userName: zUserName,
 });
 
-export const zUserStatus = z.enum(['OFFLINE', 'ONLINE', 'INVISIBLE']);
+export const zUserStatus = z.enum(["OFFLINE", "ONLINE", "INVISIBLE"]);
 
 export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
   dmPolicyLevel: z.nativeEnum(DmPolicyLevelType),
@@ -18,7 +26,7 @@ export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
     z.strictObject({ type: zChanType, title: zChanTitle.nullable(), id: z.string().uuid() })
   ),
   blockedShipId: z.string().uuid().optional(),
-  status: zUserStatus
+  status: zUserStatus,
 });
 
 export const zPartialUserProfileReturn = zUserProfileReturn.partial();
@@ -26,93 +34,85 @@ export const zPartialUserProfileReturn = zUserProfileReturn.partial();
 export const zMyProfileReturn = z.strictObject({
   userName: zUserName,
   dmPolicyLevel: z.nativeEnum(DmPolicyLevelType),
-  statusVisibilityLevel: z.nativeEnum(StatusVisibilityLevel)
+  statusVisibilityLevel: z.nativeEnum(StatusVisibilityLevel),
 });
 
 const zSearchUsersQueryBase = z.strictObject({
   userNameContains: z.string().nonempty(),
-  nResult: z.number().positive().int().max(30).default(10)
+  nResult: z.number().positive().int().max(30).default(10),
 });
 
 export const usersContract = c.router(
   {
     searchUsers: {
-      method: 'GET',
-      path: '/',
-      summary: 'search for users',
-      description: 'not finished yet (beta)',
+      method: "GET",
+      path: "/",
+      summary: "search for users",
+      description: "not finished yet (beta)",
       query: z.union([
         zSearchUsersQueryBase.extend({
           filter: z.strictObject({
-            type: z.literal('inc').default('inc'),
+            type: z.literal("inc").default("inc"),
             friends: z.boolean().default(true),
             mySelf: z.boolean().default(false),
-            blocked: z.boolean().default(true)
+            blocked: z.boolean().default(true),
             // canStartDm: z.boolean().default(true)
-          })
+          }),
         }),
         zSearchUsersQueryBase.extend({
           filter: z.strictObject({
-            type: z.literal('only'),
+            type: z.literal("only"),
             friends: z.boolean().default(false),
             hasDm: z.boolean().default(false),
-            blocked: z.boolean().default(false)
+            blocked: z.boolean().default(false),
             // canStartDm: z.boolean().default(false)
-          })
-        })
+          }),
+        }),
       ]),
       responses: {
-        200: z.array(zUserProfilePreviewReturn)
-      }
+        200: z.array(zUserProfilePreviewReturn),
+      },
     },
     getMe: {
-      method: 'GET',
-      path: '/@me',
+      method: "GET",
+      path: "/@me",
       responses: {
-        200: zMyProfileReturn
-      }
+        200: zMyProfileReturn,
+      },
     },
     getUser: {
-      method: 'GET',
-      path: '/:userName',
+      method: "GET",
+      path: "/:userName",
       pathParams: z.strictObject({
-        userName: zUserName
+        userName: zUserName,
       }),
       responses: {
-        200: zUserProfileReturn
-      }
+        200: zUserProfileReturn,
+      },
     },
     updateMe: {
-      method: 'PATCH',
-      path: '/@me',
+      method: "PATCH",
+      path: "/@me",
       body: zMyProfileReturn.partial(),
       responses: {
-        200: zMyProfileReturn
-      }
+        200: zMyProfileReturn,
+      },
     },
     signUp: {
-      method: 'POST',
-      path: '/',
+      method: "POST",
+      path: "/",
       body: z.strictObject({
         name: zUserName,
-        password: zUserPassword
+        password: zUserPassword,
       }),
       responses: {
         201: z.object({
-          name: zUserName
-        })
-      }
-    }
+          name: zUserName,
+        }),
+      },
+    },
   },
   {
-    pathPrefix: '/users'
+    pathPrefix: "/users",
   }
 );
-
-export type UserEvent = {
-  type: 'UPDATED_USER_STATUS';
-  data: {
-    userName: z.infer<typeof zUserName>;
-    status: z.infer<typeof zUserStatus>;
-  };
-};

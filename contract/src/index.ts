@@ -3,8 +3,18 @@ export type { ChanEvent } from "./routers/chans";
 export type { SseEvent } from "./contract";
 
 export { contract } from "./contract";
-export { zDmReturn, zDmDiscussionElementReturn } from "./routers/dms";
-export { zUserProfileReturn } from "./routers/users";
+export {
+  zDmReturn,
+  zDmDiscussionElementReturn,
+  zDmDiscussionEventReturn,
+  zDmDiscussionMessageReturn,
+} from "./routers/dms";
+export {
+  zUserProfileReturn,
+  zMyProfileReturn,
+  zUserProfilePreviewReturn,
+  zUserStatus,
+} from "./routers/users";
 export { zFriendShipReturn } from "./routers/friends";
 export { zChanInvitationReturn, zFriendInvitationReturn } from "./routers/invitations";
 export {
@@ -26,6 +36,7 @@ export {
 //     zFriendInvitationReturn,
 //     zFriendShipReturn,
 //     zUserProfileReturn,
+//     zDmDiscussionEventReturn,
 //   },
 //   contract,
 // };

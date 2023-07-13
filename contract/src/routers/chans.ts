@@ -9,6 +9,7 @@ import {
 	type PermissionList,
 	RoleApplyingType,
 } from "prisma-generated"
+
 const c = initContract()
 
 const zClassicChanEventType = z.nativeEnum(ClassicChanEventType)
@@ -25,8 +26,10 @@ const zPermissionList = z.enum([
 	"DESTROY",
 ])
 
-;(zEnum: z.infer<typeof zPermissionList>, readonlyObject: typeof PermissionList) =>
-	(zEnum satisfies typeof readonlyObject) && (readonlyObject satisfies typeof zEnum)
+;(
+	zEnum: z.infer<typeof zPermissionList>,
+	readonlyObject: (typeof PermissionList)[keyof typeof PermissionList],
+) => (zEnum satisfies typeof readonlyObject) && (readonlyObject satisfies typeof zEnum)
 
 const zRoleApplyingType = z.nativeEnum(RoleApplyingType)
 

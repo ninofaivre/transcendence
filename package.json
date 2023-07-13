@@ -7,7 +7,7 @@
     "preinstall": "npx only-allow pnpm && for dir in $(echo */); do if [ -f ${dir}.env.example ]; then cp -v -n ${dir}.env.example $dir/.env; fi; done",
     "start": "pnpm --stream -r start",
     "start:dev": "pnpm --parallel --stream -r run start:dev",
-    "build": "pnpm --stream -r run build",
+    "build": "./.build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

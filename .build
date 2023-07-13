@@ -1,0 +1,7 @@
+for package in prisma-generated contract backend frontend
+do
+    echo Building $package... &&
+    cd $package &&
+    pnpm build &&
+    cd ..
+done

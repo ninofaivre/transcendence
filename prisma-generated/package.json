@@ -4,7 +4,7 @@
     "types": "./dist/index.d.ts",
     "scripts": {
         "postinstall": "prisma generate",
-        "build": "tsup src/index.ts --format cjs --dts"
+        "build": "rm -rf dist && tsup src/index.ts --format cjs,esm --dts"
     },
     "devDependencies": {
         "prisma": "^5.0.0",

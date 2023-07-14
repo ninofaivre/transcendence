@@ -1,5 +1,6 @@
+# The order determines the build order in our build script. Do not remove this comment
 packages: 
+  - 'prisma-generated'
+  - 'contract'
   - 'backend'
   - 'frontend'
-  - 'contract'
-  - 'prisma-generated'

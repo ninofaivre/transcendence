@@ -43,11 +43,6 @@ const zSearchUsersQueryBase = z.strictObject({
 	nResult: z.number().positive().int().max(30).default(10),
 })
 
-const zSearchUsersQueryBase = z.strictObject({
-    userNameContains: z.string().nonempty(),
-    nResult: z.number().positive().int().max(30).default(10)
-})
-
 export const usersContract = c.router(
 	{
 		searchUsers: {

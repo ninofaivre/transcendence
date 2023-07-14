@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   '@gabrola/zod-prisma@0.11.0':
-    hash: xpmj7jy472ygjv6xobimbuq77u
+    hash: ota2pglxlvcswmdjoxqaabv5jy
     path: patches/@gabrola__zod-prisma@0.11.0.patch
   http-proxy@1.18.1:
     hash: aq3thkjkntv4znsfw6nkinp4fi
@@ -247,7 +247,7 @@ importers:
     devDependencies:
       '@gabrola/zod-prisma':
         specifier: ^0.11.0
-        version: 0.11.0(patch_hash=xpmj7jy472ygjv6xobimbuq77u)(prisma@5.0.0)(zod@3.21.4)
+        version: 0.11.0(patch_hash=ota2pglxlvcswmdjoxqaabv5jy)(prisma@5.0.0)(zod@3.21.4)
       prisma:
         specifier: ^5.0.0
         version: 5.0.0
@@ -846,7 +846,7 @@ packages:
       '@floating-ui/core': 1.3.1
     dev: true
 
-  /@gabrola/zod-prisma@0.11.0(patch_hash=xpmj7jy472ygjv6xobimbuq77u)(prisma@5.0.0)(zod@3.21.4):
+  /@gabrola/zod-prisma@0.11.0(patch_hash=ota2pglxlvcswmdjoxqaabv5jy)(prisma@5.0.0)(zod@3.21.4):
     resolution: {integrity: sha512-q799u9axhVyG6uftSBkKRQwGQ2vJR1kbWijizePqIu33ciwXW1QF4VKB6I8eDaMJi/ZCSs1lMkDrA14pgJNNFg==}
     engines: {node: '>=14'}
     hasBin: true

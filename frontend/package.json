@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm vite",
-    "build": "pnpm vite build",
+    "build": "pnpm exec vite build",
     "build:watch": "find src -type f | entr -c -r pnpm vite build #pnpm vite build --watch ",
     "preview": "pnpm vite preview",
     "check": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --compiler-warnings \"a11y-click-events-have-key-events:ignore,\"",
@@ -13,9 +13,10 @@
     "lint": "pnpm prettier --plugin-search-dir . --check . && eslint .",
     "format": "pnpm prettier --plugin-search-dir . --write ."
   },
+  "type": "module",
   "dependencies": {
     "@ts-rest/core": "^3.26.3",
-    "contract": "file:../contract",
+    "contract": "workspace:*",
     "socket.io-client": "^4.7.1",
     "zod": "^3.21.4"
   },
@@ -44,11 +45,5 @@
     "tslib": "^2.6.0",
     "typescript": "^5.1.6",
     "vite": "^4.4.3"
-  },
-  "type": "module",
-  "pnpm": {
-    "patchedDependencies": {
-      "http-proxy@1.18.1": "patches/http-proxy@1.18.1.patch"
-    }
   }
 }

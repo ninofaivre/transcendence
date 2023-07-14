@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common"
-import { FriendInvitationStatus, Prisma } from "prisma-client"
+import { FriendInvitationStatus, Prisma } from "prisma-generated"
 import { FriendsService } from "src/friends/friends.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { SseService } from "src/sse/sse.service"
@@ -8,7 +8,7 @@ import { UserService } from "src/user/user.service"
 @Injectable()
 export class FriendInvitationsService {
 	constructor(
-        private readonly prisma: PrismaService,
+		private readonly prisma: PrismaService,
 		private readonly userService: UserService,
 		private readonly sse: SseService,
 		private readonly friendService: FriendsService,
@@ -22,7 +22,9 @@ export class FriendInvitationsService {
 		status: true,
 	} satisfies Prisma.FriendInvitationSelect
 
-	private getFriendInvitationArgViaUser(status: FriendInvitationStatus[]) {
+	private getFriendInvitationArgViaUser(
+		status: (typeof FriendInvitationStatus)[keyof typeof FriendInvitationStatus][],
+	) {
 		const arg = {
 			where: { status: { in: status } },
 			select: this.friendInvitationSelect,
@@ -31,7 +33,10 @@ export class FriendInvitationsService {
 		return arg
 	}
 
-	async getFriendInvitations(username: string, status: FriendInvitationStatus[]) {
+	async getFriendInvitations(
+		username: string,
+		status: (typeof FriendInvitationStatus)[keyof typeof FriendInvitationStatus][],
+	) {
 		const res = await this.userService.getUserByNameOrThrow(username, {
 			incomingFriendInvitation: this.getFriendInvitationArgViaUser(status),
 			outcomingFriendInvitation: this.getFriendInvitationArgViaUser(status),
@@ -123,7 +128,11 @@ export class FriendInvitationsService {
 		return newFriendInvitation
 	}
 
-	async updateFriendInvitation(username: string, newStatus: FriendInvitationStatus, id: string) {
+	async updateFriendInvitation(
+		username: string,
+		newStatus: (typeof FriendInvitationStatus)[keyof typeof FriendInvitationStatus],
+		id: string,
+	) {
 		const {
 			invitedUserName,
 			invitingUserName,
@@ -148,11 +157,10 @@ export class FriendInvitationsService {
 			data: { status: newStatus },
             select: this.friendInvitationSelect 
 		})
-		this.sse.pushEvent(
-			invitingUserName !== username ? invitingUserName : invitedUserName, {
-                type: "UPDATED_FRIEND_INVITATION_STATUS",
-                data: { friendInvitationId: id, status: newStatus }
-            })
+		this.sse.pushEvent(invitingUserName !== username ? invitingUserName : invitedUserName, {
+			type: "UPDATED_FRIEND_INVITATION_STATUS",
+			data: { friendInvitationId: id, status: newStatus },
+		})
 		return updatedFriendInvitation
 	}
 }

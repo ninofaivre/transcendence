@@ -1,0 +1,25 @@
+{
+  "name": "transcendance",
+  "version": "1.0.0",
+  "description": "A webapp to play pong and chat with your friends",
+  "main": "index.js",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm && for dir in $(echo */); do if [ -f ${dir}.env.example ]; then cp -v -n ${dir}.env.example $dir/.env; fi; done",
+    "start": "pnpm --stream -r start",
+    "start:dev": "pnpm --parallel --stream -r run start:dev",
+    "build": "./.build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "6e696e6f+cassepipe",
+  "license": "MIT",
+  "pnpm": {
+    "patchedDependencies": {
+      "http-proxy@1.18.1": "patches/http-proxy@1.18.1.patch",
+      "@gabrola/zod-prisma@0.11.0": "patches/@gabrola__zod-prisma@0.11.0.patch"
+    }
+  },
+  "dependencies": {
+    "@ts-rest/core": "^3.26.3"
+  }
+}

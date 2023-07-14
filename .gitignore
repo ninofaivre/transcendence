@@ -42,4 +42,5 @@ package-lock.json
 Session.vim
 REMEMBER.md
 
+.vite
 cookies.*.txt

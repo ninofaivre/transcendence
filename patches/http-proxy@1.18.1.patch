@@ -1,0 +1,123 @@
+diff --git a/lib/http-proxy/passes/web-incoming.js b/lib/http-proxy/passes/web-incoming.js
+index 7ae735514190eea569c605fff7d27c045fe8d601..450ccaf8589a982b727925f8b6e331565c396f8e 100644
+--- a/lib/http-proxy/passes/web-incoming.js
++++ b/lib/http-proxy/passes/web-incoming.js
+@@ -1,8 +1,8 @@
+-var httpNative   = require('http'),
+-    httpsNative  = require('https'),
+-    web_o  = require('./web-outgoing'),
+-    common = require('../common'),
+-    followRedirects = require('follow-redirects');
++var httpNative = require('http'),
++  httpsNative = require('https'),
++  web_o = require('./web-outgoing'),
++  common = require('../common'),
++  followRedirects = require('follow-redirects');
+ 
+ web_o = Object.keys(web_o).map(function(pass) {
+   return web_o[pass];
+@@ -32,8 +32,8 @@ module.exports = {
+    */
+ 
+   deleteLength: function deleteLength(req, res, options) {
+-    if((req.method === 'DELETE' || req.method === 'OPTIONS')
+-       && !req.headers['content-length']) {
++    if ((req.method === 'DELETE' || req.method === 'OPTIONS')
++      && !req.headers['content-length']) {
+       req.headers['content-length'] = '0';
+       delete req.headers['transfer-encoding'];
+     }
+@@ -50,7 +50,7 @@ module.exports = {
+    */
+ 
+   timeout: function timeout(req, res, options) {
+-    if(options.timeout) {
++    if (options.timeout) {
+       req.socket.setTimeout(options.timeout);
+     }
+   },
+@@ -66,12 +66,12 @@ module.exports = {
+    */
+ 
+   XHeaders: function XHeaders(req, res, options) {
+-    if(!options.xfwd) return;
++    if (!options.xfwd) return;
+ 
+     var encrypted = req.isSpdy || common.hasEncryptedConnection(req);
+     var values = {
+-      for  : req.connection.remoteAddress || req.socket.remoteAddress,
+-      port : common.getPort(req),
++      for: req.connection.remoteAddress || req.socket.remoteAddress,
++      port: common.getPort(req),
+       proto: encrypted ? 'https' : 'http'
+     };
+ 
+@@ -106,7 +106,7 @@ module.exports = {
+     var http = agents.http;
+     var https = agents.https;
+ 
+-    if(options.forward) {
++    if (options.forward) {
+       // If forward enable, so just pipe the request
+       var forwardReq = (options.forward.protocol === 'https:' ? https : http).request(
+         common.setupOutgoing(options.ssl || {}, options, req, 'forward')
+@@ -119,7 +119,7 @@ module.exports = {
+       forwardReq.on('error', forwardError);
+ 
+       (options.buffer || req).pipe(forwardReq);
+-      if(!options.target) { return res.end(); }
++      if (!options.target) { return res.end(); }
+     }
+ 
+     // Request initalization
+@@ -129,22 +129,22 @@ module.exports = {
+ 
+     // Enable developers to modify the proxyReq before headers are sent
+     proxyReq.on('socket', function(socket) {
+-      if(server && !proxyReq.getHeader('expect')) {
++      if (server && !proxyReq.getHeader('expect')) {
+         server.emit('proxyReq', proxyReq, req, res, options);
+       }
+     });
+ 
+     // allow outgoing socket to timeout so that we could
+     // show an error page at the initial request
+-    if(options.proxyTimeout) {
++    if (options.proxyTimeout) {
+       proxyReq.setTimeout(options.proxyTimeout, function() {
+-         proxyReq.abort();
++        proxyReq.abort();
+       });
+     }
+ 
+     // Ensure we abort proxy if request is aborted
+-    req.on('aborted', function () {
+-      proxyReq.abort();
++    res.on('close', function() {
++      proxyReq.destroy();
+     });
+ 
+     // handle errors in proxy and incoming request, just like for forward proxy
+@@ -170,17 +170,17 @@ module.exports = {
+     (options.buffer || req).pipe(proxyReq);
+ 
+     proxyReq.on('response', function(proxyRes) {
+-      if(server) { server.emit('proxyRes', proxyRes, req, res); }
++      if (server) { server.emit('proxyRes', proxyRes, req, res); }
+ 
+-      if(!res.headersSent && !options.selfHandleResponse) {
+-        for(var i=0; i < web_o.length; i++) {
+-          if(web_o[i](req, res, proxyRes, options)) { break; }
++      if (!res.headersSent && !options.selfHandleResponse) {
++        for (var i = 0; i < web_o.length; i++) {
++          if (web_o[i](req, res, proxyRes, options)) { break; }
+         }
+       }
+ 
+       if (!res.finished) {
+         // Allow us to listen when the proxy has completed
+-        proxyRes.on('end', function () {
++        proxyRes.on('end', function() {
+           if (server) server.emit('end', req, res, proxyRes);
+         });
+         // We pipe to the response unless its expected to be handled by the user

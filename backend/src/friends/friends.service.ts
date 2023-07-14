@@ -1,5 +1,11 @@
 import { Inject, Injectable, NotFoundException, forwardRef } from "@nestjs/common"
-import { ClassicDmEventType, DirectMessageStatus, DmPolicyLevelType, Prisma, StatusVisibilityLevel } from "prisma-client"
+import {
+	ClassicDmEventType,
+	DirectMessageStatus,
+	DmPolicyLevelType,
+	Prisma,
+	StatusVisibilityLevel,
+} from "prisma-generated"
 import { zFriendShipReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
@@ -11,11 +17,11 @@ import { PrismaService } from "src/prisma/prisma.service"
 @Injectable()
 export class FriendsService {
 	constructor(
-        private readonly prisma: PrismaService,
+		private readonly prisma: PrismaService,
 		private readonly sse: SseService,
 		private readonly dmsService: DmsService,
-        @Inject(forwardRef(() => UserService))
-		private readonly usersService: UserService
+		@Inject(forwardRef(() => UserService))
+		private readonly usersService: UserService,
 	) {}
 
 	public friendShipSelect = {
@@ -23,8 +29,8 @@ export class FriendsService {
 		creationDate: true,
 		requestingUserName: true,
 		requestedUserName: true,
-        requestingUser: { select: { statusVisibilityLevel: true } },
-        requestedUser: { select: { statusVisibilityLevel: true } }
+		requestingUser: { select: { statusVisibilityLevel: true } },
+		requestedUser: { select: { statusVisibilityLevel: true } },
 	} satisfies Prisma.FriendShipSelect
 
 	private friendShipGetPayload = {
@@ -32,25 +38,30 @@ export class FriendsService {
 	} satisfies Prisma.FriendShipArgs
 
 	public formatFriendShip(
-        friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,
-        username: string,
-	)
-    // why the fuck can't I use z.infer here ? (can't find 'this')
-    //: z.infer<typeof zFriendShipReturn>
-    {
-		const { requestedUserName, requestingUserName,
-            requestingUser: { statusVisibilityLevel: requestingVisi },
-            requestedUser: { statusVisibilityLevel: requestedVisi }, ...rest
-        } = friendShip
-        const friend = (requestedUserName === username)
-            ? { name: requestingUserName, visibility: requestingVisi }
-            : { name: requestedUserName, visibility: requestedVisi }
+		friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,
+		username: string,
+	) // why the fuck can't I use z.infer here ? (can't find 'this')
+	//: z.infer<typeof zFriendShipReturn>
+	{
+		const {
+			requestedUserName,
+			requestingUserName,
+			requestingUser: { statusVisibilityLevel: requestingVisi },
+			requestedUser: { statusVisibilityLevel: requestedVisi },
+			...rest
+		} = friendShip
+		const friend =
+			requestedUserName === username
+				? { name: requestingUserName, visibility: requestingVisi }
+				: { name: requestedUserName, visibility: requestedVisi }
 		const formattedFriendShip: z.infer<typeof zFriendShipReturn> = {
 			...rest,
 			friendName: friend.name,
-            friendStatus: this.usersService
-                .getUserStatusFromVisibilityAndProximityLevel(friend, "FRIEND")
-        }
+			friendStatus: this.usersService.getUserStatusFromVisibilityAndProximityLevel(
+				friend,
+				"FRIEND",
+			),
+		}
 		return formattedFriendShip
 	}
 
@@ -90,7 +101,12 @@ export class FriendsService {
 			dmId,
 			ClassicDmEventType.CREATED_FRIENDSHIP,
 		)
-        await this.dmsService.formatAndNotifyDmElement(requestingUserName, requestedUserName, dmId, newEvent)
+		await this.dmsService.formatAndNotifyDmElement(
+			requestingUserName,
+			requestedUserName,
+			dmId,
+			newEvent,
+		)
 		if (directMessage && directMessage.status === DirectMessageStatus.DISABLED)
 			await this.dmsService.updateAndNotifyDmStatus(
 				directMessage.id,
@@ -99,17 +115,19 @@ export class FriendsService {
 			)
 	}
 
-    public async areUsersFriend(usernameA: string, usernameB: string) {
-        return Boolean(await this.prisma.friendShip.count({
-            where: {
-                OR: [
-                    { requestedUserName: usernameA, requestingUserName: usernameB },
-                    { requestedUserName: usernameB, requestingUserName: usernameA }
-                ]
-            },
-            take: 1
-        }))
-    }
+	public async areUsersFriend(usernameA: string, usernameB: string) {
+		return Boolean(
+			await this.prisma.friendShip.count({
+				where: {
+					OR: [
+						{ requestedUserName: usernameA, requestingUserName: usernameB },
+						{ requestedUserName: usernameB, requestingUserName: usernameA },
+					],
+				},
+				take: 1,
+			}),
+		)
+	}
 
 	// bien crade mais techniquement ça devrait marcher
 	public async deleteFriend(username: string, friendShipId: string) {
@@ -132,14 +150,21 @@ export class FriendsService {
 			)
 			if (!res) {
 				// should never happen as dms is auto created at friendShip Creation and there should not be any way of deleting a dm
-				throw new NotFoundException(`not found dm between ${requestedUserName} and ${requestingUserName}`)
-            }
+				throw new NotFoundException(
+					`not found dm between ${requestedUserName} and ${requestingUserName}`,
+				)
+			}
 			const { id: dmId } = res
 			const newEvent = await this.dmsService.createClassicDmEvent(
 				dmId,
 				ClassicDmEventType.DELETED_FRIENDSHIP,
 			)
-			await this.dmsService.formatAndNotifyDmElement(requestingUserName, requestedUserName, dmId, newEvent)
+			await this.dmsService.formatAndNotifyDmElement(
+				requestingUserName,
+				requestedUserName,
+				dmId,
+				newEvent,
+			)
 		} catch (e) {
 			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025")
 				throw new NotFoundException(`not found friendShip ${friendShipId}`)

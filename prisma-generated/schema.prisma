@@ -4,7 +4,41 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["extendedWhereUnique"]
-  output = "./client"
+}
+
+generator zod {
+  provider                 = "zod-prisma"
+  output                   = "./src/zod" // (default) the directory where generated zod schemas will be saved
+
+  relationModel            = true // (default) Create and export both plain and related models.
+  // relationModel         = "default" // Do not export model without relations.
+  // relationModel         = false // Do not generate related model
+
+  modelCase                = "PascalCase" // (default) Output models using pascal case (ex. UserModel, PostModel)
+  // modelCase             = "camelCase" // Output models using camel case (ex. userModel, postModel)
+
+  modelSuffix              = "Model" // (default) Suffix to apply to your prisma models when naming Zod schemas
+
+  // useDecimalJs          = false // (default) represent the prisma Decimal type using as a JS number
+  useDecimalJs             = true // represent the prisma Decimal type using Decimal.js (as Prisma does)
+
+   // I don't understand what this is but that prevents a successful build
+  // imports                  = null // (default) will import the referenced file in generated schemas to be used via imports.someExportedVariable
+
+  // https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-by-null-values
+  prismaJsonNullability    = true // (default) uses prisma's scheme for JSON field nullability
+  // prismaJsonNullability = false // allows null assignment to optional JSON fields
+
+  enumFile                 = "enums" // will generate enum file instead of referencing generated ones from the prisma client
+
+  // date      -  z.date()
+  // union     -  z.union([z.date(), z.string().datetime()])
+  // transform -  z.date().transform((v) => v.toISOString()).pipe(z.string().datetime())
+  dateTimeSchema           = "date" // (default) the type to use for DateTime fields
+
+  // data returned from prisma queries are (type | null), however passing data to a query is nullish as they are optional
+  nullableType             = "nullish" // (default) use nullish (type | null | undefined) for optional fields
+  // nullableType             = "nullable" // use nullable (type | null) for optional fields 
 }
 
 datasource db {

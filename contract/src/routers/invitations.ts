@@ -3,12 +3,9 @@ import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
 import { unique } from "../zod/global.zod"
 import { zChanTitle } from "./chans"
-import { ChanInvitationStatus, FriendInvitationStatus } from "@prisma-generated/enums"
+import { zChanInvitationStatus, zFriendInvitationStatus } from "prisma-generated"
 
 const c = initContract()
-
-const zChanInvitationStatus = z.nativeEnum(ChanInvitationStatus)
-const zFriendInvitationStatus = z.nativeEnum(FriendInvitationStatus)
 
 export const zFriendInvitationReturn = z.strictObject({
 	id: z.string().uuid(),
@@ -69,7 +66,11 @@ const friendInvitationsContract = c.router(
 				id: z.string().uuid(),
 			}),
 			body: z.strictObject({
-				status: z.enum([zFriendInvitationStatus.enum.ACCEPTED, zFriendInvitationStatus.enum.REFUSED, zFriendInvitationStatus.enum.CANCELED]),
+				status: z.enum([
+					zFriendInvitationStatus.enum.ACCEPTED,
+					zFriendInvitationStatus.enum.REFUSED,
+					zFriendInvitationStatus.enum.CANCELED,
+				]),
 			}),
 			responses: {
 				200: zFriendInvitationReturn,
@@ -124,7 +125,11 @@ const chanInvitationsContract = c.router(
 				id: z.string().uuid(),
 			}),
 			body: z.strictObject({
-				status: z.enum([zChanInvitationStatus.enum.ACCEPTED, zChanInvitationStatus.enum.REFUSED, zChanInvitationStatus.enum.CANCELED]),
+				status: z.enum([
+					zChanInvitationStatus.enum.ACCEPTED,
+					zChanInvitationStatus.enum.REFUSED,
+					zChanInvitationStatus.enum.CANCELED,
+				]),
 			}),
 			responses: {
 				200: zChanInvitationReturn,
@@ -147,23 +152,23 @@ export const invitationsContract = c.router(
 )
 
 type FriendInvitationEvent =
-    | {
-            type: "CREATED_FRIEND_INVITATION"
-            data: z.infer<typeof zFriendInvitationReturn>
-      }
-    | {
-            type: "UPDATED_FRIEND_INVITATION_STATUS",
-            data: { friendInvitationId: string, status: z.infer<typeof zFriendInvitationStatus> }
-      }
+	| {
+			type: "CREATED_FRIEND_INVITATION"
+			data: z.infer<typeof zFriendInvitationReturn>
+	  }
+	| {
+			type: "UPDATED_FRIEND_INVITATION_STATUS"
+			data: { friendInvitationId: string; status: z.infer<typeof zFriendInvitationStatus> }
+	  }
 
 type ChanInvitationEvent =
-    | {
-            type: "CREATED_CHAN_INVITATION"
-            data: z.infer<typeof zChanInvitationReturn>
-      }
-    | {
-            type: "UPDATED_CHAN_INVITATION_STATUS",
-            data: { chanInvitationId: string, status: z.infer<typeof zChanInvitationStatus> }
-      }
+	| {
+			type: "CREATED_CHAN_INVITATION"
+			data: z.infer<typeof zChanInvitationReturn>
+	  }
+	| {
+			type: "UPDATED_CHAN_INVITATION_STATUS"
+			data: { chanInvitationId: string; status: z.infer<typeof zChanInvitationStatus> }
+	  }
 
 export type InvitationEvent = FriendInvitationEvent | ChanInvitationEvent

@@ -1,17 +1,17 @@
-import { extendApi } from "@anatine/zod-openapi"
 import { initContract } from "@ts-rest/core"
+import { extendApi } from "@anatine/zod-openapi"
+
 import { unique } from "../zod/global.zod"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import { ChanType, ClassicChanEventType, PermissionList, RoleApplyingType } from "@prisma-generated/enums"
+import {
+	zChanType,
+	zClassicChanEventType,
+	zRoleApplyingType,
+	zPermissionList,
+} from "prisma-generated"
+
 const c = initContract()
-
-const zClassicChanEventType = z.nativeEnum(ClassicChanEventType)
-export const zChanType = z.nativeEnum(ChanType)
-
-const zPermissionList = z.enum(["SEND_MESSAGE", "DELETE_MESSAGE", "EDIT", "INVITE", "KICK", "BAN", "MUTE", "DESTROY"])
-;(zEnum: z.infer<typeof zPermissionList>, nativeEnum: PermissionList) => zEnum satisfies typeof nativeEnum && nativeEnum satisfies typeof zEnum;
-const zRoleApplyingType = z.nativeEnum(RoleApplyingType)
 
 export const zChanTitle = z
 	.string()
@@ -41,12 +41,12 @@ const zRoleReturn = z.object({
 })
 
 const zChanReturn = z.object({
-    users: z.array(zUserName).min(1),
-    ownerName: zUserName,
-    title: zChanTitle.nullable(),
-    id: z.string().uuid(),
-    type: zChanType,
-    roles: z.array(zRoleReturn)
+	users: z.array(zUserName).min(1),
+	ownerName: zUserName,
+	title: zChanTitle.nullable(),
+	id: z.string().uuid(),
+	type: zChanType,
+	roles: z.array(zRoleReturn),
 })
 
 // TODO
@@ -282,21 +282,21 @@ export const chansContract = c.router(
 				202: c.type<null>(),
 			},
 		},
-        // TODO
-        // getChanUser: {
-        //     method: "GET",
-        //     path: "/:chanId/:username",
-        //     pathParams: z.strictObject({
-        //         chanId: z.string().uuid(),
-        //         username: zUserName
-        //     }),
-        //     responses: {
-        //         200: z.strictObject({
-        //             roles: z.string().array(),
-        //             myPermissionOverHim: z.array(zPermissionList.extract(["BAN", "KICK", "MUTE", "DELETE_MESSAGE"]))
-        //         })
-        //     }
-        // }
+		// TODO
+		// getChanUser: {
+		//     method: "GET",
+		//     path: "/:chanId/:username",
+		//     pathParams: z.strictObject({
+		//         chanId: z.string().uuid(),
+		//         username: zUserName
+		//     }),
+		//     responses: {
+		//         200: z.strictObject({
+		//             roles: z.string().array(),
+		//             myPermissionOverHim: z.array(zPermissionList.extract(["BAN", "KICK", "MUTE", "DELETE_MESSAGE"]))
+		//         })
+		//     }
+		// }
 	},
 	{
 		pathPrefix: "/chans",

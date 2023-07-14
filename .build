@@ -1,4 +1,4 @@
-for package in prisma-generated contract backend frontend
+for package in $(/bin/cat pnpm-workspace.yaml | sed -n "s|'||g; s|-||; 1,2d; p;" | /bin/tr -d '\n')
 do
     echo Building $package... &&
     cd $package &&

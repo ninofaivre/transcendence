@@ -1,6 +1,7 @@
 {
 	"scripts": {
 		"start": "pnpm exec nest start",
+		"start:dev": "pnpm exec nest start --watch",
 		"build": "pnpm exec nest build"
 	},
 	"dependencies": {

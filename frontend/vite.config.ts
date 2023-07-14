@@ -1,10 +1,10 @@
-import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { sveltekit } from "@sveltejs/kit/vite"
+import { defineConfig } from "vite"
 
 export default defineConfig({
 	plugins: [sveltekit()],
 	build: {
-		minify: false
+		minify: false,
 	},
 	server: {
 		// https: {
@@ -13,7 +13,7 @@ export default defineConfig({
 		// },
 		proxy: {
 			// string shorthand: http://localhost:5173/api -> http://localhost:3000/api
-			'/api': 'http://localhost:3000'
+			"/api": "http://localhost:3000",
 			// with options: http://localhost:5173/api/bar-> http://example.com/bar
 			// "/api": {
 			// 	target: "http://localhost:3000/api",
@@ -36,6 +36,6 @@ export default defineConfig({
 			// 		})
 			// 	},
 			// },
-		}
-	}
-});
+		},
+	},
+})

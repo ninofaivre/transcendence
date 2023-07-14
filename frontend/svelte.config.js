@@ -18,6 +18,9 @@ const config = {
 			$stores: "src/lib/stores",
 			$clients: "src/lib/clients",
 		},
+		env: {
+			dir: "..",
+		},
 	},
 }
 

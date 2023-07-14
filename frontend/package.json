@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm vite",
+    "start:dev": "pnpm vite",
     "build": "pnpm exec vite build",
     "build:watch": "find src -type f | entr -c -r pnpm vite build #pnpm vite build --watch ",
     "preview": "pnpm vite preview",

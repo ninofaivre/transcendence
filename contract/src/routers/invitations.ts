@@ -3,12 +3,9 @@ import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
 import { unique } from "../zod/global.zod"
 import { zChanTitle } from "./chans"
-import { ChanInvitationStatus, FriendInvitationStatus } from "prisma-generated"
+import { zChanInvitationStatus, zFriendInvitationStatus } from "prisma-generated"
 
 const c = initContract()
-
-const zChanInvitationStatus = z.nativeEnum(ChanInvitationStatus)
-const zFriendInvitationStatus = z.nativeEnum(FriendInvitationStatus)
 
 export const zFriendInvitationReturn = z.strictObject({
 	id: z.string().uuid(),

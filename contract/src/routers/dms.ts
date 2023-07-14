@@ -1,22 +1,11 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import { ClassicDmEventType, DirectMessageStatus } from "prisma-generated"
+import { zClassicDmEventType, zDirectMessageStatus } from "prisma-generated"
 import { zChanTitle } from "./chans"
 import { zUserStatus } from "./users"
 
-const test = {
-	ENABLED: "ENABLED",
-	DISABLED: "DISABLED",
-} as const
-
-;(a: typeof DirectMessageStatus, b: typeof test) =>
-	(a satisfies typeof test) && (b satisfies typeof DirectMessageStatus)
-
 const c = initContract()
-
-const zDirectMessageStatus = z.nativeEnum(DirectMessageStatus)
-const zClassicDmEventType = z.nativeEnum(ClassicDmEventType)
 
 export const zDmReturn = z.strictObject({
 	id: z.string().uuid(),

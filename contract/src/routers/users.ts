@@ -1,8 +1,10 @@
 import { initContract } from "@ts-rest/core"
+
+import { zChanType, zDmPolicyLevelType, zStatusVisibilityLevel } from "prisma-generated"
+
+import { zChanTitle } from "./chans"
 import { zUserName, zUserPassword } from "../zod/user.zod"
 import { z } from "zod"
-import { zChanTitle, zChanType } from "./chans"
-import { DmPolicyLevelType, StatusVisibilityLevel } from "prisma-generated"
 
 export type UserEvent = {
 	type: "UPDATED_USER_STATUS"
@@ -19,9 +21,8 @@ export const zUserProfilePreviewReturn = z.strictObject({
 })
 
 export const zUserStatus = z.enum(["OFFLINE", "ONLINE", "INVISIBLE"])
-
 export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
-	dmPolicyLevel: z.nativeEnum(DmPolicyLevelType),
+	dmPolicyLevel: zDmPolicyLevelType,
 	commonChans: z.array(
 		z.strictObject({ type: zChanType, title: zChanTitle.nullable(), id: z.string().uuid() }),
 	),
@@ -33,8 +34,8 @@ export const zPartialUserProfileReturn = zUserProfileReturn.partial()
 
 export const zMyProfileReturn = z.strictObject({
 	userName: zUserName,
-	dmPolicyLevel: z.nativeEnum(DmPolicyLevelType),
-	statusVisibilityLevel: z.nativeEnum(StatusVisibilityLevel),
+	dmPolicyLevel: zDmPolicyLevelType,
+	statusVisibilityLevel: zStatusVisibilityLevel,
 })
 
 const zSearchUsersQueryBase = z.strictObject({

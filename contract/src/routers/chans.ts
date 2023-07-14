@@ -1,37 +1,17 @@
-import { extendApi } from "@anatine/zod-openapi"
 import { initContract } from "@ts-rest/core"
+import { extendApi } from "@anatine/zod-openapi"
+
 import { unique } from "../zod/global.zod"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
 import {
-	ChanType,
-	ClassicChanEventType,
-	type PermissionList,
-	RoleApplyingType,
+	zChanType,
+	zClassicChanEventType,
+	zRoleApplyingType,
+	zPermissionList,
 } from "prisma-generated"
 
 const c = initContract()
-
-const zClassicChanEventType = z.nativeEnum(ClassicChanEventType)
-export const zChanType = z.nativeEnum(ChanType)
-
-const zPermissionList = z.enum([
-	"SEND_MESSAGE",
-	"DELETE_MESSAGE",
-	"EDIT",
-	"INVITE",
-	"KICK",
-	"BAN",
-	"MUTE",
-	"DESTROY",
-])
-
-;(
-	zEnum: z.infer<typeof zPermissionList>,
-	readonlyObject: (typeof PermissionList)[keyof typeof PermissionList],
-) => (zEnum satisfies typeof readonlyObject) && (readonlyObject satisfies typeof zEnum)
-
-const zRoleApplyingType = z.nativeEnum(RoleApplyingType)
 
 export const zChanTitle = z
 	.string()

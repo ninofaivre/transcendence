@@ -1,7 +1,7 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import { zClassicDmEventType, zDirectMessageStatus } from "prisma-generated"
+import { zClassicDmEventType, ClassicDmEventType, zDirectMessageStatus } from "prisma-generated"
 import { zChanTitle } from "./chans"
 import { zUserStatus } from "./users"
 
@@ -43,7 +43,7 @@ export const zDmDiscussionMessageReturn = z.union([
 	}),
 ])
 
-export const zDmDiscussionEventReturn = z.discriminatedUnion("eventType", [
+export const zDmDiscussionEventReturn = z.union([
 	zDmDiscussionBaseEvent.extend({
 		eventType: zClassicDmEventType,
 		otherName: zUserName, // if we really need it

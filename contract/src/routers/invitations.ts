@@ -66,11 +66,12 @@ const friendInvitationsContract = c.router(
 				id: z.string().uuid(),
 			}),
 			body: z.strictObject({
-				status: z.enum([
-					zFriendInvitationStatus.enum.ACCEPTED,
-					zFriendInvitationStatus.enum.REFUSED,
-					zFriendInvitationStatus.enum.CANCELED,
-				]),
+                status: zFriendInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"])
+				// status: z.enum([
+				// 	zFriendInvitationStatus.enum.ACCEPTED,
+				// 	zFriendInvitationStatus.enum.REFUSED,
+				// 	zFriendInvitationStatus.enum.CANCELED,
+				// ]),
 			}),
 			responses: {
 				200: zFriendInvitationReturn,
@@ -125,11 +126,12 @@ const chanInvitationsContract = c.router(
 				id: z.string().uuid(),
 			}),
 			body: z.strictObject({
-				status: z.enum([
-					zChanInvitationStatus.enum.ACCEPTED,
-					zChanInvitationStatus.enum.REFUSED,
-					zChanInvitationStatus.enum.CANCELED,
-				]),
+				status: zChanInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"])
+                // status: z.enum([
+				// 	zChanInvitationStatus.enum.ACCEPTED,
+				// 	zChanInvitationStatus.enum.REFUSED,
+				// 	zChanInvitationStatus.enum.CANCELED,
+				// ]),
 			}),
 			responses: {
 				200: zChanInvitationReturn,

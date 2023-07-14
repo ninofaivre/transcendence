@@ -1,3 +1,5 @@
+export type * as Types from "contract"
+
 import type { ClientInferResponseBody } from "@ts-rest/core"
 
 import type { contract } from "contract"

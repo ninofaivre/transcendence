@@ -5,6 +5,7 @@ import { zChanType, zDmPolicyLevelType, zStatusVisibilityLevel } from "prisma-ge
 import { zChanTitle } from "./chans"
 import { zUserName, zUserPassword } from "../zod/user.zod"
 import { z } from "zod"
+import { getErrorForContract, getErrorsForContract } from "../errors"
 
 export type UserEvent = {
 	type: "UPDATED_USER_STATUS"
@@ -79,6 +80,7 @@ export const usersContract = c.router(
 			path: "/@me",
 			responses: {
 				200: zMyProfileReturn,
+                ...getErrorsForContract(c, [404, "NotFoundUser"])
 			},
 		},
 		getUser: {
@@ -89,6 +91,7 @@ export const usersContract = c.router(
 			}),
 			responses: {
 				200: zUserProfileReturn,
+                ...getErrorsForContract(c, [404, "NotFoundUser"])
 			},
 		},
 		updateMe: {
@@ -97,6 +100,7 @@ export const usersContract = c.router(
 			body: zMyProfileReturn.partial(),
 			responses: {
 				200: zMyProfileReturn,
+                ...getErrorsForContract(c, [404, "NotFoundUser"])
 			},
 		},
 		signUp: {
@@ -110,6 +114,7 @@ export const usersContract = c.router(
 				201: z.object({
 					name: zUserName,
 				}),
+                ...getErrorsForContract(c, [409, "UserAlreadyExist"])
 			},
 		},
 	},

@@ -6,7 +6,7 @@ import { hash } from "bcrypt"
 import { StatusVisibilityLevel } from "prisma-generated"
 import { PrismaService } from "src/prisma/prisma.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
-import { contract } from "contract"
+import { contract, contractErrors } from "contract"
 import { z } from "zod"
 import { zUserProfileReturn } from "contract"
 import { zMyProfileReturn, zUserProfilePreviewReturn, zUserStatus } from "contract"
@@ -14,6 +14,7 @@ import { SseService } from "src/sse/sse.service"
 import { ChansService } from "src/chans/chans.service"
 import { FriendsService } from "src/friends/friends.service"
 import { DmsService } from "src/dms/dms.service"
+import { EnrichedRequest } from "src/auth/auth.service"
 
 const c = nestControllerContract(contract.users)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -136,6 +137,13 @@ export class UserService {
 		)
 	}
 
+    async getUserProfile({ user: { username } }: EnrichedRequest, toGetUserName: string) {
+        const profile = await this.getUser(toGetUserName,
+            this.getUserProfileSelectForUser(username))
+        if (!profile) return contractErrors.NotFoundUser(toGetUserName)
+        return this.formatUserProfileForUser(username, profile)
+    }
+
 	public getProximityLevel({
 		friend,
 		friendOf,
@@ -209,30 +217,19 @@ export class UserService {
 
 	async searchUsers(
 		username: string,
-		contains: string,
-		nRes: number,
-		filter: RequestShapes["searchUsers"]["query"]["filter"],
+        { filter, nResult, userNameContains }: RequestShapes['searchUsers']['query']
 	) {
 		const where = {
-			name: { contains },
+			name: { contains: userNameContains },
 			...this.getTest(filter, filter.type, username),
 		} satisfies Prisma.UserWhereInput
-		console.log(where)
 		const res = await this.prisma.user.findMany({
 			where,
-			take: nRes,
+			take: nResult,
 			orderBy: { name: "asc" },
 			select: this.getUserProfilePreviewSelectForUser(username),
 		})
 		return this.formatUserProfilePreviewForUserArray(username, res)
-	}
-
-	async getUser(username: string, searchedUserName: string) {
-		const res = await this.getUserByNameOrThrow(
-			searchedUserName,
-			this.getUserProfileSelectForUser(username),
-		)
-		return this.formatUserProfileForUser(username, res)
 	}
 
 	formatMe(
@@ -243,11 +240,13 @@ export class UserService {
 	}
 
 	async getMe(username: string) {
-		return this.formatMe(await this.getUserByNameOrThrow(username, this.myProfileSelect))
+        const me = await this.getUser(username, this.myProfileSelect)
+        if (!me) return contractErrors.NotFoundUser(username)
+		return this.formatMe(me)
 	}
 
 	getArrayOfUniqueUserNamesFromStatusData(
-		data: Awaited<ReturnType<typeof this.getNotifyStatusData>>,
+		data: Exclude<Awaited<ReturnType<typeof this.getNotifyStatusData>>, null>,
 	) {
 		return [
 			...new Set<string>(
@@ -262,6 +261,7 @@ export class UserService {
 
 	async updateMe(username: string, dto: RequestShapes["updateMe"]["body"]) {
 		const oldData = await this.getNotifyStatusData(username)
+        if (!oldData) return contractErrors.NotFoundUser(username)
 		const oldUserNames = this.getArrayOfUniqueUserNamesFromStatusData(oldData)
 
 		const updatedMe = await this.prisma.user.update({
@@ -271,6 +271,7 @@ export class UserService {
 		})
 
 		const newData = await this.getNotifyStatusData(username)
+        if (!newData) return contractErrors.NotFoundUser(username)
 		const newUserNames = this.getArrayOfUniqueUserNamesFromStatusData(newData)
 
 		this.sse.pushEventMultipleUser(
@@ -307,16 +308,27 @@ export class UserService {
 		return user
 	}
 
+    public async getUser<T extends Prisma.UserSelect>(
+        name: string,
+        select: Prisma.SelectSubset<T, Prisma.UserSelect>
+    ) {
+        const user = await this.prisma.user.findUnique({
+            where: { name },
+            select
+        })
+        return user
+    }
+
 	async createUser(user: RequestShapes["signUp"]["body"]) {
 		if (await this.getUserByName(user.name, { name: true }))
-			throw new ConflictException("user already exist")
+            return contractErrors.UserAlreadyExist(user.name)
 		user.password = await hash(user.password, 10)
 		const { password, ...result } = await this.prisma.user.create({ data: user })
 		return result
 	}
 
 	private async getNotifyStatusData(username: string) {
-		return this.getUserByNameOrThrow(username, {
+		return this.getUser(username, {
 			friend: {
 				where: { requestingUser: { statusVisibilityLevel: { not: "NO_ONE" } } },
 				select: { requestedUserName: true },
@@ -414,6 +426,7 @@ export class UserService {
 
 	public async notifyStatus(username: string) {
 		const data = await this.getNotifyStatusData(username)
+        if (!data) return
 		const toNotifyUserNames = this.getArrayOfUniqueUserNamesFromStatusData(data)
 		this.sse.pushEventMultipleUser(toNotifyUserNames, {
 			type: "UPDATED_USER_STATUS",

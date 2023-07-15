@@ -1,0 +1,15 @@
+echo Updating... \
+&& cd prisma \
+    && pnpm update \
+&& cd enums \
+    && pnpm up \
+&& cd ../.. \
+&& cd contract \
+    && pnpm up \
+&& cd .. \
+&& cd backend \
+    && pnpm up \
+&& cd .. \
+&& cd frontend \
+    && pnpm up \
+&& cd .. 

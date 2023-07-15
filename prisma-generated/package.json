@@ -11,7 +11,7 @@
         }
     },
     "scripts": {
-        "postinstall": "prisma generate",
+        "postinstall": "pnpm exec prisma generate",
         "build": "tsup src/index.ts --format cjs,esm --dts --clean",
         "watch": "npm run build -- --watch src",
         "prepublishOnly": "npm run build"

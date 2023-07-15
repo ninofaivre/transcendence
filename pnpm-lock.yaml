@@ -68,7 +68,7 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0
       contract:
-        specifier: link:../contract
+        specifier: workspace:*
         version: link:../contract
       cookie:
         specifier: ^0.5.0

@@ -20,7 +20,7 @@
 		"@ts-rest/nest": "^3.26.3",
 		"@ts-rest/open-api": "^3.26.3",
 		"bcrypt": "^5.1.0",
-		"contract": "link:../contract",
+		"contract": "workspace:*",
 		"cookie": "^0.5.0",
 		"cookie-parser": "^1.4.6",
 		"dotenv": "^16.3.1",

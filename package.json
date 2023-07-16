@@ -8,7 +8,8 @@
     "start": "pnpm --stream -r start",
     "start:dev": "pnpm --parallel --stream -r run start:dev",
     "build": "./.build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "studio" : "pnpm exec prisma studio --schema='./prisma-generated/schema.prisma' "
   },
   "keywords": [],
   "author": "6e696e6f+cassepipe",

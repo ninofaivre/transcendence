@@ -3,7 +3,7 @@ import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
 import { unique } from "../zod/global.zod"
 import { zChanTitle } from "./chans"
-import { zChanInvitationStatus, zFriendInvitationStatus } from "prisma-generated"
+import { zChanInvitationStatus, zFriendInvitationStatus } from "../generated-zod"
 
 const c = initContract()
 
@@ -66,7 +66,7 @@ const friendInvitationsContract = c.router(
 				id: z.string().uuid(),
 			}),
 			body: z.strictObject({
-                status: zFriendInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"])
+				status: zFriendInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"]),
 				// status: z.enum([
 				// 	zFriendInvitationStatus.enum.ACCEPTED,
 				// 	zFriendInvitationStatus.enum.REFUSED,
@@ -126,8 +126,8 @@ const chanInvitationsContract = c.router(
 				id: z.string().uuid(),
 			}),
 			body: z.strictObject({
-				status: zChanInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"])
-                // status: z.enum([
+				status: zChanInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"]),
+				// status: z.enum([
 				// 	zChanInvitationStatus.enum.ACCEPTED,
 				// 	zChanInvitationStatus.enum.REFUSED,
 				// 	zChanInvitationStatus.enum.CANCELED,

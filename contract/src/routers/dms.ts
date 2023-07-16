@@ -1,7 +1,7 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import { zClassicDmEventType, ClassicDmEventType, zDirectMessageStatus } from "prisma-generated"
+import { zClassicDmEventType, ClassicDmEventType, zDirectMessageStatus } from "../generated-zod"
 import { zChanTitle } from "./chans"
 import { zUserStatus } from "./users"
 
@@ -183,10 +183,10 @@ export type DmEvent =
 			type: "CREATED_DM"
 			data: z.infer<typeof zDmReturn>
 	  }
-    | {
-            type: "UPDATED_DM_STATUS",
-            data: { dmId: string, status: z.infer<typeof zDirectMessageStatus> }
-      }
+	| {
+			type: "UPDATED_DM_STATUS"
+			data: { dmId: string; status: z.infer<typeof zDirectMessageStatus> }
+	  }
 	| {
 			type: "UPDATED_DM_STATUS"
 			data: { dmId: string; status: z.infer<typeof zDirectMessageStatus> }

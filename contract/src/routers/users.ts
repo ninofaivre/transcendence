@@ -1,6 +1,6 @@
 import { initContract } from "@ts-rest/core"
 
-import { zChanType, zDmPolicyLevelType, zStatusVisibilityLevel } from "prisma-generated"
+import { zChanType, zDmPolicyLevelType, zStatusVisibilityLevel } from "../generated-zod"
 
 import { zChanTitle } from "./chans"
 import { zUserName, zUserPassword } from "../zod/user.zod"
@@ -80,7 +80,7 @@ export const usersContract = c.router(
 			path: "/@me",
 			responses: {
 				200: zMyProfileReturn,
-                ...getErrorsForContract(c, [404, "NotFoundUser"])
+				...getErrorsForContract(c, [404, "NotFoundUser"]),
 			},
 		},
 		getUser: {
@@ -91,7 +91,7 @@ export const usersContract = c.router(
 			}),
 			responses: {
 				200: zUserProfileReturn,
-                ...getErrorsForContract(c, [404, "NotFoundUser"])
+				...getErrorsForContract(c, [404, "NotFoundUser"]),
 			},
 		},
 		updateMe: {
@@ -100,7 +100,7 @@ export const usersContract = c.router(
 			body: zMyProfileReturn.partial(),
 			responses: {
 				200: zMyProfileReturn,
-                ...getErrorsForContract(c, [404, "NotFoundUser"])
+				...getErrorsForContract(c, [404, "NotFoundUser"]),
 			},
 		},
 		signUp: {
@@ -114,7 +114,7 @@ export const usersContract = c.router(
 				201: z.object({
 					name: zUserName,
 				}),
-                ...getErrorsForContract(c, [409, "UserAlreadyExist"])
+				...getErrorsForContract(c, [409, "UserAlreadyExist"]),
 			},
 		},
 	},

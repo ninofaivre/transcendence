@@ -21,7 +21,6 @@
     },
     "dependencies": {
         "@anatine/zod-openapi": "^2.0.1",
-        "prisma-generated": "workspace:*",
         "zod": "^3.21.4"
     }
 }

@@ -9,7 +9,7 @@ import {
 	zClassicChanEventType,
 	zRoleApplyingType,
 	zPermissionList,
-} from "prisma-generated"
+} from "../generated-zod"
 
 const c = initContract()
 

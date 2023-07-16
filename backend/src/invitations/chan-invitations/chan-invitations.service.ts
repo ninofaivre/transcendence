@@ -5,7 +5,7 @@ import {
 	NotFoundException,
 	forwardRef,
 } from "@nestjs/common"
-import { Prisma, ChanInvitationStatus, PermissionList } from "prisma-generated"
+import { Prisma, ChanInvitationStatus, PermissionList } from "@prisma/client"
 import { zChanInvitationReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
@@ -165,7 +165,7 @@ export class ChanInvitationsService {
 			where: { id: { in: invs.map((el) => el.id) } },
 			data: {
 				status: newStatus,
-			}
+			},
 		})
 		return Promise.all(
 			invs.map(async (el) => {

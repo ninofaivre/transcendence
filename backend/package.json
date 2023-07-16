@@ -29,7 +29,6 @@
 		"passport": "^0.6.0",
 		"passport-jwt": "^4.0.1",
 		"passport-local": "^1.0.0",
-		"prisma-generated": "workspace:*",
 		"rxjs": "^7.8.1",
 		"source-map-support": "^0.5.21",
 		"swagger-themes": "^1.2.29",

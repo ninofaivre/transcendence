@@ -94,9 +94,6 @@ importers:
       passport-local:
         specifier: ^1.0.0
         version: 1.0.0
-      prisma-generated:
-        specifier: workspace:*
-        version: link:../prisma-generated
       rxjs:
         specifier: ^7.8.1
         version: 7.8.1
@@ -137,9 +134,6 @@ importers:
       '@anatine/zod-openapi':
         specifier: ^2.0.1
         version: 2.0.1(openapi3-ts@4.1.2)(zod@3.21.4)
-      prisma-generated:
-        specifier: workspace:*
-        version: link:../prisma-generated
       zod:
         specifier: ^3.21.4
         version: 3.21.4

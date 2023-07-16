@@ -1,9 +1,9 @@
-import type { Prisma } from "prisma-generated"
+import type { Prisma } from "@prisma/client"
 
 import { Inject, Injectable, forwardRef } from "@nestjs/common"
 import { NotFoundException, ConflictException } from "@nestjs/common"
 import { hash } from "bcrypt"
-import { StatusVisibilityLevel } from "prisma-generated"
+import { StatusVisibilityLevel } from "@prisma/client"
 import { PrismaService } from "src/prisma/prisma.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract, contractErrors } from "contract"
@@ -137,12 +137,14 @@ export class UserService {
 		)
 	}
 
-    async getUserProfile({ user: { username } }: EnrichedRequest, toGetUserName: string) {
-        const profile = await this.getUser(toGetUserName,
-            this.getUserProfileSelectForUser(username))
-        if (!profile) return contractErrors.NotFoundUser(toGetUserName)
-        return this.formatUserProfileForUser(username, profile)
-    }
+	async getUserProfile({ user: { username } }: EnrichedRequest, toGetUserName: string) {
+		const profile = await this.getUser(
+			toGetUserName,
+			this.getUserProfileSelectForUser(username),
+		)
+		if (!profile) return contractErrors.NotFoundUser(toGetUserName)
+		return this.formatUserProfileForUser(username, profile)
+	}
 
 	public getProximityLevel({
 		friend,
@@ -217,7 +219,7 @@ export class UserService {
 
 	async searchUsers(
 		username: string,
-        { filter, nResult, userNameContains }: RequestShapes['searchUsers']['query']
+		{ filter, nResult, userNameContains }: RequestShapes["searchUsers"]["query"],
 	) {
 		const where = {
 			name: { contains: userNameContains },
@@ -240,8 +242,8 @@ export class UserService {
 	}
 
 	async getMe(username: string) {
-        const me = await this.getUser(username, this.myProfileSelect)
-        if (!me) return contractErrors.NotFoundUser(username)
+		const me = await this.getUser(username, this.myProfileSelect)
+		if (!me) return contractErrors.NotFoundUser(username)
 		return this.formatMe(me)
 	}
 
@@ -261,7 +263,7 @@ export class UserService {
 
 	async updateMe(username: string, dto: RequestShapes["updateMe"]["body"]) {
 		const oldData = await this.getNotifyStatusData(username)
-        if (!oldData) return contractErrors.NotFoundUser(username)
+		if (!oldData) return contractErrors.NotFoundUser(username)
 		const oldUserNames = this.getArrayOfUniqueUserNamesFromStatusData(oldData)
 
 		const updatedMe = await this.prisma.user.update({
@@ -271,7 +273,7 @@ export class UserService {
 		})
 
 		const newData = await this.getNotifyStatusData(username)
-        if (!newData) return contractErrors.NotFoundUser(username)
+		if (!newData) return contractErrors.NotFoundUser(username)
 		const newUserNames = this.getArrayOfUniqueUserNamesFromStatusData(newData)
 
 		this.sse.pushEventMultipleUser(
@@ -308,20 +310,20 @@ export class UserService {
 		return user
 	}
 
-    public async getUser<T extends Prisma.UserSelect>(
-        name: string,
-        select: Prisma.SelectSubset<T, Prisma.UserSelect>
-    ) {
-        const user = await this.prisma.user.findUnique({
-            where: { name },
-            select
-        })
-        return user
-    }
+	public async getUser<T extends Prisma.UserSelect>(
+		name: string,
+		select: Prisma.SelectSubset<T, Prisma.UserSelect>,
+	) {
+		const user = await this.prisma.user.findUnique({
+			where: { name },
+			select,
+		})
+		return user
+	}
 
 	async createUser(user: RequestShapes["signUp"]["body"]) {
 		if (await this.getUserByName(user.name, { name: true }))
-            return contractErrors.UserAlreadyExist(user.name)
+			return contractErrors.UserAlreadyExist(user.name)
 		user.password = await hash(user.password, 10)
 		const { password, ...result } = await this.prisma.user.create({ data: user })
 		return result
@@ -426,7 +428,7 @@ export class UserService {
 
 	public async notifyStatus(username: string) {
 		const data = await this.getNotifyStatusData(username)
-        if (!data) return
+		if (!data) return
 		const toNotifyUserNames = this.getArrayOfUniqueUserNamesFromStatusData(data)
 		this.sse.pushEventMultipleUser(toNotifyUserNames, {
 			type: "UPDATED_USER_STATUS",

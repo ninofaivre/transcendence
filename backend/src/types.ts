@@ -1,4 +1,4 @@
-import { Prisma } from "prisma-generated"
+import { Prisma } from "@prisma/client"
 import { PrismaService } from "./prisma/prisma.service"
 
 export type Tx = Omit<

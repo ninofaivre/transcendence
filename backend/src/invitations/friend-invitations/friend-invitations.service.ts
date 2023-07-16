@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common"
-import { FriendInvitationStatus, Prisma } from "prisma-generated"
+import { FriendInvitationStatus, Prisma } from "@prisma/client"
 import { FriendsService } from "src/friends/friends.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { SseService } from "src/sse/sse.service"
@@ -155,7 +155,7 @@ export class FriendInvitationsService {
 		const updatedFriendInvitation = await this.prisma.friendInvitation.update({
 			where: { id },
 			data: { status: newStatus },
-            select: this.friendInvitationSelect 
+			select: this.friendInvitationSelect,
 		})
 		this.sse.pushEvent(invitingUserName !== username ? invitingUserName : invitedUserName, {
 			type: "UPDATED_FRIEND_INVITATION_STATUS",

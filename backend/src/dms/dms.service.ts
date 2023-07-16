@@ -6,13 +6,7 @@ import {
 	NotFoundException,
 	forwardRef,
 } from "@nestjs/common"
-import {
-	ClassicDmEventType,
-	DeletedMessageDmDiscussionEventModel,
-	DirectMessageStatus,
-	DmDiscussionEventModel,
-	Prisma,
-} from "prisma-generated"
+import { ClassicDmEventType, DirectMessageStatus, Prisma } from "@prisma/client"
 import { SseService } from "src/sse/sse.service"
 import { z } from "zod"
 import { DmEvent, zDmDiscussionElementReturn, zDmReturn } from "contract"

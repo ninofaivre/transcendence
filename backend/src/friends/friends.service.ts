@@ -5,7 +5,7 @@ import {
 	DmPolicyLevelType,
 	Prisma,
 	StatusVisibilityLevel,
-} from "prisma-generated"
+} from "@prisma/client"
 import { zFriendShipReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
@@ -39,9 +39,8 @@ export class FriendsService {
 
 	public formatFriendShip(
 		friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,
-		username: string,
-	) // why the fuck can't I use z.infer here ? (can't find 'this')
-	//: z.infer<typeof zFriendShipReturn>
+		username: string, // why the fuck can't I use z.infer here ? (can't find 'this')
+	) //: z.infer<typeof zFriendShipReturn>
 	{
 		const {
 			requestedUserName,

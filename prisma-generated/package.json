@@ -1,19 +1,7 @@
 {
     "name": "prisma-generated",
-    "main": "./dist/index.js",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "require": "./dist/index.js",
-            "import": "./dist/index.mjs",
-            "types": "./dist/index.d.ts"
-        }
-    },
     "scripts": {
-        "postinstall": "pnpm exec prisma generate",
-        "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-        "dev": "pnpm run build -- --watch src"
+        "postinstall": "pnpm exec prisma generate"
     },
     "devDependencies": {
         "@gabrola/zod-prisma": "^0.11.0",

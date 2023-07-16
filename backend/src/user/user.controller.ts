@@ -8,6 +8,23 @@ import { EnrichedRequest } from "src/auth/auth.service"
 
 const c = contract.users
 
+/*
+TODO: Update this comment later (and probably moove it to another place)
+
+Below there is a method called *signUp* in the nest controller
+wich is in contract *contract.users* but not in the multi-handler,
+I call It an **exception**.
+
+Every **exception** needs to be omited in the type passed to *tsRestHandler* function.
+
+Every **exception** that share it path with another endpoint in the multi-handler
+needs to be higher than the multi-handler in the controller.
+
+If an **exception** doesn't share it path with another endpoint, it can be
+below the multi-handler but in that case needs to be omited in the type
+passed to *TsRestHandler* decorator too.
+*/
+
 @TsRest({jsonQuery: true})
 @Controller()
 export class UserController {

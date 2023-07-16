@@ -14,10 +14,18 @@ export class UserController {
 
 	constructor(private userService: UserService) {}
 
+    @TsRestHandler(c.signUp)
+    async signUp() {
+        return tsRestHandler(c.signUp, async ({ body }) => {
+            const res = await this.userService.createUser(body)
+            return isContractError(res) ? res : { status: 201, body: res }
+        })
+    }
+
     @UseGuards(JwtAuthGuard)
     @TsRestHandler(c)
     async handler(@Request()req: EnrichedRequest) {
-        return tsRestHandler(c as Omit<typeof c, 'signUp'>, {
+        return tsRestHandler<Omit<typeof c, 'signUp'>>(c, {
 
             getMe: async () => {
                 const res = await this.userService.getMe(req.user.username)
@@ -39,14 +47,6 @@ export class UserController {
                 return isContractError(res) ? res : { status: 200, body: res }
             }
 
-        })
-    }
-
-    @TsRestHandler(c.signUp)
-    async signUp() {
-        return tsRestHandler(c.signUp, async ({ body }) => {
-            const res = await this.userService.createUser(body)
-            return isContractError(res) ? res : { status: 201, body: res }
         })
     }
 

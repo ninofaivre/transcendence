@@ -33,7 +33,7 @@
 		{ inner: "🏓", href: "/pong" },
 		{ inner: "💬", href: "/chat" },
 		{ inner: "✉️", href: "/dms" },
-		{ inner: "🤝", href: "/friends" },
+		// { inner: "🤝", href: "/friends" },
 	]
 </script>
 

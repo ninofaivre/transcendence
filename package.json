@@ -4,7 +4,7 @@
   "description": "A webapp to play pong and chat with your friends",
   "main": "index.js",
   "scripts": {
-    "preinstall": "npx only-allow pnpm && cp -n .env.example .env",
+    "preinstall": "npx only-allow pnpm",
     "start": "pnpm --stream -r start",
     "start:dev": "pnpm --parallel --stream -r run start:dev",
     "build": "./.build",

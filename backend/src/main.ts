@@ -7,6 +7,7 @@ import { generateOpenApi } from "@ts-rest/open-api"
 import { contract } from "contract"
 // import { HttpStatus } from "@nestjs/common"
 import { join } from "path"
+import { EnvService } from "./env/env.service"
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
@@ -45,7 +46,7 @@ async function bootstrap() {
 	// 	}),
 	// )
 
-	await app.listen(3000)
+	await app.listen(EnvService.env.PUBLIC_BACKEND_PORT)
 }
 
 // TODO: make this function a bit cleaner and put it somewhere else

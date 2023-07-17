@@ -1,5 +1,5 @@
 {
-    "name": "prisma-generated",
+    "name": "prisma-dummy",
     "scripts": {
         "build": "pnpm exec prisma generate"
     },

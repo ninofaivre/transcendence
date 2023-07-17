@@ -233,7 +233,7 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
-  prisma-generated:
+  prisma-dummy:
     dependencies:
       '@prisma/client':
         specifier: ^5.0.0

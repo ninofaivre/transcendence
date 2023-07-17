@@ -1,6 +1,6 @@
 # The order determines the build order in our build script. Do not remove this comment
 packages: 
-  - 'prisma-generated'
+  - 'prisma-dummy'
   - 'contract'
   - 'backend'
   - 'frontend'

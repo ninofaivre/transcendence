@@ -9,7 +9,9 @@
     "start:dev": "pnpm --parallel --stream -r run start:dev",
     "build": "./.build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "studio" : "pnpm exec prisma studio --schema='./prisma-dummy/schema.prisma' "
+    "studio" : "pnpm exec prisma studio --schema='./prisma-dummy/schema.prisma' ",
+    "migrate:dev" : "pnpm exec prisma migrate dev --schema='./prisma-dummy/schema.prisma' ",
+    "migrate:reset" : "pnpm exec prisma migrate reset --schema='./prisma-dummy/schema.prisma' "
   },
   "keywords": [],
   "author": "6e696e6f+cassepipe",

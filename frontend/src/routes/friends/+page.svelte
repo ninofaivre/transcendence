@@ -62,7 +62,7 @@
 	}
 </script>
 
-<SendFriendRequest />
+<SendFriendRequest friendList={$page.data.friendList} />
 
 <ul class="m-3">
 	{#if $page.data.friend_requests.incoming.length != 0}

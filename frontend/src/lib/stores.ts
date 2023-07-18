@@ -1,7 +1,7 @@
 import { derived } from "svelte/store"
 
 import { localStorageStore } from "@skeletonlabs/skeleton"
-import { client }  from "$clients"
+import { client } from "$clients"
 import { get } from "svelte/store"
 
 console.log("The stores module is being executed...")
@@ -32,7 +32,7 @@ export const my_name = derived(
 let eventSource: EventSource | undefined
 export const sse_store = derived(logged_in, ($logged_in) => {
 	if ($logged_in === true) {
-		eventSource = new EventSource("/api/sse")
+		eventSource = new EventSource("/api/sse", { withCredentials: true })
 		eventSource.onopen = function (_evt) {
 			console.log("Successfully established sse connection")
 		}

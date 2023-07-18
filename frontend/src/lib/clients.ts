@@ -13,4 +13,5 @@ export const client = initClient(contract, {
 	baseUrl,
 	baseHeaders: {},
 	jsonQuery: true,
+	credentials: "include",
 })

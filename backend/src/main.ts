@@ -17,11 +17,12 @@ async function bootstrap() {
 		// 	key: fs.readFileSync('./secrets/key.pem'),
 		// 	cert: fs.readFileSync('./secrets/cert.pem'),
 		// },
-		// cors:
-		// {
-		// 	credentials: true,
-		// 	origin: ['https://localhost:3000', 'https://localhost:5173', 'https://localhost'],
-		// }
+		cors: {
+			// Mandatory for any protected route to work (must be set on the client's fetch and EventSource constructor too)
+			credentials: true,
+			//Matches all localhost whether http/https or there's a port
+			origin: /https?:\/\/localhost(?::\d{1,6})?$/,
+		},
 	})
 
 	app.use(cookieParser())

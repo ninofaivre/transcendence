@@ -8,6 +8,8 @@
 	import { page } from "$app/stores"
 	import { my_name } from "$stores"
 
+	export let friendList: String[]
+
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
 
@@ -47,7 +49,7 @@
 	}
 
 	$: if (search_input) getUsernames(search_input)
-	$: denylist = [...$page.data.friendList, $my_name]
+	$: denylist = [...friendList, $my_name]
 </script>
 
 <input class="input" type="search" bind:value={search_input} placeholder="Search user..." />

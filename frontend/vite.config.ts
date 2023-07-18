@@ -1,41 +1,23 @@
 import { sveltekit } from "@sveltejs/kit/vite"
-import { defineConfig } from "vite"
+import { defineConfig, loadEnv } from "vite"
 
-export default defineConfig({
-	plugins: [sveltekit()],
-	build: {
-		minify: false,
-	},
-	server: {
-		// https: {
-		// 	key: "../secrets/key.pem",
-		// 	cert: "../secrets/cert.pem",
-		// },
-		proxy: {
-			// string shorthand: http://localhost:5173/api -> http://localhost:3000/api
-			"/api": "http://localhost:3000",
-			// with options: http://localhost:5173/api/bar-> http://example.com/bar
-			// "/api": {
-			// 	target: "http://localhost:3000/api",
-			// 	changeOrigin: true,
-			// 	secure: true,
-			// 	configure: (proxy, _options) => {
-			// 		proxy.on("error", (err, _req, _res) => {
-			// 			console.log("proxy error", err)
-			// 		})
-			// 		proxy.on("proxyReq", (_proxyReq, req, _res) => {
-			// 			console.log("Sending Request to the Target:", req.method, req.url)
-			// 			// console.log(req)
-			// 		})
-			// 		proxy.on("proxyRes", (proxyRes, req, _res) => {
-			// 			console.log(
-			// 				"Received Response from the Target:",
-			// 				proxyRes.statusCode,
-			// 				req.url,
-			// 			)
-			// 		})
-			// 	},
-			// },
+export default defineConfig(({ mode }) => {
+	const env = loadEnv(mode, "..")
+	return {
+		plugins: [sveltekit()],
+		build: {
+			minify: false,
 		},
-	},
+		envDir: "../",
+		server: {
+			// https: {
+			// 	key: "../secrets/key.pem",
+			// 	cert: "../secrets/cert.pem",
+			// },
+			proxy: {
+				// string shorthand: http://localhost:5173/api -> http://localhost:3000/api
+				"/api": env.PUBLIC_BACKEND_URL,
+			},
+		},
+	}
 })

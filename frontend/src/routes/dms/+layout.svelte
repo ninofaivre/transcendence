@@ -56,7 +56,7 @@
 				on:outsideclick={() => (sending_friend_request = false)}
 			>
 				{#if sending_friend_request}
-					<SendFriendRequest />
+					<SendFriendRequest friendList={$page.data.friendList} />
 				{:else}
 					<button
 						class="btn btn-sm variant-filled-tertiary mt-1 rounded-md"
@@ -80,7 +80,9 @@
 {:else}
 	<div id="convo" class="my-10 flex h-full flex-col justify-center">
 		<div class="mx-auto text-center text-3xl font-bold">You don't have any friends yet</div>
-		<div class="mx-auto my-10">Thingie form to make forms</div>
+		<div class="mx-auto my-10">
+			<SendFriendRequest friendList={$page.data.friendList} />
+		</div>
 	</div>
 {/if}
 

@@ -1,6 +1,6 @@
 import { initContract } from "@ts-rest/core"
 
-import { zChanType, zDmPolicyLevelType, zStatusVisibilityLevel } from "../generated-zod"
+import { zChanType, zAccessPolicyLevel } from "../generated-zod"
 
 import { zChanTitle } from "./chans"
 import { zUserName, zUserPassword } from "../zod/user.zod"
@@ -23,7 +23,7 @@ export const zUserProfilePreviewReturn = z.strictObject({
 
 export const zUserStatus = z.enum(["OFFLINE", "ONLINE", "INVISIBLE"])
 export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
-	dmPolicyLevel: zDmPolicyLevelType,
+	dmPolicyLevel: zAccessPolicyLevel.exclude(["NO_ONE"]),
 	commonChans: z.array(
 		z.strictObject({ type: zChanType, title: zChanTitle.nullable(), id: z.string().uuid() }),
 	),
@@ -35,8 +35,8 @@ export const zPartialUserProfileReturn = zUserProfileReturn.partial()
 
 export const zMyProfileReturn = z.strictObject({
 	userName: zUserName,
-	dmPolicyLevel: zDmPolicyLevelType,
-	statusVisibilityLevel: zStatusVisibilityLevel,
+	dmPolicyLevel: zAccessPolicyLevel.exclude(["NO_ONE"]),
+	statusVisibilityLevel: zAccessPolicyLevel,
 })
 
 const zSearchUsersQueryBase = z.strictObject({

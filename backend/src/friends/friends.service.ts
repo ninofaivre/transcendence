@@ -2,12 +2,9 @@ import { Inject, Injectable, NotFoundException, forwardRef } from "@nestjs/commo
 import {
 	ClassicDmEventType,
 	DirectMessageStatus,
-	DmPolicyLevelType,
 	Prisma,
-	StatusVisibilityLevel,
 } from "@prisma/client"
 import { zFriendShipReturn } from "contract"
-import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
 import { SseService } from "src/sse/sse.service"
 import { UserService } from "src/user/user.service"
@@ -56,10 +53,9 @@ export class FriendsService {
 		const formattedFriendShip: z.infer<typeof zFriendShipReturn> = {
 			...rest,
 			friendName: friend.name,
-			friendStatus: this.usersService.getUserStatusFromVisibilityAndProximityLevel(
-				friend,
-				"FRIEND",
-			),
+			friendStatus: this.usersService.getUserStatusByProximity(friend.name,
+                "FRIEND",
+                friend.visibility),
 		}
 		return formattedFriendShip
 	}

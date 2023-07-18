@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client"
 import { Inject, Injectable, forwardRef } from "@nestjs/common"
 import { NotFoundException, ConflictException } from "@nestjs/common"
 import { hash } from "bcrypt"
-import { StatusVisibilityLevel } from "@prisma/client"
+import { AccessPolicyLevel as AccessPolicyLevelPrisma } from "@prisma/client"
 import { PrismaService } from "src/prisma/prisma.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract, contractErrors } from "contract"
@@ -16,10 +16,20 @@ import { FriendsService } from "src/friends/friends.service"
 import { DmsService } from "src/dms/dms.service"
 import { EnrichedRequest } from "src/auth/auth.service"
 
-const c = nestControllerContract(contract.users)
-type RequestShapes = NestRequestShapes<typeof c>
+type RequestShapes = NestRequestShapes<typeof contract.users>
 
-type ProximityLevel = "FRIEND" | "COMMON_CHAN" | "ANYONE"
+const ProximityLevel = {
+    ANYONE: 0,
+    COMMON_CHAN: 1,
+    FRIEND: 2
+} as const
+
+const AccessPolicyLevel = {
+    ANYONE: 0,
+    IN_COMMON_CHAN: 1,
+    ONLY_FRIEND: 2,
+    NO_ONE: 3
+} as const satisfies { [key in AccessPolicyLevelPrisma]: number }
 
 @Injectable()
 export class UserService {
@@ -90,51 +100,41 @@ export class UserService {
 		return toFormat.map((el) => this.formatUserProfilePreviewForUser(username, el))
 	}
 
+    public getProximityLevelSelect(username: string) {
+        return {
+            friend: {
+                where: { requestedUserName: username },
+                take: 1,
+                select: { id: true }
+            },
+            friendOf: {
+                where: { requestingUserName: username },
+                take: 1,
+                select: { id: true }
+            },
+            chans: {
+                where: {
+                    users: { some: { name: username } }
+                },
+                take: 1,
+                select: { id: true }
+            }
+        } satisfies Prisma.UserSelect
+    }
+
+    // public amICloseEnought(proximityLevel: ProximityLevel, statusVisibilityLevel: StatusVisibilityLevel)
+
 	private async formatUserStatusForUser(
 		username: string,
 		toGetStatusUserName: string,
 	): Promise<z.infer<typeof zUserStatus>> {
 		const data = await this.getUserByNameOrThrow(toGetStatusUserName, {
 			statusVisibilityLevel: true,
-			friend: {
-				where: {
-					requestingUser: { statusVisibilityLevel: { not: "NO_ONE" } },
-					requestedUserName: username,
-				},
-				select: { id: true },
-			},
-			friendOf: {
-				where: {
-					requestedUser: { statusVisibilityLevel: { not: "NO_ONE" } },
-					requestingUserName: username,
-				},
-				select: { id: true },
-			},
-			chans: {
-				where: {
-					AND: [
-						{ users: { some: { name: username } } },
-						{
-							users: {
-								some: {
-									name: toGetStatusUserName,
-									statusVisibilityLevel: "IN_COMMON_CHAN",
-								},
-							},
-						},
-					],
-				},
-				select: { id: true },
-				take: 1,
-			},
+            ...this.getProximityLevelSelect(username)
 		})
-		return this.getUserStatusFromVisibilityAndProximityLevel(
-			{
-				name: toGetStatusUserName,
-				visibility: data.statusVisibilityLevel,
-			},
-			this.getProximityLevel(data),
-		)
+        return this.getUserStatusByProximity(toGetStatusUserName,
+            this.getProximityLevel(data),
+            data.statusVisibilityLevel)
 	}
 
 	async getUserProfile({ user: { username } }: EnrichedRequest, toGetUserName: string) {
@@ -154,7 +154,7 @@ export class UserService {
 		friend: {}[]
 		friendOf: {}[]
 		chans: {}[]
-	}) {
+	}): keyof typeof ProximityLevel {
 		return friend.length || friendOf.length ? "FRIEND" : chans.length ? "COMMON_CHAN" : "ANYONE"
 	}
 
@@ -162,10 +162,11 @@ export class UserService {
 		username: string,
 		toFormat: Prisma.UserGetPayload<typeof this.userProfileSelectGetPayload>,
 	): Promise<z.infer<typeof zUserProfileReturn>> {
-		const { name, chans, blockedUser, ...rest } = toFormat
+		const { name, chans, blockedUser, dmPolicyLevel, ...rest } = toFormat
 
 		return {
 			...rest,
+            dmPolicyLevel: (dmPolicyLevel === "NO_ONE") ? "ONLY_FRIEND" : dmPolicyLevel,
 			status: await this.formatUserStatusForUser(username, name),
 			...this.formatUserProfilePreviewForUser(username, { name }),
 			commonChans: chans,
@@ -237,8 +238,12 @@ export class UserService {
 	formatMe(
 		toFormat: Prisma.UserGetPayload<typeof this.myProfileSelectGetPayload>,
 	): z.infer<typeof zMyProfileReturn> {
-		const { name, ...rest } = toFormat
-		return { ...rest, userName: name }
+		const { name, dmPolicyLevel, ...rest } = toFormat
+		return {
+            ...rest,
+            dmPolicyLevel: (dmPolicyLevel === "NO_ONE") ? "ONLY_FRIEND" : dmPolicyLevel,
+            userName: name
+        }
 	}
 
 	async getMe(username: string) {
@@ -408,23 +413,17 @@ export class UserService {
 		})
 	}
 
-	public getUserStatus(username: string) {
-		return this.sse.isUserOnline(username) ? "ONLINE" : "OFFLINE"
-	}
+    public getUserStatus = (username: string) => this.sse.isUserOnline(username)
+        ? "ONLINE"
+        : "OFFLINE"
 
-	public getUserStatusFromVisibilityAndProximityLevel(
-		user: {
-			visibility: (typeof StatusVisibilityLevel)[keyof typeof StatusVisibilityLevel]
-			name: string
-		},
-		proximity: ProximityLevel,
-	) {
-		return (proximity === "FRIEND" && user.visibility !== "NO_ONE") ||
-			(user.visibility === "IN_COMMON_CHAN" && proximity === "COMMON_CHAN") ||
-			user.visibility === "ANYONE"
-			? this.getUserStatus(user.name)
-			: "INVISIBLE"
-	}
+	public getUserStatusByProximity = (
+        username: string,
+        proximity: keyof typeof ProximityLevel,
+        visibility: AccessPolicyLevelPrisma
+    ) => (ProximityLevel[proximity] < AccessPolicyLevel[visibility])
+        ? "INVISIBLE"
+        : this.getUserStatus(username)
 
 	public async notifyStatus(username: string) {
 		const data = await this.getNotifyStatusData(username)

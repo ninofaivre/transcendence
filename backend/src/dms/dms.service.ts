@@ -9,7 +9,7 @@ import {
 import { ClassicDmEventType, DirectMessageStatus, Prisma } from "@prisma/client"
 import { SseService } from "src/sse/sse.service"
 import { z } from "zod"
-import { DmEvent, zDmDiscussionElementReturn, zDmReturn } from "contract"
+import { DmEvent, contractErrors, zDmDiscussionElementReturn, zDmReturn } from "contract"
 import { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx } from "src/types"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
@@ -151,13 +151,9 @@ export class DmsService {
 		const formattedDirectMessage: z.infer<typeof zDmReturn> = {
 			...rest,
 			otherName: other.name,
-			otherStatus: this.usersService.getUserStatusFromVisibilityAndProximityLevel(
-				{
-					name: other.name,
-					visibility: other.statusVisibilityLevel,
-				},
+			otherStatus: this.usersService.getUserStatusByProximity(other.name,
 				this.usersService.getProximityLevel(other),
-			),
+				other.statusVisibilityLevel),
 		}
 		return formattedDirectMessage
 	}
@@ -504,6 +500,19 @@ export class DmsService {
 			username,
 		)
 	}
+
+    async createDm(username: string, otherUserName: string) {
+        const res = await this.usersService.getUser(username, {
+            dmPolicyLevel: true,
+            ...this.usersService.getProximityLevelSelect(otherUserName)
+        })
+        if (!res) return contractErrors.NotFoundUser(username)
+        const { dmPolicyLevel } = res
+        const proximityLevel = this.usersService.getProximityLevel(res)
+        if ((proximityLevel === "ANYONE" && dmPolicyLevel !== "ANYONE")
+            || (proximityLevel === "COMMON_CHAN" && dmPolicyLevel !== "IN_COMMON_CHAN"))
+            console.log()
+    }
 
 	async createDmMessage(username: string, dmId: string, content: string, relatedId?: string) {
 		const toCheck = await this.getDmOfUserOrThrow(username, dmId, {

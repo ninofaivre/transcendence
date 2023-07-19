@@ -121,7 +121,7 @@ export async function signup(name: string, password: string) {
 
 type GetDataFromEventType<T extends SseEvent["type"]> = Extract<SseEvent, { type: T }>["data"]
 
-export function addEventSourceListener<EventType extends SseEvent["type"]>(
+export function addListenerToEventSource<EventType extends SseEvent["type"]>(
 	es: EventSource,
 	eventType: EventType,
 	callback: (data: GetDataFromEventType<EventType>, event: MessageEvent) => void,

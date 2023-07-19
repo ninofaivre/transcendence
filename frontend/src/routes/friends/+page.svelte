@@ -8,9 +8,6 @@
 	import { toastStore } from "@skeletonlabs/skeleton"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { invalidate } from "$app/navigation"
-	import { sse_store } from "$stores"
-	import { addEventSourceListener } from "$lib/global"
-	import { onMount } from "svelte"
 
 	async function acceptInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
 		const id = e.currentTarget.dataset.id
@@ -63,17 +60,6 @@
 		// The data visibly shown in your table body UI.
 		body: tableMapperValues($page.data.friendships, ["friendName"]),
 	}
-
-	onMount(() => {
-		if ($sse_store) {
-			const destroyer = new Array(
-				addEventSourceListener($sse_store, "CREATED_FRIENDSHIP", (_data) => {
-					invalidate(":friendships")
-				}),
-			)
-			return () => void destroyer.forEach((func) => void func())
-		} else throw new Error("$sse_store is undefined !!!")
-	})
 </script>
 
 <SendFriendRequest />

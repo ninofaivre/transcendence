@@ -2,7 +2,7 @@
 	import type { DirectConversation } from "$types"
 	import { sse_store } from "$lib/stores"
 	import { onMount } from "svelte"
-	import { addEventSourceListener } from "$lib/global"
+	import { addListenerToEventSource } from "$lib/global"
 	import { invalidate, invalidateAll } from "$app/navigation"
 
 	export let currentDiscussionId: string
@@ -21,11 +21,11 @@
 	onMount(() => {
 		if ($sse_store) {
 			const destroyer = new Array(
-				addEventSourceListener($sse_store, "CREATED_DM", (data) => {
+				addListenerToEventSource($sse_store, "CREATED_DM", (data) => {
 					console.log("A new dm was created!")
 					invalidate(":discussions") // Does this work ?
 				}),
-				addEventSourceListener($sse_store, "UPDATED_USER_STATUS", (data) => {
+				addListenerToEventSource($sse_store, "UPDATED_USER_STATUS", (data) => {
 					console.log("Got a event about a dm")
 					// invalidate(":discussions")
 					// invalidateAll()
@@ -42,7 +42,7 @@
 						}
 					} else console.log("IT WAS NULL !")
 				}),
-				addEventSourceListener($sse_store, "UPDATED_DM_MESSAGE", (data) => {
+				addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (data) => {
 					// Mark unread the discussion that corresponds to the discussion who got a new message
 					// How to I differentiate a modified message from a new message
 				}),

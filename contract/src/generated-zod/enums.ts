@@ -35,14 +35,8 @@ export const ChanInvitationStatus = {
   BANNED_FROM_CHAN: 'BANNED_FROM_CHAN',
 } as const;
 
-export const StatusVisibilityLevel = {
+export const AccessPolicyLevel = {
   NO_ONE: 'NO_ONE',
-  ONLY_FRIEND: 'ONLY_FRIEND',
-  IN_COMMON_CHAN: 'IN_COMMON_CHAN',
-  ANYONE: 'ANYONE',
-} as const;
-
-export const DmPolicyLevelType = {
   ONLY_FRIEND: 'ONLY_FRIEND',
   IN_COMMON_CHAN: 'IN_COMMON_CHAN',
   ANYONE: 'ANYONE',
@@ -105,14 +99,8 @@ export const zChanInvitationStatus = z.enum([
   "BANNED_FROM_CHAN",
 ]);
 
-export const zStatusVisibilityLevel = z.enum([
+export const zAccessPolicyLevel = z.enum([
   "NO_ONE",
-  "ONLY_FRIEND",
-  "IN_COMMON_CHAN",
-  "ANYONE",
-]);
-
-export const zDmPolicyLevelType = z.enum([
   "ONLY_FRIEND",
   "IN_COMMON_CHAN",
   "ANYONE",

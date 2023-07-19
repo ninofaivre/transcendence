@@ -201,22 +201,15 @@ model User {
 
   mutedUserChan MutedUserChan[]
 
-  dmPolicyLevel	DmPolicyLevelType @default(ONLY_FRIEND)
-  statusVisibilityLevel StatusVisibilityLevel @default(ONLY_FRIEND)
+  dmPolicyLevel	AccessPolicyLevel @default(ONLY_FRIEND)
+  statusVisibilityLevel AccessPolicyLevel @default(IN_COMMON_CHAN)
 }
 
-enum StatusVisibilityLevel {
+enum AccessPolicyLevel {
     NO_ONE
     ONLY_FRIEND
     IN_COMMON_CHAN
     ANYONE
-}
-
-enum DmPolicyLevelType {
-    // DO_NOT_DISTURB (NO_ONE) ???
-	ONLY_FRIEND
-	IN_COMMON_CHAN	
-	ANYONE
 }
 
 

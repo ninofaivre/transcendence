@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { DmPolicyLevelType, StatusVisibilityLevel } from "./enums";
+import { AccessPolicyLevel } from "./enums";
 import { CompleteRoleInput, CompleteRoleOutput, RelatedRoleModel, CompleteDirectMessageInput, CompleteDirectMessageOutput, RelatedDirectMessageModel, CompleteChanInput, CompleteChanOutput, RelatedChanModel, CompleteFriendShipInput, CompleteFriendShipOutput, RelatedFriendShipModel, CompleteFriendInvitationInput, CompleteFriendInvitationOutput, RelatedFriendInvitationModel, CompleteChanInvitationInput, CompleteChanInvitationOutput, RelatedChanInvitationModel, CompleteBlockedShipInput, CompleteBlockedShipOutput, RelatedBlockedShipModel, CompleteChanDiscussionElementInput, CompleteChanDiscussionElementOutput, RelatedChanDiscussionElementModel, CompleteChanDiscussionEventInput, CompleteChanDiscussionEventOutput, RelatedChanDiscussionEventModel, CompleteDeletedMessageChanDiscussionEventInput, CompleteDeletedMessageChanDiscussionEventOutput, RelatedDeletedMessageChanDiscussionEventModel, CompleteChanDiscussionMessageInput, CompleteChanDiscussionMessageOutput, RelatedChanDiscussionMessageModel, CompleteDmDiscussionMessageInput, CompleteDmDiscussionMessageOutput, RelatedDmDiscussionMessageModel, CompleteDeletedMessageDmDiscussionEventInput, CompleteDeletedMessageDmDiscussionEventOutput, RelatedDeletedMessageDmDiscussionEventModel, CompleteBlockedDmDiscussionEventInput, CompleteBlockedDmDiscussionEventOutput, RelatedBlockedDmDiscussionEventModel, CompleteMutedUserChanInput, CompleteMutedUserChanOutput, RelatedMutedUserChanModel } from "./index";
 
 export const UserModel = z.object({
   name: z.string(),
   password: z.string(),
-  dmPolicyLevel: z.nativeEnum(DmPolicyLevelType),
-  statusVisibilityLevel: z.nativeEnum(StatusVisibilityLevel),
+  dmPolicyLevel: z.nativeEnum(AccessPolicyLevel),
+  statusVisibilityLevel: z.nativeEnum(AccessPolicyLevel),
 });
 
 export interface CompleteUserInput extends z.input<typeof UserModel> {

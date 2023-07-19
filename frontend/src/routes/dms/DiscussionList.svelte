@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { DirectConversation } from "$types"
 	import { sse_store } from "$lib/stores"
-	import { page } from "$app/stores"
 	import { onMount } from "svelte"
 	import { addEventSourceListener } from "$lib/global"
 	import { invalidate, invalidateAll } from "$app/navigation"
@@ -44,12 +43,12 @@
 					} else console.log("IT WAS NULL !")
 				}),
 				addEventSourceListener($sse_store, "UPDATED_DM_MESSAGE", (data) => {
-                    // Mark unread the discussion that corresponds to the discussion who got a new message
-                    // How to I differentiate a modified message from a new message
+					// Mark unread the discussion that corresponds to the discussion who got a new message
+					// How to I differentiate a modified message from a new message
 				}),
 			)
 			return () => {
-				destroyer.forEach((func: () => any) => func())
+				destroyer.forEach((func: () => void) => func())
 			}
 		} else throw new Error("sse_store is empty ! Grrrr", $sse_store)
 	})

@@ -1,5 +1,5 @@
 import type { LayoutLoad, LayoutLoadEvent } from "./$types"
-import { client } from "$lib/clients"
+import { client } from "$clients"
 
 export const load = async ({ depends }: LayoutLoadEvent) => {
 	console.log("layout load function from dms/ ")

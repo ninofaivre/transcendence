@@ -22,7 +22,10 @@ async function bootstrap() {
 			credentials: true,
 			//Matches all localhost whether http/https or there's a port
 			origin: /https?:\/\/localhost(?::\d{1,6})?$/,
+			methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
 		},
+		// Just this won't work because Access-Control-Allow-Origin can't be * when credentials are included
+		// cors: true,
 	})
 
 	app.use(cookieParser())

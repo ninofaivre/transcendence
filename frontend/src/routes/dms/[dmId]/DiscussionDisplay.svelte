@@ -9,9 +9,9 @@
 	import { my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { sse_store } from "$stores"
-	import { client }  from "$clients"
+	import { client } from "$clients"
 	import { page } from "$app/stores"
-	import { addEventSourceListener } from "$lib/global"
+	import { addListenerToEventSource } from "$lib/global"
 
 	export let messages: DirectMessageOrEvent[] = []
 	// export let new_message: [string, Promise<Response>]
@@ -98,14 +98,14 @@
 
 		if ($sse_store) {
 			const destroyer = new Array(
-				addEventSourceListener($sse_store, "CREATED_DM_ELEMENT", (data) => {
+				addListenerToEventSource($sse_store, "CREATED_DM_ELEMENT", (data) => {
 					console.log("Server message: New message", data)
 					if (data?.dmId === currentDiscussionId) {
 						messages = [...messages, data.element]
 					}
 				}),
 
-				addEventSourceListener($sse_store, "UPDATED_DM_MESSAGE", (data) => {
+				addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (data) => {
 					console.log("Server message: Message was modified", data)
 					if (data.dmId === currentDiscussionId) {
 						const { message } = data

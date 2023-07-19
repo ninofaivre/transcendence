@@ -24,7 +24,7 @@
 					message,
 				})
 				console.error(message)
-			} else invalidate(":friendships")
+			} else invalidate("friends:friendships")
 		}
 	}
 
@@ -43,7 +43,7 @@
 					message,
 				})
 				console.error(message)
-			} else invalidate(":friendships")
+			} else invalidate("friends:friendships")
 		}
 	}
 
@@ -54,7 +54,8 @@
 	console.log("Your friendships are:", $page.data.friendships)
 	console.log(tableMapperValues($page.data.friendships, ["friendName"]))
 
-	const friendTableSource: TableSource = {
+	let friendTableSource: TableSource
+	$: friendTableSource = {
 		// A list of heading labels.
 		head: ["Friends"],
 		// The data visibly shown in your table body UI.
@@ -62,7 +63,7 @@
 	}
 </script>
 
-<SendFriendRequest friendList={$page.data.friendList} />
+<SendFriendRequest />
 
 <ul class="m-3">
 	{#if $page.data.friend_requests.incoming.length != 0}

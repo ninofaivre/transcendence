@@ -72,7 +72,7 @@
 		outline-offset: 5px;
 	}
 
-	#button {
+	button {
 		border-top-right-radius: 10px;
 		border-bottom-right-radius: 10px;
 		padding: 0px 5px;
@@ -82,8 +82,8 @@
 		position: relative;
 	}
 
-	#pre,
-	#textarea {
+	pre,
+	textarea {
 		font-family: inherit;
 		padding: 0.5em;
 		box-sizing: border-box;
@@ -92,7 +92,7 @@
 		overflow: hidden;
 	}
 
-	#textarea {
+	textarea {
 		position: absolute;
 		width: 100%;
 		height: 100%;

@@ -12,7 +12,7 @@
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
 	import { client } from "$clients"
-	import { addEventSourceListener } from "$lib/global"
+	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store } from "$stores"
 
 	// let new_message: [string, Promise<ClientInferResponses<typeof contract.chans.createChan>>]
@@ -60,9 +60,13 @@
 		})
 		resizeObserver.observe(header!)
 
-		const removeListener = addEventSourceListener($sse_store!, "UPDATED_DM_STATUS", (data) => {
-			disabled = data.status === "DISABLED" ? true : false
-		})
+		const removeListener = addListenerToEventSource(
+			$sse_store!,
+			"UPDATED_DM_STATUS",
+			(data) => {
+				disabled = data.status === "DISABLED" ? true : false
+			},
+		)
 
 		return () => {
 			removeListener()

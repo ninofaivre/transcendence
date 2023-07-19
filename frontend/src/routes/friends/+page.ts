@@ -2,9 +2,9 @@ import type { LoadEvent } from "@sveltejs/kit"
 import { client } from "$lib/clients"
 
 export const load = async ({ depends }: LoadEvent) => {
-	depends(":friendships")
-	depends(":invitations")
+	console.log("Current page load function is being called...")
 
+	depends("friends:invitations")
 	const { status: retcode1, body: friendships } = await client.friends.getFriends()
 	if (retcode1 !== 200) {
 		console.log(
@@ -14,6 +14,7 @@ export const load = async ({ depends }: LoadEvent) => {
 		)
 	} else console.log("Loaded friendship list")
 
+	depends("friends:friendships")
 	const { status: retcode2, body: friend_requests } =
 		await client.invitations.friend.getFriendInvitations({
 			query: { status: ["PENDING"] },
@@ -25,6 +26,6 @@ export const load = async ({ depends }: LoadEvent) => {
 			}\"`,
 		)
 	} else console.log("Loaded friendship requests list")
-    console.log({ friendships, friend_requests })
+	console.log({ friendships, friend_requests })
 	return { friendships, friend_requests }
 }

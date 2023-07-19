@@ -9,6 +9,7 @@
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
 	let input_focused = false
+	let border_radius = "15px"
 
 	async function sendFriendRequest(username: string) {
 		const { status, body } = await client.invitations.friend.createFriendInvitation({
@@ -60,35 +61,45 @@
 </script>
 
 <div use:listenOutsideClick on:outsideclick={() => void (input_focused = false)}>
-	<div id="grid" class="grid min-w-[50vw] grid-cols-[1fr_auto]">
-		<div id="container">
-			<input
-				class="input"
-				type="search"
-				bind:value={search_input}
-				placeholder="Search user..."
-				on:focusin={() => void (input_focused = true)}
-				on:keypress={onKeypress}
-			/>
-		</div>
+	<div class="grid min-w-[50vw] grid-cols-[1fr_auto]">
+		<input
+			class="input py-2"
+			type="search"
+			bind:value={search_input}
+			placeholder="Search user..."
+			on:focusin={() => void (input_focused = true)}
+			on:keypress={onKeypress}
+			style="--border-radius-var: {border_radius}"
+		/>
 		<button
-			id="button"
 			on:click={() => void sendFriendRequest(search_input)}
 			class="variant-filled-primary hover:font-medium"
+			style="--border-radius-var: {border_radius}"
 		>
 			Send
 		</button>
 	</div>
 
 	{#if input_focused}
-		<div class="card max-h-48 w-full max-w-sm overflow-y-auto p-4" tabindex="-1">
-			<Autocomplete options={users} on:selection={onUserSelection} />
+		<div class="card my-2 max-h-48 w-full overflow-y-auto p-2" tabindex="-1">
+			<Autocomplete
+				options={users}
+				on:selection={onUserSelection}
+				regionButton="w-full btn-md"
+			/>
 		</div>
 	{/if}
 </div>
 
 <style>
-	#container {
-		position: relative;
+	input {
+		border-radius: var(--border-radius-var) 0px 0px var(--border-radius-var);
+	}
+
+	button {
+		border-top-right-radius: var(--border-radius-var);
+		border-bottom-right-radius: var(--border-radius-var);
+		/* top | right | bottom | left */
+		padding: 0px 8px 0px 5px;
 	}
 </style>

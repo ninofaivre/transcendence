@@ -25,7 +25,6 @@
 	}
 
 	function filterByDenied(options: AutocompleteOption[]) {
-		console.log(denylist)
 		if (denylist?.length) {
 			const denySet = new Set(denylist)
 			return options.filter((option: AutocompleteOption) => !denySet.has(option.value))
@@ -36,7 +35,7 @@
 
 	function filterOptions(options: AutocompleteOption[]) {
 		if (denylist?.length && allowlist?.length)
-			throw new Error("Autocomplete component can't both an allowlist and denylist")
+			throw new Error("Autocomplete component can't have both an allowlist and denylist")
 		else if (denylist?.length) return filterByDenied(options)
 		else return filterByAllowed(options)
 	}

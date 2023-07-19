@@ -42,7 +42,6 @@
 				},
 			})
 			.then(({ status, body }) => {
-				console.log(body)
 				if (status === 200) {
 					users = body.map((obj) => ({ label: obj.userName, value: obj.userName }))
 				} else reportUnexpectedCode(status, "get users' names", body)

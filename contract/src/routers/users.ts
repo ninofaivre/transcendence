@@ -58,6 +58,7 @@ export const usersContract = c.router(
 						friends: z.boolean().default(true),
 						mySelf: z.boolean().default(false),
 						blocked: z.boolean().default(true),
+						blockedBy: z.boolean().default(true),
 						// canStartDm: z.boolean().default(true)
 					}),
 				}),
@@ -67,6 +68,7 @@ export const usersContract = c.router(
 						friends: z.boolean().default(false),
 						hasDm: z.boolean().default(false),
 						blocked: z.boolean().default(false),
+                        blockedBy: z.boolean().default(false)
 						// canStartDm: z.boolean().default(false)
 					}),
 				}),

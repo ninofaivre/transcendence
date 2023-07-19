@@ -7,100 +7,76 @@ import {
 	TsRest,
 	TsRestRequest,
 	nestControllerContract,
+    TsRestHandler,
+    tsRestHandler
 } from "@ts-rest/nest"
-import { contract } from "contract"
+import { contract, isContractError } from "contract"
 import { EnrichedRequest } from "src/auth/auth.service"
 
-const c = nestControllerContract(contract.dms)
-type RequestShapes = NestRequestShapes<typeof c>
+const c = contract.dms
 
 @Controller()
 @TsRest({ jsonQuery: true })
-export class DmsController implements NestControllerInterface<typeof c> {
+export class DmsController {
+
 	constructor(private readonly dmsService: DmsService) {}
 
-    @UseGuards(JwtAuthGuard)
-    @TsRest(c.searchDms)
-    async searchDms(@Request() req: EnrichedRequest, @TsRestRequest(){ query }: RequestShapes['searchDms']) {
-        const body = await this.dmsService.searchDms(req.user.username, query.nResult, query.otherUserNameContains)
-        return { status: 200 as const, body }
+
+	@UseGuards(JwtAuthGuard)
+	@TsRestHandler(c)
+	async handler(@Request() req: EnrichedRequest) {
+        return tsRestHandler(c, {
+
+            searchDms: async ({ query }) => {
+                const body = await this.dmsService.searchDms(req.user.username, query.nResult, query.otherUserNameContains)
+                return { status: 200, body }
+            },
+            
+            getDms: async () => {
+                const body = await this.dmsService.getDms(req.user.username)
+                return { status: 200, body }
+            },
+            
+            createDm: async ({ body: { username } }) => {
+                const res = await this.dmsService.createDmIfRightTo(req.user.username, username)
+                return isContractError(res) ? res : { status: 201, body: res }
+            },
+            
+            getDmElements: async ({ params: { dmId }, query: { cursor, nElements } }) => {
+                const body = await this.dmsService.getDmElements(req.user.username, dmId, nElements, cursor)
+                return { status: 200, body }
+            },
+            
+            createDmMessage: async ({ params: { dmId }, body: { content, relatedTo } }) => {
+                const body = await this.dmsService.createDmMessage(
+                req.user.username,
+                dmId,
+                content,
+                relatedTo,
+                )
+                return { status: 201, body }
+            },
+            
+            getDmElementById: async ({ params: { dmId, elementId } }) => {
+                const body = await this.dmsService.getDmElementById(req.user.username, dmId, elementId)
+                return { status: 200, body }
+            },
+
+            updateMessage: async ({ body: { content }, params: { elementId, dmId } }) => {
+                const body = await this.dmsService.updateMessage(
+                    req.user.username,
+                    dmId,
+                    elementId,
+                    content,
+                )
+                return { status: 200, body }
+            },
+
+            deleteDmMessage: async ({ params: { dmId, messageId } }) => {
+                const body = await this.dmsService.deleteDmMessage(req.user.username, dmId, messageId)
+                return { status: 202, body }
+            }
+
+        })
     }
-
-	@UseGuards(JwtAuthGuard)
-	@TsRest(c.getDms)
-	async getDms(@Request() req: EnrichedRequest) {
-		const body = await this.dmsService.getDms(req.user.username)
-		return { status: 200 as const, body }
-	}
-
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.createDm)
-	// async createDm(@Request()req: EnrichedRequest, @TsRestRequest(){ body: { username } }: RequestShapes['createDm'])
-	// {
-	// 	const body = this.dmsService.createDm(req.user.username, username)
-	// 	return { status: 201 as const, body }
-	// }
-
-	@UseGuards(JwtAuthGuard)
-	@TsRest(c.getDmElements)
-	async getDmElements(
-		@Request() req: EnrichedRequest,
-		@TsRestRequest()
-		{ params: { dmId }, query: { cursor, nElements } }: RequestShapes["getDmElements"],
-	) {
-		const body = await this.dmsService.getDmElements(req.user.username, dmId, nElements, cursor)
-		return { status: 200 as const, body }
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@TsRest(c.createDmMessage)
-	async createDmMessage(
-		@Request() req: EnrichedRequest,
-		@TsRestRequest()
-		{ params: { dmId }, body: { content, relatedTo } }: RequestShapes["createDmMessage"],
-	) {
-		const body = await this.dmsService.createDmMessage(
-			req.user.username,
-			dmId,
-			content,
-			relatedTo,
-		)
-		return { status: 201 as const, body }
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@TsRest(c.getDmElementById)
-	async getDmElementById(
-		@Request() req: EnrichedRequest,
-		@TsRestRequest() { params: { dmId, elementId } }: RequestShapes["getDmElementById"],
-	) {
-		const body = await this.dmsService.getDmElementById(req.user.username, dmId, elementId)
-		return { status: 200 as const, body }
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@TsRest(c.updateMessage)
-	async updateMessage(
-		@Request() req: EnrichedRequest,
-		@TsRestRequest()
-		{ body: { content }, params: { elementId, dmId } }: RequestShapes["updateMessage"],
-	) {
-		const body = await this.dmsService.updateMessage(
-			req.user.username,
-			dmId,
-			elementId,
-			content,
-		)
-		return { status: 200 as const, body }
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@TsRest(c.deleteDmMessage)
-	async deleteDmMessage(
-		@Request() req: EnrichedRequest,
-		@TsRestRequest() { params: { dmId, messageId } }: RequestShapes["deleteDmMessage"],
-	) {
-		const body = await this.dmsService.deleteDmMessage(req.user.username, dmId, messageId)
-		return { status: 202 as const, body }
-	}
 }

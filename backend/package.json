@@ -1,8 +1,8 @@
 {
 	"scripts": {
-		"start": "pnpm exec nest start",
-		"start:dev": "pnpm exec nest start --watch",
 		"build": "pnpm exec nest build"
+		"dev": "pnpm exec nest start --watch",
+		"start": "pnpm exec nest start",
 	},
 	"dependencies": {
 		"@nestjs/cli": "^10.1.8",

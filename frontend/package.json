@@ -4,13 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "pnpm vite",
-    "start:dev": "pnpm vite",
+    "preview": "pnpm vite preview",
     "build": "pnpm exec vite build",
     "build:watch": "find src -type f | entr -c -r pnpm vite build #pnpm vite build --watch ",
-    "preview": "pnpm vite preview",
     "check": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --compiler-warnings \"a11y-click-events-have-key-events:ignore,\"",
     "check:watch": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "test:unit": "pnpm vitest",
     "lint": "pnpm prettier --plugin-search-dir . --check . && eslint .",
     "format": "pnpm prettier --plugin-search-dir . --write .",
     "prepare": "pnpm svelte-kit sync"

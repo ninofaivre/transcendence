@@ -4,6 +4,7 @@ import { z } from "zod"
 import { zClassicDmEventType, ClassicDmEventType, zDirectMessageStatus } from "../generated-zod"
 import { zChanTitle } from "./chans"
 import { zUserStatus } from "./users"
+import { getErrorForContract, getErrorsForContract } from "../errors"
 
 const c = initContract()
 
@@ -91,22 +92,23 @@ export const dmsContract = c.router(
 					.array(),
 			},
 		},
-		//
-		// stay commented because rn we can only have dm with friends (autocreated dms)
-		//
-		// createDm:
-		// {
-		// 	method: 'POST',
-		// 	path: '/',
-		// 	body: z.strictObject
-		// 	({
-		// 		username: zUserName
-		// 	}),
-		// 	responses:
-		// 	{
-		// 		201: zDmReturn
-		// 	}
-		// },
+		createDm:
+		{
+			method: 'POST',
+			path: '/',
+			body: z.strictObject
+			({
+				username: zUserName
+			}),
+			responses:
+			{
+				201: zDmReturn,
+                ...getErrorsForContract(c,
+                    [403, "BlockedUser", "BlockedByUser", "ProximityLevelTooLow"],
+                    [404, "NotFoundUser"],
+                    [409, "DmAlreadyExist"])
+			}
+		},
 		getDmElements: {
 			method: "GET",
 			path: "/:dmId/elements",

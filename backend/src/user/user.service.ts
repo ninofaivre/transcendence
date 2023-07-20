@@ -1,35 +1,20 @@
-import type { Prisma } from "@prisma/client"
-
+import type { Prisma, AccessPolicyLevel as AccessPolicyLevelPrisma } from "@prisma/client"
 import { Inject, Injectable, forwardRef } from "@nestjs/common"
 import { NotFoundException, ConflictException } from "@nestjs/common"
 import { hash } from "bcrypt"
-import { AccessPolicyLevel as AccessPolicyLevelPrisma } from "@prisma/client"
 import { PrismaService } from "src/prisma/prisma.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
 import { contract, contractErrors } from "contract"
 import { z } from "zod"
-import { zUserProfileReturn } from "contract"
-import { zMyProfileReturn, zUserProfilePreviewReturn, zUserStatus } from "contract"
+import { zUserProfileReturn, zMyProfileReturn, zUserProfilePreviewReturn, zUserStatus } from "contract"
 import { SseService } from "src/sse/sse.service"
 import { ChansService } from "src/chans/chans.service"
 import { FriendsService } from "src/friends/friends.service"
 import { DmsService } from "src/dms/dms.service"
 import { EnrichedRequest } from "src/auth/auth.service"
+import { AccessPolicyLevel, ProximityLevel } from "src/types"
 
 type RequestShapes = NestRequestShapes<typeof contract.users>
-
-const ProximityLevel = {
-    ANYONE: 0,
-    COMMON_CHAN: 1,
-    FRIEND: 2
-} as const
-
-const AccessPolicyLevel = {
-    ANYONE: 0,
-    IN_COMMON_CHAN: 1,
-    ONLY_FRIEND: 2,
-    NO_ONE: 3
-} as const satisfies { [key in AccessPolicyLevelPrisma]: number }
 
 @Injectable()
 export class UserService {
@@ -113,16 +98,22 @@ export class UserService {
                 select: { id: true }
             },
             chans: {
-                where: {
-                    users: { some: { name: username } }
-                },
+                where: { users: { some: { name: username } } },
                 take: 1,
                 select: { id: true }
+            },
+            blockedUser: {
+                where: { blockedUserName: username },
+                take: 1,
+                select: { blockedUserName: true }
+            },
+            blockedByUser: {
+                where: { blockingUserName: username },
+                take: 1,
+                select: { blockingUserName: true }
             }
         } satisfies Prisma.UserSelect
     }
-
-    // public amICloseEnought(proximityLevel: ProximityLevel, statusVisibilityLevel: StatusVisibilityLevel)
 
 	private async formatUserStatusForUser(
 		username: string,
@@ -150,12 +141,17 @@ export class UserService {
 		friend,
 		friendOf,
 		chans,
+        blockedUser
 	}: {
-		friend: {}[]
-		friendOf: {}[]
-		chans: {}[]
+		friend: {}[],
+		friendOf: {}[],
+		chans: {}[],
+        blockedUser: {}[]
 	}): keyof typeof ProximityLevel {
-		return friend.length || friendOf.length ? "FRIEND" : chans.length ? "COMMON_CHAN" : "ANYONE"
+        let level: keyof typeof ProximityLevel = chans.length ? "COMMON_CHAN" : "ANYONE"
+        level = (friend.length || friendOf.length) ? "FRIEND" : level
+        level = blockedUser.length ? "BLOCKED" : level
+        return level
 	}
 
 	private async formatUserProfileForUser(
@@ -187,8 +183,10 @@ export class UserService {
 			],
 			blocked: [
 				{ blockedUser: { some: { blockedUserName: username } } },
-				{ blockedByUser: { some: { blockingUserName: username } } },
 			],
+            blockedBy: [
+				{ blockedByUser: { some: { blockingUserName: username } } },
+            ]
 		} satisfies Record<
 			keyof Omit<
 				Extract<RequestShapes["searchUsers"]["query"]["filter"], { type: "inc" }>,
@@ -255,6 +253,8 @@ export class UserService {
 	getArrayOfUniqueUserNamesFromStatusData(
 		data: Exclude<Awaited<ReturnType<typeof this.getNotifyStatusData>>, null>,
 	) {
+        const blockUserNames = data.blockedUser.map(el => el.blockedUserName)
+            .concat(data.blockedByUser.map(el => el.blockingUserName))
 		return [
 			...new Set<string>(
 				data.friend
@@ -263,7 +263,7 @@ export class UserService {
 					.concat(data.directMessage.map((el) => el.requestedUserName))
 					.concat(data.directMessageOf.map((el) => el.requestingUserName)),
 			),
-		]
+		].filter(el => !blockUserNames.includes(el))
 	}
 
 	async updateMe(username: string, dto: RequestShapes["updateMe"]["body"]) {
@@ -336,6 +336,12 @@ export class UserService {
 
 	private async getNotifyStatusData(username: string) {
 		return this.getUser(username, {
+            blockedUser: {
+                select: { blockedUserName: true }
+            },
+            blockedByUser: {
+                select: { blockingUserName: true }
+            },
 			friend: {
 				where: { requestingUser: { statusVisibilityLevel: { not: "NO_ONE" } } },
 				select: { requestedUserName: true },

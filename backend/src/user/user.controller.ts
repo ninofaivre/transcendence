@@ -31,7 +31,7 @@ export class UserController {
 	constructor(private userService: UserService) {}
 
 	@TsRestHandler(c.signUp)
-	signUp() {
+	async signUp() {
 		return tsRestHandler(c.signUp, async ({ body }) => {
 			const res = await this.userService.createUser(body)
 			return isContractError(res) ? res : { status: 201, body: res }

@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client"
+import { Prisma, AccessPolicyLevel as AccessPolicyLevelPrisma } from "@prisma/client"
 import { PrismaService } from "./prisma/prisma.service"
 
 export type Tx = Omit<
@@ -38,3 +38,17 @@ export type ElementUnion = "event" | "message"
 
 export type RetypedElement<T extends Record<ElementUnion, any>> =
 	transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, ElementUnion>
+
+export const ProximityLevel = {
+    BLOCKED: -1,
+    ANYONE: 0,
+    COMMON_CHAN: 1,
+    FRIEND: 2
+} as const
+
+export const AccessPolicyLevel = {
+    ANYONE: 0,
+    IN_COMMON_CHAN: 1,
+    ONLY_FRIEND: 2,
+    NO_ONE: 3
+} as const satisfies { [key in keyof typeof AccessPolicyLevelPrisma]: number }

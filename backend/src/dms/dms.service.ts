@@ -10,7 +10,7 @@ import { ClassicDmEventType, DirectMessageStatus, Prisma } from "@prisma/client"
 import { SseService } from "src/sse/sse.service"
 import { z } from "zod"
 import { DmEvent, contractErrors, zDmDiscussionElementReturn, zDmReturn } from "contract"
-import { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx } from "src/types"
+import { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx, AccessPolicyLevel, ProximityLevel } from "src/types"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
 import type { zDmDiscussionEventReturn, zDmDiscussionMessageReturn } from "contract"
@@ -41,48 +41,14 @@ export class DmsService {
 		return {
 			requestedUser: {
 				select: {
-					friend: {
-						where: {
-							requestedUserName: username,
-							requestedUser: { statusVisibilityLevel: { not: "NO_ONE" } },
-						},
-						select: { id: true },
-					},
-					friendOf: {
-						where: {
-							requestingUserName: username,
-							requestingUser: { statusVisibilityLevel: { not: "NO_ONE" } },
-						},
-						select: { id: true },
-					},
-					chans: {
-						where: { users: { some: { name: username } } },
-						take: 1,
-					},
+                    ...this.usersService.getProximityLevelSelect(username),
 					name: true,
 					statusVisibilityLevel: true,
 				},
 			},
 			requestingUser: {
 				select: {
-					friend: {
-						where: {
-							requestedUserName: username,
-							requestedUser: { statusVisibilityLevel: { not: "NO_ONE" } },
-						},
-						select: { id: true },
-					},
-					friendOf: {
-						where: {
-							requestingUserName: username,
-							requestingUser: { statusVisibilityLevel: { not: "NO_ONE" } },
-						},
-						select: { id: true },
-					},
-					chans: {
-						where: { users: { some: { name: username } } },
-						take: 1,
-					},
+                    ...this.usersService.getProximityLevelSelect(username),
 					name: true,
 					statusVisibilityLevel: true,
 				},
@@ -387,14 +353,17 @@ export class DmsService {
 		return this.formatDmElementForUser(dmDiscussionElement, username)
 	}
 
-	public async createAndNotifyDm(requestingUserName: string, requestedUserName: string) {
-		const newDm = await this.prisma.directMessage.create({
+    public createDm = async(requestingUserName: string, requestedUserName: string) => this
+		.prisma.directMessage.create({
 			data: {
 				requestingUserName: requestingUserName,
 				requestedUserName: requestedUserName,
 			},
 			select: this.getDirectMessageSelect(requestingUserName),
 		})
+
+	public async createAndNotifyDm(requestingUserName: string, requestedUserName: string) {
+        const newDm = await this.createDm(requestingUserName, requestedUserName)
 		await this.sse.pushEvent(requestingUserName, {
 			type: "CREATED_DM",
 			data: this.formatDirectMessage(newDm, requestingUserName),
@@ -501,17 +470,33 @@ export class DmsService {
 		)
 	}
 
-    async createDm(username: string, otherUserName: string) {
-        const res = await this.usersService.getUser(username, {
+    async createDmIfRightTo(username: string, otherUserName: string) {
+        const res = await this.usersService.getUser(otherUserName, {
             dmPolicyLevel: true,
-            ...this.usersService.getProximityLevelSelect(otherUserName)
+            directMessage: { where: { requestedUserName: username }, select: { id: true } },
+            directMessageOf: { where: { requestingUserName: username }, select: { id: true } },
+            ...this.usersService.getProximityLevelSelect(username)
         })
-        if (!res) return contractErrors.NotFoundUser(username)
+        if (!res) return contractErrors.NotFoundUser(otherUserName)
+        if (res.directMessage.length || res.directMessageOf.length)
+            return contractErrors.DmAlreadyExist(username, otherUserName)
         const { dmPolicyLevel } = res
-        const proximityLevel = this.usersService.getProximityLevel(res)
-        if ((proximityLevel === "ANYONE" && dmPolicyLevel !== "ANYONE")
-            || (proximityLevel === "COMMON_CHAN" && dmPolicyLevel !== "IN_COMMON_CHAN"))
-            console.log()
+        const proximity = this.usersService.getProximityLevel(res)
+        if (proximity === "BLOCKED") {
+            return res.blockedUser.length
+                ? contractErrors.BlockedByUser(otherUserName, "createDm")
+                : contractErrors.BlockedUser(username, "createDm")
+        }
+        if (ProximityLevel[proximity] < AccessPolicyLevel[dmPolicyLevel]) {
+            return contractErrors.ProximityLevelTooLow(otherUserName,
+                "createDm", proximity, dmPolicyLevel)
+        }
+        const newDm = await this.createDm(username, otherUserName)
+        this.sse.pushEvent(otherUserName, {
+            type: "CREATED_DM",
+            data: this.formatDirectMessage(newDm, otherUserName)
+        })
+        return this.formatDirectMessage(newDm, username)
     }
 
 	async createDmMessage(username: string, dmId: string, content: string, relatedId?: string) {

@@ -1,10 +1,10 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import { zClassicDmEventType, ClassicDmEventType, zDirectMessageStatus } from "../generated-zod"
+import { zClassicDmEventType, zDirectMessageStatus } from "../generated-zod"
 import { zChanTitle } from "./chans"
 import { zUserStatus } from "./users"
-import { getErrorForContract, getErrorsForContract } from "../errors"
+import { getErrorsForContract } from "../errors"
 
 const c = initContract()
 
@@ -148,7 +148,7 @@ export const dmsContract = c.router(
 				200: zDmDiscussionElementReturn,
 			},
 		},
-		updateMessage: {
+		updateDmMessage: {
 			method: "PATCH",
 			path: "/:dmId/elements/:elementId",
 			pathParams: z.strictObject({
@@ -190,16 +190,8 @@ export type DmEvent =
 			data: { dmId: string; status: z.infer<typeof zDirectMessageStatus> }
 	  }
 	| {
-			type: "UPDATED_DM_STATUS"
-			data: { dmId: string; status: z.infer<typeof zDirectMessageStatus> }
-	  }
-	| {
 			type: "CREATED_DM_ELEMENT"
 			data: { dmId: string; element: z.infer<typeof zDmDiscussionElementReturn> }
-	  }
-	| {
-			type: "DELETED_DM_MESSAGE"
-			data: { dmId: string; messageId: string }
 	  }
 	| {
 			type: "UPDATED_DM_MESSAGE"

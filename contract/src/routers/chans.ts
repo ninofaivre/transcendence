@@ -10,6 +10,7 @@ import {
 	zRoleApplyingType,
 	zPermissionList,
 } from "../generated-zod"
+import { zUserStatus } from "../../dist"
 
 const c = initContract()
 
@@ -40,34 +41,49 @@ const zRoleReturn = z.object({
 	name: z.string(),
 })
 
+const zChanUser = z.object({
+    name: zUserName,
+    status: zUserStatus
+})
+
+const zSelfPermissionList = zPermissionList.extract(["EDIT", "DESTROY", "INVITE", "SEND_MESSAGE"])
+
 const zChanReturn = z.object({
-	users: z.array(zUserName).min(1),
-	ownerName: zUserName,
 	title: zChanTitle.nullable(),
-	id: z.string().uuid(),
 	type: zChanType,
-	roles: z.array(zRoleReturn),
+	ownerName: zUserName,
+	id: z.string().uuid(),
+	users: z.array(zChanUser).min(1),
+    selfPerms: z.array(zSelfPermissionList),
 })
 
-// TODO
-// const zChanReturn = z.object({
-// 	title: zChanTitle.nullable(),
-// 	type: zChanType,
-// 	ownerName: zUserName,
-// 	id: z.string().uuid(),
-// 	users: z.array(zUserName).min(1),
-//  selfPerms: z.array(zPermissionList.extract(["EDIT", "DESTROY", "INVITE", "SEND_MESSAGE"])),
-// 	roles: z.array(zRoleReturn),
-// })
-
-const zChanDiscussionMessageReturn = z.strictObject({
-	content: z.string(),
-	relatedTo: z.string().uuid().nullable(),
-	relatedUsers: z.array(zUserName),
-	relatedRoles: z.array(z.string()),
+const zChanDiscussionBaseElement = z.strictObject({
+	id: z.string().uuid(),
+	author: zUserName,
+	creationDate: z.date(),
 })
 
-const zChanDiscussionBaseEvent = z.strictObject({})
+const zChanDiscussionBaseMessage = zChanDiscussionBaseElement.extend({
+    type: z.literal("message"),
+})
+
+const zChanDiscussionBaseEvent = zChanDiscussionBaseElement.extend({
+    type: z.literal("event")
+})
+
+const zChanDiscussionMessageReturn = z.union([
+    zChanDiscussionBaseMessage.extend({
+        content: z.string(),
+        relatedTo: z.string().uuid().nullable(),
+        isDeleted: z.literal(false),
+        hasBeenEdited: z.boolean(),
+        mentionMe: z.boolean()
+    }),
+    zChanDiscussionBaseMessage.extend({
+        content: z.literal(""),
+        isDeleted: z.literal(true)
+    })
+])
 
 export const zChanDiscussionEventReturn = z.union([
 	zChanDiscussionBaseEvent.extend({
@@ -79,27 +95,11 @@ export const zChanDiscussionEventReturn = z.union([
 		oldTitle: z.string(),
 		newTitle: z.string(),
 	}),
-	zChanDiscussionBaseEvent.extend({
-		eventType: z.literal("DELETED_MESSAGE"),
-		deletingUserName: zUserName,
-	}),
 ])
 
-const zChanDiscussionBaseElement = z.strictObject({
-	id: z.string().uuid(),
-	authorName: zUserName,
-	creationDate: z.date(),
-})
-
-export const zChanDiscussionElementReturn = z.discriminatedUnion("type", [
-	zChanDiscussionBaseElement.extend({
-		type: z.literal("message"),
-		message: zChanDiscussionMessageReturn,
-	}),
-	zChanDiscussionBaseElement.extend({
-		type: z.literal("event"),
-		event: zChanDiscussionEventReturn,
-	}),
+export const zChanDiscussionElementReturn = z.union([
+    zChanDiscussionMessageReturn,
+    zChanDiscussionEventReturn
 ])
 
 export const chansContract = c.router(
@@ -138,9 +138,9 @@ export const chansContract = c.router(
 			pathParams: z.strictObject({
 				chanId: z.string().uuid(),
 			}),
-			body: c.body<null>(),
+			body: c.type<null>(),
 			responses: {
-				202: c.response<null>(),
+				202: c.type<null>(),
 			},
 		},
 		joinChanById: {
@@ -210,9 +210,9 @@ export const chansContract = c.router(
 			pathParams: z.strictObject({
 				chanId: z.string().uuid(),
 			}),
-			body: c.body<null>(),
+			body: c.type<null>(),
 			responses: {
-				202: c.response<null>(),
+				202: c.type<null>(),
 			},
 		},
 		createChanMessage: {
@@ -225,11 +225,9 @@ export const chansContract = c.router(
 			body: z.strictObject({
 				content: z.string().nonempty().max(5000),
 				relatedTo: z.string().uuid().optional().describe("id of the related msg/event"),
-				usersAt: unique(z.array(zUserName).nonempty()).optional(),
-				rolesAt: unique(z.array(zRoleName).nonempty()).optional(),
 			}),
 			responses: {
-				201: zChanDiscussionElementReturn,
+				201: zChanDiscussionMessageReturn,
 			},
 		},
 		getChanElements: {
@@ -258,6 +256,20 @@ export const chansContract = c.router(
 				200: zChanDiscussionElementReturn,
 			},
 		},
+        updateChanMessage: {
+            method: "PATCH",
+            path: "/:chanId/elements/elementId",
+            pathParams: z.strictObject({
+                chanId: z.string().uuid(),
+                elementId: z.string().uuid(),
+            }),
+            body: z.strictObject({
+                content: z.string().nonempty()
+            }),
+            responses: {
+                200: zChanDiscussionMessageReturn
+            }
+        },
 		deleteChanMessage: {
 			method: "DELETE",
 			path: "/:chanId/elements/:elementId",
@@ -267,7 +279,7 @@ export const chansContract = c.router(
 			}),
 			body: c.type<null>(),
 			responses: {
-				202: zChanDiscussionElementReturn,
+				202: zChanDiscussionMessageReturn,
 			},
 		},
 		kickUserFromChan: {
@@ -303,15 +315,41 @@ export const chansContract = c.router(
 	},
 )
 
+const zUpdatedChanReturn = zChanReturn.pick({ title: true, type: true,
+    ownerName: true, id: true })
+
 export type ChanEvent =
 	| {
-			type: "UPDATED_CHAN" | "CREATED_CHAN"
+			type: "CREATED_CHAN"
 			data: z.infer<typeof zChanReturn>
 	  }
-	| {
-			type: "CREATED_CHAN_ELEMENT" | "UPDATED_CHAN_ELEMENT"
-			data: { chanId: string; element: z.infer<typeof zChanDiscussionElementReturn> }
-	  }
+    | {
+            type: "UPDATED_CHAN_INFO"
+            data: z.infer<typeof zUpdatedChanReturn>
+      }
+    | {
+            type: "CREATED_CHAN_USER"
+            data: z.infer<typeof zChanUser>
+      }
+    | {
+            type: "DELETED_CHAN_USER"
+            data: z.infer<typeof zUserName>
+      }
+    | {
+            type: "UPDATED_CHAN_SELF_PERMS"
+            data: {
+                chanId: string,
+                selfPerms: z.infer<typeof zSelfPermissionList>[]
+            }
+      }
+    | {
+            type: "CREATED_CHAN_ELEMENT"
+            data: { chanId: string, element: z.infer<typeof zChanDiscussionElementReturn> }
+      }
+    | {
+            type: "UPDATED_CHAN_MESSAGE"
+            data: { chanId: string, message: z.infer<typeof zChanDiscussionMessageReturn> }
+      }
 	| {
 			type: "DELETED_CHAN" | "KICKED_FROM_CHAN"
 			data: { chanId: string }

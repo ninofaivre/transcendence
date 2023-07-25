@@ -25,16 +25,23 @@ import { z } from "zod"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
 import { PrismaService } from "src/prisma/prisma.service"
+import { UserService } from "src/user/user.service"
+import { ChanRetypedEvent } from "src/types"
+import { zSelfPermissionList } from "contract"
 
 const c = nestControllerContract(contract.chans)
 type RequestShapes = NestRequestShapes<typeof c>
+
+type ReturnOfMethod<T> = T extends (...args: any[]) => infer R ? R : never;
+
+type test = { select: ReturnType<ChansService['getChanDiscussionElementsSelect']> }
 
 @Injectable()
 export class ChansService {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly sse: SseService,
-		// private readonly usersService: UserService,
+		private readonly usersService: UserService,
 		@Inject(forwardRef(() => ChanInvitationsService))
 		private readonly chanInvitationsService: ChanInvitationsService,
 	) {}
@@ -55,17 +62,26 @@ export class ChansService {
 		select: this.rolesSelect,
 	} satisfies Prisma.RoleArgs
 
-	private chansSelect = {
+	private getChansSelect = (username: string) => ({
 		id: true,
 		title: true,
 		type: true,
 		ownerName: true,
-		users: { select: this.usersSelect },
-		roles: { select: this.rolesSelect },
-	} satisfies Prisma.ChanSelect
+		users: {
+            select: {
+                ...this.usersService.getProximityLevelSelect(username),
+                statusVisibilityLevel: true,
+                name: true
+            }
+        },
+		roles: {
+            where: { users: { some: { name: username } } },
+            select: { permissions: true }
+        }
+	} satisfies Prisma.ChanSelect)
 
 	private chansGetPayload = {
-		select: this.chansSelect,
+		select: this.getChansSelect("exemple"),
 	} satisfies Prisma.ChanArgs
 
 	private chanDiscussionEventsSelect = {
@@ -79,27 +95,34 @@ export class ChansService {
 		select: this.chanDiscussionEventsSelect,
 	} satisfies Prisma.ChanDiscussionEventArgs
 
-	private chanDiscussionMessagesSelect = {
+	private getChanDiscussionMessagesSelect = (username: string) => ({
 		content: true,
 		relatedTo: true,
-		relatedUsers: { select: { name: true } },
-		relatedRoles: { select: { name: true } },
-	} satisfies Prisma.ChanDiscussionMessageSelect
+		relatedUsers: {
+            where: { name: username },
+            select: { name: true }
+        },
+		relatedRoles: {
+            where: { name: username },
+            select: { name: true },
+            take: 1
+        },
+	} satisfies Prisma.ChanDiscussionMessageSelect)
 
 	private chanDiscussionMessagesGetPayload = {
-		select: this.chanDiscussionMessagesSelect,
+		select: this.getChanDiscussionMessagesSelect("bob"),
 	} satisfies Prisma.ChanDiscussionMessageArgs
 
-	private chanDiscussionElementsSelect = {
+	public getChanDiscussionElementsSelect = (username: string) => ({
 		id: true,
 		event: { select: this.chanDiscussionEventsSelect },
-		message: { select: this.chanDiscussionMessagesSelect },
+		message: { select: this.getChanDiscussionMessagesSelect(username) },
 		authorName: true,
 		creationDate: true,
-	} satisfies Prisma.ChanDiscussionElementSelect
+	} satisfies Prisma.ChanDiscussionElementSelect)
 
 	private chanDiscussionElementsGetPayload = {
-		select: this.chanDiscussionElementsSelect,
+		select: this.getChanDiscussionElementsSelect("exemple"),
 	} satisfies Prisma.ChanDiscussionElementArgs
 
 	private defaultPermissions: (typeof PermissionList)[keyof typeof PermissionList][] = [
@@ -119,27 +142,44 @@ export class ChansService {
 		return users.map((el) => el.name)
 	}
 
-	private formatRole(role: Prisma.RoleGetPayload<typeof this.rolesGetPayload>) {
-		const { roles, users } = role
-		return {
-			...role,
-			roles: this.namesArrayToStringArray(roles),
-			users: this.namesArrayToStringArray(users),
-		}
-	}
+	// private formatRole(role: Prisma.RoleGetPayload<typeof this.rolesGetPayload>) {
+	// 	const { roles, users } = role
+	// 	return {
+	// 		...role,
+	// 		roles: this.namesArrayToStringArray(roles),
+	// 		users: this.namesArrayToStringArray(users),
+	// 	}
+	// }
+    
+    private formatChanUser = (
+        user: Prisma.ChanGetPayload<typeof this.chansGetPayload>['users'][number]
+    ) => ({
+            name: user.name,
+            status: this.usersService.getUserStatusByProximity(
+                user.name,
+                this.usersService.getProximityLevel(user),
+                user.statusVisibilityLevel)
+        } as const)
 
 	private formatChan(chan: Prisma.ChanGetPayload<typeof this.chansGetPayload>) {
-		const { roles, users } = chan
+		const { roles, users, ...rest } = chan
+        const formattedUsers = users.map(el => this.formatChanUser(el))
+        const selfPerms = [...new Set(roles
+            .flatMap(el => el.permissions
+                .filter((el): el is z.infer<typeof zSelfPermissionList> =>
+                    // (zSelfPermissionList.options as string[]).includes(el)
+                    zSelfPermissionList.safeParse(el).success)
+        ))]
 		return {
-			...chan,
-			users: this.namesArrayToStringArray(users),
-			roles: roles.map((el) => this.formatRole(el)),
+			...rest,
+			users: formattedUsers,
+            selfPerms
 		}
 	}
 
-	private formatChanArray(chans: Prisma.ChanGetPayload<typeof this.chansGetPayload>[]) {
-		return chans.map((chan) => this.formatChan(chan))
-	}
+	// private formatChanArray(chans: Prisma.ChanGetPayload<typeof this.chansGetPayload>[]) {
+	// 	return chans.map((chan) => this.formatChan(chan))
+	// }
 
 	private formatChanDiscussionMessage(
 		message: Prisma.ChanDiscussionMessageGetPayload<
@@ -161,40 +201,7 @@ export class ChansService {
 	private formatChanDiscussionEvent(
 		event: Prisma.ChanDiscussionEventGetPayload<typeof this.chanDiscussionEventsGetPayload>,
 	): z.infer<typeof zChanDiscussionEventReturn> {
-		type omittedEvent = Omit<
-			typeof event,
-			| "classicChanDiscussionEvent"
-			| "changedTitleChanDiscussionEvent"
-			| "deletedMessageChanDiscussionEvent"
-		>
-
-		type RetypedEvent =
-			| (omittedEvent & {
-					classicChanDiscussionEvent: null
-					changedTitleChanDiscussionEvent: Exclude<
-						typeof event.changedTitleChanDiscussionEvent,
-						null
-					>
-					deletedMessageChanDiscussionEvent: null
-			  })
-			| (omittedEvent & {
-					classicChanDiscussionEvent: Exclude<
-						typeof event.classicChanDiscussionEvent,
-						null
-					>
-					changedTitleChanDiscussionEvent: null
-					deletedMessageChanDiscussionEvent: null
-			  })
-			| (omittedEvent & {
-					classicChanDiscussionEvent: null
-					changedTitleChanDiscussionEvent: null
-					deletedMessageChanDiscussionEvent: Exclude<
-						typeof event.deletedMessageChanDiscussionEvent,
-						null
-					>
-			  })
-
-		const retypedEvent = event as RetypedEvent
+		const retypedEvent = event as ChanRetypedEvent<typeof event>
 
 		const {
 			classicChanDiscussionEvent,
@@ -211,101 +218,96 @@ export class ChansService {
 	}
 
 	private formatChanDiscussionElement(
+        REPRENDRE ICI JSKLJFKLJSD
 		element: Prisma.ChanDiscussionElementGetPayload<
-			typeof this.chanDiscussionElementsGetPayload
+		    test	
 		>,
 	): z.infer<typeof zChanDiscussionElementReturn> {
-		type RetypedElement =
-			| (Omit<typeof element, "event" | "message"> & {
-					event: null
-					message: Exclude<typeof element.message, null>
-			  })
-			| (Omit<typeof element, "event" | "message"> & {
-					event: Exclude<typeof element.event, null>
-					message: null
-			  })
-		const retypedElement = element as RetypedElement
+		const { event, message, ...rest } = element as ChanRetypedElement<typeof element>
 
-		const { event, message, ...rest } = retypedElement
-		if (event) return { ...rest, type: "event", event: this.formatChanDiscussionEvent(event) }
+		// if (event) return { ...rest, type: "event", event: this.formatChanDiscussionEvent(event) }
+        if (event) {
+
+        }
+
 		else return { ...rest, type: "message", message: this.formatChanDiscussionMessage(message) }
 	}
 
-	private formatChanDiscussionElementArray(
-		elements: Prisma.ChanDiscussionElementGetPayload<
-			typeof this.chanDiscussionElementsGetPayload
-		>[],
-	) {
-		return elements.map((element) => this.formatChanDiscussionElement(element))
-	}
+	// private formatChanDiscussionElementArray(
+	// 	elements: Prisma.ChanDiscussionElementGetPayload<
+	// 		typeof this.chanDiscussionElementsGetPayload
+	// 	>[],
+	// ) {
+	// 	return elements.map((element) => this.formatChanDiscussionElement(element))
+	// }
 
-	async getUserChans(username: string) {
-		return this.formatChanArray(
-			await this.prisma.chan.findMany({
-				where: {
-					users: { some: { name: username } },
-				},
-				select: this.chansSelect,
-				orderBy: { type: "desc" },
-			}),
-		)
-	}
+	// async getUserChans(username: string) {
+	// 	return this.formatChanArray(
+	// 		await this.prisma.chan.findMany({
+	// 			where: {
+	// 				users: { some: { name: username } },
+	// 			},
+	// 			select: this.chansSelect,
+	// 			orderBy: { type: "desc" },
+	// 		}),
+	// 	)
+	// }
 
-	async createChan(username: string, chan: RequestShapes["createChan"]["body"]) {
-		if (chan.type === "PUBLIC" && chan.password) chan.password = await hash(chan.password, 10)
-		try {
-			const res = await this.prisma.chan.create({
-				data: {
-					...chan,
-					owner: { connect: { name: username } },
-					users: { connect: { name: username } },
-					roles: {
-						createMany: {
-							data: [
-								{
-									name: "DEFAULT",
-									permissions: this.defaultPermissions,
-									roleApplyOn: RoleApplyingType.NONE,
-								},
-								{
-									name: "ADMIN",
-									permissions: this.adminPermissions,
-									roleApplyOn: RoleApplyingType.ROLES,
-								},
-							],
-						},
-					},
-				},
-				select: this.chansSelect,
-			})
-			await this.prisma.role.update({
-				where: { chanId_name: { chanId: res.id, name: "ADMIN" } },
-				data: {
-					roles: { connect: { chanId_name: { chanId: res.id, name: "DEFAULT" } } },
-				},
-			})
-			res.roles.find((el) => el.name === "ADMIN")?.roles.push({ name: "DEFAULT" })
-			return this.formatChan(res)
-		} catch (e) {
-			if (e instanceof PrismaClientKnownRequestError && e.code === "P2002")
-				throw new ConflictException(`conflict, chan ${chan.title} already exist`)
-			throw e
-		}
-	}
+	// async createChan(username: string, chan: RequestShapes["createChan"]["body"]) {
+	// 	if (chan.type === "PUBLIC" && chan.password) chan.password = await hash(chan.password, 10)
+	// 	try {
+	// 		const res = await this.prisma.chan.create({
+	// 			data: {
+	// 				...chan,
+	// 				owner: { connect: { name: username } },
+	// 				users: { connect: { name: username } },
+	// 				roles: {
+	// 					createMany: {
+	// 						data: [
+	// 							{
+	// 								name: "DEFAULT",
+	// 								permissions: this.defaultPermissions,
+	// 								roleApplyOn: RoleApplyingType.NONE,
+	// 							},
+	// 							{
+	// 								name: "ADMIN",
+	// 								permissions: this.adminPermissions,
+	// 								roleApplyOn: RoleApplyingType.ROLES,
+	// 							},
+	// 						],
+	// 					},
+	// 				},
+	// 			},
+	// 			select: this.chansSelect,
+	// 		})
+	// 		await this.prisma.role.update({
+	// 			where: { chanId_name: { chanId: res.id, name: "ADMIN" } },
+	// 			data: {
+	// 				roles: { connect: { chanId_name: { chanId: res.id, name: "DEFAULT" } } },
+	// 			},
+	// 		})
+	// 		res.roles.find((el) => el.name === "ADMIN")?.roles.push({ name: "DEFAULT" })
+	// 		return this.formatChan(res)
+	// 	} catch (e) {
+	// 		if (e instanceof PrismaClientKnownRequestError && e.code === "P2002")
+	// 			throw new ConflictException(`conflict, chan ${chan.title} already exist`)
+	// 		throw e
+	// 	}
+	// }
 
-	async getAllPendingInvitationsForChan(chanId: string) {
-		return (
-			await this.prisma.chan.findUniqueOrThrow({
-				where: { id: chanId },
-				select: {
-					invitations: {
-						where: { status: ChanInvitationStatus.PENDING },
-						select: { id: true, invitedUserName: true, invitingUserName: true },
-					},
-				},
-			})
-		).invitations
-	}
+	// async getAllPendingInvitationsForChan(chanId: string) {
+	// 	return (
+	// 		await this.prisma.chan.findUniqueOrThrow({
+	// 			where: { id: chanId },
+	// 			select: {
+	// 				invitations: {
+	// 					where: { status: ChanInvitationStatus.PENDING },
+	// 					select: { id: true, invitedUserName: true, invitingUserName: true },
+	// 				},
+	// 			},
+	// 		})
+	// 	).invitations
+	// }
 
 	public async throwIfUserNotAuthorizedInChan(
 		username: string,
@@ -330,352 +332,352 @@ export class ChansService {
 		if (!roles.length) throw new ForbiddenException(`${username} can't ${perm} in ${chanId}`)
 	}
 
-	async throwIfUserNotAuthorizedOverUserInChan(
-		username: string,
-		otherUserName: string,
-		chanId: string,
-		perm: (typeof PermissionList)[keyof typeof PermissionList],
-	) {
-		const { ownerName, roles, users } = await this.getChanOrThrow(
-			{ id: chanId, users: { some: { name: username } } },
-			{
-				roles: {
-					where: {
-						users: { some: { name: username } },
-						roleApplyOn: { not: RoleApplyingType.NONE },
-						OR: [
-							{
-								roleApplyOn: RoleApplyingType.ROLES,
-								users: { none: { name: otherUserName } },
-								roles: { some: { users: { some: { name: otherUserName } } } },
-							},
-							{
-								roleApplyOn: RoleApplyingType.ROLES_AND_SELF,
-								OR: [
-									{ users: { some: { name: otherUserName } } },
-									{
-										roles: {
-											some: { users: { some: { name: otherUserName } } },
-										},
-									},
-								],
-							},
-						],
-					},
-					take: 1,
-					select: { name: true },
-				},
-				ownerName: true,
-				users: { where: { name: otherUserName }, take: 1, select: { name: true } },
-			},
-		)
-		if (username === otherUserName)
-			throw new BadRequestException(`${username} can't ${perm} over himself`)
-		if (!users.length) throw new ForbiddenException(`${otherUserName} not in chan ${chanId}`)
-		if (username === ownerName) return
-		if (otherUserName === ownerName)
-			throw new ForbiddenException(
-				`${username} can't ${perm} in chan ${chanId} over the owner`,
-			)
-		if (!roles.length)
-			throw new ForbiddenException(
-				`${username} can't ${perm} in chan ${chanId} over ${otherUserName}`,
-			)
-	}
+	// async throwIfUserNotAuthorizedOverUserInChan(
+	// 	username: string,
+	// 	otherUserName: string,
+	// 	chanId: string,
+	// 	perm: (typeof PermissionList)[keyof typeof PermissionList],
+	// ) {
+	// 	const { ownerName, roles, users } = await this.getChanOrThrow(
+	// 		{ id: chanId, users: { some: { name: username } } },
+	// 		{
+	// 			roles: {
+	// 				where: {
+	// 					users: { some: { name: username } },
+	// 					roleApplyOn: { not: RoleApplyingType.NONE },
+	// 					OR: [
+	// 						{
+	// 							roleApplyOn: RoleApplyingType.ROLES,
+	// 							users: { none: { name: otherUserName } },
+	// 							roles: { some: { users: { some: { name: otherUserName } } } },
+	// 						},
+	// 						{
+	// 							roleApplyOn: RoleApplyingType.ROLES_AND_SELF,
+	// 							OR: [
+	// 								{ users: { some: { name: otherUserName } } },
+	// 								{
+	// 									roles: {
+	// 										some: { users: { some: { name: otherUserName } } },
+	// 									},
+	// 								},
+	// 							],
+	// 						},
+	// 					],
+	// 				},
+	// 				take: 1,
+	// 				select: { name: true },
+	// 			},
+	// 			ownerName: true,
+	// 			users: { where: { name: otherUserName }, take: 1, select: { name: true } },
+	// 		},
+	// 	)
+	// 	if (username === otherUserName)
+	// 		throw new BadRequestException(`${username} can't ${perm} over himself`)
+	// 	if (!users.length) throw new ForbiddenException(`${otherUserName} not in chan ${chanId}`)
+	// 	if (username === ownerName) return
+	// 	if (otherUserName === ownerName)
+	// 		throw new ForbiddenException(
+	// 			`${username} can't ${perm} in chan ${chanId} over the owner`,
+	// 		)
+	// 	if (!roles.length)
+	// 		throw new ForbiddenException(
+	// 			`${username} can't ${perm} in chan ${chanId} over ${otherUserName}`,
+	// 		)
+	// }
 
-	async deleteChan(username: string, chanId: string) {
-		await this.throwIfUserNotAuthorizedInChan(username, chanId, PermissionList.DESTROY)
-		// a bit dangerous, need to think about what need to be in a transaction or something like that in case something fail
-		Promise.all([
-			// check if need to await in .then
-			this.getAllPendingInvitationsForChan(chanId).then((invs) =>
-				this.chanInvitationsService.updateAndNotifyManyInvs(
-					ChanInvitationStatus.DELETED_CHAN,
-					invs,
-				),
-			),
-			this.notifyChan(chanId, { type: "DELETED_CHAN", data: { chanId } }, null),
-		])
-		await this.prisma.chan.delete({ where: { id: chanId } })
-	}
+	// async deleteChan(username: string, chanId: string) {
+	// 	await this.throwIfUserNotAuthorizedInChan(username, chanId, PermissionList.DESTROY)
+	// 	// a bit dangerous, need to think about what need to be in a transaction or something like that in case something fail
+	// 	Promise.all([
+	// 		// check if need to await in .then
+	// 		this.getAllPendingInvitationsForChan(chanId).then((invs) =>
+	// 			this.chanInvitationsService.updateAndNotifyManyInvs(
+	// 				ChanInvitationStatus.DELETED_CHAN,
+	// 				invs,
+	// 			),
+	// 		),
+	// 		this.notifyChan(chanId, { type: "DELETED_CHAN", data: { chanId } }, null),
+	// 	])
+	// 	await this.prisma.chan.delete({ where: { id: chanId } })
+	// }
 
-	async leaveChan(username: string, chanId: string) {
-		const { ownerName } = await this.getChanOrThrow(
-			{ id: chanId, users: { some: { name: username } } },
-			{ ownerName: true },
-		)
-		if (username === ownerName)
-			throw new ForbiddenException(
-				"owner can't leave chan (transfer ownerShip or Delete chan)",
-			)
-		await this.prisma.chan.update({
-			where: { id: chanId },
-			data: {
-				users: { disconnect: { name: username } },
-			},
-		})
-		await this.createAndNotifyClassicChanEvent(
-			username,
-			null,
-			chanId,
-			ClassicChanEventType.AUTHOR_LEAVED,
-		)
-	}
+	// async leaveChan(username: string, chanId: string) {
+	// 	const { ownerName } = await this.getChanOrThrow(
+	// 		{ id: chanId, users: { some: { name: username } } },
+	// 		{ ownerName: true },
+	// 	)
+	// 	if (username === ownerName)
+	// 		throw new ForbiddenException(
+	// 			"owner can't leave chan (transfer ownerShip or Delete chan)",
+	// 		)
+	// 	await this.prisma.chan.update({
+	// 		where: { id: chanId },
+	// 		data: {
+	// 			users: { disconnect: { name: username } },
+	// 		},
+	// 	})
+	// 	await this.createAndNotifyClassicChanEvent(
+	// 		username,
+	// 		null,
+	// 		chanId,
+	// 		ClassicChanEventType.AUTHOR_LEAVED,
+	// 	)
+	// }
 
-	async createAndNotifyChanMessage(
-		username: string,
-		chanId: string,
-		content: string,
-		relatedTo: string | undefined,
-		usersAt: string[] | undefined,
-		rolesAt: string[] | undefined,
-	) {
-		const res = (
-			await this.prisma.chanDiscussionMessage.create({
-				data: {
-					content: content,
-					related: relatedTo
-						? {
-								connect: { id: relatedTo },
-						  }
-						: undefined,
-					relatedUsers: usersAt
-						? {
-								connect: usersAt.map((el) => {
-									return { name: el }
-								}),
-						  }
-						: undefined,
-					relatedRoles: rolesAt
-						? {
-								connect: rolesAt.map((el) => {
-									return { chanId_name: { chanId, name: el } }
-								}),
-						  }
-						: undefined,
-					discussionElement: {
-						create: {
-							chanId: chanId,
-							authorName: username,
-						},
-					},
-				},
-				select: {
-					discussionElement: { select: this.chanDiscussionElementsSelect },
-				},
-			})
-		).discussionElement
-		if (!res) throw new InternalServerErrorException("discussion element creation failed")
-		const formattedRes = this.formatChanDiscussionElement(res)
-		await this.notifyChan(
-			chanId,
-			{ type: "CREATED_CHAN_ELEMENT", data: { chanId, element: formattedRes } },
-			username,
-		)
-		return formattedRes
-	}
+	// async createAndNotifyChanMessage(
+	// 	username: string,
+	// 	chanId: string,
+	// 	content: string,
+	// 	relatedTo: string | undefined,
+	// 	usersAt: string[] | undefined,
+	// 	rolesAt: string[] | undefined,
+	// ) {
+	// 	const res = (
+	// 		await this.prisma.chanDiscussionMessage.create({
+	// 			data: {
+	// 				content: content,
+	// 				related: relatedTo
+	// 					? {
+	// 							connect: { id: relatedTo },
+	// 					  }
+	// 					: undefined,
+	// 				relatedUsers: usersAt
+	// 					? {
+	// 							connect: usersAt.map((el) => {
+	// 								return { name: el }
+	// 							}),
+	// 					  }
+	// 					: undefined,
+	// 				relatedRoles: rolesAt
+	// 					? {
+	// 							connect: rolesAt.map((el) => {
+	// 								return { chanId_name: { chanId, name: el } }
+	// 							}),
+	// 					  }
+	// 					: undefined,
+	// 				discussionElement: {
+	// 					create: {
+	// 						chanId: chanId,
+	// 						authorName: username,
+	// 					},
+	// 				},
+	// 			},
+	// 			select: {
+	// 				discussionElement: { select: this.chanDiscussionElementsSelect },
+	// 			},
+	// 		})
+	// 	).discussionElement
+	// 	if (!res) throw new InternalServerErrorException("discussion element creation failed")
+	// 	const formattedRes = this.formatChanDiscussionElement(res)
+	// 	await this.notifyChan(
+	// 		chanId,
+	// 		{ type: "CREATED_CHAN_ELEMENT", data: { chanId, element: formattedRes } },
+	// 		username,
+	// 	)
+	// 	return formattedRes
+	// }
 
-	// TODO: type state
-	public async removeMutedIfUntilDateReached(state: { id: string; untilDate: Date | null }) {
-		if (!state.untilDate || new Date() < state.untilDate) return false
-		await this.prisma.mutedUserChan.delete({ where: { id: state.id }, select: { id: true } })
-		return true
-	}
+	// // TODO: type state
+	// public async removeMutedIfUntilDateReached(state: { id: string; untilDate: Date | null }) {
+	// 	if (!state.untilDate || new Date() < state.untilDate) return false
+	// 	await this.prisma.mutedUserChan.delete({ where: { id: state.id }, select: { id: true } })
+	// 	return true
+	// }
 
-	async throwIfUserMutedInChan(username: string, chanId: string) {
-		const { mutedUsers } = await this.getChanOrThrow(
-			{ id: chanId, users: { some: { name: username } } },
-			{
-				mutedUsers: {
-					where: { mutedUserName: username },
-					take: 1,
-					select: { id: true, untilDate: true },
-				},
-			},
-		)
-		if (!mutedUsers.length) return
-		if (!(await this.removeMutedIfUntilDateReached(mutedUsers[0])))
-			throw new ForbiddenException(`${username} muted in chan ${chanId}`)
-	}
+	// async throwIfUserMutedInChan(username: string, chanId: string) {
+	// 	const { mutedUsers } = await this.getChanOrThrow(
+	// 		{ id: chanId, users: { some: { name: username } } },
+	// 		{
+	// 			mutedUsers: {
+	// 				where: { mutedUserName: username },
+	// 				take: 1,
+	// 				select: { id: true, untilDate: true },
+	// 			},
+	// 		},
+	// 	)
+	// 	if (!mutedUsers.length) return
+	// 	if (!(await this.removeMutedIfUntilDateReached(mutedUsers[0])))
+	// 		throw new ForbiddenException(`${username} muted in chan ${chanId}`)
+	// }
 
-	async createChanMessageIfRightTo(
-		username: string,
-		chanId: string,
-		dto: RequestShapes["createChanMessage"]["body"],
-	) {
-		const { relatedTo, content, usersAt, rolesAt } = dto
-		await this.throwIfUserMutedInChan(username, chanId)
-		await this.throwIfUserNotAuthorizedInChan(username, chanId, PermissionList.SEND_MESSAGE)
-		const { elements, users, roles } = await this.getChanOrThrow(
-			{ id: chanId },
-			{
-				elements: !!relatedTo && {
-					where: { id: relatedTo },
-					select: { id: true },
-				},
-				users: !!usersAt && {
-					where: { name: { in: usersAt } },
-					select: { name: true },
-				},
-				roles: !!rolesAt && {
-					where: { name: { in: rolesAt } },
-					select: { name: true },
-				},
-			},
-		)
-		if (relatedTo && !elements.length)
-			throw new ForbiddenException(`not found element ${relatedTo} in chan ${chanId}`)
-		if (usersAt && usersAt.length !== users.length)
-			throw new ForbiddenException(`not found one of users ${usersAt}`)
-		if (rolesAt && rolesAt.length !== roles.length)
-			throw new ForbiddenException(`not found one of roles ${rolesAt}`)
-		return this.createAndNotifyChanMessage(
-			username,
-			chanId,
-			content,
-			relatedTo,
-			usersAt,
-			rolesAt,
-		)
-	}
+	// async createChanMessageIfRightTo(
+	// 	username: string,
+	// 	chanId: string,
+	// 	dto: RequestShapes["createChanMessage"]["body"],
+	// ) {
+	// 	const { relatedTo, content, usersAt, rolesAt } = dto
+	// 	await this.throwIfUserMutedInChan(username, chanId)
+	// 	await this.throwIfUserNotAuthorizedInChan(username, chanId, PermissionList.SEND_MESSAGE)
+	// 	const { elements, users, roles } = await this.getChanOrThrow(
+	// 		{ id: chanId },
+	// 		{
+	// 			elements: !!relatedTo && {
+	// 				where: { id: relatedTo },
+	// 				select: { id: true },
+	// 			},
+	// 			users: !!usersAt && {
+	// 				where: { name: { in: usersAt } },
+	// 				select: { name: true },
+	// 			},
+	// 			roles: !!rolesAt && {
+	// 				where: { name: { in: rolesAt } },
+	// 				select: { name: true },
+	// 			},
+	// 		},
+	// 	)
+	// 	if (relatedTo && !elements.length)
+	// 		throw new ForbiddenException(`not found element ${relatedTo} in chan ${chanId}`)
+	// 	if (usersAt && usersAt.length !== users.length)
+	// 		throw new ForbiddenException(`not found one of users ${usersAt}`)
+	// 	if (rolesAt && rolesAt.length !== roles.length)
+	// 		throw new ForbiddenException(`not found one of roles ${rolesAt}`)
+	// 	return this.createAndNotifyChanMessage(
+	// 		username,
+	// 		chanId,
+	// 		content,
+	// 		relatedTo,
+	// 		usersAt,
+	// 		rolesAt,
+	// 	)
+	// }
 
-	private async getChanElementOrThrow<Sel extends Prisma.ChanDiscussionElementSelect>(
-		username: string,
-		chanId: string,
-		elementId: string,
-		select: Prisma.Subset<Sel, Prisma.ChanDiscussionElementSelect>,
-	) {
-		const element = await this.prisma.chanDiscussionElement.findUnique({
-			where: {
-				chanId: chanId,
-				chan: { users: { some: { name: username } } },
-				id: elementId,
-			},
-			select,
-		})
-		if (!element)
-			throw new NotFoundException(`not found msg where chanId ${chanId}, id: ${elementId}`)
-		return element
-	}
+	// private async getChanElementOrThrow<Sel extends Prisma.ChanDiscussionElementSelect>(
+	// 	username: string,
+	// 	chanId: string,
+	// 	elementId: string,
+	// 	select: Prisma.Subset<Sel, Prisma.ChanDiscussionElementSelect>,
+	// ) {
+	// 	const element = await this.prisma.chanDiscussionElement.findUnique({
+	// 		where: {
+	// 			chanId: chanId,
+	// 			chan: { users: { some: { name: username } } },
+	// 			id: elementId,
+	// 		},
+	// 		select,
+	// 	})
+	// 	if (!element)
+	// 		throw new NotFoundException(`not found msg where chanId ${chanId}, id: ${elementId}`)
+	// 	return element
+	// }
 
-	async getChanElementById(username: string, chanId: string, elementId: string) {
-		return this.formatChanDiscussionElement(
-			await this.getChanElementOrThrow(
-				username,
-				chanId,
-				elementId,
-				this.chanDiscussionElementsSelect,
-			),
-		)
-	}
+	// async getChanElementById(username: string, chanId: string, elementId: string) {
+	// 	return this.formatChanDiscussionElement(
+	// 		await this.getChanElementOrThrow(
+	// 			username,
+	// 			chanId,
+	// 			elementId,
+	// 			this.chanDiscussionElementsSelect,
+	// 		),
+	// 	)
+	// }
 
-	async getChanElements(username: string, chanId: string, nElements: number, start?: string) {
-		const res = await this.getChanOrThrow(
-			{ id: chanId, users: { some: { name: username } } },
-			{
-				elements: {
-					cursor: start ? { id: start } : undefined,
-					orderBy: { creationDate: "desc" },
-					take: nElements,
-					select: this.chanDiscussionElementsSelect,
-					skip: Number(!!start),
-				},
-			},
-		)
-		return this.formatChanDiscussionElementArray(res.elements.reverse())
-	}
+	// async getChanElements(username: string, chanId: string, nElements: number, start?: string) {
+	// 	const res = await this.getChanOrThrow(
+	// 		{ id: chanId, users: { some: { name: username } } },
+	// 		{
+	// 			elements: {
+	// 				cursor: start ? { id: start } : undefined,
+	// 				orderBy: { creationDate: "desc" },
+	// 				take: nElements,
+	// 				select: this.chanDiscussionElementsSelect,
+	// 				skip: Number(!!start),
+	// 			},
+	// 		},
+	// 	)
+	// 	return this.formatChanDiscussionElementArray(res.elements.reverse())
+	// }
 
-	async deleteChanMessage(username: string, chanId: string, elementId: string) {
-		const { messageId, authorName } = await this.getChanElementOrThrow(
-			username,
-			chanId,
-			elementId,
-			{ authorName: true, messageId: true },
-		)
-		if (!messageId) throw new ForbiddenException("event can't be deleted")
-		if (username === authorName)
-			await this.throwIfUserNotAuthorizedInChan(
-				username,
-				chanId,
-				PermissionList.DELETE_MESSAGE,
-			)
-		else
-			await this.throwIfUserNotAuthorizedOverUserInChan(
-				username,
-				chanId,
-				authorName,
-				PermissionList.DELETE_MESSAGE,
-			)
-		await this.prisma.chanDiscussionElement.update({
-			where: { id: elementId },
-			data: {
-				event: {
-					create: {
-						deletedMessageChanDiscussionEvent: {
-							create: { deletingUserName: username },
-						},
-					},
-				},
-			},
-		})
-		const res = await this.prisma.chanDiscussionElement.update({
-			where: { id: elementId },
-			data: {
-				message: { delete: { id: messageId } },
-			},
-			select: this.chanDiscussionElementsSelect,
-		})
-		const formattedRes = this.formatChanDiscussionElement({ ...res, message: null })
-		await this.notifyChan(
-			chanId,
-			{ type: "UPDATED_CHAN_ELEMENT", data: { chanId, element: formattedRes } },
-			username,
-		)
-		return formattedRes
-	}
+	// async deleteChanMessage(username: string, chanId: string, elementId: string) {
+	// 	const { messageId, authorName } = await this.getChanElementOrThrow(
+	// 		username,
+	// 		chanId,
+	// 		elementId,
+	// 		{ authorName: true, messageId: true },
+	// 	)
+	// 	if (!messageId) throw new ForbiddenException("event can't be deleted")
+	// 	if (username === authorName)
+	// 		await this.throwIfUserNotAuthorizedInChan(
+	// 			username,
+	// 			chanId,
+	// 			PermissionList.DELETE_MESSAGE,
+	// 		)
+	// 	else
+	// 		await this.throwIfUserNotAuthorizedOverUserInChan(
+	// 			username,
+	// 			chanId,
+	// 			authorName,
+	// 			PermissionList.DELETE_MESSAGE,
+	// 		)
+	// 	await this.prisma.chanDiscussionElement.update({
+	// 		where: { id: elementId },
+	// 		data: {
+	// 			event: {
+	// 				create: {
+	// 					deletedMessageChanDiscussionEvent: {
+	// 						create: { deletingUserName: username },
+	// 					},
+	// 				},
+	// 			},
+	// 		},
+	// 	})
+	// 	const res = await this.prisma.chanDiscussionElement.update({
+	// 		where: { id: elementId },
+	// 		data: {
+	// 			message: { delete: { id: messageId } },
+	// 		},
+	// 		select: this.chanDiscussionElementsSelect,
+	// 	})
+	// 	const formattedRes = this.formatChanDiscussionElement({ ...res, message: null })
+	// 	await this.notifyChan(
+	// 		chanId,
+	// 		{ type: "UPDATED_CHAN_ELEMENT", data: { chanId, element: formattedRes } },
+	// 		username,
+	// 	)
+	// 	return formattedRes
+	// }
 
-	async kickUserFromChan(username: string, toKickUserName: string, chanId: string) {
-		await this.throwIfUserNotAuthorizedOverUserInChan(
-			username,
-			toKickUserName,
-			chanId,
-			PermissionList.KICK,
-		)
-		const res = this.formatChan(
-			await this.prisma.chan.update({
-				where: { id: chanId },
-				data: { users: { disconnect: { name: toKickUserName } } },
-				select: this.chansSelect,
-			}),
-		)
+	// async kickUserFromChan(username: string, toKickUserName: string, chanId: string) {
+	// 	await this.throwIfUserNotAuthorizedOverUserInChan(
+	// 		username,
+	// 		toKickUserName,
+	// 		chanId,
+	// 		PermissionList.KICK,
+	// 	)
+	// 	const res = this.formatChan(
+	// 		await this.prisma.chan.update({
+	// 			where: { id: chanId },
+	// 			data: { users: { disconnect: { name: toKickUserName } } },
+	// 			select: this.chansSelect,
+	// 		}),
+	// 	)
 
-		// PRISMA SUCK
-		const roles = (
-			await this.prisma.role.findMany({
-				where: { chanId, users: { some: { name: toKickUserName } } },
-				select: { id: true },
-			})
-		).map((role) => role.id)
-		await Promise.all(
-			roles.map(async (id) =>
-				this.prisma.role.update({
-					where: { id },
-					data: { users: { disconnect: { name: toKickUserName } } },
-				}),
-			),
-		)
+	// 	// PRISMA SUCK
+	// 	const roles = (
+	// 		await this.prisma.role.findMany({
+	// 			where: { chanId, users: { some: { name: toKickUserName } } },
+	// 			select: { id: true },
+	// 		})
+	// 	).map((role) => role.id)
+	// 	await Promise.all(
+	// 		roles.map(async (id) =>
+	// 			this.prisma.role.update({
+	// 				where: { id },
+	// 				data: { users: { disconnect: { name: toKickUserName } } },
+	// 			}),
+	// 		),
+	// 	)
 
-		return Promise.all([
-			this.notifyChan(chanId, { type: "UPDATED_CHAN", data: res }, null),
-			this.createAndNotifyClassicChanEvent(
-				username,
-				toKickUserName,
-				chanId,
-				ClassicChanEventType.AUTHOR_KICKED_CONCERNED,
-			),
-			this.sse.pushEvent(toKickUserName, { type: "KICKED_FROM_CHAN", data: { chanId } }),
-		])
-	}
+	// 	return Promise.all([
+	// 		this.notifyChan(chanId, { type: "UPDATED_CHAN", data: res }, null),
+	// 		this.createAndNotifyClassicChanEvent(
+	// 			username,
+	// 			toKickUserName,
+	// 			chanId,
+	// 			ClassicChanEventType.AUTHOR_KICKED_CONCERNED,
+	// 		),
+	// 		this.sse.pushEvent(toKickUserName, { type: "KICKED_FROM_CHAN", data: { chanId } }),
+	// 	])
+	// }
 
 	private async notifyChan(
 		chanId: string,
@@ -730,25 +732,29 @@ export class ChansService {
 
 	// TODO: when banned user setted up in the schema check and throw here if user is banned from chan
 	public async pushUserToChanAndNotifyUsers(username: string, chanId: string) {
-		const newChan = this.formatChan(
-			await this.prisma.chan.update({
-				where: { id: chanId },
-				data: {
-					users: { connect: { name: username } },
-					roles: {
-						update: {
-							where: { chanId_name: { chanId, name: "DEFAULT" } },
-							data: { users: { connect: { name: username } } },
-						},
-					},
-				},
-				select: this.chansSelect,
-			}),
-		)
+		const newChan = await this.prisma.chan.update({
+            where: { id: chanId },
+            data: {
+                users: { connect: { name: username } },
+                roles: {
+                    update: {
+                        where: { chanId_name: { chanId, name: "DEFAULT" } },
+                        data: { users: { connect: { name: username } } },
+                    },
+                },
+            },
+            select: this.getChansSelect(username),
+        })
+
+        const newUser = newChan.users.find(el => el.name === username)
+        if (!newUser)
+            throw new InternalServerErrorException("change this shit later")
 
 		await this.sse.pushEventMultipleUser(
-			newChan.users.filter((el) => el !== username),
-			{ type: "UPDATED_CHAN", data: newChan },
+			newChan.users
+                .map(el => el.name)
+                .filter((el) => el !== username),
+			{ type: "CREATED_CHAN_USER", data: this.formatChanUser(newUser) },
 		)
 		setTimeout(
 			this.createAndNotifyClassicChanEvent.bind(this),
@@ -758,22 +764,22 @@ export class ChansService {
 			chanId,
 			ClassicChanEventType.AUTHOR_JOINED,
 		)
-		return newChan
+		return this.formatChan(newChan)
 	}
 
-	public async doesUsersHasCommonChan(usernameA: string, usernameB: string) {
-		return Boolean(
-			await this.prisma.chan.count({
-				where: {
-					AND: [
-						{ users: { some: { name: usernameA } } },
-						{ users: { some: { name: usernameB } } },
-					],
-				},
-				take: 1,
-			}),
-		)
-	}
+	// public async doesUsersHasCommonChan(usernameA: string, usernameB: string) {
+	// 	return Boolean(
+	// 		await this.prisma.chan.count({
+	// 			where: {
+	// 				AND: [
+	// 					{ users: { some: { name: usernameA } } },
+	// 					{ users: { some: { name: usernameB } } },
+	// 				],
+	// 			},
+	// 			take: 1,
+	// 		}),
+	// 	)
+	// }
 
 	async getChanOrThrow<Sel extends Prisma.ChanSelect>(
 		where: Prisma.ChanWhereUniqueInput,
@@ -784,44 +790,44 @@ export class ChansService {
 		return chan
 	}
 
-	async joinChanById(username: string, chanId: string, password?: string) {
-		const { password: chanPassword, users } = await this.getChanOrThrow(
-			{
-				id: chanId,
-				type: ChanType.PUBLIC,
-			},
-			{
-				password: true,
-				users: { where: { name: username }, select: { name: true } },
-			},
-		)
-		if (users.length) throw new ForbiddenException(`${username} already in chan ${chanId}`)
-		if (password && !chanPassword)
-			throw new BadRequestException(`chan ${chanId} doesn't has a password`)
-		if (!password && chanPassword)
-			throw new BadRequestException(`chan ${chanId} has a password`)
-		if (chanPassword && password && !compareSync(password, chanPassword))
-			throw new ForbiddenException(`chan ${chanId} wrong password`)
-		await this.chanInvitationsService.acceptAllChanInvitationsForUser(username, chanId)
-		return this.pushUserToChanAndNotifyUsers(username, chanId)
-	}
+	// async joinChanById(username: string, chanId: string, password?: string) {
+	// 	const { password: chanPassword, users } = await this.getChanOrThrow(
+	// 		{
+	// 			id: chanId,
+	// 			type: ChanType.PUBLIC,
+	// 		},
+	// 		{
+	// 			password: true,
+	// 			users: { where: { name: username }, select: { name: true } },
+	// 		},
+	// 	)
+	// 	if (users.length) throw new ForbiddenException(`${username} already in chan ${chanId}`)
+	// 	if (password && !chanPassword)
+	// 		throw new BadRequestException(`chan ${chanId} doesn't has a password`)
+	// 	if (!password && chanPassword)
+	// 		throw new BadRequestException(`chan ${chanId} has a password`)
+	// 	if (chanPassword && password && !compareSync(password, chanPassword))
+	// 		throw new ForbiddenException(`chan ${chanId} wrong password`)
+	// 	await this.chanInvitationsService.acceptAllChanInvitationsForUser(username, chanId)
+	// 	return this.pushUserToChanAndNotifyUsers(username, chanId)
+	// }
 
-	async searchChans(titleContains: string, nRes: number) {
-		const res = await this.prisma.chan.findMany({
-			where: {
-				type: ChanType.PUBLIC,
-				title: { contains: titleContains, not: null },
-			},
-			select: { id: true, title: true, _count: { select: { users: true } }, password: true },
-			take: nRes,
-			orderBy: { title: "asc" },
-		})
-		return res.map((el) => {
-			const passwordProtected: boolean = !!el.password
-			const { password, _count, title, ...trimmedEl } = el
-			return { passwordProtected, nUsers: _count.users, title: title as string, ...trimmedEl }
-		})
-	}
+	// async searchChans(titleContains: string, nRes: number) {
+	// 	const res = await this.prisma.chan.findMany({
+	// 		where: {
+	// 			type: ChanType.PUBLIC,
+	// 			title: { contains: titleContains, not: null },
+	// 		},
+	// 		select: { id: true, title: true, _count: { select: { users: true } }, password: true },
+	// 		take: nRes,
+	// 		orderBy: { title: "asc" },
+	// 	})
+	// 	return res.map((el) => {
+	// 		const passwordProtected: boolean = !!el.password
+	// 		const { password, _count, title, ...trimmedEl } = el
+	// 		return { passwordProtected, nUsers: _count.users, title: title as string, ...trimmedEl }
+	// 	})
+	// }
 
 	// // TODO: test updateChan (untested)
 	// // UNSTABLE

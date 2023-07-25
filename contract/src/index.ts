@@ -23,6 +23,7 @@ export {
 	zCreatePrivateChan,
 	zChanDiscussionEventReturn,
 	zChanDiscussionElementReturn,
+    zSelfPermissionList
 } from "./routers/chans"
 
 // const contract_module = {

@@ -23,6 +23,7 @@ type transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<
 	[k in K]: Omit<T, K> & (Record<Exclude<K, k>, null> & { [index in k]: Exclude<T[k], null> }) // could remove that line but null is more in the prisma spirit than undefined
 }[K]
 
+// TODO: Event => DmEvent
 export type EventUnion =
 	| "classicDmDiscussionEvent"
 	| "chanInvitationDmDiscussionEvent"
@@ -33,11 +34,27 @@ export type EventUnion =
 export type RetypedEvent<T extends Record<EventUnion, any>> =
 	transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, EventUnion>
 
+export type ChanEventUnion =
+    | "classicChanDiscussionEvent"
+    | "changedTitleChanDiscussionEvent"
+    | "deletedMessageChanDiscussionEvent"
+;(eventUnion: ChanEventUnion) => eventUnion satisfies keyof Prisma.ChanDiscussionEventSelect
+
+export type ChanRetypedEvent<T extends Record<ChanEventUnion, any>> =
+	transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, ChanEventUnion>
+
+// TODO: Element => DmElement
 export type ElementUnion = "event" | "message"
 ;(elementUnion: ElementUnion) => elementUnion satisfies keyof Prisma.DmDiscussionElementSelect
 
 export type RetypedElement<T extends Record<ElementUnion, any>> =
 	transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, ElementUnion>
+
+export type ChanElementUnion = "event" | "message"
+;(elementUnion: ChanElementUnion) => elementUnion satisfies keyof Prisma.ChanDiscussionElementSelect
+
+export type ChanRetypedElement<T extends Record<ChanElementUnion, any>> =
+	transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, ChanElementUnion>
 
 export const ProximityLevel = {
     BLOCKED: -1,

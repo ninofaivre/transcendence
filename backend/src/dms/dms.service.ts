@@ -216,6 +216,7 @@ export class DmsService {
 		}
 	}
 
+    // TODO: stop doing db query in this shit
 	private async formatDmElementForUser(
 		element: Prisma.DmDiscussionElementGetPayload<typeof this.dmDiscussionElementGetPayload>,
 		username: string,

@@ -10,7 +10,7 @@ import {
 	zRoleApplyingType,
 	zPermissionList,
 } from "../generated-zod"
-import { zUserStatus } from "../../dist"
+import { zUserStatus } from "./users"
 
 const c = initContract()
 
@@ -33,20 +33,20 @@ export const zCreatePrivateChan = z.strictObject({
 	title: zChanTitle.optional(),
 })
 
-const zRoleReturn = z.object({
-	users: z.array(zUserName),
-	roles: z.array(zRoleName),
-	permissions: z.array(zPermissionList),
-	roleApplyOn: zRoleApplyingType,
-	name: z.string(),
-})
+// const zRoleReturn = z.object({
+// 	users: z.array(zUserName),
+// 	roles: z.array(zRoleName),
+// 	permissions: z.array(zPermissionList),
+// 	roleApplyOn: zRoleApplyingType,
+// 	name: z.string(),
+// })
 
 const zChanUser = z.object({
     name: zUserName,
     status: zUserStatus
 })
 
-const zSelfPermissionList = zPermissionList.extract(["EDIT", "DESTROY", "INVITE", "SEND_MESSAGE"])
+export const zSelfPermissionList = zPermissionList.extract(["EDIT", "DESTROY", "INVITE", "SEND_MESSAGE"])
 
 const zChanReturn = z.object({
 	title: zChanTitle.nullable(),

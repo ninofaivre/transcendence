@@ -19,7 +19,7 @@ import {
 import { compareSync, hash } from "bcrypt"
 import { SseService } from "src/sse/sse.service"
 import { NestRequestShapes, nestControllerContract } from "@ts-rest/nest"
-import { contract } from "contract"
+import { contract, contractErrors } from "contract"
 import { ChanEvent, zChanDiscussionElementReturn, zChanDiscussionEventReturn } from "contract"
 import { z } from "zod"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
@@ -157,9 +157,9 @@ export class ChansService {
 		}
 	}
 
-	// private formatChanArray(chans: Prisma.ChanGetPayload<typeof this.chansGetPayload>[]) {
-	// 	return chans.map((chan) => this.formatChan(chan))
-	// }
+	private formatChanArray = (chans: ChanPayload[]) =>
+		chans.map((chan) => this.formatChan(chan))
+
 	private formatChanDiscussionMessageForUser(
         username: string,
         element: Omit<ChanDiscussionElementPayload, "event" | "message">,
@@ -251,17 +251,17 @@ export class ChansService {
 	// 	return elements.map((element) => this.formatChanDiscussionElement(element))
 	// }
 
-	// async getUserChans(username: string) {
-	// 	return this.formatChanArray(
-	// 		await this.prisma.chan.findMany({
-	// 			where: {
-	// 				users: { some: { name: username } },
-	// 			},
-	// 			select: this.chansSelect,
-	// 			orderBy: { type: "desc" },
-	// 		}),
-	// 	)
-	// }
+	async getUserChans(username: string) {
+		return this.formatChanArray(
+			await this.prisma.chan.findMany({
+				where: {
+					users: { some: { name: username } },
+				},
+				select: this.getChansSelect(username),
+				orderBy: { type: "desc" },
+			}),
+		)
+	}
 
 	// async createChan(username: string, chan: RequestShapes["createChan"]["body"]) {
 	// 	if (chan.type === "PUBLIC" && chan.password) chan.password = await hash(chan.password, 10)
@@ -411,28 +411,27 @@ export class ChansService {
 	// 	await this.prisma.chan.delete({ where: { id: chanId } })
 	// }
 
-	// async leaveChan(username: string, chanId: string) {
-	// 	const { ownerName } = await this.getChanOrThrow(
-	// 		{ id: chanId, users: { some: { name: username } } },
-	// 		{ ownerName: true },
-	// 	)
-	// 	if (username === ownerName)
-	// 		throw new ForbiddenException(
-	// 			"owner can't leave chan (transfer ownerShip or Delete chan)",
-	// 		)
-	// 	await this.prisma.chan.update({
-	// 		where: { id: chanId },
-	// 		data: {
-	// 			users: { disconnect: { name: username } },
-	// 		},
-	// 	})
-	// 	await this.createAndNotifyClassicChanEvent(
-	// 		username,
-	// 		null,
-	// 		chanId,
-	// 		ClassicChanEventType.AUTHOR_LEAVED,
-	// 	)
-	// }
+	async leaveChan(username: string, chanId: string) {
+		const chan = await this.getChan(
+			{ id: chanId, users: { some: { name: username } } },
+			{ ownerName: true })
+        if (!chan)
+            return contractErrors.NotFoundChan(chanId)
+		if (username === chan.ownerName)
+            return contractErrors.OwnerCannotLeaveChan()
+		await this.prisma.chan.update({
+			where: { id: chanId },
+			data: {
+				users: { disconnect: { name: username } },
+			},
+		})
+		await this.createAndNotifyClassicChanEvent(
+			username,
+			null,
+			chanId,
+			ClassicChanEventType.AUTHOR_LEAVED,
+		)
+	}
 
 	// async createAndNotifyChanMessage(
 	// 	username: string,
@@ -740,7 +739,7 @@ export class ChansService {
 			})
 		).discussionElement
 		if (!newEvent)
-			throw new InternalServerErrorException("a discussion event has failed to be created")
+            return
         newEvent.chan.users.forEach(({ name }) => {
             this.sse.pushEvent(name, {
                 type: "CREATED_CHAN_ELEMENT",
@@ -812,6 +811,11 @@ export class ChansService {
 		return chan
 	}
 
+	private getChan = async <Sel extends Prisma.ChanSelect>(
+		where: Prisma.ChanWhereUniqueInput,
+		select: Prisma.Subset<Sel, Prisma.ChanSelect>,
+	) => this.prisma.chan.findUnique({ where, select })
+
 	// async joinChanById(username: string, chanId: string, password?: string) {
 	// 	const { password: chanPassword, users } = await this.getChanOrThrow(
 	// 		{
@@ -834,22 +838,34 @@ export class ChansService {
 	// 	return this.pushUserToChanAndNotifyUsers(username, chanId)
 	// }
 
-	// async searchChans(titleContains: string, nRes: number) {
-	// 	const res = await this.prisma.chan.findMany({
-	// 		where: {
-	// 			type: ChanType.PUBLIC,
-	// 			title: { contains: titleContains, not: null },
-	// 		},
-	// 		select: { id: true, title: true, _count: { select: { users: true } }, password: true },
-	// 		take: nRes,
-	// 		orderBy: { title: "asc" },
-	// 	})
-	// 	return res.map((el) => {
-	// 		const passwordProtected: boolean = !!el.password
-	// 		const { password, _count, title, ...trimmedEl } = el
-	// 		return { passwordProtected, nUsers: _count.users, title: title as string, ...trimmedEl }
-	// 	})
-	// }
+	async searchChans({ titleContains, nResult }: RequestShapes['searchChans']['query']) {
+		const res = await this.prisma.chan.findMany({
+			where: {
+				type: ChanType.PUBLIC,
+				title: { contains: titleContains, not: null },
+			},
+			select: {
+                id: true,
+                title: true,
+                _count: { select: { users: true } },
+                password: true,
+            },
+			take: nResult,
+			orderBy: { title: "asc" },
+		})
+		return res.map((el) => {
+			const passwordProtected: boolean = !!el.password
+			const { password, _count, title, ...trimmedEl } = el
+			return {
+                passwordProtected,
+                nUsers: _count.users,
+                title: title as Exclude<typeof title, null>,
+                // TODO: change this when ban features is available
+                bannedMe: false,
+                ...trimmedEl
+            }
+		})
+	}
 
 	// // TODO: test updateChan (untested)
 	// // UNSTABLE

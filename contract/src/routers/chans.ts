@@ -11,6 +11,7 @@ import {
 	zPermissionList,
 } from "../generated-zod"
 import { zUserStatus } from "./users"
+import { getErrorsForContract } from "../errors"
 
 const c = initContract()
 
@@ -120,6 +121,7 @@ export const chansContract = c.router(
 						nUsers: z.number().positive().int(),
 						id: z.string().uuid(),
 						title: zChanTitle,
+                        bannedMe: z.boolean()
 					}),
 				),
 			},
@@ -141,35 +143,38 @@ export const chansContract = c.router(
 			body: c.type<null>(),
 			responses: {
 				202: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [403, "OwnerCannotLeaveChan"],
+                    [404, "NotFoundChan"])
 			},
 		},
-		joinChanById: {
-			method: "POST",
-			path: "/@me",
-			body: z.strictObject({
-				chanId: z.string().uuid(),
-				password: zChanPassword.optional(),
-			}),
-			responses: {
-				200: zChanReturn,
-			},
-		},
-		createChan: {
-			method: "POST",
-			path: "/",
-			summary: "create a chan",
-			body: z.discriminatedUnion("type", [
-				extendApi(zCreatePublicChan, {
-					title: "PUBLIC",
-				}),
-				extendApi(zCreatePrivateChan, {
-					title: "PRIVATE",
-				}),
-			]),
-			responses: {
-				201: zChanReturn,
-			},
-		},
+		// joinChanById: {
+		// 	method: "POST",
+		// 	path: "/@me",
+		// 	body: z.strictObject({
+		// 		chanId: z.string().uuid(),
+		// 		password: zChanPassword.optional(),
+		// 	}),
+		// 	responses: {
+		// 		200: zChanReturn,
+		// 	},
+		// },
+		// createChan: {
+		// 	method: "POST",
+		// 	path: "/",
+		// 	summary: "create a chan",
+		// 	body: z.discriminatedUnion("type", [
+		// 		extendApi(zCreatePublicChan, {
+		// 			title: "PUBLIC",
+		// 		}),
+		// 		extendApi(zCreatePrivateChan, {
+		// 			title: "PRIVATE",
+		// 		}),
+		// 	]),
+		// 	responses: {
+		// 		201: zChanReturn,
+		// 	},
+		// },
 		// updateChan:
 		// {
 		// 	method: 'PATCH',
@@ -203,97 +208,97 @@ export const chansContract = c.router(
 		// 		204: zChanReturn
 		// 	}
 		// },
-		deleteChan: {
-			method: "DELETE",
-			path: "/:chanId",
-			summary: "delete a chan",
-			pathParams: z.strictObject({
-				chanId: z.string().uuid(),
-			}),
-			body: c.type<null>(),
-			responses: {
-				202: c.type<null>(),
-			},
-		},
-		createChanMessage: {
-			method: "POST",
-			path: "/:chanId/elements",
-			summary: "post a message to a chan",
-			pathParams: z.strictObject({
-				chanId: z.string().uuid(),
-			}),
-			body: z.strictObject({
-				content: z.string().nonempty().max(5000),
-				relatedTo: z.string().uuid().optional().describe("id of the related msg/event"),
-			}),
-			responses: {
-				201: zChanDiscussionMessageReturn,
-			},
-		},
-		getChanElements: {
-			method: "GET",
-			path: "/:chanId/elements",
-			summary: "get elements by cursor in chan",
-			pathParams: z.strictObject({
-				chanId: z.string().uuid(),
-			}),
-			query: z.strictObject({
-				nElements: z.number().positive().int().max(50).default(25),
-				cursor: z.string().uuid().optional(),
-			}),
-			responses: {
-				200: z.array(zChanDiscussionElementReturn),
-			},
-		},
-		getChanElementById: {
-			method: "GET",
-			path: "/:chanId/elements/:elementId",
-			pathParams: z.strictObject({
-				chanId: z.string().uuid(),
-				elementId: z.string().uuid(),
-			}),
-			responses: {
-				200: zChanDiscussionElementReturn,
-			},
-		},
-        updateChanMessage: {
-            method: "PATCH",
-            path: "/:chanId/elements/elementId",
-            pathParams: z.strictObject({
-                chanId: z.string().uuid(),
-                elementId: z.string().uuid(),
-            }),
-            body: z.strictObject({
-                content: z.string().nonempty()
-            }),
-            responses: {
-                200: zChanDiscussionMessageReturn
-            }
-        },
-		deleteChanMessage: {
-			method: "DELETE",
-			path: "/:chanId/elements/:elementId",
-			pathParams: z.strictObject({
-				chanId: z.string().uuid(),
-				elementId: z.string().uuid(),
-			}),
-			body: c.type<null>(),
-			responses: {
-				202: zChanDiscussionMessageReturn,
-			},
-		},
-		kickUserFromChan: {
-			method: "DELETE",
-			path: "/:chanId/:username",
-			pathParams: z.strictObject({
-				chanId: z.string().uuid(),
-				username: zUserName,
-			}),
-			body: c.type<null>(),
-			responses: {
-				202: c.type<null>(),
-			},
-		},
+		// deleteChan: {
+		// 	method: "DELETE",
+		// 	path: "/:chanId",
+		// 	summary: "delete a chan",
+		// 	pathParams: z.strictObject({
+		// 		chanId: z.string().uuid(),
+		// 	}),
+		// 	body: c.type<null>(),
+		// 	responses: {
+		// 		202: c.type<null>(),
+		// 	},
+		// },
+		// createChanMessage: {
+		// 	method: "POST",
+		// 	path: "/:chanId/elements",
+		// 	summary: "post a message to a chan",
+		// 	pathParams: z.strictObject({
+		// 		chanId: z.string().uuid(),
+		// 	}),
+		// 	body: z.strictObject({
+		// 		content: z.string().nonempty().max(5000),
+		// 		relatedTo: z.string().uuid().optional().describe("id of the related msg/event"),
+		// 	}),
+		// 	responses: {
+		// 		201: zChanDiscussionMessageReturn,
+		// 	},
+		// },
+		// getChanElements: {
+		// 	method: "GET",
+		// 	path: "/:chanId/elements",
+		// 	summary: "get elements by cursor in chan",
+		// 	pathParams: z.strictObject({
+		// 		chanId: z.string().uuid(),
+		// 	}),
+		// 	query: z.strictObject({
+		// 		nElements: z.number().positive().int().max(50).default(25),
+		// 		cursor: z.string().uuid().optional(),
+		// 	}),
+		// 	responses: {
+		// 		200: z.array(zChanDiscussionElementReturn),
+		// 	},
+		// },
+		// getChanElementById: {
+		// 	method: "GET",
+		// 	path: "/:chanId/elements/:elementId",
+		// 	pathParams: z.strictObject({
+		// 		chanId: z.string().uuid(),
+		// 		elementId: z.string().uuid(),
+		// 	}),
+		// 	responses: {
+		// 		200: zChanDiscussionElementReturn,
+		// 	},
+		// },
+  //       updateChanMessage: {
+  //           method: "PATCH",
+  //           path: "/:chanId/elements/elementId",
+  //           pathParams: z.strictObject({
+  //               chanId: z.string().uuid(),
+  //               elementId: z.string().uuid(),
+  //           }),
+  //           body: z.strictObject({
+  //               content: z.string().nonempty()
+  //           }),
+  //           responses: {
+  //               200: zChanDiscussionMessageReturn
+  //           }
+  //       },
+		// deleteChanMessage: {
+		// 	method: "DELETE",
+		// 	path: "/:chanId/elements/:elementId",
+		// 	pathParams: z.strictObject({
+		// 		chanId: z.string().uuid(),
+		// 		elementId: z.string().uuid(),
+		// 	}),
+		// 	body: c.type<null>(),
+		// 	responses: {
+		// 		202: zChanDiscussionMessageReturn,
+		// 	},
+		// },
+		// kickUserFromChan: {
+		// 	method: "DELETE",
+		// 	path: "/:chanId/:username",
+		// 	pathParams: z.strictObject({
+		// 		chanId: z.string().uuid(),
+		// 		username: zUserName,
+		// 	}),
+		// 	body: c.type<null>(),
+		// 	responses: {
+		// 		202: c.type<null>(),
+		// 	},
+		// },
 		// TODO
 		// getChanUser: {
 		//     method: "GET",

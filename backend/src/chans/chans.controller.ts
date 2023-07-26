@@ -1,33 +1,37 @@
-import { Controller, Req, UseGuards } from "@nestjs/common"
+import { Controller, Request, UseGuards } from "@nestjs/common"
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard"
 import { ChansService } from "./chans.service"
-import { contract } from "contract"
-import {
-	nestControllerContract,
-	NestControllerInterface,
-	NestRequestShapes,
-	TsRest,
-	TsRestRequest,
-} from "@ts-rest/nest"
+import { contract, isContractError } from "contract"
+import { TsRest, TsRestHandler, tsRestHandler } from "@ts-rest/nest"
 import { EnrichedRequest } from "src/auth/auth.service"
 
-const c = nestControllerContract(contract.chans)
-type RequestShapes = NestRequestShapes<typeof c>
+const c = contract.chans
 
 @Controller()
 @TsRest({ jsonQuery: true })
-export class ChansController /* implements NestControllerInterface<typeof c>*/ {
-	// constructor(private readonly chansService: ChansService) {}
+export class ChansController {
+	constructor(private readonly chansService: ChansService) {}
 
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.searchChans)
-	// async searchChans(
-	// 	@TsRestRequest() { query: { titleContains, nResult } }: RequestShapes["searchChans"],
-	// ) {
-	// 	const body = await this.chansService.searchChans(titleContains, nResult)
-	// 	return { status: 200 as const, body }
-	// }
+    @UseGuards(JwtAuthGuard)
+    @TsRestHandler(c)
+    async handler(@Request()req: EnrichedRequest) {
+        return tsRestHandler(c, {
+            searchChans: async ({ query }) => ({
+                status: 200,
+                body: await this.chansService.searchChans(query)
+            }),
 
+            getMyChans: async () => ({
+                status: 200,
+                body: await this.chansService.getUserChans(req.user.username)
+            }),
+
+            leaveChan: async ({ params: { chanId } }) => {
+                const res = await this.chansService.leaveChan(req.user.username, chanId)
+                return isContractError(res) ? res : { status: 202, body: null }
+            }
+        })
+    }
 	// @UseGuards(JwtAuthGuard)
 	// @TsRest(c.getMyChans)
 	// async getMyChans(@Req() req: EnrichedRequest) {

@@ -1,9 +1,9 @@
 import { ContractPlainType, HTTPStatusCode, initContract } from "@ts-rest/core"
 
 type Codes =
-    | "NotFoundUser" | "NotFoundUserForValidToken"
+    | "NotFoundUser" | "NotFoundUserForValidToken" | "NotFoundChan"
     | "UserAlreadyExist" | "DmAlreadyExist"
-    | "BlockedByUser" | "BlockedUser" | "ProximityLevelTooLow"
+    | "BlockedByUser" | "BlockedUser" | "ProximityLevelTooLow" | "OwnerCannotLeaveChan"
     | "ContentModifiedBetweenCreationAndRead" | "ContentModifiedBetweenUpdateAndRead"
 
 // TODO: naming is a bit dirty
@@ -28,6 +28,14 @@ export const contractErrors = {
         body: {
             code: "NotFoundUser",
             message: `not found user ${username}${custom ? ' ' + custom : ''}`
+        }
+    } as const),
+
+    NotFoundChan: (chanId: string) => ({
+        status: 404,
+        body: {
+            code: "NotFoundChan",
+            message: `not found chan with id ${chanId}`
         }
     } as const),
 
@@ -70,6 +78,14 @@ export const contractErrors = {
         body: {
             code: "ProximityLevelTooLow",
             message: `action ${action} is forbidden because your proximity (${proximity}) is tool low with user ${username} (need to be at least ${accessLevel})`
+        }
+    } as const),
+
+    OwnerCannotLeaveChan: () => ({
+        status: 403,
+        body: {
+            code: "OwnerCannotLeaveChan",
+            message: "owner can't leave chan (transfer ownerShip or Delete chan)"
         }
     } as const),
 

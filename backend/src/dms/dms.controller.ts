@@ -62,7 +62,7 @@ export class DmsController {
                 return { status: 200, body }
             },
 
-            updateMessage: async ({ body: { content }, params: { elementId, dmId } }) => {
+            updateDmMessage: async ({ body: { content }, params: { elementId, dmId } }) => {
                 const body = await this.dmsService.updateMessage(
                     req.user.username,
                     dmId,

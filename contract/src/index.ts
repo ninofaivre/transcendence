@@ -23,6 +23,7 @@ export {
 	zCreatePrivateChan,
 	zChanDiscussionEventReturn,
 	zChanDiscussionElementReturn,
+    zChanDiscussionMessageReturn,
     zSelfPermissionList
 } from "./routers/chans"
 

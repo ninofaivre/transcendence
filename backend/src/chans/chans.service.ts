@@ -26,15 +26,20 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
-import { ChanRetypedEvent } from "src/types"
+import { ChanRetypedElement, ChanRetypedEvent } from "src/types"
 import { zSelfPermissionList } from "contract"
+import { zChanDiscussionMessageReturn } from "contract"
 
-const c = nestControllerContract(contract.chans)
-type RequestShapes = NestRequestShapes<typeof c>
+type RequestShapes = NestRequestShapes<typeof contract.chans>
 
-type ReturnOfMethod<T> = T extends (...args: any[]) => infer R ? R : never;
-
-type test = { select: ReturnType<ChansService['getChanDiscussionElementsSelect']> }
+type ChanDiscussionElementPayload = Prisma.ChanDiscussionElementGetPayload<
+    { select: ChansService['chanDiscussionElementsSelect'] }>
+type ChanDiscussionMessagePayload = Prisma.ChanDiscussionMessageGetPayload<
+    { select: ChansService['chanDiscussionMessagesSelect'] }>
+type ChanDiscussionEventPayload = Prisma.ChanDiscussionEventGetPayload<
+    { select: ChansService['chanDiscussionEventsSelect'] }>
+type ChanPayload = Prisma.ChanGetPayload<
+    { select: ReturnType<ChansService['getChansSelect']> }>
 
 @Injectable()
 export class ChansService {
@@ -50,17 +55,13 @@ export class ChansService {
 		name: true,
 	} satisfies Prisma.UserSelect
 
-	private rolesSelect = {
-		permissions: true,
-		roleApplyOn: true,
-		roles: { select: { name: true } },
-		name: true,
-		users: { select: this.usersSelect },
-	} satisfies Prisma.RoleSelect
-
-	private rolesGetPayload = {
-		select: this.rolesSelect,
-	} satisfies Prisma.RoleArgs
+	// private rolesSelect = {
+	// 	permissions: true,
+	// 	roleApplyOn: true,
+	// 	roles: { select: { name: true } },
+	// 	name: true,
+	// 	users: { select: this.usersSelect },
+	// } satisfies Prisma.RoleSelect
 
 	private getChansSelect = (username: string) => ({
 		id: true,
@@ -80,10 +81,6 @@ export class ChansService {
         }
 	} satisfies Prisma.ChanSelect)
 
-	private chansGetPayload = {
-		select: this.getChansSelect("exemple"),
-	} satisfies Prisma.ChanArgs
-
 	private chanDiscussionEventsSelect = {
 		concernedUserName: true,
 		classicChanDiscussionEvent: { select: { eventType: true } },
@@ -91,39 +88,21 @@ export class ChansService {
 		deletedMessageChanDiscussionEvent: { select: { deletingUserName: true } },
 	} satisfies Prisma.ChanDiscussionEventSelect
 
-	private chanDiscussionEventsGetPayload = {
-		select: this.chanDiscussionEventsSelect,
-	} satisfies Prisma.ChanDiscussionEventArgs
-
-	private getChanDiscussionMessagesSelect = (username: string) => ({
+	private chanDiscussionMessagesSelect = {
 		content: true,
 		relatedTo: true,
-		relatedUsers: {
-            where: { name: username },
-            select: { name: true }
-        },
-		relatedRoles: {
-            where: { name: username },
-            select: { name: true },
-            take: 1
-        },
-	} satisfies Prisma.ChanDiscussionMessageSelect)
+		relatedUsers: { select: { name: true } },
+		relatedRoles: { select: { name: true } },
+        modificationDate: true
+	} satisfies Prisma.ChanDiscussionMessageSelect
 
-	private chanDiscussionMessagesGetPayload = {
-		select: this.getChanDiscussionMessagesSelect("bob"),
-	} satisfies Prisma.ChanDiscussionMessageArgs
-
-	public getChanDiscussionElementsSelect = (username: string) => ({
+	private chanDiscussionElementsSelect = {
 		id: true,
 		event: { select: this.chanDiscussionEventsSelect },
-		message: { select: this.getChanDiscussionMessagesSelect(username) },
+		message: { select: this.chanDiscussionMessagesSelect },
 		authorName: true,
 		creationDate: true,
-	} satisfies Prisma.ChanDiscussionElementSelect)
-
-	private chanDiscussionElementsGetPayload = {
-		select: this.getChanDiscussionElementsSelect("exemple"),
-	} satisfies Prisma.ChanDiscussionElementArgs
+	} satisfies Prisma.ChanDiscussionElementSelect
 
 	private defaultPermissions: (typeof PermissionList)[keyof typeof PermissionList][] = [
 		"INVITE",
@@ -152,7 +131,7 @@ export class ChansService {
 	// }
     
     private formatChanUser = (
-        user: Prisma.ChanGetPayload<typeof this.chansGetPayload>['users'][number]
+        user: ChanPayload['users'][number]
     ) => ({
             name: user.name,
             status: this.usersService.getUserStatusByProximity(
@@ -161,12 +140,13 @@ export class ChansService {
                 user.statusVisibilityLevel)
         } as const)
 
-	private formatChan(chan: Prisma.ChanGetPayload<typeof this.chansGetPayload>) {
+	private formatChan(chan: ChanPayload) {
 		const { roles, users, ...rest } = chan
         const formattedUsers = users.map(el => this.formatChanUser(el))
         const selfPerms = [...new Set(roles
             .flatMap(el => el.permissions
                 .filter((el): el is z.infer<typeof zSelfPermissionList> =>
+                    // may perform better, but do we really care ?
                     // (zSelfPermissionList.options as string[]).includes(el)
                     zSelfPermissionList.safeParse(el).success)
         ))]
@@ -180,57 +160,87 @@ export class ChansService {
 	// private formatChanArray(chans: Prisma.ChanGetPayload<typeof this.chansGetPayload>[]) {
 	// 	return chans.map((chan) => this.formatChan(chan))
 	// }
-
-	private formatChanDiscussionMessage(
-		message: Prisma.ChanDiscussionMessageGetPayload<
-			typeof this.chanDiscussionMessagesGetPayload
-		>,
+	private formatChanDiscussionMessageForUser(
+        username: string,
+        element: Omit<ChanDiscussionElementPayload, "event" | "message">,
+		message: 
+            | (ChanDiscussionMessagePayload
+                & { isDeleted: false })
+            | (Extract<
+                    ChanRetypedEvent<ChanDiscussionEventPayload>,
+                    { deletedMessageChanDiscussionEvent: {} }
+                >
+                & { isDeleted: true })
 	) {
-		const { relatedRoles, relatedUsers } = message
+        const { isDeleted } = message
 
-		const formattedRelatedRoles = this.namesArrayToStringArray(relatedRoles)
-		const formattedRelatedUsers = this.namesArrayToStringArray(relatedUsers)
+        if (isDeleted)
+            return { isDeleted, content: "" } as const
+		const { relatedRoles, relatedUsers, ...rest } = message
 
-		return {
-			...message,
-			relatedRoles: formattedRelatedRoles,
-			relatedUsers: formattedRelatedUsers,
-		}
+        return {
+            ...rest,
+            ...element,
+            mentionMe: !!(this.namesArrayToStringArray(relatedRoles.concat(relatedUsers))
+                .includes(username)),
+            hasBeenEdited: (element.creationDate.getTime() !==
+                message.modificationDate.getTime()),
+        }
 	}
 
 	private formatChanDiscussionEvent(
-		event: Prisma.ChanDiscussionEventGetPayload<typeof this.chanDiscussionEventsGetPayload>,
-	): z.infer<typeof zChanDiscussionEventReturn> {
-		const retypedEvent = event as ChanRetypedEvent<typeof event>
-
-		const {
-			classicChanDiscussionEvent,
-			changedTitleChanDiscussionEvent,
-			deletedMessageChanDiscussionEvent,
-			...rest
-		} = retypedEvent
-
-		if (changedTitleChanDiscussionEvent)
-			return { ...rest, eventType: "CHANGED_TITLE", ...changedTitleChanDiscussionEvent }
-		if (deletedMessageChanDiscussionEvent)
-			return { ...rest, eventType: "DELETED_MESSAGE", ...deletedMessageChanDiscussionEvent }
-		else return { ...rest, ...classicChanDiscussionEvent }
+		event: Extract<
+            ChanRetypedEvent<ChanDiscussionEventPayload>,
+            { deletedMessageChanDiscussionEvent: null }
+        >
+	) {
+        const {
+            deletedMessageChanDiscussionEvent,
+            changedTitleChanDiscussionEvent,
+            classicChanDiscussionEvent,
+            ...rest
+        } = event
+        if (changedTitleChanDiscussionEvent)
+            return { ...changedTitleChanDiscussionEvent, eventType: "CHANGED_TITLE" } as const
+        return { ...classicChanDiscussionEvent, ...rest }
 	}
 
-	private formatChanDiscussionElement(
-        REPRENDRE ICI JSKLJFKLJSD
-		element: Prisma.ChanDiscussionElementGetPayload<
-		    test	
-		>,
+	private formatChanDiscussionElementForUser(
+        username: string,
+		element: ChanDiscussionElementPayload,
 	): z.infer<typeof zChanDiscussionElementReturn> {
-		const { event, message, ...rest } = element as ChanRetypedElement<typeof element>
+		const { event, message, authorName: author, ...rest } =
+            element as ChanRetypedElement<typeof element>
 
-		// if (event) return { ...rest, type: "event", event: this.formatChanDiscussionEvent(event) }
+        const common = {
+            ...rest,
+            author
+        } as const
+
         if (event) {
-
+            const retypedEvent = event as ChanRetypedEvent<typeof event>
+            if (retypedEvent.deletedMessageChanDiscussionEvent) {
+                return {
+                    ...common,
+                    ...this.formatChanDiscussionMessageForUser(username,
+                        element,
+                        { ...retypedEvent, isDeleted: true }),
+                    type: 'message'
+                }
+            }
+            return {
+                ...common,
+                ...this.formatChanDiscussionEvent(retypedEvent),
+                type: 'event'
+            }
         }
-
-		else return { ...rest, type: "message", message: this.formatChanDiscussionMessage(message) }
+        return {
+            ...common,
+            ...this.formatChanDiscussionMessageForUser(username,
+                element,
+                { ...message, isDeleted: false }),
+            type: 'message'
+        }
 	}
 
 	// private formatChanDiscussionElementArray(
@@ -709,7 +719,9 @@ export class ChansService {
 					classicChanDiscussionEvent: {
 						create: { eventType: event },
 					},
-					...(concerned ? { concernedUser: { connect: { name: concerned } } } : {}),
+					...(concerned
+                        ? { concernedUser: { connect: { name: concerned } } }
+                        : {}),
 					discussionElement: {
 						create: {
 							chan: { connect: { id: chanId } },
@@ -717,17 +729,27 @@ export class ChansService {
 						},
 					},
 				},
-				select: { discussionElement: { select: this.chanDiscussionElementsSelect } },
+				select: {
+                    discussionElement: {
+                        select: {
+                            ...this.chanDiscussionElementsSelect,
+                            chan: { select: { users: { select: { name: true } } } }
+                        }
+                    }
+                },
 			})
 		).discussionElement
 		if (!newEvent)
 			throw new InternalServerErrorException("a discussion event has failed to be created")
-		const formattedNewEvent = this.formatChanDiscussionElement(newEvent)
-		await this.notifyChan(
-			chanId,
-			{ type: "CREATED_CHAN_ELEMENT", data: { chanId: chanId, element: formattedNewEvent } },
-			null,
-		)
+        newEvent.chan.users.forEach(({ name }) => {
+            this.sse.pushEvent(name, {
+                type: "CREATED_CHAN_ELEMENT",
+                data: {
+                    chanId,
+                    element: this.formatChanDiscussionElementForUser(name, newEvent)
+                }
+            })
+        });
 	}
 
 	// TODO: when banned user setted up in the schema check and throw here if user is banned from chan

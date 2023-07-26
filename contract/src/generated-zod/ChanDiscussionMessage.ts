@@ -5,6 +5,7 @@ export const ChanDiscussionMessageModel = z.object({
   id: z.string(),
   content: z.string(),
   relatedTo: z.string().nullish(),
+  modificationDate: z.date(),
 });
 
 export interface CompleteChanDiscussionMessageInput extends z.input<typeof ChanDiscussionMessageModel> {

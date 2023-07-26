@@ -416,6 +416,8 @@ model ChanDiscussionMessage {
   related             ChanDiscussionElement? @relation(name: "related", fields: [relatedTo], references: [id])
   relatedTo           String?
   discussionElement   ChanDiscussionElement? @relation(name: "message")
+
+  modificationDate DateTime @updatedAt
 }
 
 model ChanDiscussionEvent {

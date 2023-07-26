@@ -71,7 +71,7 @@ const zChanDiscussionBaseEvent = zChanDiscussionBaseElement.extend({
     type: z.literal("event")
 })
 
-const zChanDiscussionMessageReturn = z.union([
+export const zChanDiscussionMessageReturn = z.union([
     zChanDiscussionBaseMessage.extend({
         content: z.string(),
         relatedTo: z.string().uuid().nullable(),

@@ -1,17 +1,27 @@
-import { ContractPlainType, initContract } from "@ts-rest/core"
-import { AccessPolicyLevel as AccessPolicyLevelPrisma } from "./generated-zod/enums"
+import { ContractPlainType, HTTPStatusCode, initContract } from "@ts-rest/core"
 
 type Codes =
-    | "NotFoundUser"
+    | "NotFoundUser" | "NotFoundUserForValidToken"
     | "UserAlreadyExist" | "DmAlreadyExist"
     | "BlockedByUser" | "BlockedUser" | "ProximityLevelTooLow"
+    | "ContentModifiedBetweenCreationAndRead" | "ContentModifiedBetweenUpdateAndRead"
+
+// TODO: naming is a bit dirty
 type Action = "createDm"
 
-//TODO: permettre de directement mettre l'erreur sans fonction pour les erreurs
-// qui n'ont pas besoin d'être générées
-
-// don't forget the as const it won't work otherwise
+// as const is only useful for precise type of message
 export const contractErrors = {
+
+    /**
+     * @remarks error that should theoretically never happens, it exists mostly for type safety
+     */
+    NotFoundUserForValidToken: (username: string) => ({
+        status: 404,
+        body: {
+            code: "NotFoundUserForValidToken",
+            message: `not found user ${username} from valid token (account has probably been deleted)`
+        }
+    } as const),
 
     NotFoundUser: (username: string, custom?: string) => ({
         status: 404,
@@ -61,12 +71,33 @@ export const contractErrors = {
             code: "ProximityLevelTooLow",
             message: `action ${action} is forbidden because your proximity (${proximity}) is tool low with user ${username} (need to be at least ${accessLevel})`
         }
-    } as const)
+    } as const),
 
+    /**
+     * @remarks error that should theoretically never happens, it exists mostly for type safety
+     */
+    ContentModifiedBetweenCreationAndRead: (subject: 'ChanMessage' | 'DmMessage') => ({
+        status: 200,
+        body: {
+            code: "ContentModifiedBetweenCreationAndRead",
+            message: `Content for subject ${subject} has beed modified between it's creation (with your parameters) and the read, making the server unable to return you the data you expect`
+        }
+    } as const),
+
+    /**
+     * @remarks error that should theoretically never happens, it exists mostly for type safety
+     */
+    ContentModifiedBetweenUpdateAndRead: (subject: 'ChanMessage' | 'DmMessage') => ({
+        status: 200,
+        body: {
+            code: "ContentModifiedBetweenUpdateAndRead",
+            message: `Content for subject ${subject} has beed modified between it's creation (with your parameters) and the read, making the server unable to return you the data you expect`
+        }
+    } as const)
 } satisfies { [Code in Codes]: (...args: any) => ContractError<Code> }
 
 type ContractError<Code = Codes> = {
-    status: number,
+    status: HTTPStatusCode,
     body: {
         code: Code,
         message?: string

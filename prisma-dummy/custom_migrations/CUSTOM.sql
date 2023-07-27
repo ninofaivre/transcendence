@@ -6,6 +6,7 @@ ALTER TABLE "ChanDiscussionElement"
   CHECK(COALESCE("eventId" , "messageId") IS NOT NULL);
 --- event | message ---
 
+--- classicEvent | changedTitleEvent | deletedMessageEvent ---
 ALTER TABLE "ChanDiscussionEvent"
   ADD CONSTRAINT event_union
   CHECK (("classicChanDiscussionEventId" IS NOT NULL)::int +
@@ -13,6 +14,11 @@ ALTER TABLE "ChanDiscussionEvent"
 	("deletedMessageChanDiscussionEventId" IS NOT NULL)::int
 		= 1);
 --- classicEvent | changedTitleEvent | deletedMessageEvent ---
+
+--- type: 'PUBLIC' && title !== null || type: 'PRIVATE' ---
+ALTER TABLE "Chan"
+    ADD CONSTRAINT "ChanType_Title"
+    CHECK(("type" = "PRIVATE") OR ("title" IS NOT NULL AND "type" = "PUBLIC"))
 
 ------------------CHAN------------------
 

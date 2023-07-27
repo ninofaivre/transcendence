@@ -14,7 +14,7 @@ export class ChansController {
 
     @UseGuards(JwtAuthGuard)
     @TsRestHandler(c)
-    async handler(@Request()req: EnrichedRequest) {
+    async handler(@Request(){ user: { username } }: EnrichedRequest) {
         return tsRestHandler(c, {
             searchChans: async ({ query }) => ({
                 status: 200,
@@ -23,68 +23,41 @@ export class ChansController {
 
             getMyChans: async () => ({
                 status: 200,
-                body: await this.chansService.getUserChans(req.user.username)
+                body: await this.chansService.getUserChans(username)
             }),
 
             leaveChan: async ({ params: { chanId } }) => {
-                const res = await this.chansService.leaveChan(req.user.username, chanId)
+                const res = await this.chansService.leaveChan(username, chanId)
                 return isContractError(res) ? res : { status: 202, body: null }
+            },
+
+            joinChanById: async ({ body }) => {
+                const res = await this.chansService.joinChanById(username, body)
+                return isContractError(res) ? res : { status: 200, body: res }
+            },
+
+            createChan: async ({ body }) => {
+                const res = await this.chansService.createChan(username, body)
+                return isContractError(res) ? res: { status: 201, body: res }
+            },
+
+            deleteChan: async ({ params: { chanId } }) => {
+                const res = await this.chansService.deleteChan(username, chanId)
+                return isContractError(res) ? res : { status: 202, body: null }
+            },
+
+            createChanMessage: async ({ params: { chanId }, body }) => {
+                const res = await this.chansService.createChanMessageIfRightTo(username, chanId, body)
+                return isContractError(res) ? res: { status: 201, body: res }
             }
         })
     }
 	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.getMyChans)
-	// async getMyChans(@Req() req: EnrichedRequest) {
-	// 	const body = await this.chansService.getUserChans(req.user.username)
-	// 	return { status: 200 as const, body }
-	// }
-
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.leaveChan)
-	// async leaveChan(
-	// 	@Req() req: EnrichedRequest,
-	// 	@TsRestRequest() { params: { chanId } }: RequestShapes["leaveChan"],
-	// ) {
-	// 	await this.chansService.leaveChan(req.user.username, chanId)
-	// 	return { status: 200 as const, body: null }
-	// }
-
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.joinChanById)
-	// async joinChanById(
-	// 	@Req() req: EnrichedRequest,
-	// 	@TsRestRequest() { body: { chanId, password } }: RequestShapes["joinChanById"],
-	// ) {
-	// 	const body = await this.chansService.joinChanById(req.user.username, chanId, password)
-	// 	return { status: 200 as const, body }
-	// }
-
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.createChan)
-	// async createChan(
-	// 	@Req() req: EnrichedRequest,
-	// 	@TsRestRequest() { body: requestBody }: RequestShapes["createChan"],
-	// ) {
-	// 	const responseBody = await this.chansService.createChan(req.user.username, requestBody)
-	// 	return { status: 201 as const, body: responseBody }
-	// }
-
-	// // @UseGuards(JwtAuthGuard)
-	// // @TsRest(c.updateChan)
-	// // async updateChan(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId }, body: requestBody }: RequestShapes['updateChan'])
-	// // {
-	// // 	const responseBody = this.chansService.formatChan(await this.chansService.updateChan(req.user.username, chanId, requestBody))
-	// // 	return { status: 204 as const, body: responseBody }
-	// // }
-
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.deleteChan)
-	// async deleteChan(
-	// 	@Req() req: EnrichedRequest,
-	// 	@TsRestRequest() { params: { chanId } }: RequestShapes["deleteChan"],
-	// ) {
-	// 	await this.chansService.deleteChan(req.user.username, chanId)
-	// 	return { status: 202 as const, body: null }
+	// @TsRest(c.updateChan)
+	// async updateChan(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId }, body: requestBody }: RequestShapes['updateChan'])
+	// {
+	// 	const responseBody = this.chansService.formatChan(await this.chansService.updateChan(req.user.username, chanId, requestBody))
+	// 	return { status: 204 as const, body: responseBody }
 	// }
 
 	// @UseGuards(JwtAuthGuard)

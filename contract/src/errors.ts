@@ -1,10 +1,14 @@
 import { ContractPlainType, HTTPStatusCode, initContract } from "@ts-rest/core"
+import { z } from "zod"
+import { zPermissionList } from "./generated-zod/"
 
 type Codes =
     | "NotFoundUser" | "NotFoundUserForValidToken" | "NotFoundChan"
-    | "UserAlreadyExist" | "DmAlreadyExist"
-    | "BlockedByUser" | "BlockedUser" | "ProximityLevelTooLow" | "OwnerCannotLeaveChan"
+    | "UserAlreadyExist" | "DmAlreadyExist" | "ChanUserAlreadyExist" | "ChanAlreadyExist"
+    | "BlockedByUser" | "BlockedUser" | "ProximityLevelTooLow" | "OwnerCannotLeaveChan" | "ChanPermissionTooLow"
     | "ContentModifiedBetweenCreationAndRead" | "ContentModifiedBetweenUpdateAndRead"
+    | "ChanDoesntNeedPassword" | "ChanNeedPassword" | "ChanWrongPassword"
+    | "NotFoundChanMessageRelatedTo"
 
 // TODO: naming is a bit dirty
 type Action = "createDm"
@@ -14,6 +18,7 @@ export const contractErrors = {
 
     /**
      * @remarks error that should theoretically never happens, it exists mostly for type safety
+     * please trigger logout and refresh page on this error
      */
     NotFoundUserForValidToken: (username: string) => ({
         status: 404,
@@ -35,7 +40,7 @@ export const contractErrors = {
         status: 404,
         body: {
             code: "NotFoundChan",
-            message: `not found chan with id ${chanId}`
+            message: `not found chan ${chanId}`
         }
     } as const),
 
@@ -44,6 +49,22 @@ export const contractErrors = {
         body: {
             code: "UserAlreadyExist",
             message: `user ${username} already exist`
+        }
+    } as const),
+
+    ChanUserAlreadyExist: (username: string, chanId: string) => ({
+        status: 409,
+        body: {
+            code: "ChanUserAlreadyExist",
+            message: `user ${username} already exist in chan ${chanId}`
+        }
+    } as const),
+
+    ChanAlreadyExist: (title: string) => ({
+        status: 409,
+        body: {
+            code: "ChanAlreadyExist",
+            message: `chan with title ${title} already exist`
         }
     } as const),
 
@@ -89,11 +110,19 @@ export const contractErrors = {
         }
     } as const),
 
+    ChanPermissionTooLow: (username: string, chanId: string, perm: z.infer<typeof zPermissionList>) => ({
+        status: 403,
+        body: {
+            code: "ChanPermissionTooLow",
+            message: `user ${username} doesn't have permission ${perm} in chan ${chanId}`
+        }
+    } as const),
+
     /**
      * @remarks error that should theoretically never happens, it exists mostly for type safety
      */
-    ContentModifiedBetweenCreationAndRead: (subject: 'ChanMessage' | 'DmMessage') => ({
-        status: 200,
+    ContentModifiedBetweenCreationAndRead: (subject: 'ChanMessage' | 'DmMessage' | 'ChanUser') => ({
+        status: 500,
         body: {
             code: "ContentModifiedBetweenCreationAndRead",
             message: `Content for subject ${subject} has beed modified between it's creation (with your parameters) and the read, making the server unable to return you the data you expect`
@@ -104,12 +133,45 @@ export const contractErrors = {
      * @remarks error that should theoretically never happens, it exists mostly for type safety
      */
     ContentModifiedBetweenUpdateAndRead: (subject: 'ChanMessage' | 'DmMessage') => ({
-        status: 200,
+        status: 500,
         body: {
             code: "ContentModifiedBetweenUpdateAndRead",
             message: `Content for subject ${subject} has beed modified between it's creation (with your parameters) and the read, making the server unable to return you the data you expect`
         }
-    } as const)
+    } as const),
+
+    ChanDoesntNeedPassword: (chanId: string) => ({
+        status: 400,
+        body: {
+            code: "ChanDoesntNeedPassword",
+            message: `a password was provided but chan ${chanId} doesn't need one to be joined`
+        }
+    } as const),
+
+    ChanNeedPassword: (chanId: string) => ({
+        status: 400,
+        body: {
+            code: "ChanNeedPassword",
+            message: `chan ${chanId} need a password to be joined but none was provided`
+        }
+    } as const),
+
+    ChanWrongPassword: (chanId: string) => ({
+        status: 403,
+        body: {
+            code: "ChanWrongPassword",
+            message: `password provided to join chan ${chanId} is not valid`
+        }
+    } as const),
+
+    NotFoundChanMessageRelatedTo: (chanId: string, messageId: string) => ({
+        status: 404,
+        body: {
+            code: "NotFoundChanMessageRelatedTo",
+            message: `not found message related to ${messageId} in chan ${chanId}`
+        }
+    })
+
 } satisfies { [Code in Codes]: (...args: any) => ContractError<Code> }
 
 type ContractError<Code = Codes> = {

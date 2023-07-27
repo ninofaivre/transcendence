@@ -6,6 +6,8 @@ import {
 	forwardRef,
 } from "@nestjs/common"
 import { Prisma, ChanInvitationStatus, PermissionList } from "@prisma/client"
+import { zChanInvitationStatus } from "contract"
+import { contractErrors, isContractError } from "contract"
 import { zChanInvitationReturn } from "contract"
 import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
@@ -112,11 +114,16 @@ export class ChanInvitationsService {
 			})
 		)?.id
 		if (!directMessageId) throw new ForbiddenException("no dm with user")
-		await this.chansService.throwIfUserNotAuthorizedInChan(
-			invitingUserName,
-			chanId,
-			PermissionList.INVITE,
-		)
+        const chan = await this.chansService.getChan({ id: chanId },
+            this.chansService.getDoesUserHasSelfPermSelect(invitingUserName, chanId, 'INVITE'))
+        if (!chan)
+            return contractErrors.NotFoundChan(chanId)
+        if (!await this.chansService.doesUserHasSelfPermInChan(
+            invitingUserName,
+            PermissionList.INVITE,
+            chan)) {
+            return contractErrors.ChanPermissionTooLow(invitingUserName, chanId, 'INVITE')
+        }
 		const { users } = await this.chansService.getChanOrThrow(
 			{ id: chanId },
 			{
@@ -157,49 +164,77 @@ export class ChanInvitationsService {
 		return chanInv
 	}
 
-	public async updateAndNotifyManyInvs(
-		newStatus: (typeof ChanInvitationStatus)[keyof typeof ChanInvitationStatus],
-		invs: { id: string; invitedUserName: string; invitingUserName: string }[],
-	) {
-		await this.prisma.chanInvitation.updateMany({
-			where: { id: { in: invs.map((el) => el.id) } },
-			data: {
-				status: newStatus,
-			},
-		})
+	public async updateAndNotifyManyInvsStatus(
+		status: z.infer<typeof zChanInvitationStatus>,
+        where: Prisma.ChanInvitationWhereInput
+    ) {
+        const invs = await this.prisma.chanInvitation.findMany({
+            where: {
+                ...where,
+                status: 'PENDING'
+            },
+            select: {
+                invitedUserName: true,
+                invitingUserName: true,
+                id: true
+            }})
+        await this.prisma.chanInvitation.updateMany({
+            where: { id: { in: invs.map(el => el.id) } },
+            data: { status }
+        })
 		return Promise.all(
-			invs.map(async (el) => {
-				return this.sse.pushEventMultipleUser([el.invitingUserName, el.invitedUserName], {
+			invs.map(async (el) => 
+				 this.sse.pushEventMultipleUser([el.invitingUserName, el.invitedUserName], {
 					type: "UPDATED_CHAN_INVITATION_STATUS",
-					data: { chanInvitationId: el.id, status: newStatus },
+					data: { chanInvitationId: el.id, status },
 				})
-			}),
+			),
 		)
-	}
+    }
 
-	async acceptAllChanInvitationsForUser(
-		username: string,
-		chanId: string,
-		exceptionInvitationId?: string,
-	) {
-		const invs = (
-			await this.usersService.getUserByNameOrThrow(username, {
-				incomingChanInvitation: {
-					where: {
-						status: ChanInvitationStatus.PENDING,
-						chanId: chanId,
-						...(!!exceptionInvitationId ? { id: { not: exceptionInvitationId } } : {}),
-					},
-					select: {
-						id: true,
-						invitedUserName: true,
-						invitingUserName: true,
-					},
-				},
-			})
-		).incomingChanInvitation
-		await this.updateAndNotifyManyInvs(ChanInvitationStatus.ACCEPTED, invs)
-	}
+	// public async updateAndNotifyManyInvs(
+	// 	newStatus: (typeof ChanInvitationStatus)[keyof typeof ChanInvitationStatus],
+	// 	invs: { id: string; invitedUserName: string; invitingUserName: string }[],
+	// ) {
+	// 	await this.prisma.chanInvitation.updateMany({
+	// 		where: { id: { in: invs.map((el) => el.id) } },
+	// 		data: {
+	// 			status: newStatus,
+	// 		},
+	// 	})
+	// 	return Promise.all(
+	// 		invs.map(async (el) => {
+	// 			return this.sse.pushEventMultipleUser([el.invitingUserName, el.invitedUserName], {
+	// 				type: "UPDATED_CHAN_INVITATION_STATUS",
+	// 				data: { chanInvitationId: el.id, status: newStatus },
+	// 			})
+	// 		}),
+	// 	)
+	// }
+
+	// async acceptAllChanInvitationsForUser(
+	// 	username: string,
+	// 	chanId: string,
+	// 	exceptionInvitationId?: string,
+	// ) {
+	// 	const res = await this.usersService.getUser(username, {
+ //            incomingChanInvitation: {
+ //                where: {
+ //                    status: ChanInvitationStatus.PENDING,
+ //                    chanId: chanId,
+ //                    ...(!!exceptionInvitationId ? { id: { not: exceptionInvitationId } } : {}),
+ //                },
+ //                select: {
+ //                    id: true,
+ //                    invitedUserName: true,
+ //                    invitingUserName: true,
+ //                },
+ //            },
+ //        })
+ //        if (!res)
+ //            return contractErrors.NotFoundUserForValidToken(username)
+	// 	return this.updateAndNotifyManyInvs(ChanInvitationStatus.ACCEPTED, res.incomingChanInvitation)
+	// }
 
 	async updateChanInvitation(
 		username: string,
@@ -226,9 +261,11 @@ export class ChanInvitationsService {
 		if (invitedUserName === username && newStatus === ChanInvitationStatus.CANCELED)
 			throw new ForbiddenException(`can't cancel incoming chan invitation`)
 		if (newStatus === ChanInvitationStatus.ACCEPTED) {
-			await this.acceptAllChanInvitationsForUser(username, chanId, id)
+			await this.updateAndNotifyManyInvsStatus('ACCEPTED',
+                { chanId, invitedUserName: username, id: { not: id } })
 			const newChan = await this.chansService.pushUserToChanAndNotifyUsers(username, chanId)
-
+            if (isContractError(newChan))
+                return newChan
 			await this.sse.pushEvent(username, { type: "CREATED_CHAN", data: newChan })
 		}
 		const updatedChanInvitation = this.formatChanInvitation(

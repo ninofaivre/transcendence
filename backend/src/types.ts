@@ -1,6 +1,8 @@
 import { Prisma, AccessPolicyLevel as AccessPolicyLevelPrisma } from "@prisma/client"
 import { PrismaService } from "./prisma/prisma.service"
 
+// TODO retype of password and of title by type of chan. commit ref: <600d73f6e2c998c19f4560b825f5e5203abadd61>
+
 export type Tx = Omit<
 	PrismaService,
 	| "$connect"

@@ -11,6 +11,7 @@ import { ChanInvitationsService } from "./chan-invitations.service"
 import { contract } from "contract"
 import { EnrichedRequest } from "src/auth/auth.service"
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard"
+import { isContractError } from "contract"
 
 const c = nestControllerContract(contract.invitations.chan)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -52,6 +53,8 @@ export class ChanInvitationsController implements NestControllerInterface<typeof
 			invitedUserName,
 			chanId,
 		)
+        if (isContractError(body))
+            return body
 		return { status: 201 as const, body }
 	}
 
@@ -67,6 +70,8 @@ export class ChanInvitationsController implements NestControllerInterface<typeof
 			status,
 			id,
 		)
+        if (isContractError(body))
+            return body
 		return { status: 200 as const, body }
 	}
 }

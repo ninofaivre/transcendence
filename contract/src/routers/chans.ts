@@ -49,6 +49,7 @@ const zChanUser = z.object({
 
 export const zSelfPermissionList = zPermissionList.extract(["EDIT", "DESTROY", "INVITE", "SEND_MESSAGE"])
 
+// TODO typer title en fonction de PUBLIC | PRIVATE avec un zBaseChan j'imagine
 const zChanReturn = z.object({
 	title: zChanTitle.nullable(),
 	type: zChanType,
@@ -89,7 +90,8 @@ export const zChanDiscussionMessageReturn = z.union([
 export const zChanDiscussionEventReturn = z.union([
 	zChanDiscussionBaseEvent.extend({
 		concernedUserName: zUserName.nullable(),
-		eventType: zClassicChanEventType,
+        concernMe: z.boolean(),
+		eventType: zClassicChanEventType
 	}),
 	zChanDiscussionBaseEvent.extend({
 		eventType: z.literal("CHANGED_TITLE"),
@@ -148,33 +150,40 @@ export const chansContract = c.router(
                     [404, "NotFoundChan"])
 			},
 		},
-		// joinChanById: {
-		// 	method: "POST",
-		// 	path: "/@me",
-		// 	body: z.strictObject({
-		// 		chanId: z.string().uuid(),
-		// 		password: zChanPassword.optional(),
-		// 	}),
-		// 	responses: {
-		// 		200: zChanReturn,
-		// 	},
-		// },
-		// createChan: {
-		// 	method: "POST",
-		// 	path: "/",
-		// 	summary: "create a chan",
-		// 	body: z.discriminatedUnion("type", [
-		// 		extendApi(zCreatePublicChan, {
-		// 			title: "PUBLIC",
-		// 		}),
-		// 		extendApi(zCreatePrivateChan, {
-		// 			title: "PRIVATE",
-		// 		}),
-		// 	]),
-		// 	responses: {
-		// 		201: zChanReturn,
-		// 	},
-		// },
+		joinChanById: {
+			method: "POST",
+			path: "/@me",
+			body: z.strictObject({
+				chanId: z.string().uuid(),
+				password: zChanPassword.optional(),
+			}),
+			responses: {
+				200: zChanReturn,
+                ...getErrorsForContract(c,
+                    [400, "ChanDoesntNeedPassword", "ChanNeedPassword"],
+                    [404, "NotFoundChan", "NotFoundUserForValidToken"],
+                    [409, "ChanUserAlreadyExist"],
+                    [500, "ContentModifiedBetweenCreationAndRead"])
+			},
+		},
+		createChan: {
+			method: "POST",
+			path: "/",
+			summary: "create a chan",
+			body: z.discriminatedUnion("type", [
+				extendApi(zCreatePublicChan, {
+					title: "PUBLIC",
+				}),
+				extendApi(zCreatePrivateChan, {
+					title: "PRIVATE",
+				}),
+			]),
+			responses: {
+				201: zChanReturn,
+                ...getErrorsForContract(c,
+                    [409, "ChanAlreadyExist"])
+			},
+		},
 		// updateChan:
 		// {
 		// 	method: 'PATCH',
@@ -208,33 +217,39 @@ export const chansContract = c.router(
 		// 		204: zChanReturn
 		// 	}
 		// },
-		// deleteChan: {
-		// 	method: "DELETE",
-		// 	path: "/:chanId",
-		// 	summary: "delete a chan",
-		// 	pathParams: z.strictObject({
-		// 		chanId: z.string().uuid(),
-		// 	}),
-		// 	body: c.type<null>(),
-		// 	responses: {
-		// 		202: c.type<null>(),
-		// 	},
-		// },
-		// createChanMessage: {
-		// 	method: "POST",
-		// 	path: "/:chanId/elements",
-		// 	summary: "post a message to a chan",
-		// 	pathParams: z.strictObject({
-		// 		chanId: z.string().uuid(),
-		// 	}),
-		// 	body: z.strictObject({
-		// 		content: z.string().nonempty().max(5000),
-		// 		relatedTo: z.string().uuid().optional().describe("id of the related msg/event"),
-		// 	}),
-		// 	responses: {
-		// 		201: zChanDiscussionMessageReturn,
-		// 	},
-		// },
+		deleteChan: {
+			method: "DELETE",
+			path: "/:chanId",
+			summary: "delete a chan",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+			}),
+			body: c.type<null>(),
+			responses: {
+				202: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [403, "ChanPermissionTooLow"],
+                    [404, "NotFoundChan"])
+			},
+		},
+		createChanMessage: {
+			method: "POST",
+			path: "/:chanId/elements",
+			summary: "post a message to a chan",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+			}),
+			body: z.strictObject({
+				content: z.string().nonempty().max(5000),
+				relatedTo: z.string().uuid().optional().describe("id of the related msg/event"),
+			}),
+			responses: {
+				201: zChanDiscussionMessageReturn,
+                ...getErrorsForContract(c,
+                    [403, "ChanPermissionTooLow"],
+                    [404, "NotFoundChan", "NotFoundChanMessageRelatedTo"])
+			},
+		},
 		// getChanElements: {
 		// 	method: "GET",
 		// 	path: "/:chanId/elements",

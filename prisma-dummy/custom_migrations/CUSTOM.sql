@@ -18,7 +18,8 @@ ALTER TABLE "ChanDiscussionEvent"
 --- type: 'PUBLIC' && title !== null || type: 'PRIVATE' ---
 ALTER TABLE "Chan"
     ADD CONSTRAINT "ChanType_Title"
-    CHECK(("type" = "PRIVATE") OR ("title" IS NOT NULL AND "type" = "PUBLIC"))
+    CHECK(("type" = "PRIVATE" AND "password" IS NULL)
+        OR ("title" IS NOT NULL AND "type" = "PUBLIC"))
 
 ------------------CHAN------------------
 

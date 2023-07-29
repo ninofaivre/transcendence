@@ -8,10 +8,8 @@ type Codes =
     | "BlockedByUser" | "BlockedUser" | "ProximityLevelTooLow" | "OwnerCannotLeaveChan" | "ChanPermissionTooLow"
     | "ContentModifiedBetweenCreationAndRead" | "ContentModifiedBetweenUpdateAndRead"
     | "ChanDoesntNeedPassword" | "ChanNeedPassword" | "ChanWrongPassword"
-    | "NotFoundChanMessageRelatedTo"
-
-// TODO: naming is a bit dirty
-type Action = "createDm"
+    | "NotFoundChanRelatedToElement" | "NotFoundChanMessage"
+    | "NotOwnedChanMessage"
 
 // as const is only useful for precise type of message
 export const contractErrors = {
@@ -76,7 +74,7 @@ export const contractErrors = {
         }
     } as const),
 
-    BlockedByUser: (username: string, action: Action) => ({
+    BlockedByUser: (username: string, action: 'createDm') => ({
         status: 403,
         body: {
             code: "BlockedByUser",
@@ -84,7 +82,7 @@ export const contractErrors = {
         }
     } as const),
 
-    BlockedUser: (username: string, action: Action) => ({
+    BlockedUser: (username: string, action: 'createDm') => ({
         status: 403,
         body: {
             code: "BlockedUser",
@@ -92,7 +90,7 @@ export const contractErrors = {
         }
     } as const),
 
-    ProximityLevelTooLow: (username: string, action: Action,
+    ProximityLevelTooLow: (username: string, action: 'createDm',
         proximity: string, accessLevel: string
     ) => ({
         status: 403,
@@ -164,13 +162,29 @@ export const contractErrors = {
         }
     } as const),
 
-    NotFoundChanMessageRelatedTo: (chanId: string, messageId: string) => ({
+    NotFoundChanRelatedToElement: (chanId: string, elementId: string) => ({
         status: 404,
         body: {
-            code: "NotFoundChanMessageRelatedTo",
-            message: `not found message related to ${messageId} in chan ${chanId}`
+            code: "NotFoundChanRelatedToElement",
+            message: `not found relatedTo element  ${elementId} in chan ${chanId}`
         }
-    })
+    } as const),
+
+    NotFoundChanMessage: (chanId: string, messageId: string) => ({
+        status: 404,
+        body: {
+            code: "NotFoundChanMessage",
+            message: `not found message ${messageId} in chan ${chanId}`
+        }
+    } as const),
+
+    NotOwnedChanMessage: (username: string, action: 'update', chanId: string, messageId: string) => ({
+        status: 403,
+        body: {
+            code: "NotOwnedChanMessage",
+            message: `user ${username} can't ${action} message ${messageId} in chan ${chanId} because he is not the owner of it`
+        }
+    } as const)
 
 } satisfies { [Code in Codes]: (...args: any) => ContractError<Code> }
 

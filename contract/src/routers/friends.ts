@@ -1,7 +1,7 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import { zUserStatus } from "./users"
+import { zUserStatus } from "../zod/user.zod"
 
 const c = initContract()
 

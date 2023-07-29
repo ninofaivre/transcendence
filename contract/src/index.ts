@@ -15,7 +15,6 @@ export {
 	zUserProfileReturn,
 	zMyProfileReturn,
 	zUserProfilePreviewReturn,
-	zUserStatus,
 } from "./routers/users"
 export { zFriendShipReturn } from "./routers/friends"
 export { zChanInvitationReturn, zFriendInvitationReturn } from "./routers/invitations"
@@ -27,6 +26,10 @@ export {
     zChanDiscussionMessageReturn,
     zSelfPermissionList
 } from "./routers/chans"
+
+export {
+	zUserStatus,
+} from "./zod/user.zod"
 
 // const contract_module = {
 //   zodTypes: {

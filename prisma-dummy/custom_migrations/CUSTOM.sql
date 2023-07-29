@@ -1,3 +1,13 @@
+------------------USER------------------
+
+--- name !== "@me" ---
+ALTER TABLE "User"
+    ADD CONSTRAINT "UserName"
+    CHECK("name" != "@me")
+--- name !== "@me" ---
+
+------------------USER------------------
+
 ------------------CHAN------------------
 
 --- event | message ---
@@ -20,6 +30,13 @@ ALTER TABLE "Chan"
     ADD CONSTRAINT "ChanType_Title"
     CHECK(("type" = "PRIVATE" AND "password" IS NULL)
         OR ("title" IS NOT NULL AND "type" = "PUBLIC"))
+--- type: 'PUBLIC' && title !== null || type: 'PRIVATE' ---
+
+--- title !== "@me" ---
+ALTER TABLE "Chan"
+    ADD CONSTRAINT "ChanTitle"
+    CHECK("title" != "@me")
+--- title !== "@me" ---
 
 ------------------CHAN------------------
 

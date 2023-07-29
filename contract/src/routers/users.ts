@@ -3,7 +3,7 @@ import { initContract } from "@ts-rest/core"
 import { zChanType, zAccessPolicyLevel } from "../generated-zod"
 
 import { zChanTitle } from "./chans"
-import { zUserName, zUserPassword } from "../zod/user.zod"
+import { zUserName, zUserStatus, zUserPassword } from "../zod/user.zod"
 import { z } from "zod"
 import { getErrorForContract, getErrorsForContract } from "../errors"
 
@@ -21,7 +21,6 @@ export const zUserProfilePreviewReturn = z.strictObject({
 	userName: zUserName,
 })
 
-export const zUserStatus = z.enum(["OFFLINE", "ONLINE", "INVISIBLE"])
 export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
 	dmPolicyLevel: zAccessPolicyLevel.exclude(["NO_ONE"]),
 	commonChans: z.array(

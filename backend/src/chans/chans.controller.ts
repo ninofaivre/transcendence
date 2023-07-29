@@ -48,7 +48,17 @@ export class ChansController {
 
             createChanMessage: async ({ params: { chanId }, body }) => {
                 const res = await this.chansService.createChanMessageIfRightTo(username, chanId, body)
-                return isContractError(res) ? res: { status: 201, body: res }
+                return isContractError(res) ? res : { status: 201, body: res }
+            },
+
+            getChanElements: async ({ params: { chanId }, query }) => {
+                const res = await this.chansService.getChanElements(username, chanId, query)
+                return isContractError(res) ? res : { status: 200, body: res }
+            },
+
+            updateChanMessage: async ({ params, body: { content } }) => {
+                const res = await this.chansService.updateChanMessage(username, params, content)
+                return isContractError(res) ? res : { status: 200, body: res }
             }
         })
     }
@@ -58,37 +68,6 @@ export class ChansController {
 	// {
 	// 	const responseBody = this.chansService.formatChan(await this.chansService.updateChan(req.user.username, chanId, requestBody))
 	// 	return { status: 204 as const, body: responseBody }
-	// }
-
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.createChanMessage)
-	// async createChanMessage(
-	// 	@Req() req: EnrichedRequest,
-	// 	@TsRestRequest()
-	// 	{ params: { chanId }, body: requestBody }: RequestShapes["createChanMessage"],
-	// ) {
-	// 	const body = await this.chansService.createChanMessageIfRightTo(
-	// 		req.user.username,
-	// 		chanId,
-	// 		requestBody,
-	// 	)
-	// 	return { status: 201 as const, body }
-	// }
-
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.getChanElements)
-	// async getChanElements(
-	// 	@Req() req: EnrichedRequest,
-	// 	@TsRestRequest()
-	// 	{ params: { chanId }, query: { nElements, cursor } }: RequestShapes["getChanElements"],
-	// ) {
-	// 	const body = await this.chansService.getChanElements(
-	// 		req.user.username,
-	// 		chanId,
-	// 		nElements,
-	// 		cursor,
-	// 	)
-	// 	return { status: 200 as const, body }
 	// }
 
 	// @UseGuards(JwtAuthGuard)

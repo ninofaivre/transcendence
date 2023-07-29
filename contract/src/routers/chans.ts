@@ -10,7 +10,7 @@ import {
 	zRoleApplyingType,
 	zPermissionList,
 } from "../generated-zod"
-import { zUserStatus } from "./users"
+import { zUserStatus } from "../zod/user.zod"
 import { getErrorsForContract } from "../errors"
 
 const c = initContract()
@@ -76,7 +76,24 @@ const zChanDiscussionBaseEvent = zChanDiscussionBaseElement.extend({
 export const zChanDiscussionMessageReturn = z.union([
     zChanDiscussionBaseMessage.extend({
         content: z.string(),
-        relatedTo: z.string().uuid().nullable(),
+        relatedTo: z.object({
+            id: z.string().uuid(),
+            preview: z.union([
+                z.object({
+                    type: z.literal('message'),
+                    isDeleted: z.literal(true)
+                }),
+                z.object({
+                    type: z.literal('message'),
+                    isDeleted: z.literal(false),
+                    content: z.string()
+                }),
+                z.object({
+                    type: z.literal('event'),
+                    eventType: z.union([zClassicChanEventType, z.literal("CHANGED_TITLE")])
+                }),
+            ])
+        }).nullable(),
         isDeleted: z.literal(false),
         hasBeenEdited: z.boolean(),
         mentionMe: z.boolean()
@@ -247,24 +264,26 @@ export const chansContract = c.router(
 				201: zChanDiscussionMessageReturn,
                 ...getErrorsForContract(c,
                     [403, "ChanPermissionTooLow"],
-                    [404, "NotFoundChan", "NotFoundChanMessageRelatedTo"])
+                    [404, "NotFoundChan", "NotFoundChanRelatedToElement"])
 			},
 		},
-		// getChanElements: {
-		// 	method: "GET",
-		// 	path: "/:chanId/elements",
-		// 	summary: "get elements by cursor in chan",
-		// 	pathParams: z.strictObject({
-		// 		chanId: z.string().uuid(),
-		// 	}),
-		// 	query: z.strictObject({
-		// 		nElements: z.number().positive().int().max(50).default(25),
-		// 		cursor: z.string().uuid().optional(),
-		// 	}),
-		// 	responses: {
-		// 		200: z.array(zChanDiscussionElementReturn),
-		// 	},
-		// },
+		getChanElements: {
+			method: "GET",
+			path: "/:chanId/elements",
+			summary: "get elements by cursor in chan",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+			}),
+			query: z.strictObject({
+				nElements: z.number().positive().int().max(50).default(25),
+				cursor: z.string().uuid().optional(),
+			}),
+			responses: {
+				200: z.array(zChanDiscussionElementReturn),
+                ...getErrorsForContract(c,
+                    [404, "NotFoundChan"])
+			},
+		},
 		// getChanElementById: {
 		// 	method: "GET",
 		// 	path: "/:chanId/elements/:elementId",
@@ -276,20 +295,23 @@ export const chansContract = c.router(
 		// 		200: zChanDiscussionElementReturn,
 		// 	},
 		// },
-  //       updateChanMessage: {
-  //           method: "PATCH",
-  //           path: "/:chanId/elements/elementId",
-  //           pathParams: z.strictObject({
-  //               chanId: z.string().uuid(),
-  //               elementId: z.string().uuid(),
-  //           }),
-  //           body: z.strictObject({
-  //               content: z.string().nonempty()
-  //           }),
-  //           responses: {
-  //               200: zChanDiscussionMessageReturn
-  //           }
-  //       },
+        updateChanMessage: {
+            method: "PATCH",
+            path: "/:chanId/elements/:elementId",
+            pathParams: z.strictObject({
+                chanId: z.string().uuid(),
+                elementId: z.string().uuid(),
+            }),
+            body: z.strictObject({
+                content: z.string().nonempty()
+            }),
+            responses: {
+                200: zChanDiscussionMessageReturn,
+                ...getErrorsForContract(c,
+                    [403, "ChanPermissionTooLow", "NotOwnedChanMessage"],
+                    [404, "NotFoundChan", "NotFoundChanMessage"])
+            }
+        },
 		// deleteChanMessage: {
 		// 	method: "DELETE",
 		// 	path: "/:chanId/elements/:elementId",

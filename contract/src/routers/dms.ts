@@ -3,7 +3,7 @@ import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
 import { zClassicDmEventType, zDirectMessageStatus } from "../generated-zod"
 import { zChanTitle } from "./chans"
-import { zUserStatus } from "./users"
+import { zUserStatus } from "../zod/user.zod"
 import { getErrorsForContract } from "../errors"
 
 const c = initContract()

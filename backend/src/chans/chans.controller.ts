@@ -63,7 +63,7 @@ export class ChansController {
 
             deleteChanMessage: async ({ params }) => {
                 const res = await this.chansService.deleteChanMessage(username, params)
-                return isContractError(res) ? res : { status: 200, body: null }
+                return isContractError(res) ? res : { status: 202, body: res }
             }
         })
     }

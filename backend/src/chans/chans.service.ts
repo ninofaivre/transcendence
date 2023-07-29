@@ -796,7 +796,7 @@ export class ChansService {
         const { authorName } = chan.elements[0]
         if (!this.doesUserHasPermOverUserInChan(username, authorName, chan, 'DELETE_MESSAGE'))
             return contractErrors.ChanPermissionTooLowOverUser(username, authorName, chanId, 'DELETE_MESSAGE')
-		await this.prisma.chanDiscussionElement.update({
+		const deletedElement = await this.prisma.chanDiscussionElement.update({
 			where: { id: elementId, message: { isNot: null } },
 			data: {
 				event: {
@@ -810,6 +810,10 @@ export class ChansService {
 			},
             select: this.chanDiscussionElementsSelect
 		})
+        if (!deletedElement.event?.deletedMessageChanDiscussionEvent)
+            return contractErrors.ContentModifiedBetweenUpdateAndRead('ChanMessage')
+        const { event } = deletedElement
+        return this.formatChanDiscussionMessageForUser(username, { ...deletedElement, event: event as Extract<ChanRetypedEvent<typeof event>, { deletedMessageChanDiscussionEvent: {} }>, isDeleted: true })
 		// const res = await this.prisma.chanDiscussionElement.update({
 		// 	where: { id: elementId },
 		// 	data: {

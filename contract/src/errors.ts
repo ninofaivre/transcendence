@@ -1,11 +1,12 @@
 import { ContractPlainType, HTTPStatusCode, initContract } from "@ts-rest/core"
 import { z } from "zod"
 import { zPermissionList } from "./generated-zod/"
+import { zSelfPermissionList } from "./routers/chans"
 
 type Codes =
     | "NotFoundUser" | "NotFoundUserForValidToken" | "NotFoundChan"
     | "UserAlreadyExist" | "DmAlreadyExist" | "ChanUserAlreadyExist" | "ChanAlreadyExist"
-    | "BlockedByUser" | "BlockedUser" | "ProximityLevelTooLow" | "OwnerCannotLeaveChan" | "ChanPermissionTooLow"
+    | "BlockedByUser" | "BlockedUser" | "ProximityLevelTooLow" | "OwnerCannotLeaveChan" | "ChanPermissionTooLow" | "ChanPermissionTooLowOverUser"
     | "ContentModifiedBetweenCreationAndRead" | "ContentModifiedBetweenUpdateAndRead"
     | "ChanDoesntNeedPassword" | "ChanNeedPassword" | "ChanWrongPassword"
     | "NotFoundChanRelatedToElement" | "NotFoundChanMessage"
@@ -108,11 +109,19 @@ export const contractErrors = {
         }
     } as const),
 
-    ChanPermissionTooLow: (username: string, chanId: string, perm: z.infer<typeof zPermissionList>) => ({
+    ChanPermissionTooLow: (username: string, chanId: string, perm: z.infer<typeof zSelfPermissionList>) => ({
         status: 403,
         body: {
             code: "ChanPermissionTooLow",
             message: `user ${username} doesn't have permission ${perm} in chan ${chanId}`
+        }
+    } as const),
+
+    ChanPermissionTooLowOverUser: (username: string, otherUserName: string, chanId: string, perm: Exclude<z.infer<typeof zPermissionList>, z.infer<typeof zSelfPermissionList>>) => ({
+        status: 403,
+        body: {
+            code: "ChanPermissionTooLowOverUser",
+            message: `user ${username} doesn't have permission ${perm} over user ${otherUserName} in chan ${chanId}`
         }
     } as const),
 
@@ -233,6 +242,6 @@ export function getErrorsForContract<
 }
 
 export function isContractError(toTest: any): toTest is ContractError {
-    return !!(toTest.status && typeof toTest.status === 'number'
-        && toTest.body && toTest.body.code && typeof toTest.body.code === 'string')
+    return !!(toTest && toTest['status'] && typeof toTest['status'] === 'number'
+        && toTest['body'] && toTest['body']['code'] && typeof toTest['body']['code'] === 'string')
 }

@@ -42,6 +42,8 @@ type ChanPayload = Prisma.ChanGetPayload<
     { select: ReturnType<ChansService['getChansSelect']> }>
 type DoesUserHasSelfPermPayload = Prisma.ChanGetPayload<
     { select: ReturnType<ChansService['getDoesUserHasSelfPermSelect']> }>
+type DoesUserHasPermOverUserPayload = Prisma.ChanGetPayload<
+    { select: ReturnType<ChansService['getDoesUserHasPermOverUserSelect']> }>
 
 @Injectable()
 export class ChansService {
@@ -84,6 +86,7 @@ export class ChansService {
         }
 	} satisfies Prisma.ChanSelect)
 
+    // TODO: add select for roles
     public getDoesUserHasSelfPermSelect = (username: string,
         chanId: string,
         perm: z.infer<typeof zSelfPermissionList>
@@ -108,6 +111,43 @@ export class ChansService {
                 }
             }
             : {})   
+    } satisfies Prisma.ChanSelect)
+
+    public getDoesUserHasPermOverUserSelect = (username: string,
+        perm: Exclude<PermissionList, z.infer<typeof zSelfPermissionList>>
+    ) => ({
+            roles: {
+                where: {
+                    // permissions: { has: perm },
+                    // users: { some: { name: username } },
+                    // roleApplyOn: { not: RoleApplyingType.NONE },
+                    // OR: [
+                    //     {
+                    //         roleApplyOn: RoleApplyingType.ROLES,
+                    //         users: { none: { name: otherUserName } },
+                    //         roles: { some: { users: { some: { name: otherUserName } } } },
+                    //     },
+                    //     {
+                    //         roleApplyOn: RoleApplyingType.ROLES_AND_SELF,
+                    //         OR: [
+                    //             { users: { some: { name: otherUserName } } },
+                    //             {
+                    //                 roles: {
+                    //                     some: { users: { some: { name: otherUserName } } },
+                    //                 },
+                    //             },
+                    //         ],
+                    //     },
+                    // ],
+                },
+                select: {
+                    permissions: true,
+                    users: { select: { name: true } },
+                    roleApplyOn: true,
+                    roles: { select: { users: { select: { name: true } } } }
+                },
+            },
+            ownerName: true,
     } satisfies Prisma.ChanSelect)
 
 	private chanDiscussionEventsSelect = {
@@ -209,12 +249,13 @@ export class ChansService {
             ),
 	) {
         if (element.isDeleted) {
-            const { event, authorName: author, ...elementRest } = element
+            const { event: { deletedMessageChanDiscussionEvent: { deletingUserName } }, authorName: author, ...elementRest } = element
             return {
                 ...elementRest,
                 author,
                 content: "",
-                type: 'message'
+                deletingUserName,
+                type: 'message',
             } as const
         }
         const { message, authorName: author, ...elementRest } = element
@@ -395,28 +436,31 @@ export class ChansService {
                 && el.permissions.includes(perm)))
     }
 
-	// public async throwIfUserNotAuthorizedInChan(
-	// 	username: string,
-	// 	chanId: string,
-	// 	perm: (typeof PermissionList)[keyof typeof PermissionList],
-	// ) {
-	// 	const { roles, ownerName } = await this.getChanOrThrow(
-	// 		{ id: chanId, users: { some: { name: username } } },
-	// 		{
-	// 			roles: {
-	// 				where: {
-	// 					users: { some: { name: username } },
-	// 					permissions: { has: perm },
-	// 				},
-	// 				take: 1,
-	// 				select: { name: true },
-	// 			},
-	// 			ownerName: true,
-	// 		},
-	// 	)
-	// 	if (username === ownerName) return
-	// 	if (!roles.length) throw new ForbiddenException(`${username} can't ${perm} in ${chanId}`)
-	// }
+    public doesUserHasPermOverUserInChan(username: string,
+        otherUserName: string,
+        { roles, ownerName }: DoesUserHasPermOverUserPayload,
+        perm: Exclude<PermissionList, z.infer<typeof zSelfPermissionList>>
+    ) {
+        if (username === otherUserName || username === ownerName)
+            return true
+        if (roles.some(role => {
+            if ((role.roleApplyOn === 'NONE')
+                || (role.users.every(user => user.name !== username))
+                || (role.permissions.every(el => el !== perm))
+            )
+                return false
+            if (role.roles.some(el => el.users.some(el => el.name === otherUserName ))
+                && role.users.every(user => user.name !== otherUserName)
+            )
+                return true
+            if (role.roleApplyOn === 'ROLES_AND_SELF'
+                && role.users.some(user => user.name === otherUserName)
+            )
+                return true
+            return false
+        }))
+            return true
+    }
 
 	// async throwIfUserNotAuthorizedOverUserInChan(
 	// 	username: string,
@@ -695,7 +739,7 @@ export class ChansService {
             return contractErrors.NotOwnedChanMessage(username, 'update', elementId, chanId)
         const ats = this.getAtsFromChanMessageContent(chan, content)
         const updatedElement = await this.prisma.chanDiscussionElement.update({
-            where: { id: elementId, message: {} },
+            where: { id: elementId, message: { isNot: null } },
             data: {
                 message: {
                     update: {
@@ -736,54 +780,51 @@ export class ChansService {
             { ...updatedElement, message, isDeleted: false })
     }
 
-	// async deleteChanMessage(username: string, chanId: string, elementId: string) {
-	// 	const { messageId, authorName } = await this.getChanElementOrThrow(
-	// 		username,
-	// 		chanId,
-	// 		elementId,
-	// 		{ authorName: true, messageId: true },
-	// 	)
-	// 	if (!messageId) throw new ForbiddenException("event can't be deleted")
-	// 	if (username === authorName)
-	// 		await this.throwIfUserNotAuthorizedInChan(
-	// 			username,
-	// 			chanId,
-	// 			PermissionList.DELETE_MESSAGE,
-	// 		)
-	// 	else
-	// 		await this.throwIfUserNotAuthorizedOverUserInChan(
-	// 			username,
-	// 			chanId,
-	// 			authorName,
-	// 			PermissionList.DELETE_MESSAGE,
-	// 		)
-	// 	await this.prisma.chanDiscussionElement.update({
-	// 		where: { id: elementId },
-	// 		data: {
-	// 			event: {
-	// 				create: {
-	// 					deletedMessageChanDiscussionEvent: {
-	// 						create: { deletingUserName: username },
-	// 					},
-	// 				},
-	// 			},
-	// 		},
-	// 	})
-	// 	const res = await this.prisma.chanDiscussionElement.update({
-	// 		where: { id: elementId },
-	// 		data: {
-	// 			message: { delete: { id: messageId } },
-	// 		},
-	// 		select: this.chanDiscussionElementsSelect,
-	// 	})
-	// 	const formattedRes = this.formatChanDiscussionElement({ ...res, message: null })
-	// 	await this.notifyChan(
-	// 		chanId,
-	// 		{ type: "UPDATED_CHAN_ELEMENT", data: { chanId, element: formattedRes } },
-	// 		username,
-	// 	)
-	// 	return formattedRes
-	// }
+	async deleteChanMessage(username: string, { chanId , elementId }: RequestShapes['deleteChanMessage']['params']) {
+        const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
+            {
+                ...this.getDoesUserHasPermOverUserSelect(username, 'DELETE_MESSAGE'),
+                elements: {
+                    where: { id: elementId, message: { isNot: null } },
+                    select: { authorName: true }
+                }
+            })
+        if (!chan)
+            return contractErrors.NotFoundChan(chanId)
+        if (!chan.elements.length)
+            return contractErrors.NotFoundChanMessage(chanId, elementId)
+        const { authorName } = chan.elements[0]
+        if (!this.doesUserHasPermOverUserInChan(username, authorName, chan, 'DELETE_MESSAGE'))
+            return contractErrors.ChanPermissionTooLowOverUser(username, authorName, chanId, 'DELETE_MESSAGE')
+		await this.prisma.chanDiscussionElement.update({
+			where: { id: elementId, message: { isNot: null } },
+			data: {
+				event: {
+					create: {
+						deletedMessageChanDiscussionEvent: {
+							create: { deletingUserName: username },
+						},
+					},
+				},
+                message: { delete: {} }
+			},
+            select: this.chanDiscussionElementsSelect
+		})
+		// const res = await this.prisma.chanDiscussionElement.update({
+		// 	where: { id: elementId },
+		// 	data: {
+		// 		message: { delete: { id: messageId } },
+		// 	},
+		// 	select: this.chanDiscussionElementsSelect,
+		// })
+		// const formattedRes = this.formatChanDiscussionElement({ ...res, message: null })
+		// await this.notifyChan(
+		// 	chanId,
+		// 	{ type: "UPDATED_CHAN_ELEMENT", data: { chanId, element: formattedRes } },
+		// 	username,
+		// )
+		// return formattedRes
+	}
 
 	// async kickUserFromChan(username: string, toKickUserName: string, chanId: string) {
 	// 	await this.throwIfUserNotAuthorizedOverUserInChan(

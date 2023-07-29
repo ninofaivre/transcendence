@@ -100,7 +100,8 @@ export const zChanDiscussionMessageReturn = z.union([
     }),
     zChanDiscussionBaseMessage.extend({
         content: z.literal(""),
-        isDeleted: z.literal(true)
+        isDeleted: z.literal(true),
+        deletingUserName: zUserName
     })
 ])
 
@@ -312,18 +313,18 @@ export const chansContract = c.router(
                     [404, "NotFoundChan", "NotFoundChanMessage"])
             }
         },
-		// deleteChanMessage: {
-		// 	method: "DELETE",
-		// 	path: "/:chanId/elements/:elementId",
-		// 	pathParams: z.strictObject({
-		// 		chanId: z.string().uuid(),
-		// 		elementId: z.string().uuid(),
-		// 	}),
-		// 	body: c.type<null>(),
-		// 	responses: {
-		// 		202: zChanDiscussionMessageReturn,
-		// 	},
-		// },
+		deleteChanMessage: {
+			method: "DELETE",
+			path: "/:chanId/elements/:elementId",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+				elementId: z.string().uuid(),
+			}),
+			body: c.type<null>(),
+			responses: {
+				202: zChanDiscussionMessageReturn,
+			},
+		},
 		// kickUserFromChan: {
 		// 	method: "DELETE",
 		// 	path: "/:chanId/:username",

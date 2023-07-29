@@ -453,7 +453,7 @@ model DeletedMessageChanDiscussionEvent {
 	id String @id @default(uuid())
 
 	deletingUsers User @relation(fields: [deletingUserName], references: [name])
-	deletingUserName String @unique
+	deletingUserName String
 
 	chanDiscussionEvent ChanDiscussionEvent?
 }

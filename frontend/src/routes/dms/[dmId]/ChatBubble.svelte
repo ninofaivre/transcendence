@@ -118,32 +118,33 @@
 	</div>
 	{#if is_menu_open}
 		<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
-			<ul class="card mx-1 px-1 text-token">
+			<menu class="card mx-1 px-1 text-token">
 				{#if from_me}
-					<li
-						class="card my-1 px-2 hover:variant-filled-secondary"
-						on:click={editHandler}
-					>
-						Edit
+					<li class="card my-1 px-2 hover:variant-filled-secondary">
+						<button on:click={editHandler}> Edit </button>
 					</li>
-					<li
-						class="card my-1 px-2 hover:variant-filled-secondary"
-						on:click={deleteHandler}
-					>
-						Delete
+					<li class="card my-1 px-2 hover:variant-filled-secondary">
+						<button on:click={deleteHandler}> Delete </button>
 					</li>
 				{:else}
-					<li
-						class="card my-1 px-2 hover:variant-filled-secondary"
-						on:click={replyHandler}
-					>
-						Reply
+					<li class="card my-1 px-2 hover:variant-filled-secondary">
+						<button on:click={replyHandler}> Reply </button>
 					</li>
 				{/if}
-			</ul>
+			</menu>
 		</div>
 	{:else}
-		<div on:click={openMenu} class="kebab self-center text-xl">&#xFE19;</div>
+		<div
+			role="menu"
+			tabindex="0"
+			on:click={openMenu}
+			on:keypress={(e) => {
+				if (e.key == "Enter") openMenu()
+			}}
+			class="kebab self-center text-xl"
+		>
+			&#xFE19;
+		</div>
 	{/if}
 </div>
 

@@ -141,18 +141,12 @@ importers:
 
   frontend:
     dependencies:
-      '@ts-rest/core':
-        specifier: ^3.26.3
-        version: 3.26.3(zod@3.21.4)
       contract:
         specifier: workspace:*
         version: link:../contract
       socket.io-client:
         specifier: ^4.7.1
         version: 4.7.1
-      zod:
-        specifier: ^3.21.4
-        version: 3.21.4
     devDependencies:
       '@floating-ui/dom':
         specifier: ^1.4.4
@@ -1405,17 +1399,6 @@ packages:
       mkdirp: 1.0.4
       path-browserify: 1.0.1
     dev: true
-
-  /@ts-rest/core@3.26.3(zod@3.21.4):
-    resolution: {integrity: sha512-JyiZHmbKiEDnh3veQEobqSq3gmq9Sg3RtmJzxT0mefbIAw68NsOfgWYDhMci5yjI1AlCjWU/i3IIEAhr4kBt2g==}
-    peerDependencies:
-      zod: ^3.0.0
-    peerDependenciesMeta:
-      zod:
-        optional: true
-    dependencies:
-      zod: 3.21.4
-    dev: false
 
   /@ts-rest/core@3.26.4(zod@3.21.4):
     resolution: {integrity: sha512-mgDkGKnE+N67dtD2xkHh9vstlUI++p1INj93hFhQYsT9Awx+oUBY2GwzU4fSaJybKFIvQEC9NEMMWx1/E+7kiQ==}

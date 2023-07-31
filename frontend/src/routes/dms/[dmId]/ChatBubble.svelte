@@ -3,9 +3,9 @@
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
 	import type { DirectMessage } from "$types"
 	import { my_name } from "$stores"
-	import { client }  from "$clients"
+	import { client } from "$clients"
 	import { page } from "$app/stores"
-	import ChatBox from "./ChatBox.svelte"
+	import ChatBox from "$lib/ChatBox.svelte"
 	import { listenOutsideClick } from "$lib/global"
 
 	export let message: DirectMessage
@@ -55,7 +55,7 @@
 	async function updateMessage(e: CustomEvent<string>) {
 		contenteditable = false
 		is_sent = false
-		const { status, body } = await client.dms.updateMessage({
+		const { status, body } = await client.dms.updateDmMessage({
 			body: { content: e.detail },
 			params: {
 				elementId: message_row.id,
@@ -118,32 +118,33 @@
 	</div>
 	{#if is_menu_open}
 		<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
-			<ul class="card mx-1 px-1 text-token">
+			<menu class="card mx-1 px-1 text-token">
 				{#if from_me}
-					<li
-						class="card my-1 px-2 hover:variant-filled-secondary"
-						on:click={editHandler}
-					>
-						Edit
+					<li class="card my-1 px-2 hover:variant-filled-secondary">
+						<button on:click={editHandler}> Edit </button>
 					</li>
-					<li
-						class="card my-1 px-2 hover:variant-filled-secondary"
-						on:click={deleteHandler}
-					>
-						Delete
+					<li class="card my-1 px-2 hover:variant-filled-secondary">
+						<button on:click={deleteHandler}> Delete </button>
 					</li>
 				{:else}
-					<li
-						class="card my-1 px-2 hover:variant-filled-secondary"
-						on:click={replyHandler}
-					>
-						Reply
+					<li class="card my-1 px-2 hover:variant-filled-secondary">
+						<button on:click={replyHandler}> Reply </button>
 					</li>
 				{/if}
-			</ul>
+			</menu>
 		</div>
 	{:else}
-		<div on:click={openMenu} class="kebab self-center text-xl">&#xFE19;</div>
+		<div
+			role="menu"
+			tabindex="0"
+			on:click={openMenu}
+			on:keypress={(e) => {
+				if (e.key == "Enter") openMenu()
+			}}
+			class="kebab self-center text-xl"
+		>
+			&#xFE19;
+		</div>
 	{/if}
 </div>
 

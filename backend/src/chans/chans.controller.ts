@@ -28,7 +28,7 @@ export class ChansController {
 
             leaveChan: async ({ params: { chanId } }) => {
                 const res = await this.chansService.leaveChan(username, chanId)
-                return isContractError(res) ? res : { status: 202, body: null }
+                return isContractError(res) ? res : { status: 204, body: null }
             },
 
             joinChanById: async ({ body }) => {
@@ -43,7 +43,7 @@ export class ChansController {
 
             deleteChan: async ({ params: { chanId } }) => {
                 const res = await this.chansService.deleteChan(username, chanId)
-                return isContractError(res) ? res : { status: 202, body: null }
+                return isContractError(res) ? res : { status: 204, body: null }
             },
 
             createChanMessage: async ({ params: { chanId }, body }) => {
@@ -62,7 +62,7 @@ export class ChansController {
             },
 
             deleteChanMessage: async ({ params }) => {
-                const res = await this.chansService.deleteChanMessage(username, params)
+                const res = await this.chansService.deleteChanMessageIfRightTo(username, params)
                 return isContractError(res) ? res : { status: 202, body: res }
             }
         })
@@ -87,16 +87,6 @@ export class ChansController {
 	// 		elementId,
 	// 	)
 	// 	return { status: 200 as const, body }
-	// }
-
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.deleteChanMessage)
-	// async deleteChanMessage(
-	// 	@Req() req: EnrichedRequest,
-	// 	@TsRestRequest() { params: { chanId, elementId } }: RequestShapes["deleteChanMessage"],
-	// ) {
-	// 	const body = await this.chansService.deleteChanMessage(req.user.username, chanId, elementId)
-	// 	return { status: 202 as const, body }
 	// }
 
 	// @UseGuards(JwtAuthGuard)

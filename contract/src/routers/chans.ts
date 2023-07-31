@@ -162,7 +162,7 @@ export const chansContract = c.router(
 			}),
 			body: c.type<null>(),
 			responses: {
-				202: c.type<null>(),
+				204: c.type<null>(),
                 ...getErrorsForContract(c,
                     [403, "OwnerCannotLeaveChan"],
                     [404, "NotFoundChan"])
@@ -244,7 +244,7 @@ export const chansContract = c.router(
 			}),
 			body: c.type<null>(),
 			responses: {
-				202: c.type<null>(),
+				204: c.type<null>(),
                 ...getErrorsForContract(c,
                     [403, "ChanPermissionTooLow"],
                     [404, "NotFoundChan"])
@@ -310,7 +310,8 @@ export const chansContract = c.router(
                 200: zChanDiscussionMessageReturn,
                 ...getErrorsForContract(c,
                     [403, "ChanPermissionTooLow", "NotOwnedChanMessage"],
-                    [404, "NotFoundChan", "NotFoundChanMessage"])
+                    [404, "NotFoundChan", "NotFoundChanMessage"],
+                    [500, "ContentModifiedBetweenUpdateAndRead"])
             }
         },
 		deleteChanMessage: {
@@ -323,6 +324,10 @@ export const chansContract = c.router(
 			body: c.type<null>(),
 			responses: {
 				202: zChanDiscussionMessageReturn,
+                ...getErrorsForContract(c,
+                    [403, "ChanPermissionTooLowOverUser"],
+                    [404, "NotFoundChan", "NotFoundChanMessage"],
+                    [500, "ContentModifiedBetweenUpdateAndRead"])
 			},
 		},
 		// kickUserFromChan: {

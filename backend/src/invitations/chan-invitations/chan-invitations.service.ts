@@ -115,7 +115,10 @@ export class ChanInvitationsService {
 		)?.id
 		if (!directMessageId) throw new ForbiddenException("no dm with user")
         const chan = await this.chansService.getChan({ id: chanId },
-            this.chansService.getDoesUserHasSelfPermSelect(invitingUserName, chanId, 'INVITE'))
+            {
+                ...this.chansService.getDoesUserHasSelfPermSelect(invitingUserName, 'INVITE'),
+				users: { where: { name: invitedUserName }, select: { name: true } },
+            })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
         if (!await this.chansService.doesUserHasSelfPermInChan(
@@ -124,12 +127,7 @@ export class ChanInvitationsService {
             chan)) {
             return contractErrors.ChanPermissionTooLow(invitingUserName, chanId, 'INVITE')
         }
-		const { users } = await this.chansService.getChanOrThrow(
-			{ id: chanId },
-			{
-				users: { where: { name: invitedUserName }, select: { name: true } },
-			},
-		)
+        const { users } = chan
 		if (users.length)
 			throw new ForbiddenException(`${invitedUserName} already in chan ${chanId}`)
 		// TODO: check if user is ban when ban user in chan added to schema

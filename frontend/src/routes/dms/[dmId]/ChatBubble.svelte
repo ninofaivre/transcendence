@@ -3,9 +3,9 @@
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
 	import type { DirectMessage } from "$types"
 	import { my_name } from "$stores"
-	import { client }  from "$clients"
+	import { client } from "$clients"
 	import { page } from "$app/stores"
-	import ChatBox from "./ChatBox.svelte"
+	import ChatBox from "$lib/ChatBox.svelte"
 	import { listenOutsideClick } from "$lib/global"
 
 	export let message: DirectMessage
@@ -55,7 +55,7 @@
 	async function updateMessage(e: CustomEvent<string>) {
 		contenteditable = false
 		is_sent = false
-		const { status, body } = await client.dms.updateMessage({
+		const { status, body } = await client.dms.updateDmMessage({
 			body: { content: e.detail },
 			params: {
 				elementId: message_row.id,

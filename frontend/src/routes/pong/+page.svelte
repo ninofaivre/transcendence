@@ -5,7 +5,7 @@
 	import { io } from "socket.io-client"
 	import { onDestroy } from "svelte"
 
-  // This produces a bug !
+	// This produces a bug !
 	// const game_socket = io(PUBLIC_BACKEND_URL)
 	// const game_socket_store = writable(game_socket)
 	// onDestroy(game_socket.close)
@@ -141,9 +141,8 @@
 	}
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<div id="game-container" on:click={pause}>
+<svelte:window on:keydown={handleKeydown} on:click={pause} />
+<div id="game-container">
 	<div id="left-score">{left_score}</div>
 	<div id="right-score">{right_score}</div>
 	{#if !playing}

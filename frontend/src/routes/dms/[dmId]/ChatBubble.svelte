@@ -39,7 +39,7 @@
 		const { status, body } = await deleteMessageFunc({
 			body: null,
 			params: {
-				messageId: message_row.id,
+				elementId: message_row.id,
 				chanId: $page.params.dmId,
 				dmId: $page.params.chanId,
 			},
@@ -62,7 +62,7 @@
 		const { status, body } = await updateMessageFunc({
 			body: { content: e.detail },
 			params: {
-				messageId: message_row.id,
+				elementId: message_row.id,
 				dmId: $page.params.dmId,
 				chanId: $page.params.chanId,
 			},

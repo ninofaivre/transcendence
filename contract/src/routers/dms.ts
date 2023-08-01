@@ -150,7 +150,7 @@ export const dmsContract = c.router(
 		updateDmMessage: {
 			method: "PATCH",
 			path: "/:dmId/elements/:messageId",
-			pathParams: z.strictObject({
+			pathParams: z.object({
 				dmId: z.string().uuid(),
 				messageId: z.string().uuid(),
 			}),
@@ -164,7 +164,7 @@ export const dmsContract = c.router(
 		deleteDmMessage: {
 			method: "DELETE",
 			path: "/:dmId/messages/:messageId",
-			pathParams: z.strictObject({
+			pathParams: z.object({
 				dmId: z.string().uuid(),
 				messageId: z.string().uuid(),
 			}),

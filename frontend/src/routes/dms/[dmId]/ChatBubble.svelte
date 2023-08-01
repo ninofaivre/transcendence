@@ -147,17 +147,6 @@
 </div>
 
 <style>
-	/* Does not work  when element is removed*/
-	/* #message-container { */
-	/* 	transition: 1s ease-in-out; */
-	/* } */
-
-	/**
-     * Applies to slotted element. Don't do nothing if it's just text inside. (No child)
-     */
-	/* #message-container :global(> :last-child) { */
-	/* } */
-
 	div.kebab {
 		visibility: hidden;
 	}

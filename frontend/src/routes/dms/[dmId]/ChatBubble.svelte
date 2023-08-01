@@ -6,7 +6,7 @@
 	import { client } from "$clients"
 	import { page } from "$app/stores"
 	import ChatBox from "$lib/ChatBox.svelte"
-	import { listenOutsideClick } from "$lib/global"
+	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 
 	export let message: DirectMessage
 
@@ -118,7 +118,7 @@
 	</div>
 	{#if is_menu_open}
 		<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
-			<menu class="card mx-1 px-1 text-token">
+			<menu class="card text-token mx-1 px-1">
 				{#if from_me}
 					<li class="card my-1 px-2 hover:variant-filled-secondary">
 						<button on:click={editHandler}> Edit </button>
@@ -138,9 +138,7 @@
 			role="menu"
 			tabindex="0"
 			on:click={openMenu}
-			on:keypress={(e) => {
-				if (e.key == "Enter") openMenu()
-			}}
+			on:keypress={simpleKeypressHandlerFactory(["Enter"], openMenu)}
 			class="kebab self-center text-xl"
 		>
 			&#xFE19;

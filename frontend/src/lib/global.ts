@@ -195,7 +195,7 @@ export function makeToast(message: string) {
 }
 
 // Give a list of keys and call a function for those
-export function SimpleKeypressHandlerFactory(keys: string[], func: (ev?: KeyboardEvent) => void) {
+export function simpleKeypressHandlerFactory(keys: string[], func: (ev?: KeyboardEvent) => void) {
 	return (ev: KeyboardEvent) => {
 		for (const key of keys) {
 			if (key === ev.key) {
@@ -206,7 +206,7 @@ export function SimpleKeypressHandlerFactory(keys: string[], func: (ev?: Keyboar
 }
 
 // Give a map where each key is mapped to handler
-export function keypressHandlerFactory(map: Map<string, (ev: KeyboardEvent) => void>) {
+export function keypressHandlerFactory(map: Map<string, (ev?: KeyboardEvent) => void>) {
 	return (ev: KeyboardEvent) => {
 		const func = map.get(ev.key)
 		if (func) {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher } from "svelte"
+	import { createEventDispatcher, onMount } from "svelte"
 
 	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
 
@@ -13,6 +13,7 @@
 
 	const dispatch = createEventDispatcher()
 	let value: string = ""
+	let textarea: HTMLTextAreaElement
 
 	async function sendMessage() {
 		value = value.trim()
@@ -34,6 +35,8 @@
 
 	$: minHeight = `${1 + minRows * line_height}em`
 	$: maxHeight = maxRows ? `${1 + maxRows * line_height}em` : `auto`
+
+	onMount(() => textarea.focus())
 </script>
 
 <div id="grid" class="grid min-w-[50vw] grid-cols-[1fr_auto]">
@@ -43,8 +46,8 @@
 			id="pre"
 			style="min-height: {minHeight}; max-height: {maxHeight}">{value + "\n"}</pre>
 		<textarea
+			bind:this={textarea}
 			bind:value
-			id="textarea"
 			class="textarea rounded-none"
 			aria-label="Type your message here"
 			on:keypress={handleKeypress}

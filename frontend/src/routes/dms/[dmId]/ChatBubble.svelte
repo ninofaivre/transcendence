@@ -40,8 +40,8 @@
 			body: null,
 			params: {
 				elementId: message_row.id,
-				chanId: $page.params.dmId,
-				dmId: $page.params.chanId,
+				chanId: $page.params.chanId,
+				dmId: $page.params.dmId,
 			},
 		})
 		is_sent = true

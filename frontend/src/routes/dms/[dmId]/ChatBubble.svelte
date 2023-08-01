@@ -63,13 +63,13 @@
 			body: { content: e.detail },
 			params: {
 				elementId: message_row.id,
-				dmId: $page.params.dmId,
 				chanId: $page.params.chanId,
+				dmId: $page.params.dmId,
 			},
 		})
 		is_sent = true
 		if (status === 200) {
-			message = body as Message
+			message = body
 		} else {
 			console.error(
 				`Server refused to edit message, returned code ${status}\n with message \"${
@@ -82,9 +82,9 @@
 
 <div
 	id={message.id}
+	bind:this={message_row}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
 	class={`message-row ${from_me ? "space-x-2 space-x-reverse" : "space-x-2"}`}
-	bind:this={message_row}
 >
 	<div class="message-spacer" />
 	<Avatar src="https://i.pravatar.cc/?img=42" width="w-8 h-8" rounded="rounded-full" />

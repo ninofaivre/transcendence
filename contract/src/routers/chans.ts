@@ -303,10 +303,10 @@ export const chansContract = c.router(
 		// },
 		updateChanMessage: {
 			method: "PATCH",
-			path: "/:chanId/elements/:messageId",
+			path: "/:chanId/elements/:elementId",
 			pathParams: z.object({
 				chanId: z.string().uuid(),
-				messageId: z.string().uuid(),
+				elementId: z.string().uuid(),
 			}),
 			body: z.strictObject({
 				content: z.string().nonempty(),
@@ -323,10 +323,10 @@ export const chansContract = c.router(
 		},
 		deleteChanMessage: {
 			method: "DELETE",
-			path: "/:chanId/elements/:messageId",
+			path: "/:chanId/elements/:elementId",
 			pathParams: z.object({
 				chanId: z.string().uuid(),
-				messageId: z.string().uuid(),
+				elementId: z.string().uuid(),
 			}),
 			body: c.type<null>(),
 			responses: {

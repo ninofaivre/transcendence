@@ -149,10 +149,10 @@ export const dmsContract = c.router(
 		},
 		updateDmMessage: {
 			method: "PATCH",
-			path: "/:dmId/elements/:messageId",
+			path: "/:dmId/elements/:elementId",
 			pathParams: z.object({
 				dmId: z.string().uuid(),
-				messageId: z.string().uuid(),
+				elementId: z.string().uuid(),
 			}),
 			body: z.strictObject({
 				content: z.string().nonempty(),
@@ -163,10 +163,10 @@ export const dmsContract = c.router(
 		},
 		deleteDmMessage: {
 			method: "DELETE",
-			path: "/:dmId/messages/:messageId",
+			path: "/:dmId/messages/:elementId",
 			pathParams: z.object({
 				dmId: z.string().uuid(),
-				messageId: z.string().uuid(),
+				elementId: z.string().uuid(),
 			}),
 			body: c.type<null>(),
 			responses: {

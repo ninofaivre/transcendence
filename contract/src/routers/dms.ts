@@ -92,22 +92,21 @@ export const dmsContract = c.router(
 					.array(),
 			},
 		},
-		createDm:
-		{
-			method: 'POST',
-			path: '/',
-			body: z.strictObject
-			({
-				username: zUserName
+		createDm: {
+			method: "POST",
+			path: "/",
+			body: z.strictObject({
+				username: zUserName,
 			}),
-			responses:
-			{
+			responses: {
 				201: zDmReturn,
-                ...getErrorsForContract(c,
-                    [403, "BlockedUser", "BlockedByUser", "ProximityLevelTooLow"],
-                    [404, "NotFoundUser"],
-                    [409, "DmAlreadyExist"])
-			}
+				...getErrorsForContract(
+					c,
+					[403, "BlockedUser", "BlockedByUser", "ProximityLevelTooLow"],
+					[404, "NotFoundUser"],
+					[409, "DmAlreadyExist"],
+				),
+			},
 		},
 		getDmElements: {
 			method: "GET",
@@ -150,10 +149,10 @@ export const dmsContract = c.router(
 		},
 		updateDmMessage: {
 			method: "PATCH",
-			path: "/:dmId/elements/:elementId",
+			path: "/:dmId/elements/:messageId",
 			pathParams: z.strictObject({
 				dmId: z.string().uuid(),
-				elementId: z.string().uuid(),
+				messageId: z.string().uuid(),
 			}),
 			body: z.strictObject({
 				content: z.string().nonempty(),

@@ -3,20 +3,10 @@
 	import { sse_store } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { addListenerToEventSource } from "$lib/global"
-	import { invalidate, invalidateAll } from "$app/navigation"
+	import { invalidate } from "$app/navigation"
 
 	export let currentDiscussionId: string
 	export let discussions: DirectConversation[]
-
-	// This does not work
-	async function keypressHandler(e: KeyboardEvent) {
-		switch (e.code) {
-			case "ArrowDown":
-				console.log("Down arrow was pressed")
-			case "ArrowUp":
-				console.log("Up arrow was pressed")
-		}
-	}
 
 	onMount(() => {
 		if ($sse_store) {
@@ -27,8 +17,6 @@
 				}),
 				addListenerToEventSource($sse_store, "UPDATED_USER_STATUS", (data) => {
 					console.log("Got a event about a dm")
-					// invalidate(":discussions")
-					// invalidateAll()
 					const dot_to_update = document.querySelector(
 						`span.online-dot[data-relatedto=${data.userName}]`,
 					) as HTMLElement

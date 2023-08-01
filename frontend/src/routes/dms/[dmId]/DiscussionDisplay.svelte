@@ -3,20 +3,25 @@
 
 	console.log("Running DiscussionDisplay")
 
-	import type { DirectMessageOrEvent } from "$types"
+	import type {
+		DeleteMessageFunction,
+		UpdateMessageFunction,
+		CreateMessageFunction,
+		MessageOrEvent,
+	} from "$types"
 
 	import ChatBubble from "./ChatBubble.svelte"
-	import { my_name } from "$lib/stores"
 	import { onMount } from "svelte"
-	import { sse_store } from "$stores"
 	import { client } from "$clients"
-	import { page } from "$app/stores"
+	import { my_name, sse_store } from "$stores"
 	import { addListenerToEventSource } from "$lib/global"
 
-	export let messages: DirectMessageOrEvent[] = []
+	export let messages: MessageOrEvent[] = []
 	// export let new_message: [string, Promise<Response>]
-	export let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
+	export let new_message: [string, ReturnType<CreateMessageFunction>]
 	export let currentDiscussionId: string
+	export let deleteMessageFunc: DeleteMessageFunction
+	export let updateMessageFunc: UpdateMessageFunction
 
 	let observer: IntersectionObserver
 	const threshold = 0.5
@@ -114,7 +119,7 @@
 							new ChatBubble({
 								target: to_update.parentElement!,
 								anchor: to_update,
-								props: { message },
+								props: { message, updateMessageFunc, deleteMessageFunc },
 							})
 							to_update.remove()
 						}
@@ -131,7 +136,7 @@
 		<div bind:this={canary} />
 		{#each messages as message}
 			{#if message.type === "message"}
-				<ChatBubble {message} />
+				<ChatBubble {message} {deleteMessageFunc} {updateMessageFunc} />
 			{:else if message.type === "event"}
 				{#if message.eventType == "CREATED_FRIENDSHIP"}
 					<div class="text-center text-gray-500">

@@ -1,14 +1,17 @@
 <script lang="ts">
+	import type { client } from "$clients"
+
 	import { Avatar, ProgressRadial } from "@skeletonlabs/skeleton"
 	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
-	import type { DirectMessage } from "$types"
+	import type { Message, DeleteMessageFunction, UpdateMessageFunction } from "$types"
 	import { my_name } from "$stores"
-	import { client } from "$clients"
 	import { page } from "$app/stores"
 	import ChatBox from "$lib/ChatBox.svelte"
 	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 
-	export let message: DirectMessage
+	export let message: Message
+	export let deleteMessageFunc: DeleteMessageFunction
+	export let updateMessageFunc: UpdateMessageFunction
 
 	let from = message.author
 	let from_me = message.author === $my_name
@@ -26,18 +29,19 @@
 		closeMenu()
 		contenteditable = true
 	}
-	let replyHandler = () => {}
+	async function replyHandler() {}
 
 	$: is_sent = message?.id !== ""
 
 	async function deleteHandler() {
 		is_menu_open = false
 		is_sent = false
-		const { status, body } = await client.dms.deleteDmMessage({
+		const { status, body } = await deleteMessageFunc({
 			body: null,
 			params: {
 				messageId: message_row.id,
-				dmId: $page.params.dmId,
+				chanId: $page.params.dmId,
+				dmId: $page.params.chanId,
 			},
 		})
 		is_sent = true
@@ -55,16 +59,17 @@
 	async function updateMessage(e: CustomEvent<string>) {
 		contenteditable = false
 		is_sent = false
-		const { status, body } = await client.dms.updateDmMessage({
+		const { status, body } = await updateMessageFunc({
 			body: { content: e.detail },
 			params: {
-				elementId: message_row.id,
+				messageId: message_row.id,
 				dmId: $page.params.dmId,
+				chanId: $page.params.chanId,
 			},
 		})
 		is_sent = true
 		if (status === 200) {
-			message = body as DirectMessage
+			message = body as Message
 		} else {
 			console.error(
 				`Server refused to edit message, returned code ${status}\n with message \"${
@@ -121,14 +126,14 @@
 			<menu class="card text-token mx-1 px-1">
 				{#if from_me}
 					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button on:click={editHandler}> Edit </button>
+						<button tabindex="0" on:click={editHandler}> Edit </button>
 					</li>
 					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button on:click={deleteHandler}> Delete </button>
+						<button tabindex="0" on:click={deleteHandler}> Delete </button>
 					</li>
 				{:else}
 					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button on:click={replyHandler}> Reply </button>
+						<button tabindex="0" on:click={replyHandler}> Reply </button>
 					</li>
 				{/if}
 			</menu>

@@ -10,7 +10,7 @@
 	import { listenOutsideClick } from "$lib/global"
 
 	// Get our discussions
-	export let data: LayoutData
+	// export let data: LayoutData // TODO wtf
 
 	let header: HTMLElement | null
 	let header_height: number

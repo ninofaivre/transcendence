@@ -1,8 +1,6 @@
 <script lang="ts">
-	import type { client } from "$clients"
-
-	import { Avatar, ProgressRadial } from "@skeletonlabs/skeleton"
-	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
+	import { Avatar } from "@skeletonlabs/skeleton"
+	import { blur, slide } from "svelte/transition"
 	import type { Message, DeleteMessageFunction, UpdateMessageFunction } from "$types"
 	import { my_name } from "$stores"
 	import { page } from "$app/stores"
@@ -96,14 +94,11 @@
 		{/if}
 		<div class="grid grid-cols-[auto_1fr]">
 			{#if !is_sent}
-				<div class="spinner-container self-center" out:slide={{ axis: "x", duration: 800 }}>
-					<ProgressRadial
-						width="w-3"
-						stroke={140}
-						value={undefined}
-						meter="stroke-error-500"
-						track="stroke-error-500/30"
-					/>
+				<div
+					class="spinner-container self-center"
+					out:slide={{ axis: "x", duration: 1000 }}
+				>
+					<div class="spinner" out:blur={{ duration: 500 }} />
 				</div>
 			{/if}
 			{#if !contenteditable}
@@ -183,7 +178,23 @@
 		font-size: 0.8em;
 	}
 
-	.spinner-container {
-		padding-right: 3px;
+	/* .spinner-container { */
+	/* 	padding-right: 3px; */
+	/* } */
+
+	.spinner {
+		height: 0.6em;
+		width: 0.6em;
+		border: 1px solid;
+		border-radius: 50%;
+		border-top-color: transparent;
+		border-bottom-color: transparent;
+		align-self: center;
+		animation: spin 0.8s linear infinite;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 </style>

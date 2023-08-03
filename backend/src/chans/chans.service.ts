@@ -3,7 +3,6 @@ import {
 	ChanType,
 	PermissionList,
 	Prisma,
-	RoleApplyingType,
 	ChanInvitationStatus,
 	ClassicChanEventType,
 } from "@prisma/client"
@@ -105,8 +104,13 @@ export class ChansService {
                 select: {
                     permissions: true,
                     users: { select: { name: true } },
-                    roleApplyOn: true,
-                    roles: { select: { users: { select: { name: true } } } }
+                    roles: {
+                        select: {
+                            users: { select: { name: true } },
+                            name: true
+                        }
+                    },
+                    name: true
                 },
             },
             ownerName: true,
@@ -329,12 +333,10 @@ export class ChansService {
                             {
                                 name: "DEFAULT",
                                 permissions: this.defaultPermissions,
-                                roleApplyOn: RoleApplyingType.NONE,
                             },
                             {
                                 name: "ADMIN",
                                 permissions: this.adminPermissions,
-                                roleApplyOn: RoleApplyingType.ROLES,
                             },
                         ],
                     },
@@ -345,7 +347,12 @@ export class ChansService {
         await this.prisma.role.update({
             where: { chanId_name: { chanId: res.id, name: "ADMIN" } },
             data: {
-                roles: { connect: { chanId_name: { chanId: res.id, name: "DEFAULT" } } },
+                roles: {
+                    connect: [
+                        { chanId_name: { chanId: res.id, name: "DEFAULT" } },
+                        { chanId_name: { chanId: res.id, name: "ADMIN" } },
+                    ]
+                },
             },
         })
         return this.formatChan(res)
@@ -374,23 +381,18 @@ export class ChansService {
             return true
         if (otherUserName === ownerName)
             return false
-        if (roles.some(role => {
-            if ((role.roleApplyOn === 'NONE')
-                || (role.users.every(user => user.name !== username))
-                || (role.permissions.every(el => el !== perm))
-            )
-                return false
-            if (role.roles.some(el => el.users.some(el => el.name === otherUserName ))
-                && role.users.every(user => user.name !== otherUserName)
-            )
-                return true
-            if (role.roleApplyOn === 'ROLES_AND_SELF'
-                && role.users.some(user => user.name === otherUserName)
-            )
-                return true
-            return false
-        }))
-            return true
+        return roles
+            .filter(role => role.users.some(user => user.name === username))
+            .filter(role => role.permissions.includes(perm))
+            .some(role => {
+                return role.roles
+                    .filter(el => el.users.some(user => user.name === otherUserName))
+                    .some(el => {
+                        if (role.users.every(user => user.name !== otherUserName))
+                            return true
+                        return (role.name === el.name)
+                    })
+            })
     }
 
 	async deleteChan(username: string, chanId: string) {

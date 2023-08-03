@@ -69,7 +69,6 @@ model Role {
   name        String
   permissions PermissionList[]
 
-  roleApplyOn RoleApplyingType
   roles       Role[]           @relation("roles")
   rolesSym    Role[]           @relation("roles")
 

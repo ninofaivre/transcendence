@@ -1,12 +1,11 @@
 import { z } from "zod";
-import { PermissionList, RoleApplyingType } from "./enums";
+import { PermissionList } from "./enums";
 import { CompleteUserInput, CompleteUserOutput, RelatedUserModel, CompleteChanInput, CompleteChanOutput, RelatedChanModel, CompleteChanDiscussionMessageInput, CompleteChanDiscussionMessageOutput, RelatedChanDiscussionMessageModel } from "./index";
 
 export const RoleModel = z.object({
   id: z.string(),
   name: z.string(),
   permissions: z.nativeEnum(PermissionList).array(),
-  roleApplyOn: z.nativeEnum(RoleApplyingType),
   chanId: z.string(),
 });
 

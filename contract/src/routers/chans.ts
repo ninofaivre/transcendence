@@ -43,11 +43,16 @@ export const zCreatePrivateChan = z.strictObject({
 // })
 
 const zChanUser = z.object({
-    name: zUserName,
-    status: zUserStatus
+	name: zUserName,
+	status: zUserStatus,
 })
 
-export const zSelfPermissionList = zPermissionList.extract(["EDIT", "DESTROY", "INVITE", "SEND_MESSAGE"])
+export const zSelfPermissionList = zPermissionList.extract([
+	"EDIT",
+	"DESTROY",
+	"INVITE",
+	"SEND_MESSAGE",
+])
 
 // TODO typer title en fonction de PUBLIC | PRIVATE avec un zBaseChan j'imagine
 const zChanReturn = z.object({
@@ -56,7 +61,7 @@ const zChanReturn = z.object({
 	ownerName: zUserName,
 	id: z.string().uuid(),
 	users: z.array(zChanUser).min(1),
-    selfPerms: z.array(zSelfPermissionList),
+	selfPerms: z.array(zSelfPermissionList),
 })
 
 const zChanDiscussionBaseElement = z.strictObject({
@@ -66,50 +71,52 @@ const zChanDiscussionBaseElement = z.strictObject({
 })
 
 const zChanDiscussionBaseMessage = zChanDiscussionBaseElement.extend({
-    type: z.literal("message"),
+	type: z.literal("message"),
 })
 
 const zChanDiscussionBaseEvent = zChanDiscussionBaseElement.extend({
-    type: z.literal("event")
+	type: z.literal("event"),
 })
 
 export const zChanDiscussionMessageReturn = z.union([
-    zChanDiscussionBaseMessage.extend({
-        content: z.string(),
-        relatedTo: z.object({
-            id: z.string().uuid(),
-            preview: z.union([
-                z.object({
-                    type: z.literal('message'),
-                    isDeleted: z.literal(true)
-                }),
-                z.object({
-                    type: z.literal('message'),
-                    isDeleted: z.literal(false),
-                    content: z.string()
-                }),
-                z.object({
-                    type: z.literal('event'),
-                    eventType: z.union([zClassicChanEventType, z.literal("CHANGED_TITLE")])
-                }),
-            ])
-        }).nullable(),
-        isDeleted: z.literal(false),
-        hasBeenEdited: z.boolean(),
-        mentionMe: z.boolean()
-    }),
-    zChanDiscussionBaseMessage.extend({
-        content: z.literal(""),
-        isDeleted: z.literal(true),
-        deletingUserName: zUserName
-    })
+	zChanDiscussionBaseMessage.extend({
+		content: z.string(),
+		relatedTo: z
+			.object({
+				id: z.string().uuid(),
+				preview: z.union([
+					z.object({
+						type: z.literal("message"),
+						isDeleted: z.literal(true),
+					}),
+					z.object({
+						type: z.literal("message"),
+						isDeleted: z.literal(false),
+						content: z.string(),
+					}),
+					z.object({
+						type: z.literal("event"),
+						eventType: z.union([zClassicChanEventType, z.literal("CHANGED_TITLE")]),
+					}),
+				]),
+			})
+			.nullable(),
+		isDeleted: z.literal(false),
+		hasBeenEdited: z.boolean(),
+		mentionMe: z.boolean(),
+	}),
+	zChanDiscussionBaseMessage.extend({
+		content: z.literal(""),
+		isDeleted: z.literal(true),
+		deletingUserName: zUserName,
+	}),
 ])
 
 export const zChanDiscussionEventReturn = z.union([
 	zChanDiscussionBaseEvent.extend({
 		concernedUserName: zUserName.nullable(),
-        concernMe: z.boolean(),
-		eventType: zClassicChanEventType
+		concernMe: z.boolean(),
+		eventType: zClassicChanEventType,
 	}),
 	zChanDiscussionBaseEvent.extend({
 		eventType: z.literal("CHANGED_TITLE"),
@@ -119,8 +126,8 @@ export const zChanDiscussionEventReturn = z.union([
 ])
 
 export const zChanDiscussionElementReturn = z.union([
-    zChanDiscussionMessageReturn,
-    zChanDiscussionEventReturn
+	zChanDiscussionMessageReturn,
+	zChanDiscussionEventReturn,
 ])
 
 export const chansContract = c.router(
@@ -141,7 +148,7 @@ export const chansContract = c.router(
 						nUsers: z.number().positive().int(),
 						id: z.string().uuid(),
 						title: zChanTitle,
-                        bannedMe: z.boolean()
+						bannedMe: z.boolean(),
 					}),
 				),
 			},
@@ -163,9 +170,7 @@ export const chansContract = c.router(
 			body: c.type<null>(),
 			responses: {
 				204: c.type<null>(),
-                ...getErrorsForContract(c,
-                    [403, "OwnerCannotLeaveChan"],
-                    [404, "NotFoundChan"])
+				...getErrorsForContract(c, [403, "OwnerCannotLeaveChan"], [404, "NotFoundChan"]),
 			},
 		},
 		joinChanById: {
@@ -177,11 +182,13 @@ export const chansContract = c.router(
 			}),
 			responses: {
 				200: zChanReturn,
-                ...getErrorsForContract(c,
-                    [400, "ChanDoesntNeedPassword", "ChanNeedPassword"],
-                    [404, "NotFoundChan", "NotFoundUserForValidToken"],
-                    [409, "ChanUserAlreadyExist"],
-                    [500, "ContentModifiedBetweenCreationAndRead"])
+				...getErrorsForContract(
+					c,
+					[400, "ChanDoesntNeedPassword", "ChanNeedPassword"],
+					[404, "NotFoundChan", "NotFoundUserForValidToken"],
+					[409, "ChanUserAlreadyExist"],
+					[500, "ContentModifiedBetweenCreationAndRead"],
+				),
 			},
 		},
 		createChan: {
@@ -198,8 +205,7 @@ export const chansContract = c.router(
 			]),
 			responses: {
 				201: zChanReturn,
-                ...getErrorsForContract(c,
-                    [409, "ChanAlreadyExist"])
+				...getErrorsForContract(c, [409, "ChanAlreadyExist"]),
 			},
 		},
 		// updateChan:
@@ -245,9 +251,7 @@ export const chansContract = c.router(
 			body: c.type<null>(),
 			responses: {
 				204: c.type<null>(),
-                ...getErrorsForContract(c,
-                    [403, "ChanPermissionTooLow"],
-                    [404, "NotFoundChan"])
+				...getErrorsForContract(c, [403, "ChanPermissionTooLow"], [404, "NotFoundChan"]),
 			},
 		},
 		createChanMessage: {
@@ -317,7 +321,7 @@ export const chansContract = c.router(
 		deleteChanMessage: {
 			method: "DELETE",
 			path: "/:chanId/elements/:elementId",
-			pathParams: z.strictObject({
+			pathParams: z.object({
 				chanId: z.string().uuid(),
 				elementId: z.string().uuid(),
 			}),
@@ -363,41 +367,40 @@ export const chansContract = c.router(
 	},
 )
 
-const zUpdatedChanReturn = zChanReturn.pick({ title: true, type: true,
-    ownerName: true, id: true })
+const zUpdatedChanReturn = zChanReturn.pick({ title: true, type: true, ownerName: true, id: true })
 
 export type ChanEvent =
 	| {
 			type: "CREATED_CHAN"
 			data: z.infer<typeof zChanReturn>
 	  }
-    | {
-            type: "UPDATED_CHAN_INFO"
-            data: z.infer<typeof zUpdatedChanReturn>
-      }
-    | {
-            type: "CREATED_CHAN_USER"
-            data: z.infer<typeof zChanUser>
-      }
-    | {
-            type: "DELETED_CHAN_USER"
-            data: z.infer<typeof zUserName>
-      }
-    | {
-            type: "UPDATED_CHAN_SELF_PERMS"
-            data: {
-                chanId: string,
-                selfPerms: z.infer<typeof zSelfPermissionList>[]
-            }
-      }
-    | {
-            type: "CREATED_CHAN_ELEMENT"
-            data: { chanId: string, element: z.infer<typeof zChanDiscussionElementReturn> }
-      }
-    | {
-            type: "UPDATED_CHAN_MESSAGE"
-            data: { chanId: string, message: z.infer<typeof zChanDiscussionMessageReturn> }
-      }
+	| {
+			type: "UPDATED_CHAN_INFO"
+			data: z.infer<typeof zUpdatedChanReturn>
+	  }
+	| {
+			type: "CREATED_CHAN_USER"
+			data: z.infer<typeof zChanUser>
+	  }
+	| {
+			type: "DELETED_CHAN_USER"
+			data: z.infer<typeof zUserName>
+	  }
+	| {
+			type: "UPDATED_CHAN_SELF_PERMS"
+			data: {
+				chanId: string
+				selfPerms: z.infer<typeof zSelfPermissionList>[]
+			}
+	  }
+	| {
+			type: "CREATED_CHAN_ELEMENT"
+			data: { chanId: string; element: z.infer<typeof zChanDiscussionElementReturn> }
+	  }
+	| {
+			type: "UPDATED_CHAN_MESSAGE"
+			data: { chanId: string; message: z.infer<typeof zChanDiscussionMessageReturn> }
+	  }
 	| {
 			type: "DELETED_CHAN" | "KICKED_FROM_CHAN"
 			data: { chanId: string }

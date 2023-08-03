@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@floating-ui/dom": "^1.5.1",
-    "@skeletonlabs/skeleton": "^1.10.0",
+    "@skeletonlabs/skeleton": "^1.11.0",
     "@sveltejs/adapter-static": "^2.0.3",
     "@sveltejs/kit": "^1.22.4",
     "@tailwindcss/forms": "^0.5.4",
@@ -42,6 +42,6 @@
     "tailwindcss": "^3.3.3",
     "tslib": "^2.6.1",
     "typescript": "^5.1.6",
-    "vite": "^4.4.7"
+    "vite": "^4.4.8"
   }
 }

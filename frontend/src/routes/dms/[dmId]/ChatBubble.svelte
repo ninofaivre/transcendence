@@ -1,14 +1,15 @@
 <script lang="ts">
-	import { Avatar, ProgressRadial } from "@skeletonlabs/skeleton"
-	import { fade, fly, blur, crossfade, draw, slide, scale } from "svelte/transition"
-	import type { DirectMessage } from "$types"
+	import { Avatar } from "@skeletonlabs/skeleton"
+	import { blur, slide } from "svelte/transition"
+	import type { Message, DeleteMessageFunction, UpdateMessageFunction } from "$types"
 	import { my_name } from "$stores"
-	import { client } from "$clients"
 	import { page } from "$app/stores"
 	import ChatBox from "$lib/ChatBox.svelte"
 	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 
-	export let message: DirectMessage
+	export let message: Message
+	export let deleteMessageFunc: DeleteMessageFunction
+	export let updateMessageFunc: UpdateMessageFunction
 
 	let from = message.author
 	let from_me = message.author === $my_name
@@ -26,17 +27,18 @@
 		closeMenu()
 		contenteditable = true
 	}
-	let replyHandler = () => {}
+	async function replyHandler() {}
 
 	$: is_sent = message?.id !== ""
 
 	async function deleteHandler() {
 		is_menu_open = false
 		is_sent = false
-		const { status, body } = await client.dms.deleteDmMessage({
+		const { status, body } = await deleteMessageFunc({
 			body: null,
 			params: {
-				messageId: message_row.id,
+				elementId: message_row.id,
+				chanId: $page.params.chanId,
 				dmId: $page.params.dmId,
 			},
 		})
@@ -55,16 +57,17 @@
 	async function updateMessage(e: CustomEvent<string>) {
 		contenteditable = false
 		is_sent = false
-		const { status, body } = await client.dms.updateDmMessage({
+		const { status, body } = await updateMessageFunc({
 			body: { content: e.detail },
 			params: {
 				elementId: message_row.id,
+				chanId: $page.params.chanId,
 				dmId: $page.params.dmId,
 			},
 		})
 		is_sent = true
 		if (status === 200) {
-			message = body as DirectMessage
+			message = body
 		} else {
 			console.error(
 				`Server refused to edit message, returned code ${status}\n with message \"${
@@ -77,9 +80,9 @@
 
 <div
 	id={message.id}
+	bind:this={message_row}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
 	class={`message-row ${from_me ? "space-x-2 space-x-reverse" : "space-x-2"}`}
-	bind:this={message_row}
 >
 	<div class="message-spacer" />
 	<Avatar src="https://i.pravatar.cc/?img=42" width="w-8 h-8" rounded="rounded-full" />
@@ -91,14 +94,11 @@
 		{/if}
 		<div class="grid grid-cols-[auto_1fr]">
 			{#if !is_sent}
-				<div class="spinner-container self-center" out:slide={{ axis: "x", duration: 800 }}>
-					<ProgressRadial
-						width="w-3"
-						stroke={140}
-						value={undefined}
-						meter="stroke-error-500"
-						track="stroke-error-500/30"
-					/>
+				<div
+					class="spinner-container self-center"
+					out:slide={{ axis: "x", duration: 1000 }}
+				>
+					<div class="spinner" out:blur={{ duration: 500 }} />
 				</div>
 			{/if}
 			{#if !contenteditable}
@@ -121,14 +121,14 @@
 			<menu class="card text-token mx-1 px-1">
 				{#if from_me}
 					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button on:click={editHandler}> Edit </button>
+						<button tabindex="0" on:click={editHandler}> Edit </button>
 					</li>
 					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button on:click={deleteHandler}> Delete </button>
+						<button tabindex="0" on:click={deleteHandler}> Delete </button>
 					</li>
 				{:else}
 					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button on:click={replyHandler}> Reply </button>
+						<button tabindex="0" on:click={replyHandler}> Reply </button>
 					</li>
 				{/if}
 			</menu>
@@ -178,7 +178,23 @@
 		font-size: 0.8em;
 	}
 
-	.spinner-container {
-		padding-right: 3px;
+	/* .spinner-container { */
+	/* 	padding-right: 3px; */
+	/* } */
+
+	.spinner {
+		height: 0.6em;
+		width: 0.6em;
+		border: 1px solid;
+		border-radius: 50%;
+		border-top-color: transparent;
+		border-bottom-color: transparent;
+		align-self: center;
+		animation: spin 0.8s linear infinite;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 </style>

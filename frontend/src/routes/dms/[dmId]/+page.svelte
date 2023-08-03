@@ -84,6 +84,8 @@
 		messages={$page.data.messages}
 		{new_message}
 		currentDiscussionId={$page.params.dmId}
+		deleteMessageFunc={client.dms.deleteDmMessage}
+		updateMessageFunc={client.dms.updateDmMessage}
 	/>
 	<section id="input-row" class="p-4">
 		<ChatBox

@@ -1,5 +1,6 @@
 export type * as Types from "contract"
 
+import type { client } from "$clients"
 import type { ClientInferResponseBody } from "@ts-rest/core"
 
 import type { contract } from "contract"
@@ -22,6 +23,18 @@ export type DirectConversation = Flatten<DirectConversations>
 export type DirectMessagesOrEvents = ClientInferResponseBody<typeof contract.dms.getDmElements, 200>
 export type DirectMessageOrEvent = Flatten<DirectMessagesOrEvents>
 export type DirectMessage = Extract<DirectMessageOrEvent, { type: "message" }>
+
+export type Message = ChanMessage | DirectMessage
+export type MessageOrEvent = ChanMessageOrEvent | DirectMessageOrEvent
+export type DeleteMessageFunction =
+	| typeof client.chans.deleteChanMessage
+	| typeof client.dms.deleteDmMessage
+export type UpdateMessageFunction =
+	| typeof client.chans.updateChanMessage
+	| typeof client.dms.updateDmMessage
+export type CreateMessageFunction =
+	| typeof client.chans.createChanMessage
+	| typeof client.dms.createDmMessage
 
 export type Friendships = ClientInferResponseBody<typeof contract.friends.getFriends, 200>
 export type Friendship = Flatten<Friendships>

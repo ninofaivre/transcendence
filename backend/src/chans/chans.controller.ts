@@ -57,7 +57,7 @@ export class ChansController {
             },
 
             updateChanMessage: async ({ params, body: { content } }) => {
-                const res = await this.chansService.updateChanMessage(username, params, content)
+                const res = await this.chansService.updateChanMessageIfRightTo(username, params, content)
                 return isContractError(res) ? res : { status: 200, body: res }
             },
 

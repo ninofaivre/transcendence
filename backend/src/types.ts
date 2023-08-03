@@ -36,9 +36,15 @@ export type EventUnion =
 export type RetypedEvent<T extends Record<EventUnion, any>> =
 	transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, EventUnion>
 
+export type RetypedElement<T extends Record<ElementUnion, any>> =
+	transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, ElementUnion>
+
 // TODO: Element => DmElement
 export type ElementUnion = "event" | "message"
 ;(elementUnion: ElementUnion) => elementUnion satisfies keyof Prisma.DmDiscussionElementSelect
+
+
+
 
 export type ChanEventUnion =
     | "classicChanDiscussionEvent"
@@ -49,33 +55,25 @@ export type ChanEventUnion =
 export type ChanElementUnion = "event" | "message"
 ;(elementUnion: ChanElementUnion) => elementUnion satisfies keyof Prisma.ChanDiscussionElementSelect
 
-export type ChanRetypedEventTest<T> = T extends Record<ChanEventUnion, any>
+type RetypeChanEvent<T> = T extends Record<ChanEventUnion, unknown>
     ? transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, ChanEventUnion>
     : T
 
-export type ChanRetypedMessageTest<T> = T extends Record<"relatedTo", any>
-    ? Omit<T, "relatedTo"> & Record<"relatedTo", ChanRetypedElementTest<T['relatedTo']>>
+type RetypeChanMessage<T> = T extends Record<"related", (Record<ChanElementUnion, unknown> | null)>
+    ? Omit<T, "related"> & (Record<"related", RetypeChanElement<Exclude<T['related'], null>>> | null)
     : T
 
-export type ChanRetypedElementTest<T> = T extends Record<"event" | "message", any>
-    ? transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<
-            (Omit<T, "event" | "message"> & { event: ChanRetypedEventTest<Exclude<T['event'], null>> | null, message: T['message'] }),
-            "event" | "message"
-        >
-    : T extends Record<"event", any>
-        ? Omit<T, "event"> & Record<"event", ChanRetypedEventTest<T['event']>>
-        : T extends Record<"message", any>
-            ? Omit<T, "message"> & Record<"message", ChanRetypedMessageTest<T['message']>>
-            : T
+export type RetypeChanEventInElement<T extends Record<"event", unknown>> =
+    Omit<T, "event"> & Record<"event", (RetypeChanEvent<Exclude<T['event'], null>> | null)>
 
-export type RetypedElement<T extends Record<ElementUnion, any>> =
-	transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, ElementUnion>
+export type RetypeChanMessageInElement<T extends Record<"message", unknown>> =
+    Omit<T, "message"> & Record<"message", (RetypeChanMessage<Exclude<T['message'], null>> | null)>
 
-export type ChanRetypedEvent<T extends Record<ChanEventUnion, any>> =
-	transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, ChanEventUnion>
-
-export type ChanRetypedElement<T extends Record<ChanElementUnion, any>> =
-	transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, ChanElementUnion>
+export type RetypeChanElement<T extends Record<ChanElementUnion, unknown>> =
+    transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<
+        RetypeChanEventInElement<RetypeChanMessageInElement<T>>,
+        ChanElementUnion
+    >
 
 export const ProximityLevel = {
     BLOCKED: -1,

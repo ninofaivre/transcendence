@@ -16,18 +16,22 @@ import { z } from "zod"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
-import { ChanRetypedElement, ChanRetypedElementTest, ChanRetypedEvent, RetypedElement, RetypedEvent } from "src/types"
 import { zSelfPermissionList } from "contract"
 import { zChanDiscussionMessageReturn } from "contract"
+import { ChanElementUnion, RetypeChanElement } from "src/types"
 
 type RequestShapes = NestRequestShapes<typeof contract.chans>
 
-type ChanDiscussionElementPayload = Prisma.ChanDiscussionElementGetPayload<
-    { select: ChansService['chanDiscussionElementsSelect'] }>
-type ChanDiscussionMessagePayload = Prisma.ChanDiscussionMessageGetPayload<
-    { select: ChansService['chanDiscussionMessagesSelect'] }>
-type ChanDiscussionEventPayload = Prisma.ChanDiscussionEventGetPayload<
-    { select: ChansService['chanDiscussionEventsSelect'] }>
+type ChanDiscussionElementPayload = RetypeChanElement<Prisma.ChanDiscussionElementGetPayload<
+    { select: ChansService['chanDiscussionElementsSelect'] }>>
+
+type ChanDiscussionElementEventPayload = Extract<ChanDiscussionElementPayload, { event: {} }>
+type ChanDiscussionElementMessagePayload = Extract<ChanDiscussionElementPayload, { message: {} }>
+
+// type ChanDiscussionMessagePayload = Prisma.ChanDiscussionMessageGetPayload<
+//     { select: ChansService['chanDiscussionMessagesSelect'] }>
+// type ChanDiscussionEventPayload = Prisma.ChanDiscussionEventGetPayload<
+//     { select: ChansService['chanDiscussionEventsSelect'] }>
 type ChanPayload = Prisma.ChanGetPayload<
     { select: ReturnType<ChansService['getChansSelect']> }>
 type DoesUserHasSelfPermPayload = Prisma.ChanGetPayload<
@@ -187,16 +191,13 @@ export class ChansService {
 
 	private formatChanDiscussionMessageForUser(
         username: string,
-        element: Omit<ChanDiscussionElementPayload, "event" | "message">
-            & (
-                ({ message: ChanDiscussionMessagePayload, event: null})
-                | ({ event: Extract<
-                            ChanRetypedEvent<ChanDiscussionEventPayload>,
-                            { deletedMessageChanDiscussionEvent: {} }
-                        >,
-                     message: null
-                  })
-            ),
+        element: ChanDiscussionElementMessagePayload
+            | (
+                Omit<ChanDiscussionElementEventPayload, "event">
+                & {
+                    event: Extract<ChanDiscussionElementEventPayload['event'],
+                        { deletedMessageChanDiscussionEvent: {} }>
+                })
 	) {
         if (element.event) {
             const { event: { deletedMessageChanDiscussionEvent: { deletingUserName } }, authorName: author, ...elementRest } = element
@@ -220,16 +221,16 @@ export class ChansService {
                 id: related.id,
                 // TODO this is just for testing purpose, do something cleaner if tom likes preview
                 preview: (() => {
-                    if (related.event) {
-                        const retypedRelatedEvent = related.event as ChanRetypedEvent<typeof related.event>
-                        if (retypedRelatedEvent.deletedMessageChanDiscussionEvent)
+                    const { event, message } = related
+                    if (event) {
+                        if (event.deletedMessageChanDiscussionEvent)
                             return { type: 'message', isDeleted: true } as const
-                        else if (retypedRelatedEvent.changedTitleChanDiscussionEvent)
+                        else if (event.changedTitleChanDiscussionEvent)
                             return { type: 'event', eventType: "CHANGED_TITLE" } as const
                         else
-                            return { type: 'event', eventType: retypedRelatedEvent.classicChanDiscussionEvent.eventType } as const
+                            return { type: 'event', eventType: event.classicChanDiscussionEvent.eventType } as const
                     }
-                    return { type: 'message', isDeleted: false, content: related.message?.content || "" } as const
+                    return { type: 'message', isDeleted: false, content: message.content } as const
                 })()
             },
             ...messageRest,
@@ -245,14 +246,12 @@ export class ChansService {
 
 	private formatChanDiscussionEvent(
         username: string,
-        element: Omit<ChanDiscussionElementPayload, "event" | "message">
+        element: Omit<ChanDiscussionElementEventPayload, "event">
             & {
-                event: Extract<
-                    ChanRetypedEvent<ChanDiscussionEventPayload>,
-                    { deletedMessageChanDiscussionEvent: null }
-                >
+                event: Exclude<ChanDiscussionElementEventPayload['event'],
+                    { deletedMessageChanDiscussionEvent: {} }>
             }
-	) {
+    ) {
         const { event, authorName: author, ...elementRest } = element
         const {
             deletedMessageChanDiscussionEvent,
@@ -284,7 +283,7 @@ export class ChansService {
 
 	private formatChanDiscussionElementForUser(
         username: string,
-		element: ChanRetypedElementTest<ChanDiscussionElementPayload>
+		element: ChanDiscussionElementPayload
 	): z.infer<typeof zChanDiscussionElementReturn> {
         const { event } = element;
         if (event?.deletedMessageChanDiscussionEvent)
@@ -296,7 +295,7 @@ export class ChansService {
 
 	private formatChanDiscussionElementArrayForUser(
         username: string,
-		elements: ChanRetypedElementTest<ChanDiscussionElementPayload>[],
+		elements: ChanDiscussionElementPayload[],
 	) {
 		return elements.map(element =>
             this.formatChanDiscussionElementForUser(username, element))
@@ -373,6 +372,8 @@ export class ChansService {
     ) {
         if (username === otherUserName || username === ownerName)
             return true
+        if (otherUserName === ownerName)
+            return false
         if (roles.some(role => {
             if ((role.roleApplyOn === 'NONE')
                 || (role.users.every(user => user.name !== username))
@@ -444,27 +445,27 @@ export class ChansService {
 		relatedTo: string | undefined,
         ats: { users: { name: string }[], roles: { name: string }[] }
 	) {
-		return (
-            await this.prisma.chanDiscussionMessage.create({
-				data: {
-					content: content,
-					related: relatedTo ? { connect: { id: relatedTo } } : undefined,
-					relatedUsers: { connect: ats.users },
-					relatedRoles: {
-                        connect: ats.roles.map(role => ({ chanId_name: { chanId, ...role } }))
+        // TODO try to create from element instead
+		const element = (await this.prisma.chanDiscussionMessage.create({
+            data: {
+                content: content,
+                related: relatedTo ? { connect: { id: relatedTo } } : undefined,
+                relatedUsers: { connect: ats.users },
+                relatedRoles: {
+                    connect: ats.roles.map(role => ({ chanId_name: { chanId, ...role } }))
+                },
+                discussionElement: {
+                    create: {
+                        chanId: chanId,
+                        authorName: username,
                     },
-                    discussionElement: {
-						create: {
-							chanId: chanId,
-							authorName: username,
-						},
-					},
-				},
-				select: {
-					discussionElement: { select: this.chanDiscussionElementsSelect },
-				},
-			})
-		).discussionElement
+                },
+            },
+            select: {
+                discussionElement: { select: this.chanDiscussionElementsSelect },
+            },
+        })).discussionElement
+        return element as (RetypeChanElement<Exclude<typeof element, null>> | null)
 	}
 
 	public async removeMutedIfUntilDateReached(state: { id: string; untilDate: Date | null }) {
@@ -517,7 +518,7 @@ export class ChansService {
         if (!await this.doesUserHasSelfPermInChan(username, 'SEND_MESSAGE', chan))
             return contractErrors.ChanPermissionTooLow(username, chanId, 'SEND_MESSAGE')
         if (relatedTo && !chan.elements?.length)
-            return contractErrors.NotFoundChanRelatedToElement(chanId, relatedTo)
+            return contractErrors.NotFoundChanEntity(chanId, "relatedTo element", relatedTo)
         const ats = this.getAtsFromChanMessageContent(chan, content)
 		const newMessage = await this.createChanMessage(username, chanId, content,
 			relatedTo, ats)
@@ -538,7 +539,8 @@ export class ChansService {
             { ...newMessage, message, event: null })
 	}
 
-	async getChanElements(username: string, chanId: string, { nElements, cursor }: RequestShapes['getChanElements']['query']) {
+	async getChanElements(username: string, chanId: string,
+        { nElements, cursor }: RequestShapes['getChanElements']['query']) {
 		const chan = await this.getChan(
 			{ id: chanId, users: { some: { name: username } } },
 			{
@@ -553,10 +555,55 @@ export class ChansService {
 		)
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
+        if (!chan.elements.length && cursor) {
+            if (!(await this.getChan({id: chanId, elements: { some: { id: cursor } }},
+                { id: true }))) {
+                return contractErrors.NotFoundChanEntity(chanId, "element", cursor)
+            }
+        }
 		return this.formatChanDiscussionElementArrayForUser(username, chan.elements.reverse())
 	}
 
-    async updateChanMessage(username: string,
+    async updateChanMessage(
+        chanId: string,
+        elementId: string,
+        oldAts: { roles: { name: string }[], users: { name: string }[] },
+        newAts: { roles: { name: string }[], users: { name: string }[] },
+        content: string
+    ) {
+        const updatedElement = await this.prisma.chanDiscussionElement.update({
+            where: { id: elementId, message: { isNot: null } },
+            data: {
+                message: {
+                    update: {
+                        content: content,
+                        relatedUsers: {
+                            connect: newAts.users
+                                .filter(el => oldAts.users.every(user => user.name !== el.name)),
+                            disconnect: oldAts.users
+                                .filter(user => newAts.users.every(el => el.name !== user.name))
+                        },
+                        relatedRoles: {
+                            connect: newAts.roles
+                                .filter(el => oldAts.roles.every(role => role.name !== el.name))
+                                .map(el => ({ chanId_name: { chanId, ...el } })),
+                            disconnect: oldAts.roles
+                                .filter(role => newAts.roles.every(el => el.name !== role.name))
+                                .map(el => ({ chanId_name: { chanId, ...el } }))
+                        }
+                    }
+                }
+            },
+            select: this.chanDiscussionElementsSelect
+        })
+        const retypedUpdatedElement = updatedElement as RetypeChanElement<typeof updatedElement>
+        const { message } = retypedUpdatedElement 
+        if (!message)
+            return contractErrors.ContentModifiedBetweenUpdateAndRead('ChanMessage')
+        return { ...retypedUpdatedElement, message } as const
+    }
+
+    async updateChanMessageIfRightTo(username: string,
         { chanId, elementId }: RequestShapes['updateChanMessage']['params'],
         content: string
     ) {
@@ -587,53 +634,28 @@ export class ChansService {
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
         if (!chan.elements.length || !chan.elements[0].message)
-            return contractErrors.NotFoundChanMessage(chanId, elementId)
+            return contractErrors.NotFoundChanEntity(chanId, 'message', elementId)
         const oldMessage = chan.elements[0].message
         if (!await this.doesUserHasSelfPermInChan(username, 'SEND_MESSAGE', chan))
             return contractErrors.ChanPermissionTooLow(username, chanId, 'SEND_MESSAGE')
         if (chan.elements[0].authorName !== username)
             return contractErrors.NotOwnedChanMessage(username, 'update', elementId, chanId)
-        const ats = this.getAtsFromChanMessageContent(chan, content)
-        const updatedElement = await this.prisma.chanDiscussionElement.update({
-            where: { id: elementId, message: { isNot: null } },
-            data: {
-                message: {
-                    update: {
-                        content: content,
-                        relatedUsers: {
-                            connect: ats.users
-                                .filter(el => oldMessage.relatedUsers.every(user => user.name !== el.name)),
-                            disconnect: oldMessage.relatedUsers
-                                .filter(user => ats.users.every(el => el.name !== user.name))
-                        },
-                        relatedRoles: {
-                            connect: ats.roles
-                                .filter(el => oldMessage.relatedRoles.every(role => role.name !== el.name))
-                                .map(el => ({ chanId_name: { chanId, ...el } })),
-                            disconnect: oldMessage.relatedRoles
-                                .filter(role => ats.roles.every(el => el.name !== role.name))
-                                .map(el => ({ chanId_name: { chanId, ...el } }))
-                        }
-                    }
-                }
-            },
-            select: this.chanDiscussionElementsSelect
-        })
-        const { message } = updatedElement
-        if (!message)
-            return contractErrors.ContentModifiedBetweenUpdateAndRead('ChanMessage')
+        const newAts = this.getAtsFromChanMessageContent(chan, content)
+        const updatedElement = await this.updateChanMessage(chanId, elementId,
+            { users: oldMessage.relatedUsers, roles: oldMessage.relatedRoles },
+            newAts, content)
+        if (isContractError(updatedElement))
+            return updatedElement
         chan.users.forEach(({ name }) => {
             this.sse.pushEvent(name, {
                 type: 'UPDATED_CHAN_MESSAGE',
                 data: {
                     chanId,
-                    message: this.formatChanDiscussionMessageForUser(name,
-                        { ...updatedElement, message, event: null })
+                    message: this.formatChanDiscussionMessageForUser(name, updatedElement)
                 }
             })
         })
-        return this.formatChanDiscussionMessageForUser(username,
-            { ...updatedElement, message, event: null })
+        return this.formatChanDiscussionMessageForUser(username, updatedElement)
     }
 
     private async deleteChanMessage(elementId: string, deletingUserName: string) {
@@ -651,10 +673,11 @@ export class ChansService {
 			},
             select: this.chanDiscussionElementsSelect
 		})
-        const retypedDeletedElement = deletedElement as ChanRetypedElementTest<typeof deletedElement>
-        if (!retypedDeletedElement.event?.deletedMessageChanDiscussionEvent)
+        const retypedDeletedElement = deletedElement as RetypeChanElement<typeof deletedElement>
+        const { event } = retypedDeletedElement
+        if (!event?.deletedMessageChanDiscussionEvent)
             return contractErrors.ContentModifiedBetweenUpdateAndRead('ChanMessage')
-        return { ...retypedDeletedElement, event: retypedDeletedElement.event } as const
+        return { ...retypedDeletedElement, event } as const
     }
 
 	async deleteChanMessageIfRightTo(username: string, { chanId , elementId }: RequestShapes['deleteChanMessage']['params']) {
@@ -670,7 +693,7 @@ export class ChansService {
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
         if (!chan.elements.length)
-            return contractErrors.NotFoundChanMessage(chanId, elementId)
+            return contractErrors.NotFoundChanEntity(chanId, 'message', elementId)
         const { authorName } = chan.elements[0]
         if (!this.doesUserHasPermOverUserInChan(username, authorName, chan, 'DELETE_MESSAGE'))
             return contractErrors.ChanPermissionTooLowOverUser(username, authorName, chanId, 'DELETE_MESSAGE')
@@ -772,7 +795,7 @@ export class ChansService {
                 data: {
                     chanId,
                     element: this.formatChanDiscussionElementForUser(name,
-                        newEvent as ChanRetypedElementTest<typeof newEvent>)
+                        newEvent as RetypeChanElement<typeof newEvent>)
                 }
             })
         });
@@ -824,13 +847,13 @@ export class ChansService {
 		where: Prisma.ChanWhereUniqueInput,
 		select: Prisma.Subset<Sel, Prisma.ChanSelect>,
 	) => {
-        type RetypedChan<T> = T extends Record<"elements", any[]>
+        type RetypeChan<T> = T extends Record<"elements", Record<ChanElementUnion, unknown>[]>
             ? Omit<T, "elements">
-                & Record<"elements", ChanRetypedElementTest<T['elements'][number]>[]>
+                & Record<"elements", RetypeChanElement<T['elements'][number]>[]>
             : T
         const chan = await this.prisma.chan.findUnique({ where, select })
         
-        return chan as RetypedChan<typeof chan>
+        return chan as RetypeChan<typeof chan>
     }
 
 	async joinChanById(username: string, { chanId, password }: RequestShapes['joinChanById']['body']) {

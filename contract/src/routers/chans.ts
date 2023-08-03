@@ -265,7 +265,7 @@ export const chansContract = c.router(
 				201: zChanDiscussionMessageReturn,
                 ...getErrorsForContract(c,
                     [403, "ChanPermissionTooLow"],
-                    [404, "NotFoundChan", "NotFoundChanRelatedToElement"])
+                    [404, "NotFoundChan", "NotFoundChanEntity"])
 			},
 		},
 		getChanElements: {
@@ -282,7 +282,7 @@ export const chansContract = c.router(
 			responses: {
 				200: z.array(zChanDiscussionElementReturn),
                 ...getErrorsForContract(c,
-                    [404, "NotFoundChan"])
+                    [404, "NotFoundChan", "NotFoundChanEntity"])
 			},
 		},
 		// getChanElementById: {
@@ -310,7 +310,7 @@ export const chansContract = c.router(
                 200: zChanDiscussionMessageReturn,
                 ...getErrorsForContract(c,
                     [403, "ChanPermissionTooLow", "NotOwnedChanMessage"],
-                    [404, "NotFoundChan", "NotFoundChanMessage"],
+                    [404, "NotFoundChan", "NotFoundChanEntity"],
                     [500, "ContentModifiedBetweenUpdateAndRead"])
             }
         },
@@ -326,7 +326,7 @@ export const chansContract = c.router(
 				202: zChanDiscussionMessageReturn,
                 ...getErrorsForContract(c,
                     [403, "ChanPermissionTooLowOverUser"],
-                    [404, "NotFoundChan", "NotFoundChanMessage"],
+                    [404, "NotFoundChan", "NotFoundChanEntity"],
                     [500, "ContentModifiedBetweenUpdateAndRead"])
 			},
 		},

@@ -9,7 +9,7 @@ type Codes =
     | "BlockedByUser" | "BlockedUser" | "ProximityLevelTooLow" | "OwnerCannotLeaveChan" | "ChanPermissionTooLow" | "ChanPermissionTooLowOverUser"
     | "ContentModifiedBetweenCreationAndRead" | "ContentModifiedBetweenUpdateAndRead"
     | "ChanDoesntNeedPassword" | "ChanNeedPassword" | "ChanWrongPassword"
-    | "NotFoundChanRelatedToElement" | "NotFoundChanMessage"
+    | "NotFoundChanEntity"
     | "NotOwnedChanMessage"
 
 // as const is only useful for precise type of message
@@ -171,19 +171,14 @@ export const contractErrors = {
         }
     } as const),
 
-    NotFoundChanRelatedToElement: (chanId: string, elementId: string) => ({
+    NotFoundChanEntity: (chanId: string,
+        entityType: "relatedTo element" | "element" | "message",
+        entityId: string,
+    ) => ({
         status: 404,
         body: {
-            code: "NotFoundChanRelatedToElement",
-            message: `not found relatedTo element  ${elementId} in chan ${chanId}`
-        }
-    } as const),
-
-    NotFoundChanMessage: (chanId: string, messageId: string) => ({
-        status: 404,
-        body: {
-            code: "NotFoundChanMessage",
-            message: `not found message ${messageId} in chan ${chanId}`
+            code: "NotFoundChanEntity",
+            message: `not found ${entityType} ${entityId} in chan ${chanId}`
         }
     } as const),
 

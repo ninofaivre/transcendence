@@ -71,7 +71,8 @@ export class ChansService {
         }
 	} satisfies Prisma.ChanSelect)
 
-    // TODO check this shit
+    // TODO for both functions under this comment add select and remove username + perm
+
     public getDoesUserHasSelfPermSelect = (username: string,
         perm: z.infer<typeof zSelfPermissionList>
     ) => ({
@@ -721,48 +722,34 @@ export class ChansService {
         return this.formatChanDiscussionMessageForUser(username, deletedElement)
 	}
 
-	// async kickUserFromChan(username: string, toKickUserName: string, chanId: string) {
-	// 	await this.throwIfUserNotAuthorizedOverUserInChan(
-	// 		username,
-	// 		toKickUserName,
-	// 		chanId,
-	// 		PermissionList.KICK,
-	// 	)
-	// 	const res = this.formatChan(
-	// 		await this.prisma.chan.update({
-	// 			where: { id: chanId },
-	// 			data: { users: { disconnect: { name: toKickUserName } } },
-	// 			select: this.chansSelect,
-	// 		}),
-	// 	)
-
-	// 	// PRISMA SUCK
-	// 	const roles = (
-	// 		await this.prisma.role.findMany({
-	// 			where: { chanId, users: { some: { name: toKickUserName } } },
-	// 			select: { id: true },
-	// 		})
-	// 	).map((role) => role.id)
-	// 	await Promise.all(
-	// 		roles.map(async (id) =>
-	// 			this.prisma.role.update({
-	// 				where: { id },
-	// 				data: { users: { disconnect: { name: toKickUserName } } },
-	// 			}),
-	// 		),
-	// 	)
-
-	// 	return Promise.all([
-	// 		this.notifyChan(chanId, { type: "UPDATED_CHAN", data: res }, null),
-	// 		this.createAndNotifyClassicChanEvent(
-	// 			username,
-	// 			toKickUserName,
-	// 			chanId,
-	// 			ClassicChanEventType.AUTHOR_KICKED_CONCERNED,
-	// 		),
-	// 		this.sse.pushEvent(toKickUserName, { type: "KICKED_FROM_CHAN", data: { chanId } }),
-	// 	])
-	// }
+    async kickUserFromChanIfRightTo(username: string, { username: otherUserName, chanId }: RequestShapes['kickUserFromChan']['params']) {
+        const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
+            {
+                users: { where: { name: otherUserName }, select: { name: true } },
+                ...this.getDoesUserHasPermOverUserSelect(username, "KICK")
+            })
+        if (!chan)
+            return contractErrors.NotFoundChan(chanId)
+        if (!chan.users.length)
+            return contractErrors.NotFoundChanEntity(chanId, 'user', otherUserName)
+        if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, "KICK"))
+            return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'KICK')
+        const res = await this.prisma.chan.update({
+            where: { id: chanId },
+            data: { users: { disconnect: { name: otherUserName } } },
+            select: { users: { select: { name: true } } }
+        })
+        // TODO discuter avec tom de s'il faut ou non disconnect le user kick des roles du chan
+        this.sse.pushEventMultipleUser(res.users.map(user => user.name),
+            {
+                type: 'DELETED_CHAN_USER',
+                data: {
+                    chanId,
+                    username: otherUserName
+                }
+            })
+        this.createAndNotifyClassicChanEvent(username, otherUserName, chanId, 'AUTHOR_KICKED_CONCERNED')
+    }
 
 	public async createAndNotifyClassicChanEvent(
 		author: string,
@@ -834,11 +821,14 @@ export class ChansService {
             this.sse.pushEvent(name,
                 {
                     type: "CREATED_CHAN_USER",
-                    data: this.formatChanUser({
-                        ...rest,
-                        name: username,
-                        statusVisibilityLevel: newUser.statusVisibilityLevel
-                    })
+                    data: {
+                        chanId,
+                        user: this.formatChanUser({
+                            ...rest,
+                            name: username,
+                            statusVisibilityLevel: newUser.statusVisibilityLevel
+                        })
+                    }
                 })
         })
 		setTimeout(

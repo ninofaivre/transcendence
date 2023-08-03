@@ -64,6 +64,11 @@ export class ChansController {
             deleteChanMessage: async ({ params }) => {
                 const res = await this.chansService.deleteChanMessageIfRightTo(username, params)
                 return isContractError(res) ? res : { status: 202, body: res }
+            },
+
+            kickUserFromChan: async ({ params }) => {
+                const res = await this.chansService.kickUserFromChanIfRightTo(username, params)
+                return isContractError(res) ? res : { status: 202, body: null }
             }
         })
     }
@@ -87,15 +92,5 @@ export class ChansController {
 	// 		elementId,
 	// 	)
 	// 	return { status: 200 as const, body }
-	// }
-
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.kickUserFromChan)
-	// async kickUserFromChan(
-	// 	@Req() req: EnrichedRequest,
-	// 	@TsRestRequest() { params: { chanId, username } }: RequestShapes["kickUserFromChan"],
-	// ) {
-	// 	await this.chansService.kickUserFromChan(req.user.username, username, chanId)
-	// 	return { status: 202 as const, body: null }
 	// }
 }

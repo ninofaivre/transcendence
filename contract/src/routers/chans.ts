@@ -336,18 +336,21 @@ export const chansContract = c.router(
                     [500, "EntityModifiedBetweenUpdateAndRead"])
 			},
 		},
-		// kickUserFromChan: {
-		// 	method: "DELETE",
-		// 	path: "/:chanId/:username",
-		// 	pathParams: z.strictObject({
-		// 		chanId: z.string().uuid(),
-		// 		username: zUserName,
-		// 	}),
-		// 	body: c.type<null>(),
-		// 	responses: {
-		// 		202: c.type<null>(),
-		// 	},
-		// },
+		kickUserFromChan: {
+			method: "DELETE",
+			path: "/:chanId/:username",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+				username: zUserName,
+			}),
+			body: c.type<null>(),
+			responses: {
+				202: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [403, "ChanPermissionTooLowOverUser"],
+                    [404, "NotFoundChan", "NotFoundChanEntity"])
+			},
+		},
 		// TODO
 		// getChanUser: {
 		//     method: "GET",
@@ -382,11 +385,17 @@ export type ChanEvent =
 	  }
 	| {
 			type: "CREATED_CHAN_USER"
-			data: z.infer<typeof zChanUser>
+			data: {
+                chanId: string,
+                user: z.infer<typeof zChanUser>
+            }
 	  }
 	| {
 			type: "DELETED_CHAN_USER"
-			data: z.infer<typeof zUserName>
+			data: {
+                chanId: string,
+                username: z.infer<typeof zUserName>
+            }
 	  }
 	| {
 			type: "UPDATED_CHAN_SELF_PERMS"

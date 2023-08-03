@@ -322,7 +322,7 @@ export class ChansService {
             chan.password = await hash(chan.password, 10)
         if (chan.title && await this.getChan({ title: chan.title }, { id: true }))
             return contractErrors.ChanAlreadyExist(chan.title)
-        const res = await this.prisma.chan.create({
+        const { id: chanId } = await this.prisma.chan.create({
             data: {
                 ...chan,
                 owner: { connect: { name: username } },
@@ -342,19 +342,27 @@ export class ChansService {
                     },
                 },
             },
-            select: this.getChansSelect(username),
+            select: { id: true },
         })
-        await this.prisma.role.update({
-            where: { chanId_name: { chanId: res.id, name: "ADMIN" } },
+        await Promise.all([this.prisma.role.update({
+            where: { chanId_name: { chanId, name: "ADMIN" } },
             data: {
+                users: { connect: { name: username } },
                 roles: {
                     connect: [
-                        { chanId_name: { chanId: res.id, name: "DEFAULT" } },
-                        { chanId_name: { chanId: res.id, name: "ADMIN" } },
+                        { chanId_name: { chanId, name: "DEFAULT" } },
+                        { chanId_name: { chanId, name: "ADMIN" } },
                     ]
                 },
             },
-        })
+        }),
+        this.prisma.role.update({
+            where: { chanId_name: { chanId, name: "DEFAULT" } },
+            data: { users: { connect: { name: username } } }
+        })])
+        const res = await this.getChan({ id: chanId }, this.getChansSelect(username))
+        if (!res)
+            return contractErrors.EntityModifiedBetweenCreationAndRead("Chan")
         return this.formatChan(res)
 	}
 
@@ -384,15 +392,14 @@ export class ChansService {
         return roles
             .filter(role => role.users.some(user => user.name === username))
             .filter(role => role.permissions.includes(perm))
-            .some(role => {
-                return role.roles
-                    .filter(el => el.users.some(user => user.name === otherUserName))
-                    .some(el => {
-                        if (role.users.every(user => user.name !== otherUserName))
-                            return true
-                        return (role.name === el.name)
-                    })
-            })
+            .some(role => role.roles
+                .filter(el => el.users.some(user => user.name === otherUserName))
+                .some(el => {
+                    if (role.users.every(user => user.name !== otherUserName))
+                        return true
+                    return (role.name === el.name)
+                })
+            )
     }
 
 	async deleteChan(username: string, chanId: string) {
@@ -525,7 +532,7 @@ export class ChansService {
 		const newMessage = await this.createChanMessage(username, chanId, content,
 			relatedTo, ats)
 		if (!newMessage || !newMessage.message)
-            return contractErrors.ContentModifiedBetweenCreationAndRead('ChanMessage')
+            return contractErrors.EntityModifiedBetweenCreationAndRead('ChanMessage')
         const { message } = newMessage
         chan.users.forEach(({ name }) => {
             this.sse.pushEvent(name, {
@@ -601,7 +608,7 @@ export class ChansService {
         const retypedUpdatedElement = updatedElement as RetypeChanElement<typeof updatedElement>
         const { message } = retypedUpdatedElement 
         if (!message)
-            return contractErrors.ContentModifiedBetweenUpdateAndRead('ChanMessage')
+            return contractErrors.EntityModifiedBetweenUpdateAndRead('ChanMessage')
         return { ...retypedUpdatedElement, message } as const
     }
 
@@ -678,7 +685,7 @@ export class ChansService {
         const retypedDeletedElement = deletedElement as RetypeChanElement<typeof deletedElement>
         const { event } = retypedDeletedElement
         if (!event?.deletedMessageChanDiscussionEvent)
-            return contractErrors.ContentModifiedBetweenUpdateAndRead('ChanMessage')
+            return contractErrors.EntityModifiedBetweenUpdateAndRead('ChanMessage')
         return { ...retypedDeletedElement, event } as const
     }
 
@@ -820,7 +827,7 @@ export class ChansService {
 
         const newUser = newChan.users.find(el => el.name === username)
         if (!newUser)
-            return contractErrors.ContentModifiedBetweenCreationAndRead('ChanUser')
+            return contractErrors.EntityModifiedBetweenCreationAndRead('ChanUser')
 
         newChan.users.filter(el => el.name !== username).forEach(el => {
             const { name, statusVisibilityLevel, ...rest } = el

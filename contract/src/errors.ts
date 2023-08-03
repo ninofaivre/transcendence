@@ -7,7 +7,7 @@ type Codes =
     | "NotFoundUser" | "NotFoundUserForValidToken" | "NotFoundChan"
     | "UserAlreadyExist" | "DmAlreadyExist" | "ChanUserAlreadyExist" | "ChanAlreadyExist"
     | "BlockedByUser" | "BlockedUser" | "ProximityLevelTooLow" | "OwnerCannotLeaveChan" | "ChanPermissionTooLow" | "ChanPermissionTooLowOverUser"
-    | "ContentModifiedBetweenCreationAndRead" | "ContentModifiedBetweenUpdateAndRead"
+    | "EntityModifiedBetweenCreationAndRead" | "EntityModifiedBetweenUpdateAndRead"
     | "ChanDoesntNeedPassword" | "ChanNeedPassword" | "ChanWrongPassword"
     | "NotFoundChanEntity"
     | "NotOwnedChanMessage"
@@ -128,22 +128,22 @@ export const contractErrors = {
     /**
      * @remarks error that should theoretically never happens, it exists mostly for type safety
      */
-    ContentModifiedBetweenCreationAndRead: (subject: 'ChanMessage' | 'DmMessage' | 'ChanUser') => ({
+    EntityModifiedBetweenCreationAndRead: (entityType: 'ChanMessage' | 'DmMessage' | 'ChanUser' | 'Chan') => ({
         status: 500,
         body: {
-            code: "ContentModifiedBetweenCreationAndRead",
-            message: `Content for subject ${subject} has beed modified between it's creation (with your parameters) and the read, making the server unable to return you the data you expect`
+            code: "EntityModifiedBetweenCreationAndRead",
+            message: `Entity ${entityType} has beed modified between it's creation (with your parameters) and the read, making the server unable to return expected data`
         }
     } as const),
 
     /**
      * @remarks error that should theoretically never happens, it exists mostly for type safety
      */
-    ContentModifiedBetweenUpdateAndRead: (subject: 'ChanMessage' | 'DmMessage') => ({
+    EntityModifiedBetweenUpdateAndRead: (entityType: 'ChanMessage' | 'DmMessage') => ({
         status: 500,
         body: {
-            code: "ContentModifiedBetweenUpdateAndRead",
-            message: `Content for subject ${subject} has beed modified between it's creation (with your parameters) and the read, making the server unable to return you the data you expect`
+            code: "EntityModifiedBetweenUpdateAndRead",
+            message: `Entity ${entityType} has beed modified between it's creation (with your parameters) and the read, making the server unable to return expected data`
         }
     } as const),
 

@@ -24,15 +24,26 @@
 		message_indexes.set(messages[idx], idx)
 	}
 
-	// Huh, will svelte update if messages is an argument shadowing the modules messages ? Probably not
-	function update_messages(messages: Message[], new_message: Message) {
+	function updateSomeMessage(to_update_id: string, new_message: string) {
 		const to_update_idx: number = $page.data.messages.findLastIndex(
 			(message: MessageOrEvent) => {
-				return message.id === new_message.id
+				return message.id === to_update_id
+			},
+		)
+		// We needed the index to operate directly on messages so that reactivity is triggered
+		;(messages[to_update_idx] as Message).content = new_message
+		return to_update_idx
+	}
+
+	function deleteSomeMessage(to_erase_id: string) {
+		const to_update_idx: number = $page.data.messages.findLastIndex(
+			(message: MessageOrEvent) => {
+				return message.id === to_erase_id
 			},
 		)
 		// We needed the index to operate directly on messages so that reactivity is triggered
 		;(messages[to_update_idx] as Message).isDeleted = true
+		return to_erase_id
 	}
 
 	let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
@@ -60,13 +71,7 @@
 			},
 		})
 		if (status === 202) {
-			const to_update_idx: number = $page.data.messages.findLastIndex(
-				(message: MessageOrEvent) => {
-					return message.id === elementId
-				},
-			)
-			// We needed the index to operate directly on messages so that reactivity is triggered
-			;(messages[to_update_idx] as Message).isDeleted = true
+			deleteSomeMessage(elementId)
 		} else {
 			console.error(
 				`Message deletion denied. Server returned code ${status}\n with message \"${
@@ -87,13 +92,7 @@
 			},
 		})
 		if (status === 200) {
-			const to_update_idx: number = $page.data.messages.findLastIndex(
-				(message: MessageOrEvent) => {
-					return message.id === elementId
-				},
-			)
-			// We needed the index to operate directly on messages so that reactivity is triggered
-			;(messages[to_update_idx] as Message).content = new_message
+			updateSomeMessage(elementId, new_message)
 		} else {
 			console.error(
 				`Server refused to edit message, returned code ${status}\n with message \"${
@@ -138,13 +137,7 @@
 			addListenerToEventSource($sse_store!, "UPDATED_DM_MESSAGE", (data) => {
 				console.log("Server message: Message was modified", data)
 				if (data.dmId === $page.data.dmId) {
-					const to_update_idx: number = $page.data.messages.findLastIndex(
-						(message: MessageOrEvent) => {
-							return message.id === data.message.id
-						},
-					)
-					// We needed the index to operate directly on messages so that reactivity is triggered
-					;(messages[to_update_idx] as Message).content = data.message.content
+					updateSomeMessage(data.message.id, data.message.content)
 				}
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_DM_STATUS", (data) => {

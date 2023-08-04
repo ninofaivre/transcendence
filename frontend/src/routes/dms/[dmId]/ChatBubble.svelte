@@ -88,28 +88,30 @@
 			</div>
 		</div>
 	</div>
-	{#if is_menu_open}
-		<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
-			<menu class="card text-token mx-1 px-1">
-				{#each menu_items as menu_item}
-					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button tabindex="0" on:click={menu_item.handler}>
-							{menu_item.label}
-						</button>
-					</li>
-				{/each}
-			</menu>
-		</div>
-	{:else}
-		<div
-			role="menu"
-			tabindex="0"
-			on:click={openMenu}
-			on:keypress={simpleKeypressHandlerFactory(["Enter"], openMenu)}
-			class="kebab self-center text-xl"
-		>
-			&#xFE19;
-		</div>
+	{#if is_sent}
+		{#if is_menu_open}
+			<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
+				<menu class="card text-token mx-1 px-1">
+					{#each menu_items as menu_item}
+						<li class="card my-1 px-2 hover:variant-filled-secondary">
+							<button tabindex="0" on:click={menu_item.handler}>
+								{menu_item.label}
+							</button>
+						</li>
+					{/each}
+				</menu>
+			</div>
+		{:else}
+			<div
+				role="menu"
+				tabindex="0"
+				on:click={openMenu}
+				on:keypress={simpleKeypressHandlerFactory(["Enter"], openMenu)}
+				class="kebab self-start text-xl"
+			>
+				&#xFE19;
+			</div>
+		{/if}
 	{/if}
 </div>
 
@@ -120,6 +122,11 @@
 
 	div:hover > div.kebab {
 		visibility: visible;
+	}
+
+	div.kebab:hover {
+		font-weight: 700;
+		cursor: pointer;
 	}
 
 	.message-row {

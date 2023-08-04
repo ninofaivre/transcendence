@@ -1,21 +1,12 @@
 <script lang="ts">
 	// DiscussionDisplay.svelte
 
-	console.log("Running DiscussionDisplay")
-
-	import type {
-		DeleteMessageFunction,
-		UpdateMessageFunction,
-		CreateMessageFunction,
-		MessageOrEvent,
-		Message,
-	} from "$types"
+	import type { CreateMessageFunction, MessageOrEvent } from "$types"
 
 	import ChatBubble from "./ChatBubble.svelte"
 	import { onMount } from "svelte"
 	import { client } from "$clients"
-	import { my_name, sse_store } from "$stores"
-	import { addListenerToEventSource } from "$lib/global"
+	import { my_name } from "$stores"
 
 	export let messages: MessageOrEvent[] = []
 	// export let new_message: [string, Promise<Response>]
@@ -99,27 +90,6 @@
 		observer.observe(canary)
 
 		_init = false
-
-		if ($sse_store) {
-			const destroyer = new Array(
-				addListenerToEventSource($sse_store, "CREATED_DM_ELEMENT", (data) => {
-					console.log("Server message: New message", data)
-					if (data?.dmId === currentDiscussionId) {
-						messages = [...messages, data.element]
-					}
-				}),
-
-				addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (data) => {
-					console.log("Server message: Message was modified", data)
-					if (data.dmId === currentDiscussionId) {
-						const { message } = data
-						const to_update = document.getElementById(message.id)
-						to_update!.innerHTML = message.content
-					}
-				}),
-			)
-			return () => destroyer.forEach((func: () => any) => func())
-		} else throw new Error("sse_store is empty ! Grrrr", $sse_store)
 	})
 
 	function bs_hash(str: string) {

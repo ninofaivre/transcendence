@@ -15,9 +15,25 @@
 	import { client } from "$clients"
 	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store } from "$stores"
+	import { message_indexes } from "$lib/indexes"
 
 	let messages: MessageOrEvent[]
 	$: messages = $page.data.messages
+
+	for (let idx in messages) {
+		message_indexes.set(messages[idx], idx)
+	}
+
+	// Huh, will svelte update if messages is an argument shadowing the modules messages ? Probably not
+	function update_messages(messages: Message[], new_message: Message) {
+		const to_update_idx: number = $page.data.messages.findLastIndex(
+			(message: MessageOrEvent) => {
+				return message.id === new_message.id
+			},
+		)
+		// We needed the index to operate directly on messages so that reactivity is triggered
+		;(messages[to_update_idx] as Message).isDeleted = true
+	}
 
 	let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
 	function messageSentHandler(e: CustomEvent<string>) {
@@ -46,7 +62,7 @@
 		if (status === 202) {
 			const to_update_idx: number = $page.data.messages.findLastIndex(
 				(message: MessageOrEvent) => {
-					return message.type == "message" && message.id === elementId
+					return message.id === elementId
 				},
 			)
 			// We needed the index to operate directly on messages so that reactivity is triggered
@@ -73,7 +89,7 @@
 		if (status === 200) {
 			const to_update_idx: number = $page.data.messages.findLastIndex(
 				(message: MessageOrEvent) => {
-					return message.type == "message" && message.id === elementId
+					return message.id === elementId
 				},
 			)
 			// We needed the index to operate directly on messages so that reactivity is triggered
@@ -109,17 +125,35 @@
 		})
 		resizeObserver.observe(header!)
 
-		const removeListener = addListenerToEventSource(
-			$sse_store!,
-			"UPDATED_DM_STATUS",
-			(data) => {
-				disabled = data.status === "DISABLED" ? true : false
-			},
-		)
+		const destroyer: (() => void)[] = new Array(
+			addListenerToEventSource($sse_store!, "CREATED_DM_ELEMENT", (data) => {
+				console.log("Server message: New message", data)
+				if (data.dmId === $page.data.dmId) {
+					messages = [...messages, data.element]
+					const len = messages.length
+					message_indexes.set(messages[len - 1], len - 1)
+				}
+			}),
 
+			addListenerToEventSource($sse_store!, "UPDATED_DM_MESSAGE", (data) => {
+				console.log("Server message: Message was modified", data)
+				if (data.dmId === $page.data.dmId) {
+					const to_update_idx: number = $page.data.messages.findLastIndex(
+						(message: MessageOrEvent) => {
+							return message.id === data.message.id
+						},
+					)
+					// We needed the index to operate directly on messages so that reactivity is triggered
+					;(messages[to_update_idx] as Message).content = data.message.content
+				}
+			}),
+			addListenerToEventSource($sse_store!, "UPDATED_DM_STATUS", (data) => {
+				disabled = data.status === "DISABLED" ? true : false
+			}),
+		)
 		return () => {
-			removeListener()
-			resizeObserver.unobserve(header as HTMLElement)
+			destroyer.forEach((func) => void func())
+			resizeObserver.unobserve(header as HTMLElement) // Is this necessary ?
 		}
 	})
 </script>

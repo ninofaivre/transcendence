@@ -13,7 +13,6 @@
 	const dispatch = createEventDispatcher()
 	let from_me = message.author === $my_name
 	let is_menu_open = false
-	let message_container: HTMLElement
 	let contenteditable = false
 	let openMenu = () => {
 		is_menu_open = true
@@ -75,7 +74,7 @@
 					<div class="spinner" out:blur={{ duration: 500 }} />
 				</div>
 			{/if}
-			<div id={message.id} bind:this={message_container} class="message-container">
+			<div class="message-container">
 				{#if !contenteditable}
 					{#if !message.isDeleted}
 						{message.content}

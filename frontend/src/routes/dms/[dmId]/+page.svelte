@@ -15,14 +15,14 @@
 	import { client } from "$clients"
 	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store } from "$stores"
-	import { message_indexes } from "$lib/indexes"
+	// import { message_indexes } from "$lib/indexes"
 
 	let messages: MessageOrEvent[]
 	$: messages = $page.data.messages
 
-	for (let idx in messages) {
-		message_indexes.set(messages[idx], idx)
-	}
+	// for (let idx in messages) {
+	// 	message_indexes.set(messages[idx], idx)
+	// }
 
 	function updateSomeMessage(to_update_id: string, new_message: string) {
 		const to_update_idx: number = $page.data.messages.findLastIndex(
@@ -130,7 +130,7 @@
 				if (data.dmId === $page.data.dmId) {
 					messages = [...messages, data.element]
 					const len = messages.length
-					message_indexes.set(messages[len - 1], len - 1)
+					// message_indexes.set(messages[len - 1], len - 1)
 				}
 			}),
 

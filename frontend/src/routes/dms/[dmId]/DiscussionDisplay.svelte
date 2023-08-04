@@ -128,6 +128,15 @@
 			)
 			return () => destroyer.forEach((func: () => any) => func())
 		} else throw new Error("sse_store is empty ! Grrrr", $sse_store)
+
+		function bs_hash(str: string) {
+			let sum = 0
+			for (let char of str) {
+				sum += char.charCodeAt(0) - 98
+			}
+			sum = sum % 70
+			return String(sum)
+		}
 	})
 </script>
 

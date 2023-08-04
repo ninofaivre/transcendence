@@ -120,16 +120,16 @@
 			)
 			return () => destroyer.forEach((func: () => any) => func())
 		} else throw new Error("sse_store is empty ! Grrrr", $sse_store)
-
-		function bs_hash(str: string) {
-			let sum = 0
-			for (let char of str) {
-				sum += char.charCodeAt(0) - 98
-			}
-			sum = sum % 70
-			return String(sum)
-		}
 	})
+
+	function bs_hash(str: string) {
+		let sum = 0
+		for (let char of str) {
+			sum += char.charCodeAt(0) - 98
+		}
+		sum = sum % 70
+		return String(sum)
+	}
 </script>
 
 <div bind:this={conversation_container} class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
@@ -137,7 +137,12 @@
 		<div bind:this={canary} />
 		{#each messages as message}
 			{#if message.type === "message"}
-				<ChatBubble {message} on:delete on:edit />
+				<ChatBubble
+					{message}
+					avatar_src="https://i.pravatar.cc/?img={bs_hash(message.author)}"
+					on:delete
+					on:edit
+				/>
 			{:else if message.type === "event"}
 				{#if message.eventType == "CREATED_FRIENDSHIP"}
 					<div class="text-center text-gray-500">

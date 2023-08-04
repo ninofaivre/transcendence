@@ -8,6 +8,7 @@
 	import { createEventDispatcher } from "svelte"
 
 	export let message: Message
+	export let avatar_src: string
 
 	const dispatch = createEventDispatcher()
 	let from_me = message.author === $my_name
@@ -56,7 +57,9 @@
 	class={`message-row ${from_me ? "space-x-2 space-x-reverse" : "space-x-2"}`}
 >
 	<div class="message-spacer" />
-	<Avatar src="https://i.pravatar.cc/?img=42" width="w-8 h-8" rounded="rounded-full" />
+	{#if !from_me}
+		<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" />
+	{/if}
 	<div
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}
 	>

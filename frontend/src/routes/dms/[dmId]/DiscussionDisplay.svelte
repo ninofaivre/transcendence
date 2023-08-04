@@ -114,15 +114,17 @@
 					on:edit
 				/>
 			{:else if message.type === "event"}
-				{#if message.eventType == "CREATED_FRIENDSHIP"}
-					<div class="text-center text-gray-500">
-						{`You are now friend with ${message.otherName}`}
-					</div>
-				{:else}
-					<div class="text-center text-gray-500">
-						{`${message.eventType}`}
-					</div>
-				{/if}
+				<div id={message.id}>
+					{#if message.eventType == "CREATED_FRIENDSHIP"}
+						<div class="text-center text-gray-500">
+							{`You are now friend with ${message.otherName}`}
+						</div>
+					{:else}
+						<div class="text-center text-gray-500">
+							{`${message.eventType}`}
+						</div>
+					{/if}
+				</div>
 			{/if}
 		{/each}
 	</div>

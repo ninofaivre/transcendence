@@ -52,6 +52,7 @@
 </script>
 
 <div
+	id={message.id}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
 	class={`message-row ${from_me ? "space-x-2 space-x-reverse" : "space-x-2"}`}
 >

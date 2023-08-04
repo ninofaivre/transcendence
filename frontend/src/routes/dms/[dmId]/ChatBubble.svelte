@@ -11,11 +11,9 @@
 	export let deleteMessageFunc: DeleteMessageFunction
 	export let updateMessageFunc: UpdateMessageFunction
 
-	let from = message.author
 	let from_me = message.author === $my_name
 	let is_menu_open = false
 	let message_container: HTMLElement
-	let message_row: HTMLDivElement
 	let contenteditable = false
 	let openMenu = () => {
 		is_menu_open = true
@@ -27,6 +25,14 @@
 		closeMenu()
 		contenteditable = true
 	}
+	let menu_items = from_me
+		? [
+				{ label: "Edit", handler: editHandler },
+				{ label: "Delete", handler: deleteHandler },
+				{ label: "Reply", handler: replyHandler },
+		  ]
+		: [{ label: "Reply", handler: replyHandler }]
+
 	async function replyHandler() {}
 
 	$: is_sent = message?.id !== ""
@@ -37,7 +43,7 @@
 		const { status, body } = await deleteMessageFunc({
 			body: null,
 			params: {
-				elementId: message_row.id,
+				elementId: message_container.id,
 				chanId: $page.params.chanId,
 				dmId: $page.params.dmId,
 			},
@@ -60,14 +66,14 @@
 		const { status, body } = await updateMessageFunc({
 			body: { content: e.detail },
 			params: {
-				elementId: message_row.id,
+				elementId: message_container.id,
 				chanId: $page.params.chanId,
 				dmId: $page.params.dmId,
 			},
 		})
 		is_sent = true
 		if (status === 200) {
-			message = body
+			message_container.innerHTML = body.content
 		} else {
 			console.error(
 				`Server refused to edit message, returned code ${status}\n with message \"${
@@ -79,8 +85,6 @@
 </script>
 
 <div
-	id={message.id}
-	bind:this={message_row}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
 	class={`message-row ${from_me ? "space-x-2 space-x-reverse" : "space-x-2"}`}
 >
@@ -90,7 +94,7 @@
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}
 	>
 		{#if !from_me}
-			<div class="from-field font-medium">{from}</div>
+			<div class="from-field font-medium">{message.author}</div>
 		{/if}
 		<div class="grid grid-cols-[auto_1fr]">
 			{#if !is_sent}
@@ -102,15 +106,13 @@
 				</div>
 			{/if}
 			{#if !contenteditable}
-				{#if !message.isDeleted}
-					<div bind:this={message_container} class="message-container">
+				<div id={message.id} bind:this={message_container} class="message-container">
+					{#if !message.isDeleted}
 						{message.content}
-					</div>
-				{:else}
-					<div bind:this={message_container} class="message-container">
+					{:else}
 						<i>This message has been deleted</i>
-					</div>
-				{/if}
+					{/if}
+				</div>
 			{:else}
 				<ChatBox on:message_sent={updateMessage} />
 			{/if}
@@ -119,18 +121,13 @@
 	{#if is_menu_open}
 		<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
 			<menu class="card text-token mx-1 px-1">
-				{#if from_me}
+				{#each menu_items as menu_item}
 					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button tabindex="0" on:click={editHandler}> Edit </button>
+						<button tabindex="0" on:click={menu_item.handler}>
+							{menu_item.label}
+						</button>
 					</li>
-					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button tabindex="0" on:click={deleteHandler}> Delete </button>
-					</li>
-				{:else}
-					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button tabindex="0" on:click={replyHandler}> Reply </button>
-					</li>
-				{/if}
+				{/each}
 			</menu>
 		</div>
 	{:else}

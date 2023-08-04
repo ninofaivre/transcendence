@@ -115,14 +115,7 @@
 					if (data.dmId === currentDiscussionId) {
 						const { message } = data
 						const to_update = document.getElementById(message.id)
-						if (to_update && message.type === "message") {
-							new ChatBubble({
-								target: to_update.parentElement!,
-								anchor: to_update,
-								props: { message, updateMessageFunc, deleteMessageFunc },
-							})
-							to_update.remove()
-						}
+						to_update!.innerHTML = message.content
 					}
 				}),
 			)

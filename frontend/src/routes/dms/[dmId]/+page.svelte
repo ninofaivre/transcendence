@@ -49,7 +49,7 @@
 					return message.type == "message" && message.id === elementId
 				},
 			)
-			console.log(to_update_idx)
+			// We needed the index to operate directly on messages so that reactivity is triggered
 			;(messages[to_update_idx] as Message).isDeleted = true
 		} else {
 			console.error(
@@ -76,8 +76,8 @@
 					return message.type == "message" && message.id === elementId
 				},
 			)
+			// We needed the index to operate directly on messages so that reactivity is triggered
 			;(messages[to_update_idx] as Message).content = new_message
-			console.log((messages[to_update_idx] as Message).content)
 		} else {
 			console.error(
 				`Server refused to edit message, returned code ${status}\n with message \"${

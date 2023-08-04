@@ -89,6 +89,7 @@
 	/>
 	<section id="input-row" class="p-4">
 		<ChatBox
+			outline
 			on:message_sent={messageSentHandler}
 			maxRows={20}
 			{disabled}

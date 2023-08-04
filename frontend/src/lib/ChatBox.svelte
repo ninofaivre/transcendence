@@ -3,7 +3,7 @@
 
 	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
 
-	export let no_outline = false
+	export let outline = false
 	export let minRows = 1
 	export let maxRows: number | undefined = undefined
 	export let line_height = 1.2
@@ -12,9 +12,9 @@
 	export let disabled_placeholder = "The sending of messages is disabled for the moment"
 	$: placeholder = disabled ? disabled_placeholder : placeholder
 
-	let focus_within_outline = no_outline
-		? ""
-		: "focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-[rgba(var(--color-primary-600))] "
+	let focus_within_outline = outline
+		? "focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-[rgba(var(--color-primary-600))] "
+		: ""
 	const dispatch = createEventDispatcher()
 	let value: string = ""
 	let textarea: HTMLTextAreaElement

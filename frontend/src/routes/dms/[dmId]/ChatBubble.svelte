@@ -1,16 +1,15 @@
 <script lang="ts">
 	import { Avatar } from "@skeletonlabs/skeleton"
 	import { blur, slide } from "svelte/transition"
-	import type { Message, DeleteMessageFunction, UpdateMessageFunction } from "$types"
+	import type { Message } from "$types"
 	import { my_name } from "$stores"
-	import { page } from "$app/stores"
 	import ChatBox from "$lib/ChatBox.svelte"
 	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
+	import { createEventDispatcher } from "svelte"
 
 	export let message: Message
-	export let deleteMessageFunc: DeleteMessageFunction
-	export let updateMessageFunc: UpdateMessageFunction
 
+	const dispatch = createEventDispatcher()
 	let from_me = message.author === $my_name
 	let is_menu_open = false
 	let message_container: HTMLElement
@@ -28,7 +27,7 @@
 	let menu_items = from_me
 		? [
 				{ label: "Edit", handler: editHandler },
-				{ label: "Delete", handler: deleteHandler },
+				{ label: "Delete", handler: forwardAsDeletionEvent },
 				{ label: "Reply", handler: replyHandler },
 		  ]
 		: [{ label: "Reply", handler: replyHandler }]
@@ -37,50 +36,18 @@
 
 	$: is_sent = message?.id !== ""
 
-	async function deleteHandler() {
-		is_menu_open = false
+	async function forwardAsEditEvent(e: CustomEvent<string>) {
+		contenteditable = false
+		closeMenu()
 		is_sent = false
-		const { status, body } = await deleteMessageFunc({
-			body: null,
-			params: {
-				elementId: message_container.id,
-				chanId: $page.params.chanId,
-				dmId: $page.params.dmId,
-			},
-		})
-		is_sent = true
-		if (status === 202) {
-			message_container.innerHTML = "<i>This message has been deleted</i>"
-		} else {
-			console.error(
-				`Message deletion denied. Server returned code ${status}\n with message \"${
-					(body as any)?.message
-				}\"`,
-			)
-		}
+		dispatch("edit", { id: message.id, new_message: e.detail })
 	}
 
-	async function updateMessage(e: CustomEvent<string>) {
+	async function forwardAsDeletionEvent() {
 		contenteditable = false
+		closeMenu()
 		is_sent = false
-		const { status, body } = await updateMessageFunc({
-			body: { content: e.detail },
-			params: {
-				elementId: message_container.id,
-				chanId: $page.params.chanId,
-				dmId: $page.params.dmId,
-			},
-		})
-		is_sent = true
-		if (status === 200) {
-			message_container.innerHTML = body.content
-		} else {
-			console.error(
-				`Server refused to edit message, returned code ${status}\n with message \"${
-					(body as any)?.message
-				}\"`,
-			)
-		}
+		dispatch("delete", { id: message.id })
 	}
 </script>
 
@@ -113,7 +80,7 @@
 						<i>This message has been deleted</i>
 					{/if}
 				{:else}
-					<ChatBox on:message_sent={updateMessage} />
+					<ChatBox on:message_sent={forwardAsEditEvent} />
 				{/if}
 			</div>
 		</div>

@@ -8,6 +8,7 @@
 		UpdateMessageFunction,
 		CreateMessageFunction,
 		MessageOrEvent,
+		Message,
 	} from "$types"
 
 	import ChatBubble from "./ChatBubble.svelte"
@@ -20,8 +21,6 @@
 	// export let new_message: [string, Promise<Response>]
 	export let new_message: [string, ReturnType<CreateMessageFunction>]
 	export let currentDiscussionId: string
-	export let deleteMessageFunc: DeleteMessageFunction
-	export let updateMessageFunc: UpdateMessageFunction
 
 	let observer: IntersectionObserver
 	const threshold = 0.5
@@ -138,7 +137,7 @@
 		<div bind:this={canary} />
 		{#each messages as message}
 			{#if message.type === "message"}
-				<ChatBubble {message} {deleteMessageFunc} {updateMessageFunc} />
+				<ChatBubble {message} on:delete on:edit />
 			{:else if message.type === "event"}
 				{#if message.eventType == "CREATED_FRIENDSHIP"}
 					<div class="text-center text-gray-500">

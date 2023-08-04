@@ -5,6 +5,7 @@
 
 	/* types */
 	import type { PageData } from "./$types"
+	import type { Message, MessageOrEvent } from "$types"
 
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"
@@ -15,13 +16,9 @@
 	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store } from "$stores"
 
-	// let new_message: [string, Promise<ClientInferResponses<typeof contract.chans.createChan>>]
-	// let new_message: [string, Promise<Response>]
-	// let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
-	// function messageSentHandler(e: CustomEvent<typeof new_message>) {
-	// 	console.log("You sent a message:", e.detail[0])
-	// 	new_message = e.detail
-	// }
+	let messages: MessageOrEvent[]
+	$: messages = $page.data.messages
+
 	let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
 	function messageSentHandler(e: CustomEvent<string>) {
 		console.log("You sent a message:", e.detail)
@@ -36,6 +33,58 @@
 				},
 			}),
 		]
+	}
+
+	async function deletionHandler({ detail: { id: elementId } }: CustomEvent<{ id: string }>) {
+		const { status, body } = await client.dms.deleteDmMessage({
+			body: null,
+			params: {
+				elementId,
+				dmId: $page.params.dmId,
+			},
+		})
+		if (status === 202) {
+			const to_update_idx: number = $page.data.messages.findLastIndex(
+				(message: MessageOrEvent) => {
+					return message.type == "message" && message.id === elementId
+				},
+			)
+			console.log(to_update_idx)
+			;(messages[to_update_idx] as Message).isDeleted = true
+		} else {
+			console.error(
+				`Message deletion denied. Server returned code ${status}\n with message \"${
+					(body as any)?.message
+				}\"`,
+			)
+		}
+	}
+
+	async function editHandler({
+		detail: { id: elementId, new_message },
+	}: CustomEvent<{ id: string; new_message: string }>) {
+		const { status, body } = await client.dms.updateDmMessage({
+			body: { content: new_message },
+			params: {
+				elementId,
+				dmId: $page.params.dmId,
+			},
+		})
+		if (status === 200) {
+			const to_update_idx: number = $page.data.messages.findLastIndex(
+				(message: MessageOrEvent) => {
+					return message.type == "message" && message.id === elementId
+				},
+			)
+			;(messages[to_update_idx] as Message).content = new_message
+			console.log((messages[to_update_idx] as Message).content)
+		} else {
+			console.error(
+				`Server refused to edit message, returned code ${status}\n with message \"${
+					(body as any)?.message
+				}\"`,
+			)
+		}
 	}
 
 	// Get our discussions
@@ -81,11 +130,11 @@
 	<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
 	<!-- Messages -->
 	<DiscussionDisplay
-		messages={$page.data.messages}
+		{messages}
 		{new_message}
 		currentDiscussionId={$page.params.dmId}
-		deleteMessageFunc={client.dms.deleteDmMessage}
-		updateMessageFunc={client.dms.updateDmMessage}
+		on:delete={deletionHandler}
+		on:edit={editHandler}
 	/>
 	<section id="input-row" class="p-4">
 		<ChatBox

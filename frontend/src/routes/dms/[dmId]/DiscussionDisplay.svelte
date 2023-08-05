@@ -7,11 +7,12 @@
 	import { onMount } from "svelte"
 	import { client } from "$clients"
 	import { my_name } from "$stores"
+	import { createEventDispatcher } from "svelte"
 
 	export let messages: MessageOrEvent[] = []
 	// export let new_message: [string, Promise<Response>]
 	export let new_message: [string, ReturnType<CreateMessageFunction>]
-	export let currentDiscussionId: string
+	export let sendLoadEvents: boolean
 
 	let observer: IntersectionObserver
 	const threshold = 0.5
@@ -19,6 +20,7 @@
 	const loading_greediness = 20
 	let canary: HTMLDivElement
 	let _init: boolean = true
+	const dispatch = createEventDispatcher()
 
 	function handleOwnMessage(_new_message: typeof new_message) {
 		if (_init) return
@@ -53,23 +55,12 @@
 
 	async function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
 		if (_init) return
-		console.log("intersectionHandler has been called", entry)
-		const oldest_message = canary?.nextElementSibling
-		const start = oldest_message?.getAttribute("id")
-		if (start && entry.isIntersecting) {
-			const { status, body } = await client.dms.getDmElements({
-				params: { dmId: currentDiscussionId.toString() },
-				query: { nElements: loading_greediness, cursor: start },
-			})
-			if (status == 200) {
-				if (body.length > 0) {
-					messages = [...body, ...messages]
-					canary.nextElementSibling?.scrollIntoView()
-				} else {
-					observer.unobserve(canary)
-				}
-			} else {
-				console.error("Couldn't load previous messages. Request returned:", status)
+		if (sendLoadEvents) {
+			console.log("intersectionHandler has been called", entry)
+			const oldest_message = canary?.nextElementSibling
+			const cursor = oldest_message?.getAttribute("id")
+			if (cursor && entry.isIntersecting) {
+				dispatch("loadprevious", { loading_greediness, cursor, canary })
 			}
 		}
 	}
@@ -99,6 +90,10 @@
 		}
 		sum = sum % 70
 		return String(sum)
+	}
+
+	$: {
+		if (sendLoadEvents == false) observer.unobserve(canary)
 	}
 </script>
 

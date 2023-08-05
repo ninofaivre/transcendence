@@ -19,6 +19,7 @@
 
 	let messages: MessageOrEvent[]
 	$: messages = $page.data.messages
+	let sendLoadEvents: boolean = true
 
 	// for (let idx in messages) {
 	// 	message_indexes.set(messages[idx], idx)
@@ -30,6 +31,7 @@
 				return message.id === to_update_id
 			},
 		)
+		console.log(to_update_idx)
 		// We needed the index to operate directly on messages so that reactivity is triggered
 		;(messages[to_update_idx] as Message).content = new_message
 		return to_update_idx
@@ -92,6 +94,7 @@
 			},
 		})
 		if (status === 200) {
+			console.log(elementId)
 			updateSomeMessage(elementId, new_message)
 		} else {
 			console.error(
@@ -99,6 +102,25 @@
 					(body as any)?.message
 				}\"`,
 			)
+		}
+	}
+
+	async function loadPreviousMessages({
+		detail: { loading_greediness, cursor, canary },
+	}: CustomEvent<{ loading_greediness: number; cursor: string; canary: HTMLElement }>) {
+		const { status, body } = await client.dms.getDmElements({
+			params: { dmId: $page.params.dmId },
+			query: { nElements: loading_greediness, cursor },
+		})
+		if (status == 200) {
+			if (body.length > 0) {
+				messages = [...body, ...messages]
+				canary.nextElementSibling?.scrollIntoView()
+			} else {
+				sendLoadEvents = false
+			}
+		} else {
+			console.error("Couldn't load previous messages. Request returned:", status)
 		}
 	}
 
@@ -157,11 +179,12 @@
 	<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
 	<!-- Messages -->
 	<DiscussionDisplay
-		bind:messages
+		{messages}
 		{new_message}
-		currentDiscussionId={$page.params.dmId}
+		{sendLoadEvents}
 		on:delete={deletionHandler}
 		on:edit={editHandler}
+		on:loadprevious={loadPreviousMessages}
 	/>
 	<section id="input-row" class="p-4">
 		<ChatBox

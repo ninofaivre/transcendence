@@ -65,6 +65,17 @@ export class ChansService {
                 name: true,
             }
         },
+        mutedUsers: {
+            where: {
+                mutedUserName: username,
+                OR: [
+                    { untilDate: { gte: new Date() } },
+                    // TODO the line bellow may be useless, need to test it
+                    { untilDate: null }
+                ]
+            },
+            select: { id: true, untilDate: true }
+        },
 		...this.getDoesUserHasPermOverUserSelect(username, {})
 	} satisfies Prisma.ChanSelect)
 
@@ -84,15 +95,17 @@ export class ChansService {
             take: 1,
         },
         ownerName: true,
-        ...(perm === 'SEND_MESSAGE'
-            ? {
-                mutedUsers: {
-                    where: { mutedUserName: username },
-                    take: 1,
-                    select: { id: true, untilDate: true }
-                }
-            }
-            : {})   
+        mutedUsers: {
+            where: {
+                mutedUserName: username,
+                OR: [
+                    { untilDate: { gte: new Date() } },
+                    // TODO the line bellow may be useless, need to test it
+                    { untilDate: null }
+                ]
+            },
+            select: { id: true, untilDate: true }
+        }
     } satisfies Prisma.ChanSelect)
 
     public getDoesUserHasPermOverUserSelect = (
@@ -174,20 +187,28 @@ export class ChansService {
             myPermissionOver: this.getPermOverUserInChan(username, user.name, permPayload)
         } as const)
 
-	private formatChan(username: string, chan: ChanPayload) {
-		const { roles, users, ...rest } = chan
-        const selfPerms = [...new Set(roles
+    private isSelfPerm = (perm: PermissionList)
+    : perm is z.infer<typeof zSelfPermissionList> => !this.isPermOver(perm)
+
+    private getSelfPerm(
+        username: string,
+        { ownerName, roles, mutedUsers }: DoesUserHasSelfPermPayload
+    ) {
+        if (username === ownerName)
+            return zSelfPermissionList.options
+        return [...new Set(roles
             .filter(role => role.users.some(user => user.name === username))
-            .flatMap(el => el.permissions
-                .filter((el): el is z.infer<typeof zSelfPermissionList> =>
-                    // may perform better, but do we really care ?
-                    // (zSelfPermissionList.options as string[]).includes(el)
-                    zSelfPermissionList.safeParse(el).success)
-        ))]
+            .flatMap(role => role.permissions)
+            .filter(this.isSelfPerm))]
+            .filter(perm => !mutedUsers?.length || perm !== 'SEND_MESSAGE')
+    }
+
+	private formatChan(username: string, chan: ChanPayload) {
+		const { roles, users, mutedUsers, ...rest } = chan
 		return {
             ...rest,
-            selfPerms,
-            users: users.map(user => 
+            selfPerms: this.getSelfPerm(username, chan),
+            users: users.map(user =>
                 this.formatChanUserForUser(username, user, chan),
             )
 		}
@@ -369,19 +390,12 @@ export class ChansService {
         return this.formatChan(username, res)
 	}
 
-    public async doesUserHasSelfPermInChan(
+    public doesUserHasSelfPermInChan = (
         username: string,
         perm: z.infer<typeof zSelfPermissionList>,
-        { ownerName, roles, mutedUsers }: DoesUserHasSelfPermPayload
-    ) {
-        if (perm === 'SEND_MESSAGE' && mutedUsers?.length
-            && !(await this.removeMutedIfUntilDateReached(mutedUsers[0]))) {
-            return false 
-        }
-        return !!(username === ownerName 
-            || roles.some(el => el.users.map(el => el.name).includes(username)
-                && el.permissions.includes(perm)))
-    }
+        permPayload : DoesUserHasSelfPermPayload
+    ) =>
+        this.getSelfPerm(username, permPayload).includes(perm)
 
     private isPermOver = (perm: PermissionList)
     : perm is z.infer<typeof zPermissionOverList> =>
@@ -487,14 +501,6 @@ export class ChansService {
             },
         })).discussionElement
         return element as (RetypeChanElement<Exclude<typeof element, null>> | null)
-	}
-
-	public async removeMutedIfUntilDateReached(state: { id: string; untilDate: Date | null }) {
-		if (!state.untilDate || new Date() < state.untilDate)
-            return false
-		await this.prisma.mutedUserChan.delete({ where: { id: state.id },
-            select: { id: true } })
-		return true
 	}
 
     getAtsFromChanMessageContent(chan: {

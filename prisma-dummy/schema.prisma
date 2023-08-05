@@ -57,12 +57,6 @@ enum PermissionList {
   DESTROY
 }
 
-enum RoleApplyingType {
-  NONE
-  ROLES
-  ROLES_AND_SELF
-}
-
 model Role {
   id String @id @default(uuid())
 

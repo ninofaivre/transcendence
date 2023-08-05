@@ -5,6 +5,7 @@
 
 	/* types */
 	import type { PageData } from "./$types"
+	import type { Message, MessageOrEvent } from "$types"
 
 	/* Components */
 	import DiscussionDisplay from "./DiscussionDisplay.svelte"
@@ -14,14 +15,37 @@
 	import { client } from "$clients"
 	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store } from "$stores"
+	// import { message_indexes } from "$lib/indexes"
 
-	// let new_message: [string, Promise<ClientInferResponses<typeof contract.chans.createChan>>]
-	// let new_message: [string, Promise<Response>]
-	// let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
-	// function messageSentHandler(e: CustomEvent<typeof new_message>) {
-	// 	console.log("You sent a message:", e.detail[0])
-	// 	new_message = e.detail
+	let messages: MessageOrEvent[]
+	$: messages = $page.data.messages
+
+	// for (let idx in messages) {
+	// 	message_indexes.set(messages[idx], idx)
 	// }
+
+	function updateSomeMessage(to_update_id: string, new_message: string) {
+		const to_update_idx: number = $page.data.messages.findLastIndex(
+			(message: MessageOrEvent) => {
+				return message.id === to_update_id
+			},
+		)
+		// We needed the index to operate directly on messages so that reactivity is triggered
+		;(messages[to_update_idx] as Message).content = new_message
+		return to_update_idx
+	}
+
+	function deleteSomeMessage(to_erase_id: string) {
+		const to_update_idx: number = $page.data.messages.findLastIndex(
+			(message: MessageOrEvent) => {
+				return message.id === to_erase_id
+			},
+		)
+		// We needed the index to operate directly on messages so that reactivity is triggered
+		;(messages[to_update_idx] as Message).isDeleted = true
+		return to_erase_id
+	}
+
 	let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
 	function messageSentHandler(e: CustomEvent<string>) {
 		console.log("You sent a message:", e.detail)
@@ -36,6 +60,46 @@
 				},
 			}),
 		]
+	}
+
+	async function deletionHandler({ detail: { id: elementId } }: CustomEvent<{ id: string }>) {
+		const { status, body } = await client.dms.deleteDmMessage({
+			body: null,
+			params: {
+				elementId,
+				dmId: $page.params.dmId,
+			},
+		})
+		if (status === 202) {
+			deleteSomeMessage(elementId)
+		} else {
+			console.error(
+				`Message deletion denied. Server returned code ${status}\n with message \"${
+					(body as any)?.message
+				}\"`,
+			)
+		}
+	}
+
+	async function editHandler({
+		detail: { id: elementId, new_message },
+	}: CustomEvent<{ id: string; new_message: string }>) {
+		const { status, body } = await client.dms.updateDmMessage({
+			body: { content: new_message },
+			params: {
+				elementId,
+				dmId: $page.params.dmId,
+			},
+		})
+		if (status === 200) {
+			updateSomeMessage(elementId, new_message)
+		} else {
+			console.error(
+				`Server refused to edit message, returned code ${status}\n with message \"${
+					(body as any)?.message
+				}\"`,
+			)
+		}
 	}
 
 	// Get our discussions
@@ -60,17 +124,29 @@
 		})
 		resizeObserver.observe(header!)
 
-		const removeListener = addListenerToEventSource(
-			$sse_store!,
-			"UPDATED_DM_STATUS",
-			(data) => {
-				disabled = data.status === "DISABLED" ? true : false
-			},
-		)
+		const destroyer: (() => void)[] = new Array(
+			addListenerToEventSource($sse_store!, "CREATED_DM_ELEMENT", (data) => {
+				console.log("Server message: New message", data)
+				if (data.dmId === $page.data.dmId) {
+					messages = [...messages, data.element]
+					const len = messages.length
+					// message_indexes.set(messages[len - 1], len - 1)
+				}
+			}),
 
+			addListenerToEventSource($sse_store!, "UPDATED_DM_MESSAGE", (data) => {
+				console.log("Server message: Message was modified", data)
+				if (data.dmId === $page.data.dmId) {
+					updateSomeMessage(data.message.id, data.message.content)
+				}
+			}),
+			addListenerToEventSource($sse_store!, "UPDATED_DM_STATUS", (data) => {
+				disabled = data.status === "DISABLED" ? true : false
+			}),
+		)
 		return () => {
-			removeListener()
-			resizeObserver.unobserve(header as HTMLElement)
+			destroyer.forEach((func) => void func())
+			resizeObserver.unobserve(header as HTMLElement) // Is this necessary ?
 		}
 	})
 </script>
@@ -81,14 +157,15 @@
 	<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
 	<!-- Messages -->
 	<DiscussionDisplay
-		messages={$page.data.messages}
+		{messages}
 		{new_message}
 		currentDiscussionId={$page.params.dmId}
-		deleteMessageFunc={client.dms.deleteDmMessage}
-		updateMessageFunc={client.dms.updateDmMessage}
+		on:delete={deletionHandler}
+		on:edit={editHandler}
 	/>
 	<section id="input-row" class="p-4">
 		<ChatBox
+			outline
 			on:message_sent={messageSentHandler}
 			maxRows={20}
 			{disabled}

@@ -3,6 +3,7 @@
 
 	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
 
+	export let outline = false
 	export let minRows = 1
 	export let maxRows: number | undefined = undefined
 	export let line_height = 1.2
@@ -11,9 +12,13 @@
 	export let disabled_placeholder = "The sending of messages is disabled for the moment"
 	$: placeholder = disabled ? disabled_placeholder : placeholder
 
+	let focus_within_outline = outline
+		? "focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-[rgba(var(--color-primary-600))] "
+		: ""
 	const dispatch = createEventDispatcher()
 	let value: string = ""
 	let textarea: HTMLTextAreaElement
+	// let chatbox: HTMLDivElement
 
 	async function sendMessage() {
 		value = value.trim()
@@ -36,11 +41,14 @@
 	$: minHeight = `${1 + minRows * line_height}em`
 	$: maxHeight = maxRows ? `${1 + maxRows * line_height}em` : `auto`
 
-	onMount(() => textarea.focus())
+	onMount(() => {
+		// if (no_outline) chatbox.style.setProperty("--outline", "none")
+		textarea.focus()
+	})
 </script>
 
-<div id="grid" class="grid min-w-[50vw] grid-cols-[1fr_auto]">
-	<div id="container">
+<div class="custom-radius grid min-w-[50vw] grid-cols-[1fr_auto] {focus_within_outline}">
+	<div class="box">
 		<pre
 			aria-hidden="true"
 			id="pre"
@@ -61,19 +69,19 @@
 </div>
 
 <style>
-	#grid {
+	.custom-radius {
 		border-top-right-radius: 10px;
 		border-bottom-right-radius: 10px;
 		border-top-left-radius: 6px;
 		border-bottom-left-radius: 6px;
+		/* --outline: rgba(var(--color-primary-600)) solid 2px; */
 	}
 
 	/* That var comes from the skeleton theme imported above*/
-	#grid:focus-within {
-		/* box-shadow: 0px 0px 0px 1px rgba(var(--color-primary-500)); */
-		outline: rgba(var(--color-primary-600)) solid 2px;
-		outline-offset: 5px;
-	}
+	/* .custom-radius:focus-within { */
+	/* 	outline: var(--outline); */
+	/* 	outline-offset: 5px; */
+	/* } */
 
 	button {
 		border-top-right-radius: 10px;
@@ -81,7 +89,7 @@
 		padding: 0px 5px;
 	}
 
-	#container {
+	.box {
 		position: relative;
 	}
 

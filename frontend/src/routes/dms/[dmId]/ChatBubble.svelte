@@ -1,21 +1,18 @@
 <script lang="ts">
 	import { Avatar } from "@skeletonlabs/skeleton"
 	import { blur, slide } from "svelte/transition"
-	import type { Message, DeleteMessageFunction, UpdateMessageFunction } from "$types"
+	import type { Message } from "$types"
 	import { my_name } from "$stores"
-	import { page } from "$app/stores"
 	import ChatBox from "$lib/ChatBox.svelte"
 	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
+	import { createEventDispatcher } from "svelte"
 
 	export let message: Message
-	export let deleteMessageFunc: DeleteMessageFunction
-	export let updateMessageFunc: UpdateMessageFunction
+	export let avatar_src: string
 
-	let from = message.author
+	const dispatch = createEventDispatcher()
 	let from_me = message.author === $my_name
 	let is_menu_open = false
-	let message_container: HTMLElement
-	let message_row: HTMLDivElement
 	let contenteditable = false
 	let openMenu = () => {
 		is_menu_open = true
@@ -27,70 +24,47 @@
 		closeMenu()
 		contenteditable = true
 	}
+	let menu_items = from_me
+		? [
+				{ label: "Edit", handler: editHandler },
+				{ label: "Delete", handler: forwardAsDeletionEvent },
+				{ label: "Reply", handler: replyHandler },
+		  ]
+		: [{ label: "Reply", handler: replyHandler }]
+
 	async function replyHandler() {}
 
 	$: is_sent = message?.id !== ""
 
-	async function deleteHandler() {
-		is_menu_open = false
+	async function forwardAsEditEvent(e: CustomEvent<string>) {
+		contenteditable = false
+		closeMenu()
 		is_sent = false
-		const { status, body } = await deleteMessageFunc({
-			body: null,
-			params: {
-				elementId: message_row.id,
-				chanId: $page.params.chanId,
-				dmId: $page.params.dmId,
-			},
-		})
-		is_sent = true
-		if (status === 202) {
-			message_container.innerHTML = "<i>This message has been deleted</i>"
-		} else {
-			console.error(
-				`Message deletion denied. Server returned code ${status}\n with message \"${
-					(body as any)?.message
-				}\"`,
-			)
-		}
+		dispatch("edit", { id: message.id, new_message: e.detail })
 	}
 
-	async function updateMessage(e: CustomEvent<string>) {
+	async function forwardAsDeletionEvent() {
 		contenteditable = false
+		closeMenu()
 		is_sent = false
-		const { status, body } = await updateMessageFunc({
-			body: { content: e.detail },
-			params: {
-				elementId: message_row.id,
-				chanId: $page.params.chanId,
-				dmId: $page.params.dmId,
-			},
-		})
-		is_sent = true
-		if (status === 200) {
-			message = body
-		} else {
-			console.error(
-				`Server refused to edit message, returned code ${status}\n with message \"${
-					(body as any)?.message
-				}\"`,
-			)
-		}
+		dispatch("delete", { id: message.id })
 	}
 </script>
 
 <div
 	id={message.id}
-	bind:this={message_row}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
 	class={`message-row ${from_me ? "space-x-2 space-x-reverse" : "space-x-2"}`}
 >
 	<div class="message-spacer" />
-	<Avatar src="https://i.pravatar.cc/?img=42" width="w-8 h-8" rounded="rounded-full" />
+	{#if !from_me}
+		<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" />
+	{/if}
 	<div
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}
 	>
 		{#if !from_me}
-			<div class="from-field font-medium">{from}</div>
+			<div class="from-field font-medium">{message.author}</div>
 		{/if}
 		<div class="grid grid-cols-[auto_1fr]">
 			{#if !is_sent}
@@ -101,48 +75,43 @@
 					<div class="spinner" out:blur={{ duration: 500 }} />
 				</div>
 			{/if}
-			{#if !contenteditable}
-				{#if !message.isDeleted}
-					<div bind:this={message_container} class="message-container">
+			<div class="message-container">
+				{#if !contenteditable}
+					{#if !message.isDeleted}
 						{message.content}
-					</div>
-				{:else}
-					<div bind:this={message_container} class="message-container">
+					{:else}
 						<i>This message has been deleted</i>
-					</div>
+					{/if}
+				{:else}
+					<ChatBox on:message_sent={forwardAsEditEvent} />
 				{/if}
-			{:else}
-				<ChatBox on:message_sent={updateMessage} />
-			{/if}
+			</div>
 		</div>
 	</div>
-	{#if is_menu_open}
-		<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
-			<menu class="card text-token mx-1 px-1">
-				{#if from_me}
-					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button tabindex="0" on:click={editHandler}> Edit </button>
-					</li>
-					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button tabindex="0" on:click={deleteHandler}> Delete </button>
-					</li>
-				{:else}
-					<li class="card my-1 px-2 hover:variant-filled-secondary">
-						<button tabindex="0" on:click={replyHandler}> Reply </button>
-					</li>
-				{/if}
-			</menu>
-		</div>
-	{:else}
-		<div
-			role="menu"
-			tabindex="0"
-			on:click={openMenu}
-			on:keypress={simpleKeypressHandlerFactory(["Enter"], openMenu)}
-			class="kebab self-center text-xl"
-		>
-			&#xFE19;
-		</div>
+	{#if is_sent}
+		{#if is_menu_open}
+			<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
+				<menu class="card text-token mx-1 px-1">
+					{#each menu_items as menu_item}
+						<li class="card my-1 px-2 hover:variant-filled-secondary">
+							<button tabindex="0" on:click={menu_item.handler}>
+								{menu_item.label}
+							</button>
+						</li>
+					{/each}
+				</menu>
+			</div>
+		{:else}
+			<div
+				role="menu"
+				tabindex="0"
+				on:click={openMenu}
+				on:keypress={simpleKeypressHandlerFactory(["Enter"], openMenu)}
+				class="kebab self-start text-xl"
+			>
+				&#xFE19;
+			</div>
+		{/if}
 	{/if}
 </div>
 
@@ -153,6 +122,11 @@
 
 	div:hover > div.kebab {
 		visibility: visible;
+	}
+
+	div.kebab:hover {
+		font-weight: 700;
+		cursor: pointer;
 	}
 
 	.message-row {

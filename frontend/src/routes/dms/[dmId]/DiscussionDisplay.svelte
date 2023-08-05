@@ -1,27 +1,17 @@
 <script lang="ts">
 	// DiscussionDisplay.svelte
 
-	console.log("Running DiscussionDisplay")
-
-	import type {
-		DeleteMessageFunction,
-		UpdateMessageFunction,
-		CreateMessageFunction,
-		MessageOrEvent,
-	} from "$types"
+	import type { CreateMessageFunction, MessageOrEvent } from "$types"
 
 	import ChatBubble from "./ChatBubble.svelte"
 	import { onMount } from "svelte"
 	import { client } from "$clients"
-	import { my_name, sse_store } from "$stores"
-	import { addListenerToEventSource } from "$lib/global"
+	import { my_name } from "$stores"
 
 	export let messages: MessageOrEvent[] = []
 	// export let new_message: [string, Promise<Response>]
 	export let new_message: [string, ReturnType<CreateMessageFunction>]
 	export let currentDiscussionId: string
-	export let deleteMessageFunc: DeleteMessageFunction
-	export let updateMessageFunc: UpdateMessageFunction
 
 	let observer: IntersectionObserver
 	const threshold = 0.5
@@ -100,35 +90,16 @@
 		observer.observe(canary)
 
 		_init = false
-
-		if ($sse_store) {
-			const destroyer = new Array(
-				addListenerToEventSource($sse_store, "CREATED_DM_ELEMENT", (data) => {
-					console.log("Server message: New message", data)
-					if (data?.dmId === currentDiscussionId) {
-						messages = [...messages, data.element]
-					}
-				}),
-
-				addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (data) => {
-					console.log("Server message: Message was modified", data)
-					if (data.dmId === currentDiscussionId) {
-						const { message } = data
-						const to_update = document.getElementById(message.id)
-						if (to_update && message.type === "message") {
-							new ChatBubble({
-								target: to_update.parentElement!,
-								anchor: to_update,
-								props: { message, updateMessageFunc, deleteMessageFunc },
-							})
-							to_update.remove()
-						}
-					}
-				}),
-			)
-			return () => destroyer.forEach((func: () => any) => func())
-		} else throw new Error("sse_store is empty ! Grrrr", $sse_store)
 	})
+
+	function bs_hash(str: string) {
+		let sum = 0
+		for (let char of str) {
+			sum += char.charCodeAt(0) - 98
+		}
+		sum = sum % 70
+		return String(sum)
+	}
 </script>
 
 <div bind:this={conversation_container} class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
@@ -136,17 +107,24 @@
 		<div bind:this={canary} />
 		{#each messages as message}
 			{#if message.type === "message"}
-				<ChatBubble {message} {deleteMessageFunc} {updateMessageFunc} />
+				<ChatBubble
+					{message}
+					avatar_src="https://i.pravatar.cc/?img={bs_hash(message.author)}"
+					on:delete
+					on:edit
+				/>
 			{:else if message.type === "event"}
-				{#if message.eventType == "CREATED_FRIENDSHIP"}
-					<div class="text-center text-gray-500">
-						{`You are now friend with ${message.otherName}`}
-					</div>
-				{:else}
-					<div class="text-center text-gray-500">
-						{`${message.eventType}`}
-					</div>
-				{/if}
+				<div id={message.id}>
+					{#if message.eventType == "CREATED_FRIENDSHIP"}
+						<div class="text-center text-gray-500">
+							{`You are now friend with ${message.otherName}`}
+						</div>
+					{:else}
+						<div class="text-center text-gray-500">
+							{`${message.eventType}`}
+						</div>
+					{/if}
+				</div>
 			{/if}
 		{/each}
 	</div>

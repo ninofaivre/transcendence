@@ -18,6 +18,7 @@ import { UserService } from "src/user/user.service"
 import { zSelfPermissionList } from "contract"
 import { zChanDiscussionMessageReturn } from "contract"
 import { ChanElementUnion, RetypeChanElement } from "src/types"
+import { zPermissionOverList } from "contract"
 
 type RequestShapes = NestRequestShapes<typeof contract.chans>
 
@@ -57,18 +58,14 @@ export class ChansService {
 		id: true,
 		title: true,
 		type: true,
-		ownerName: true,
 		users: {
             select: {
                 ...this.usersService.getProximityLevelSelect(username),
                 statusVisibilityLevel: true,
-                name: true
+                name: true,
             }
         },
-		roles: {
-            where: { users: { some: { name: username } } },
-            select: { permissions: true }
-        }
+		...this.getDoesUserHasPermOverUserSelect(username, {})
 	} satisfies Prisma.ChanSelect)
 
     // TODO for both functions under this comment add select and remove username + perm
@@ -98,23 +95,20 @@ export class ChansService {
             : {})   
     } satisfies Prisma.ChanSelect)
 
-    public getDoesUserHasPermOverUserSelect = (username: string,
-        perm: Exclude<PermissionList, z.infer<typeof zSelfPermissionList>>
+    public getDoesUserHasPermOverUserSelect = (
+        username: string,
+        where: Prisma.RoleWhereInput = { users: { some: { name: username } } }
     ) => ({
-            roles: {
-                select: {
-                    permissions: true,
-                    users: { select: { name: true } },
-                    roles: {
-                        select: {
-                            users: { select: { name: true } },
-                            name: true
-                        }
-                    },
-                    name: true
-                },
+        roles: {
+            where,
+            select: {
+                users: { select: { name: true } },
+                roles: { select: { users: { select: { name: true } }, name: true } },
+                permissions: true,
+                name: true
             },
-            ownerName: true,
+        },
+        ownerName: true,
     } satisfies Prisma.ChanSelect)
 
 	private chanDiscussionEventsSelect = {
@@ -164,20 +158,26 @@ export class ChansService {
 		return users.map((el) => el.name)
 	}
 
-    private formatChanUser = (
-        user: ChanPayload['users'][number]
+    private formatChanUserForUser = (
+        username: string,
+        user: ChanPayload['users'][number],
+        permPayload: Pick<ChanPayload, "roles" | "ownerName">
     ) => ({
             name: user.name,
             status: this.usersService.getUserStatusByProximity(
                 user.name,
                 this.usersService.getProximityLevel(user),
-                user.statusVisibilityLevel)
+                user.statusVisibilityLevel),
+            roles: permPayload.roles
+                .filter(role => role.users.some(user => user.name === user.name))
+                .map(role => role.name),
+            myPermissionOver: this.getPermOverUserInChan(username, user.name, permPayload)
         } as const)
 
-	private formatChan(chan: ChanPayload) {
+	private formatChan(username: string, chan: ChanPayload) {
 		const { roles, users, ...rest } = chan
-        const formattedUsers = users.map(el => this.formatChanUser(el))
         const selfPerms = [...new Set(roles
+            .filter(role => role.users.some(user => user.name === username))
             .flatMap(el => el.permissions
                 .filter((el): el is z.infer<typeof zSelfPermissionList> =>
                     // may perform better, but do we really care ?
@@ -185,14 +185,16 @@ export class ChansService {
                     zSelfPermissionList.safeParse(el).success)
         ))]
 		return {
-			...rest,
-			users: formattedUsers,
-            selfPerms
+            ...rest,
+            selfPerms,
+            users: users.map(user => 
+                this.formatChanUserForUser(username, user, chan),
+            )
 		}
 	}
 
-	private formatChanArray = (chans: ChanPayload[]) =>
-		chans.map((chan) => this.formatChan(chan))
+	private formatChanArray = (username: string, chans: ChanPayload[]) =>
+		chans.map((chan) => this.formatChan(username, chan))
 
 	private formatChanDiscussionMessageForUser(
         username: string,
@@ -307,7 +309,7 @@ export class ChansService {
 	}
 
 	async getUserChans(username: string) {
-		return this.formatChanArray(
+		return this.formatChanArray(username,
 			await this.prisma.chan.findMany({
 				where: {
 					users: { some: { name: username } },
@@ -364,7 +366,7 @@ export class ChansService {
         const res = await this.getChan({ id: chanId }, this.getChansSelect(username))
         if (!res)
             return contractErrors.EntityModifiedBetweenCreationAndRead("Chan")
-        return this.formatChan(res)
+        return this.formatChan(username, res)
 	}
 
     public async doesUserHasSelfPermInChan(
@@ -381,27 +383,34 @@ export class ChansService {
                 && el.permissions.includes(perm)))
     }
 
-    public doesUserHasPermOverUserInChan(username: string,
+    private isPermOver = (perm: PermissionList)
+    : perm is z.infer<typeof zPermissionOverList> =>
+        zPermissionOverList.safeParse(perm).success
+
+    private getPermOverUserInChan(username: string,
         otherUserName: string,
-        { roles, ownerName }: DoesUserHasPermOverUserPayload,
-        perm: Exclude<PermissionList, z.infer<typeof zSelfPermissionList>>
+        { roles, ownerName }: DoesUserHasPermOverUserPayload
     ) {
-        if (username === otherUserName || username === ownerName)
-            return true
         if (otherUserName === ownerName)
-            return false
-        return roles
+            return []
+        if (username === otherUserName || username === ownerName)
+            return zPermissionOverList.options
+        return [...new Set(roles
             .filter(role => role.users.some(user => user.name === username))
-            .filter(role => role.permissions.includes(perm))
-            .some(role => role.roles
-                .filter(el => el.users.some(user => user.name === otherUserName))
-                .some(el => {
-                    if (role.users.every(user => user.name !== otherUserName))
-                        return true
-                    return (role.name === el.name)
-                })
-            )
+            .filter(role => role
+                .roles.some(el => el.users.some(user => user.name === otherUserName)))
+            .filter(role => (role.users.every(user => user.name !== otherUserName)
+                || (role.roles.some(el => el.name === role.name))))
+            .flatMap(role => role.permissions)
+            .filter(this.isPermOver))]
     }
+
+    public doesUserHasPermOverUserInChan = (
+        username: string,
+        otherUserName: string,
+        permPayload: DoesUserHasPermOverUserPayload,
+        perm: Exclude<PermissionList, z.infer<typeof zSelfPermissionList>>
+    ) => this.getPermOverUserInChan(username, otherUserName, permPayload).includes(perm)
 
 	async deleteChan(username: string, chanId: string) {
         
@@ -693,7 +702,7 @@ export class ChansService {
 	async deleteChanMessageIfRightTo(username: string, { chanId , elementId }: RequestShapes['deleteChanMessage']['params']) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                ...this.getDoesUserHasPermOverUserSelect(username, 'DELETE_MESSAGE'),
+                ...this.getDoesUserHasPermOverUserSelect(username),
                 elements: {
                     where: { id: elementId, message: { isNot: null } },
                     select: { authorName: true }
@@ -726,7 +735,7 @@ export class ChansService {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 users: { where: { name: otherUserName }, select: { name: true } },
-                ...this.getDoesUserHasPermOverUserSelect(username, "KICK")
+                ...this.getDoesUserHasPermOverUserSelect(username)
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
@@ -823,11 +832,11 @@ export class ChansService {
                     type: "CREATED_CHAN_USER",
                     data: {
                         chanId,
-                        user: this.formatChanUser({
+                        user: this.formatChanUserForUser(el.name, {
                             ...rest,
                             name: username,
                             statusVisibilityLevel: newUser.statusVisibilityLevel
-                        })
+                        }, newChan)
                     }
                 })
         })
@@ -839,7 +848,7 @@ export class ChansService {
 			chanId,
 			ClassicChanEventType.AUTHOR_JOINED,
 		)
-		return this.formatChan(newChan)
+		return this.formatChan(username, newChan)
 	}
 
 	public getChan = async <Sel extends Prisma.ChanSelect>(

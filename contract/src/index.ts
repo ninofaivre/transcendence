@@ -24,7 +24,8 @@ export {
 	zChanDiscussionEventReturn,
 	zChanDiscussionElementReturn,
     zChanDiscussionMessageReturn,
-    zSelfPermissionList
+    zSelfPermissionList,
+    zPermissionOverList
 } from "./routers/chans"
 
 export {

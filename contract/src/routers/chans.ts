@@ -42,17 +42,22 @@ export const zCreatePrivateChan = z.strictObject({
 // 	name: z.string(),
 // })
 
-const zChanUser = z.object({
-	name: zUserName,
-	status: zUserStatus,
-})
-
 export const zSelfPermissionList = zPermissionList.extract([
 	"EDIT",
 	"DESTROY",
 	"INVITE",
 	"SEND_MESSAGE",
 ])
+
+// TODO use this in the backend instead of the craps it currently use
+export const zPermissionOverList = zPermissionList.exclude(zSelfPermissionList.options)
+
+const zChanUser = z.object({
+	name: zUserName,
+	status: zUserStatus,
+    roles: z.array(zRoleName),
+    myPermissionOver: z.array(zPermissionOverList),
+})
 
 // TODO typer title en fonction de PUBLIC | PRIVATE avec un zBaseChan j'imagine
 const zChanReturn = z.object({
@@ -103,7 +108,7 @@ export const zChanDiscussionMessageReturn = z.union([
 			.nullable(),
 		isDeleted: z.literal(false),
 		hasBeenEdited: z.boolean(),
-		mentionMe: z.boolean(),
+        mentionMe: z.boolean(),
 	}),
 	zChanDiscussionBaseMessage.extend({
 		content: z.literal(""),
@@ -350,29 +355,15 @@ export const chansContract = c.router(
                     [403, "ChanPermissionTooLowOverUser"],
                     [404, "NotFoundChan", "NotFoundChanEntity"])
 			},
-		},
-		// TODO
-		// getChanUser: {
-		//     method: "GET",
-		//     path: "/:chanId/:username",
-		//     pathParams: z.strictObject({
-		//         chanId: z.string().uuid(),
-		//         username: zUserName
-		//     }),
-		//     responses: {
-		//         200: z.strictObject({
-		//             roles: z.string().array(),
-		//             myPermissionOverHim: z.array(zPermissionList.extract(["BAN", "KICK", "MUTE", "DELETE_MESSAGE"]))
-		//         })
-		//     }
-		// }
+		}
 	},
 	{
 		pathPrefix: "/chans",
 	},
 )
 
-const zUpdatedChanReturn = zChanReturn.pick({ title: true, type: true, ownerName: true, id: true })
+const zUpdatedChan = zChanReturn.pick({ title: true, type: true, ownerName: true, id: true })
+const zUpdatedChanUser = zChanUser.pick({ name: true, roles: true, myPermissionOver: true })
 
 export type ChanEvent =
 	| {
@@ -381,7 +372,7 @@ export type ChanEvent =
 	  }
 	| {
 			type: "UPDATED_CHAN_INFO"
-			data: z.infer<typeof zUpdatedChanReturn>
+			data: z.infer<typeof zUpdatedChan>
 	  }
 	| {
 			type: "CREATED_CHAN_USER"
@@ -390,6 +381,13 @@ export type ChanEvent =
                 user: z.infer<typeof zChanUser>
             }
 	  }
+    | {
+            type: "UPDATED_CHAN_USER"
+            data: {
+                chanId: string,
+                user: z.infer<typeof zUpdatedChanUser>
+            }
+      }
 	| {
 			type: "DELETED_CHAN_USER"
 			data: {

@@ -391,9 +391,11 @@ export class ChansService {
         otherUserName: string,
         { roles, ownerName }: DoesUserHasPermOverUserPayload
     ) {
+        if (username === otherUserName)
+            return ["DELETE_MESSAGE" as const]
         if (otherUserName === ownerName)
             return []
-        if (username === otherUserName || username === ownerName)
+        if (username === ownerName)
             return zPermissionOverList.options
         return [...new Set(roles
             .filter(role => role.users.some(user => user.name === username))

@@ -129,7 +129,7 @@
 				console.log("Server message: New message", data)
 				if (data.dmId === $page.data.dmId) {
 					messages = [...messages, data.element]
-					const len = messages.length
+					// const len = messages.length
 					// message_indexes.set(messages[len - 1], len - 1)
 				}
 			}),
@@ -157,7 +157,7 @@
 	<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
 	<!-- Messages -->
 	<DiscussionDisplay
-		{messages}
+		bind:messages
 		{new_message}
 		currentDiscussionId={$page.params.dmId}
 		on:delete={deletionHandler}

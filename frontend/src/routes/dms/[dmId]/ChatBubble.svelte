@@ -58,7 +58,7 @@
 >
 	<div class="message-spacer" />
 	{#if !from_me}
-		<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" />
+		<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" loading="lazy" />
 	{/if}
 	<div
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}

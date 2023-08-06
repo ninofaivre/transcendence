@@ -10,13 +10,13 @@
 	export let placeholder = "Shift + Enter for a new line"
 	export let disabled = false
 	export let disabled_placeholder = "The sending of messages is disabled for the moment"
+	export let value: string = ""
 	$: placeholder = disabled ? disabled_placeholder : placeholder
 
 	let focus_within_outline = outline
 		? "focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-[rgba(var(--color-primary-600))] "
 		: ""
 	const dispatch = createEventDispatcher()
-	let value: string = ""
 	let textarea: HTMLTextAreaElement
 	// let chatbox: HTMLDivElement
 

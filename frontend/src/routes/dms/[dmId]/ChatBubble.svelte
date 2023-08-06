@@ -83,7 +83,7 @@
 						<i>This message has been deleted</i>
 					{/if}
 				{:else}
-					<ChatBox on:message_sent={forwardAsEditEvent} />
+					<ChatBox value={message.content} on:message_sent={forwardAsEditEvent} />
 				{/if}
 			</div>
 		</div>

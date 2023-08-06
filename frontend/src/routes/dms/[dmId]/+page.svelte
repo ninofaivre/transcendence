@@ -18,7 +18,7 @@
 	// import { message_indexes } from "$lib/indexes"
 
 	let messages: MessageOrEvent[]
-	$: messages = $page.data.messages
+	messages = $page.data.messages
 	let sendLoadEvents: boolean = true
 
 	// for (let idx in messages) {

@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte"
+	import { my_name } from "$stores"
 
 	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
+	import type { my_name } from "$stores"
 
 	export let outline = false
 	export let minRows = 1
@@ -20,12 +22,15 @@
 	let textarea: HTMLTextAreaElement
 	// let chatbox: HTMLDivElement
 
+	let i = 0
 	async function sendMessage() {
 		value = value.trim()
-		if (value) {
-			dispatch("message_sent", value)
-			value = ""
-		}
+		i++
+		// if (value) {
+		// dispatch("message_sent", value)
+		dispatch("message_sent", i + ": Sent by " + $my_name)
+		value = ""
+		// }
 	}
 
 	async function handleKeypress(event: KeyboardEvent) {

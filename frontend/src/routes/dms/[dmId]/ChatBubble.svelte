@@ -57,15 +57,15 @@
 	class={`message-row ${from_me ? "space-x-2 space-x-reverse" : "space-x-2"}`}
 >
 	<div class="message-spacer" />
-	{#if !from_me}
-		<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" loading="lazy" />
-	{/if}
+	<!-- {#if !from_me} -->
+	<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" loading="lazy" />
+	<!-- {/if} -->
 	<div
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}
 	>
-		{#if !from_me}
-			<div class="from-field font-medium">{message.author}</div>
-		{/if}
+		<!-- {#if !from_me} -->
+		<div class="from-field font-medium">{message.author}</div>
+		<!-- {/if} -->
 		<div class="grid grid-cols-[auto_1fr]">
 			{#if !is_sent}
 				<div

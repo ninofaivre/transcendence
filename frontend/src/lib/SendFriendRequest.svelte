@@ -2,12 +2,14 @@
 	import Autocomplete from "$lib/Autocomplete.svelte"
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
 
+	import { onMount } from "svelte"
 	import { client } from "$clients"
 	import { invalidate } from "$app/navigation"
 	import { reportUnexpectedCode, listenOutsideClick } from "$lib/global"
 
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
+	let input_element: HTMLElement
 	let send_button: HTMLButtonElement
 	let input_focused = false
 	let border_radius = "15px"
@@ -60,11 +62,14 @@
 	}
 
 	$: if (search_input) getUsernames(search_input)
+
+	onMount(() => void input_element.focus())
 </script>
 
 <div use:listenOutsideClick on:outsideclick={() => void (input_focused = false)}>
 	<div class="grid min-w-[50vw] grid-cols-[1fr_auto]">
 		<input
+			bind:this={input_element}
 			class="input py-2"
 			type="search"
 			bind:value={search_input}

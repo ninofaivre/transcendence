@@ -149,7 +149,7 @@
 		const destroyer: (() => void)[] = new Array(
 			addListenerToEventSource($sse_store!, "CREATED_DM_ELEMENT", (data) => {
 				console.log("Server message: New message", data)
-				if (data.dmId === $page.data.dmId) {
+				if (data.dmId === $page.params.dmId) {
 					messages = [...messages, data.element]
 					// const len = messages.length
 					// message_indexes.set(messages[len - 1], len - 1)

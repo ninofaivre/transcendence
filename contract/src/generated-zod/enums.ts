@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const PermissionList = {
   SEND_MESSAGE: 'SEND_MESSAGE',
+  UPDATE_MESSAGE: 'UPDATE_MESSAGE',
   DELETE_MESSAGE: 'DELETE_MESSAGE',
   EDIT: 'EDIT',
   INVITE: 'INVITE',
@@ -9,12 +10,6 @@ export const PermissionList = {
   BAN: 'BAN',
   MUTE: 'MUTE',
   DESTROY: 'DESTROY',
-} as const;
-
-export const RoleApplyingType = {
-  NONE: 'NONE',
-  ROLES: 'ROLES',
-  ROLES_AND_SELF: 'ROLES_AND_SELF',
 } as const;
 
 export const FriendInvitationStatus = {
@@ -66,6 +61,7 @@ export const ClassicChanEventType = {
 
 export const zPermissionList = z.enum([
   "SEND_MESSAGE",
+  "UPDATE_MESSAGE",
   "DELETE_MESSAGE",
   "EDIT",
   "INVITE",
@@ -73,12 +69,6 @@ export const zPermissionList = z.enum([
   "BAN",
   "MUTE",
   "DESTROY",
-]);
-
-export const zRoleApplyingType = z.enum([
-  "NONE",
-  "ROLES",
-  "ROLES_AND_SELF",
 ]);
 
 export const zFriendInvitationStatus = z.enum([

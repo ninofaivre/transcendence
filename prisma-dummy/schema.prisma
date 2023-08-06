@@ -48,6 +48,7 @@ datasource db {
 
 enum PermissionList {
   SEND_MESSAGE
+  UPDATE_MESSAGE
   DELETE_MESSAGE
   EDIT
   INVITE

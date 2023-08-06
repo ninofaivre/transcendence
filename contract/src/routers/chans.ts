@@ -7,7 +7,6 @@ import { z } from "zod"
 import {
 	zChanType,
 	zClassicChanEventType,
-	zRoleApplyingType,
 	zPermissionList,
 } from "../generated-zod"
 import { zUserStatus } from "../zod/user.zod"
@@ -47,6 +46,7 @@ export const zSelfPermissionList = zPermissionList.extract([
 	"DESTROY",
 	"INVITE",
 	"SEND_MESSAGE",
+    "UPDATE_MESSAGE"
 ])
 
 // TODO use this in the backend instead of the craps it currently use

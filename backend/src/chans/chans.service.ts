@@ -28,10 +28,6 @@ type ChanDiscussionElementPayload = RetypeChanElement<Prisma.ChanDiscussionEleme
 type ChanDiscussionElementEventPayload = Extract<ChanDiscussionElementPayload, { event: {} }>
 type ChanDiscussionElementMessagePayload = Extract<ChanDiscussionElementPayload, { message: {} }>
 
-// type ChanDiscussionMessagePayload = Prisma.ChanDiscussionMessageGetPayload<
-//     { select: ChansService['chanDiscussionMessagesSelect'] }>
-// type ChanDiscussionEventPayload = Prisma.ChanDiscussionEventGetPayload<
-//     { select: ChansService['chanDiscussionEventsSelect'] }>
 type ChanPayload = Prisma.ChanGetPayload<
     { select: ReturnType<ChansService['getChansSelect']> }>
 type DoesUserHasSelfPermPayload = Prisma.ChanGetPayload<
@@ -49,10 +45,6 @@ export class ChansService {
 		@Inject(forwardRef(() => ChanInvitationsService))
 		private readonly chanInvitationsService: ChanInvitationsService,
 	) {}
-
-	private usersSelect = {
-		name: true,
-	} satisfies Prisma.UserSelect
 
 	private getChansSelect = (username: string) => ({
 		id: true,
@@ -154,13 +146,13 @@ export class ChansService {
 		creationDate: true,
 	} satisfies Prisma.ChanDiscussionElementSelect
 
-	private defaultPermissions: (typeof PermissionList)[keyof typeof PermissionList][] = [
+	private defaultPermissions: PermissionList[] = [
 		"INVITE",
 		"SEND_MESSAGE",
-		"DELETE_MESSAGE",
+        "UPDATE_MESSAGE",
 	]
 
-	private adminPermissions: (typeof PermissionList)[keyof typeof PermissionList][] = [
+	private adminPermissions: PermissionList[] = [
 		"KICK",
 		"BAN",
 		"MUTE",
@@ -196,11 +188,15 @@ export class ChansService {
     ) {
         if (username === ownerName)
             return zSelfPermissionList.options
-        return [...new Set(roles
+        const perms = [...new Set(roles
             .filter(role => role.users.some(user => user.name === username))
             .flatMap(role => role.permissions)
             .filter(this.isSelfPerm))]
-            .filter(perm => !mutedUsers?.length || perm !== 'SEND_MESSAGE')
+        if (mutedUsers.length) {
+            return perms 
+                .filter(perm => (perm !== 'SEND_MESSAGE' && perm !== 'UPDATE_MESSAGE'))
+        }
+        return perms
     }
 
 	private formatChan(username: string, chan: ChanPayload) {
@@ -636,11 +632,11 @@ export class ChansService {
     ) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                ...this.getDoesUserHasSelfPermSelect(username, 'SEND_MESSAGE'),
+                ...this.getDoesUserHasSelfPermSelect(username, 'UPDATE_MESSAGE'),
                 users: { select: { name: true } },
                 roles: {
                     select: {
-                        ...(this.getDoesUserHasSelfPermSelect(username, 'SEND_MESSAGE')
+                        ...(this.getDoesUserHasSelfPermSelect(username, 'UPDATE_MESSAGE')
                             .roles.select),
                         name: true
                     }
@@ -663,8 +659,8 @@ export class ChansService {
         if (!chan.elements.length || !chan.elements[0].message)
             return contractErrors.NotFoundChanEntity(chanId, 'message', elementId)
         const oldMessage = chan.elements[0].message
-        if (!await this.doesUserHasSelfPermInChan(username, 'SEND_MESSAGE', chan))
-            return contractErrors.ChanPermissionTooLow(username, chanId, 'SEND_MESSAGE')
+        if (!this.doesUserHasSelfPermInChan(username, 'UPDATE_MESSAGE', chan))
+            return contractErrors.ChanPermissionTooLow(username, chanId, 'UPDATE_MESSAGE')
         if (chan.elements[0].authorName !== username)
             return contractErrors.NotOwnedChanMessage(username, 'update', elementId, chanId)
         const newAts = this.getAtsFromChanMessageContent(chan, content)

@@ -16,6 +16,7 @@ export class AuthController implements NestControllerInterface<typeof c> {
 		res.cookie("access_token", await this.authService.login(req.user), {
 			secure: true,
 			sameSite: true,
+			HttpOnly: true,
 		})
 		return { status: 202 as const, body: null }
 	}

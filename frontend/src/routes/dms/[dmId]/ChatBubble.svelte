@@ -9,9 +9,9 @@
 
 	export let message: Message
 	export let avatar_src: string
+	export let from_me = message.author === $my_name
 
 	const dispatch = createEventDispatcher()
-	let from_me = message.author === $my_name
 	let is_menu_open = false
 	let contenteditable = false
 	let openMenu = () => {

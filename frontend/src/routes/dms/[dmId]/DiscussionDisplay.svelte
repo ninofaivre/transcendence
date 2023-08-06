@@ -96,6 +96,7 @@
 			{#if message.type === "message"}
 				<ChatBubble
 					{message}
+					from_me={message.author === $my_name}
 					avatar_src="https://i.pravatar.cc/?img={bs_hash(message.author)}"
 					on:delete
 					on:edit

@@ -8,6 +8,7 @@
 	import { client } from "$clients"
 	import { my_name } from "$stores"
 	import { createEventDispatcher } from "svelte"
+	import { bs_hash } from "$lib/global"
 
 	export let messages: MessageOrEvent[] = []
 	// export let new_message: [string, Promise<Response>]
@@ -82,15 +83,6 @@
 
 		_init = false
 	})
-
-	function bs_hash(str: string) {
-		let sum = 0
-		for (let char of str) {
-			sum += char.charCodeAt(0) - 98
-		}
-		sum = sum % 70
-		return String(sum)
-	}
 
 	$: {
 		if (sendLoadEvents == false) observer.unobserve(canary)

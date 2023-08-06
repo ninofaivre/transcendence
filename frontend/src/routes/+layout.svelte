@@ -6,8 +6,8 @@
 	// Most of your app wide CSS should be put in this file
 	import "../app.postcss"
 
-	import { AppShell, AppBar, LightSwitch, Toast } from "@skeletonlabs/skeleton"
-	import { logout } from "$lib/global"
+	import { AppShell, AppBar, LightSwitch, Toast, Avatar } from "@skeletonlabs/skeleton"
+	import { bs_hash, logout } from "$lib/global"
 	import { logged_in, my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
@@ -73,6 +73,11 @@
 					>
 						Log out
 					</button>
+					<Avatar
+						src="https://i.pravatar.cc/?img={bs_hash($my_name)}"
+						class="h-8 w-8"
+						rounded="rounded-full"
+					/>
 					<div class="chip variant-ghost ml-1">
 						{$my_name}
 					</div>

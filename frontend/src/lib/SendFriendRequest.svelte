@@ -8,7 +8,7 @@
 
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
-	let input_element: HTMLElement
+	let send_button: HTMLButtonElement
 	let input_focused = false
 	let border_radius = "15px"
 
@@ -27,7 +27,7 @@
 	async function onUserSelection(event: any) {
 		search_input = event.detail.label
 		input_focused = false
-		input_element.focus()
+		send_button.focus()
 	}
 
 	async function getUsernames(input: string) {
@@ -65,7 +65,6 @@
 <div use:listenOutsideClick on:outsideclick={() => void (input_focused = false)}>
 	<div class="grid min-w-[50vw] grid-cols-[1fr_auto]">
 		<input
-			bind:this={input_element}
 			class="input py-2"
 			type="search"
 			bind:value={search_input}
@@ -75,6 +74,7 @@
 			style="--border-radius-var: {border_radius}"
 		/>
 		<button
+			bind:this={send_button}
 			on:click={() => {
 				sendFriendRequest(search_input)
 				search_input = ""

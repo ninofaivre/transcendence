@@ -21,7 +21,7 @@ export const my_name = derived(
 			}
 		}
 
-		Promise.resolve(getter($logged_in)).then((userName) => {
+		getter($logged_in).then((userName) => {
 			if (userName) {
 				set(userName)
 			} else set("Error")

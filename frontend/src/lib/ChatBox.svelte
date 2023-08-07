@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte"
-	import { my_name } from "$stores"
 
 	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
-	import type { my_name } from "$stores"
 
 	export let outline = false
 	export let minRows = 1
@@ -45,7 +43,6 @@
 	$: maxHeight = maxRows ? `${1 + maxRows * line_height}em` : `auto`
 
 	onMount(() => {
-		// if (no_outline) chatbox.style.setProperty("--outline", "none")
 		textarea.focus()
 	})
 </script>
@@ -77,14 +74,7 @@
 		border-bottom-right-radius: 10px;
 		border-top-left-radius: 6px;
 		border-bottom-left-radius: 6px;
-		/* --outline: rgba(var(--color-primary-600)) solid 2px; */
 	}
-
-	/* That var comes from the skeleton theme imported above*/
-	/* .custom-radius:focus-within { */
-	/* 	outline: var(--outline); */
-	/* 	outline-offset: 5px; */
-	/* } */
 
 	button {
 		border-top-right-radius: 10px;

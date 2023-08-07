@@ -25,12 +25,10 @@
 	let i = 0
 	async function sendMessage() {
 		value = value.trim()
-		i++
-		// if (value) {
-		// dispatch("message_sent", value)
-		dispatch("message_sent", i + ": Sent by " + $my_name)
-		value = ""
-		// }
+		if (value) {
+			dispatch("message_sent", value)
+			value = ""
+		}
 	}
 
 	async function handleKeypress(event: KeyboardEvent) {

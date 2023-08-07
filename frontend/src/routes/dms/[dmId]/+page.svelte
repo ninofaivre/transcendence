@@ -17,32 +17,33 @@
 	import { sse_store } from "$stores"
 	// import { message_indexes } from "$lib/indexes"
 
+	console.log($page.route.id, " init")
+
 	let messages: MessageOrEvent[]
-	$: messages = $page.data.messages
 	let sendLoadEvents: boolean = true
+	sendLoadEvents = true
+
+	// Important, resets variable on route parameter change
+	$: messages = $page.data.messages
+	$: $page.params.dmId, (sendLoadEvents = true)
 
 	// for (let idx in messages) {
 	// 	message_indexes.set(messages[idx], idx)
 	// }
 
 	function updateSomeMessage(to_update_id: string, new_message: string) {
-		const to_update_idx: number = $page.data.messages.findLastIndex(
-			(message: MessageOrEvent) => {
-				return message.id === to_update_id
-			},
-		)
-		console.log(to_update_idx)
+		const to_update_idx: number = messages.findLastIndex((message: MessageOrEvent) => {
+			return message.id === to_update_id
+		})
 		// We needed the index to operate directly on messages so that reactivity is triggered
 		;(messages[to_update_idx] as Message).content = new_message
 		return to_update_idx
 	}
 
 	function deleteSomeMessage(to_erase_id: string) {
-		const to_update_idx: number = $page.data.messages.findLastIndex(
-			(message: MessageOrEvent) => {
-				return message.id === to_erase_id
-			},
-		)
+		const to_update_idx: number = messages.findLastIndex((message: MessageOrEvent) => {
+			return message.id === to_erase_id
+		})
 		// We needed the index to operate directly on messages so that reactivity is triggered
 		;(messages[to_update_idx] as Message).isDeleted = true
 		return to_erase_id
@@ -50,7 +51,6 @@
 
 	let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
 	function messageSentHandler(e: CustomEvent<string>) {
-		console.log("You sent a message:", e.detail)
 		new_message = [
 			e.detail,
 			client.dms.createDmMessage({
@@ -94,7 +94,6 @@
 			},
 		})
 		if (status === 200) {
-			console.log(elementId)
 			updateSomeMessage(elementId, new_message)
 		} else {
 			console.error(
@@ -135,6 +134,7 @@
 
 	// Calculate the NavBar height in order to adapt the layout
 	onMount(() => {
+		console.log("Mounting ", $page.route.id, "component")
 		header = document.getElementById("shell-header")
 		header_height = header?.offsetHeight || 0
 		const resizeObserver = new ResizeObserver((entries) => {

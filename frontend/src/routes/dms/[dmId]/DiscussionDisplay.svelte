@@ -10,14 +10,15 @@
 	import { createEventDispatcher } from "svelte"
 	import { bs_hash } from "$lib/global"
 
+	console.log("DiscussionDisplay init")
+
 	export let messages: MessageOrEvent[] = []
 	// export let new_message: [string, Promise<Response>]
 	export let new_message: [string, ReturnType<CreateMessageFunction>]
 	export let sendLoadEvents: boolean
 
 	let observer: IntersectionObserver
-	const threshold = 0.5
-	const reactivity = 500
+	const reactivity = 1000
 	const loading_greediness = 20
 	let canary: HTMLDivElement
 	let _init: boolean = true
@@ -57,7 +58,7 @@
 	async function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
 		if (_init) return
 		if (sendLoadEvents) {
-			console.log("intersectionHandler has been called", entry)
+			// console.log("intersectionHandler has been called")
 			const oldest_message = canary?.nextElementSibling
 			const cursor = oldest_message?.getAttribute("id")
 			if (cursor && entry.isIntersecting) {
@@ -76,22 +77,19 @@
 		console.log("Mounting DiscussionDisplay")
 		//Set up observer
 		observer = new IntersectionObserver(intersectionHandler, {
-			threshold,
 			rootMargin: `${reactivity}px`,
 		})
 		observer.observe(canary)
 
 		_init = false
-	})
 
-	$: {
-		if (sendLoadEvents == false) observer.unobserve(canary)
-	}
+		return () => observer.unobserve(canary)
+	})
 </script>
 
 <div bind:this={conversation_container} class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
 	<div class="flex flex-col scroll-smooth">
-		<div bind:this={canary} />
+		<div bind:this={canary} id="canary" class="min-h-[1px]" />
 		{#each messages as message}
 			{#if message.type === "message"}
 				<ChatBubble

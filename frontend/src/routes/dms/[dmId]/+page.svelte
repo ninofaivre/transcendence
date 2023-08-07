@@ -14,7 +14,7 @@
 	import { page } from "$app/stores"
 	import { client } from "$clients"
 	import { addListenerToEventSource } from "$lib/global"
-	import { sse_store } from "$stores"
+	import { sse_store, my_name } from "$stores"
 	// import { message_indexes } from "$lib/indexes"
 
 	console.log($page.route.id, " init")
@@ -49,19 +49,37 @@
 		return to_erase_id
 	}
 
-	let new_message: [string, ReturnType<typeof client.dms.createDmMessage>]
-	function messageSentHandler(e: CustomEvent<string>) {
-		new_message = [
-			e.detail,
-			client.dms.createDmMessage({
-				params: {
-					dmId: $page.params.dmId,
-				},
-				body: {
-					content: e.detail,
-				},
-			}),
+	async function messageSentHandler(e: CustomEvent<string>) {
+		// conversation_container.scrollTop = conversation_container.scrollHeight
+		messages = [
+			...messages,
+			{
+				type: "message",
+				id: "",
+				content: e.detail,
+				creationDate: new Date(),
+				author: $my_name,
+				hasBeenEdited: false,
+				relatedTo: null,
+				isDeleted: false,
+			},
 		]
+		const { status, body } = await client.dms.createDmMessage({
+			params: {
+				dmId: $page.params.dmId,
+			},
+			body: {
+				content: e.detail,
+			},
+		})
+		const last_elt_index = messages.length > 0 ? messages.length - 1 : 0
+		if (status == 201 && body) {
+			messages[last_elt_index] = body
+		} else
+			console.error(
+				"The message sent was received by the server but has not been created. Server responder with:",
+				status,
+			)
 	}
 
 	async function deletionHandler({ detail: { id: elementId } }: CustomEvent<{ id: string }>) {
@@ -180,7 +198,6 @@
 	<!-- Messages -->
 	<DiscussionDisplay
 		{messages}
-		{new_message}
 		{sendLoadEvents}
 		on:delete={deletionHandler}
 		on:edit={editHandler}

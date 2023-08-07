@@ -5,7 +5,6 @@
 
 	import ChatBubble from "./ChatBubble.svelte"
 	import { onMount } from "svelte"
-	import { client } from "$clients"
 	import { my_name } from "$stores"
 	import { createEventDispatcher } from "svelte"
 	import { bs_hash } from "$lib/global"
@@ -13,8 +12,6 @@
 	console.log("DiscussionDisplay init")
 
 	export let messages: MessageOrEvent[] = []
-	// export let new_message: [string, Promise<Response>]
-	export let new_message: [string, ReturnType<CreateMessageFunction>]
 	export let sendLoadEvents: boolean
 
 	let observer: IntersectionObserver
@@ -23,37 +20,6 @@
 	let canary: HTMLDivElement
 	let _init: boolean = true
 	const dispatch = createEventDispatcher()
-
-	function handleOwnMessage(_new_message: typeof new_message) {
-		if (_init) return
-		conversation_container.scrollTop = conversation_container.scrollHeight
-		if (_new_message) {
-			let [content, msg_promise] = _new_message
-			messages = [
-				...messages,
-				{
-					type: "message",
-					id: "",
-					content,
-					creationDate: new Date(),
-					author: $my_name,
-					hasBeenEdited: false,
-					relatedTo: null,
-					isDeleted: false,
-				},
-			]
-			msg_promise.then(({ status, body }) => {
-				let last_elt_index = messages.length > 0 ? messages.length - 1 : 0
-				if (status == 201 && body) {
-					messages[last_elt_index] = body
-				} else
-					console.error(
-						"The message sent was received by the server but has not been created. Server responder with:",
-						status,
-					)
-			})
-		}
-	}
 
 	async function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
 		if (_init) return
@@ -68,10 +34,6 @@
 	}
 
 	let conversation_container: HTMLDivElement
-
-	$: {
-		handleOwnMessage(new_message)
-	}
 
 	onMount(() => {
 		console.log("Mounting DiscussionDisplay")

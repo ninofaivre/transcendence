@@ -71,12 +71,12 @@
 		{placeholder}
 		spellcheck="true"
 		class="
+            textarea
             w-full
             resize-none
             overflow-hidden
             break-all
             border-none
-            !bg-transparent
             drop-shadow
             [grid-area:1/1/2/2]
             read-only:!cursor-default

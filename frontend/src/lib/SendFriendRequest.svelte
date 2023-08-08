@@ -2,6 +2,7 @@
 	import Autocomplete from "$lib/Autocomplete.svelte"
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
 
+	import { onMount } from "svelte"
 	import { client } from "$clients"
 	import { invalidate } from "$app/navigation"
 	import { reportUnexpectedCode, listenOutsideClick } from "$lib/global"
@@ -9,6 +10,7 @@
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
 	let input_element: HTMLElement
+	let send_button: HTMLButtonElement
 	let input_focused = false
 	let border_radius = "15px"
 
@@ -27,7 +29,7 @@
 	async function onUserSelection(event: any) {
 		search_input = event.detail.label
 		input_focused = false
-		input_element.focus()
+		send_button.focus()
 	}
 
 	async function getUsernames(input: string) {
@@ -60,6 +62,8 @@
 	}
 
 	$: if (search_input) getUsernames(search_input)
+
+	onMount(() => void input_element.focus())
 </script>
 
 <div use:listenOutsideClick on:outsideclick={() => void (input_focused = false)}>
@@ -75,6 +79,7 @@
 			style="--border-radius-var: {border_radius}"
 		/>
 		<button
+			bind:this={send_button}
 			on:click={() => {
 				sendFriendRequest(search_input)
 				search_input = ""

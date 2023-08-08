@@ -214,3 +214,12 @@ export function keypressHandlerFactory(map: Map<string, (ev?: KeyboardEvent) => 
 		}
 	}
 }
+
+export function bs_hash(str: string) {
+	let sum = 0
+	for (let char of str) {
+		sum += char.charCodeAt(0) - 98
+	}
+	sum = sum % 70
+	return String(sum)
+}

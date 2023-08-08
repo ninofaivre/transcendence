@@ -207,7 +207,7 @@
 		<ChatBox
 			outline
 			on:message_sent={messageSentHandler}
-			maxRows={20}
+			max_rows={20}
 			{disabled}
 			{disabled_placeholder}
 		/>

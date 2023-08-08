@@ -52,8 +52,6 @@
 	class="
         grid
         grid-cols-[1fr_auto]
-        border-[1px]
-        border-[rgba(var(--color-primary-600))]
         after:invisible
         after:whitespace-pre-wrap
         after:break-all

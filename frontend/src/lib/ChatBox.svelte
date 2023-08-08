@@ -88,21 +88,22 @@
 		on:keypress={handleKeypress}
 		aria-label="Type your message here"
 	/>
-	<button on:click={sendMessage} class="variant-filled-primary hover:font-medium"> Send </button>
+	<button on:click={sendMessage} class="variant-filled-primary px-2 hover:font-medium">
+		Send
+	</button>
 </div>
 
 <style>
 	div {
-		border-top-right-radius: 10px;
-		border-bottom-right-radius: 10px;
-		border-top-left-radius: 6px;
-		border-bottom-left-radius: 6px;
+		border-top-right-radius: 11px;
+		border-bottom-right-radius: 11px;
+		border-top-left-radius: 7px;
+		border-bottom-left-radius: 7px;
 	}
 
 	button {
 		border-top-right-radius: 10px;
 		border-bottom-right-radius: 10px;
-		padding: 0px 5px;
 	}
 
 	textarea {

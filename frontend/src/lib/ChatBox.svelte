@@ -102,10 +102,14 @@
 	button {
 		border-top-right-radius: 10px;
 		border-bottom-right-radius: 10px;
+		border-top-left-radius: 0px;
+		border-bottom-left-radius: 0px;
 	}
 
 	textarea {
 		border-top-left-radius: 6px;
 		border-bottom-left-radius: 6px;
+		border-top-right-radius: 0px;
+		border-bottom-right-radius: 0px;
 	}
 </style>

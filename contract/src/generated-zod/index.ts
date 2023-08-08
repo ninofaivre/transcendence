@@ -17,6 +17,7 @@ export * from "./MutedUserChan";
 export * from "./ChanDiscussionElement";
 export * from "./ChanDiscussionMessage";
 export * from "./ChanDiscussionEvent";
+export * from "./MutedUserChanDiscussionEvent";
 export * from "./ChangedTitleChanDiscussionEvent";
 export * from "./DeletedMessageChanDiscussionEvent";
 export * from "./ClassicChanDiscussionEvent";

@@ -9,7 +9,7 @@ import {
 import { compareSync, hash } from "bcrypt"
 import { SseService } from "src/sse/sse.service"
 import { NestRequestShapes } from "@ts-rest/nest"
-import { contract, contractErrors, isContractError } from "contract"
+import { GetData, SseEvent, contract, contractErrors, isContractError } from "contract"
 import { ChanEvent, zChanDiscussionElementReturn, zChanDiscussionEventReturn } from "contract"
 import { z } from "zod"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
@@ -19,10 +19,12 @@ import { zSelfPermissionList } from "contract"
 import { zChanDiscussionMessageReturn } from "contract"
 import { ChanElementUnion, RetypeChanElement } from "src/types"
 import { zPermissionOverList } from "contract"
+import { CallbackService } from "src/callback/callback.service"
+import { EventsService } from "./events/events.service"
 
 type RequestShapes = NestRequestShapes<typeof contract.chans>
 
-type ChanDiscussionElementPayload = RetypeChanElement<Prisma.ChanDiscussionElementGetPayload<
+export type ChanDiscussionElementPayload = RetypeChanElement<Prisma.ChanDiscussionElementGetPayload<
     { select: ChansService['chanDiscussionElementsSelect'] }>>
 
 type ChanDiscussionElementEventPayload = Extract<ChanDiscussionElementPayload, { event: {} }>
@@ -37,14 +39,78 @@ type DoesUserHasPermOverUserPayload = Prisma.ChanGetPayload<
 
 @Injectable()
 export class ChansService {
-	constructor(
+
+    private getMutedUsersWhere = (currentDate: Date) => ({
+        OR: [
+            { untilDate: { gte: currentDate } },
+            { untilDate: null }
+        ]
+    } satisfies Prisma.Chan$mutedUsersArgs['where'])
+
+    private async unmuteUserInChan(username: string, chanId: string) {
+        await this.prisma.chan.update({ where: { id: chanId },
+            data: {
+                mutedUsers: {
+                    updateMany: {
+                        where: {
+                            mutedUserName: username,
+                            ...this.getMutedUsersWhere(new Date())
+                        },
+                        data: { untilDate: new Date() }
+                    }
+                }
+            }})
+        const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
+            { ...this.getDoesUserHasSelfPermSelect(username) })
+        if (!chan)
+            return
+        const selfPerms = this.getSelfPerm(username, chan)
+        await this.sse.pushEvent(username, {
+            type: 'UPDATED_CHAN_SELF_PERMS',
+            data: { chanId, selfPerms }
+        })
+    }
+
+    constructor(
 		private readonly prisma: PrismaService,
 		private readonly sse: SseService,
 		@Inject(forwardRef(() => UserService))
 		private readonly usersService: UserService,
 		@Inject(forwardRef(() => ChanInvitationsService))
 		private readonly chanInvitationsService: ChanInvitationsService,
-	) {}
+        private readonly callbackService: CallbackService,
+        private readonly eventsService: EventsService
+	) {
+        this.prisma.chan.findMany({
+            where: { mutedUsers: { some: this.getMutedUsersWhere(new Date()) } },
+            select: {
+                id: true,
+                mutedUsers: {
+                    where: this.getMutedUsersWhere(new Date()),
+                    select: {
+                        untilDate: true,
+                        mutedUserName: true
+                    }
+                }
+            }})
+            .then(chans => {
+                const currentDateMs = (new Date()).getTime()
+                chans.forEach(({ id: chanId, mutedUsers }) => {
+                    mutedUsers.forEach(({ mutedUserName, untilDate }) => {
+                        if (!untilDate)
+                            return
+                        const timeoutId = setTimeout(
+                            this.unmuteUserInChan.bind(this),
+                            untilDate.getTime() - currentDateMs,
+                            mutedUserName,
+                            chanId)
+                        this.callbackService.setCallback(mutedUserName,
+                            "unMute",
+                            timeoutId)
+                    })
+                })
+            })
+    }
 
 	private getChansSelect = (username: string) => ({
 		id: true,
@@ -60,22 +126,17 @@ export class ChansService {
         mutedUsers: {
             where: {
                 mutedUserName: username,
-                OR: [
-                    { untilDate: { gte: new Date() } },
-                    // TODO the line bellow may be useless, need to test it
-                    { untilDate: null }
-                ]
+                ...this.getMutedUsersWhere(new Date())
             },
-            select: { id: true, untilDate: true }
+            select: { untilDate: true, mutedUserName: true }
         },
 		...this.getDoesUserHasPermOverUserSelect(username, {})
 	} satisfies Prisma.ChanSelect)
 
     // TODO for both functions under this comment add select and remove username + perm
 
-    public getDoesUserHasSelfPermSelect = (username: string,
-        perm: z.infer<typeof zSelfPermissionList>
-    ) => ({
+    // TODO change in something like get user self perm idk kqjsdkfljklqjsdfkljqk
+    public getDoesUserHasSelfPermSelect = (username: string) => ({
         roles: {
             select: {
                 users: {
@@ -83,20 +144,15 @@ export class ChansService {
                     select: { name: true }
                 },
                 permissions: true,
-            },
-            take: 1,
+            }
         },
         ownerName: true,
         mutedUsers: {
             where: {
                 mutedUserName: username,
-                OR: [
-                    { untilDate: { gte: new Date() } },
-                    // TODO the line bellow may be useless, need to test it
-                    { untilDate: null }
-                ]
+                ...this.getMutedUsersWhere(new Date())
             },
-            select: { id: true, untilDate: true }
+            select: { untilDate: true, mutedUserName: true }
         }
     } satisfies Prisma.ChanSelect)
 
@@ -119,6 +175,7 @@ export class ChansService {
 	private chanDiscussionEventsSelect = {
 		concernedUserName: true,
 		classicChanDiscussionEvent: { select: { eventType: true } },
+        mutedUserChanDiscussionEvent: { select: { mutedUserName: true, timeoutInMs: true } },
 		changedTitleChanDiscussionEvent: { select: { oldTitle: true, newTitle: true } },
 		deletedMessageChanDiscussionEvent: { select: { deletingUserName: true } },
 	} satisfies Prisma.ChanDiscussionEventSelect
@@ -138,7 +195,7 @@ export class ChansService {
         modificationDate: true
 	} satisfies Prisma.ChanDiscussionMessageSelect
 
-	private chanDiscussionElementsSelect = {
+	public chanDiscussionElementsSelect = {
 		id: true,
 		event: { select: this.chanDiscussionEventsSelect },
 		message: { select: this.chanDiscussionMessagesSelect },
@@ -174,7 +231,7 @@ export class ChansService {
                 this.usersService.getProximityLevel(user),
                 user.statusVisibilityLevel),
             roles: permPayload.roles
-                .filter(role => role.users.some(user => user.name === user.name))
+                .filter(role => role.users.some(el => el.name === user.name))
                 .map(role => role.name),
             myPermissionOver: this.getPermOverUserInChan(username, user.name, permPayload)
         } as const)
@@ -192,7 +249,7 @@ export class ChansService {
             .filter(role => role.users.some(user => user.name === username))
             .flatMap(role => role.permissions)
             .filter(this.isSelfPerm))]
-        if (mutedUsers.length) {
+        if (mutedUsers.some(user => user.mutedUserName === username)) {
             return perms 
                 .filter(perm => (perm !== 'SEND_MESSAGE' && perm !== 'UPDATE_MESSAGE'))
         }
@@ -251,6 +308,8 @@ export class ChansService {
                             return { type: 'message', isDeleted: true } as const
                         else if (event.changedTitleChanDiscussionEvent)
                             return { type: 'event', eventType: "CHANGED_TITLE" } as const
+                        else if (event.mutedUserChanDiscussionEvent)
+                            return { type: 'event', eventType: "AUTHOR_MUTED_CONCERNED" } as const
                         else
                             return { type: 'event', eventType: event.classicChanDiscussionEvent.eventType } as const
                     }
@@ -280,6 +339,7 @@ export class ChansService {
         const {
             deletedMessageChanDiscussionEvent,
             changedTitleChanDiscussionEvent,
+            mutedUserChanDiscussionEvent,
             classicChanDiscussionEvent,
             concernedUserName,
             ...eventRest
@@ -291,6 +351,19 @@ export class ChansService {
                 author,
                 ...changedTitleChanDiscussionEvent,
                 eventType: "CHANGED_TITLE",
+                type: 'event'
+            } as const
+        }
+        else if (mutedUserChanDiscussionEvent) {
+            const { mutedUserName, timeoutInMs } = mutedUserChanDiscussionEvent
+            return {
+                ...elementRest,
+                ...eventRest,
+                author,
+                concernedUserName: mutedUserName,
+                concernMe: concernedUserName === username,
+                timeoutInMs: timeoutInMs || 'infinity',
+                eventType: "AUTHOR_MUTED_CONCERNED",
                 type: 'event'
             } as const
         }
@@ -428,12 +501,12 @@ export class ChansService {
         
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                ...this.getDoesUserHasSelfPermSelect(username, 'DESTROY'),
+                ...this.getDoesUserHasSelfPermSelect(username),
                 users: { select: { name: true } }
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
-        if (!await this.doesUserHasSelfPermInChan(username, 'DESTROY', chan))
+        if (!this.doesUserHasSelfPermInChan(username, 'DESTROY', chan))
             return contractErrors.ChanPermissionTooLow(username, chanId, 'DESTROY')
 		await this.prisma.chan.delete({ where: { id: chanId } })
         this.chanInvitationsService.updateAndNotifyManyInvsStatus(
@@ -449,24 +522,24 @@ export class ChansService {
 
 	async leaveChan(username: string, chanId: string) {
 		const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
-			{ ownerName: true })
+			{
+                ownerName: true,
+                users: { select: { name: true } }
+            })
+
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
 		if (username === chan.ownerName)
             return contractErrors.OwnerCannotLeaveChan()
+
 		await this.prisma.chan.update({
 			where: { id: chanId },
-			data: {
-				users: { disconnect: { name: username } },
-			},
+			data: { users: { disconnect: { name: username } } },
 		})
-		await this.createAndNotifyClassicChanEvent(
-			username,
-			null,
-			chanId,
-			ClassicChanEventType.AUTHOR_LEAVED,
-		)
-        return null
+
+        this.eventsService.createClassicChanEvent(chanId, 'AUTHOR_LEAVED', username)
+            .then(newEvent =>
+                this.notifyChanElement(this.usersToNames(chan.users), newEvent, chanId))
 	}
 
 	async createChanMessage(
@@ -523,11 +596,11 @@ export class ChansService {
 	) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                ...this.getDoesUserHasSelfPermSelect(username, 'SEND_MESSAGE'),
+                ...this.getDoesUserHasSelfPermSelect(username),
                 users: { select: { name: true } },
                 roles: {
                     select: {
-                        ...(this.getDoesUserHasSelfPermSelect(username, 'SEND_MESSAGE')
+                        ...(this.getDoesUserHasSelfPermSelect(username)
                             .roles.select),
                         name: true
                     }
@@ -538,7 +611,7 @@ export class ChansService {
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
-        if (!await this.doesUserHasSelfPermInChan(username, 'SEND_MESSAGE', chan))
+        if (!this.doesUserHasSelfPermInChan(username, 'SEND_MESSAGE', chan))
             return contractErrors.ChanPermissionTooLow(username, chanId, 'SEND_MESSAGE')
         if (relatedTo && !chan.elements?.length)
             return contractErrors.NotFoundChanEntity(chanId, "relatedTo element", relatedTo)
@@ -632,11 +705,11 @@ export class ChansService {
     ) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                ...this.getDoesUserHasSelfPermSelect(username, 'UPDATE_MESSAGE'),
+                ...this.getDoesUserHasSelfPermSelect(username),
                 users: { select: { name: true } },
                 roles: {
                     select: {
-                        ...(this.getDoesUserHasSelfPermSelect(username, 'UPDATE_MESSAGE')
+                        ...(this.getDoesUserHasSelfPermSelect(username)
                             .roles.select),
                         name: true
                     }
@@ -735,25 +808,103 @@ export class ChansService {
         return this.formatChanDiscussionMessageForUser(username, deletedElement)
 	}
 
-    async kickUserFromChanIfRightTo(username: string, { username: otherUserName, chanId }: RequestShapes['kickUserFromChan']['params']) {
+    async muteUserFromChanIfRightTo(username: string,
+        { username: otherUserName, chanId }: RequestShapes['muteUserFromChan']['params'],
+        timeoutInMs: number | undefined
+    ) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                users: { where: { name: otherUserName }, select: { name: true } },
-                ...this.getDoesUserHasPermOverUserSelect(username)
+                mutedUsers: {
+                    where: {
+                        mutedUserName: otherUserName,
+                        ...this.getMutedUsersWhere(new Date())
+                    },
+                    select: { id: true }
+                },
+                users: { select: { name: true } },
+                ...this.getDoesUserHasPermOverUserSelect(username,
+                    { users: { some: { OR: [{ name: username }, { name: otherUserName }] } } })
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
-        if (!chan.users.length)
+        if (!chan.users.some(user => user.name === otherUserName))
+            return contractErrors.NotFoundChanEntity(chanId, 'user', otherUserName)
+        if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, 'MUTE'))
+            return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'MUTE')
+
+        const untilDate = (timeoutInMs) ? new Date((new Date()).getTime() + timeoutInMs) : null
+
+        this.callbackService.deleteCallback(otherUserName, "unMute")
+        await this.prisma.chan.update({ where: { id: chanId },
+            data: {
+                mutedUsers: (chan.mutedUsers.length
+                    ? {
+                        update: {
+                            where: { id: chan.mutedUsers[0].id },
+                            data: { untilDate }
+                        }
+                    }
+                    : {
+                        create: {
+                            mutedUserName: otherUserName,
+                            untilDate
+                        }
+                    })
+            }})
+
+        const newEvent = await this.eventsService.createMutedUserChanEvent(chanId, username, 
+            otherUserName, timeoutInMs)
+
+        this.notifyChanElement(this.usersToNames(chan.users), newEvent, chanId)
+        
+        this.sse.pushEvent(otherUserName, {
+            type: 'UPDATED_CHAN_SELF_PERMS',
+            data: {
+                chanId,
+                selfPerms: this.getSelfPerm(
+                    otherUserName,
+                    { ...chan, mutedUsers: [{ untilDate, mutedUserName: otherUserName }] })
+            }
+        })
+        if (!untilDate)
+            return
+        const timeoutId = setTimeout(
+            this.unmuteUserInChan.bind(this),
+            timeoutInMs,
+            otherUserName,
+            chanId
+        )
+        this.callbackService.setCallback(otherUserName,
+            "unMute",
+            timeoutId)
+    }
+
+    usersToNames = (users: { name: string }[], exclude?: string) => 
+        users.map(user => user.name).filter(name => name !== exclude)
+
+    async kickUserFromChanIfRightTo(username: string,
+        { username: otherUserName, chanId }: RequestShapes['kickUserFromChan']['params']
+    ) {
+        const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
+            {
+                users: { select: { name: true } },
+                ...this.getDoesUserHasPermOverUserSelect(username)
+            })
+
+        if (!chan)
+            return contractErrors.NotFoundChan(chanId)
+        if (!chan.users.some(user => user.name === otherUserName))
             return contractErrors.NotFoundChanEntity(chanId, 'user', otherUserName)
         if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, "KICK"))
             return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'KICK')
+
         const res = await this.prisma.chan.update({
             where: { id: chanId },
-            data: { users: { disconnect: { name: otherUserName } } },
-            select: { users: { select: { name: true } } }
+            data: { users: { disconnect: { name: otherUserName } } }
         })
-        // TODO discuter avec tom de s'il faut ou non disconnect le user kick des roles du chan
-        this.sse.pushEventMultipleUser(res.users.map(user => user.name),
+
+        const chanUserNames = this.usersToNames(chan.users, otherUserName)
+        this.sse.pushEventMultipleUser(chanUserNames,
             {
                 type: 'DELETED_CHAN_USER',
                 data: {
@@ -761,54 +912,30 @@ export class ChansService {
                     username: otherUserName
                 }
             })
-        this.createAndNotifyClassicChanEvent(username, otherUserName, chanId, 'AUTHOR_KICKED_CONCERNED')
+        this.sse.pushEvent(otherUserName,
+            {
+                type: 'DELETED_CHAN',
+                data: { chanId }
+            })
+        this.eventsService
+            .createClassicChanEvent(
+                chanId, 'AUTHOR_KICKED_CONCERNED',
+                username, otherUserName)
+            .then(newEvent => this.notifyChanElement(chanUserNames, newEvent, chanId))
+        
     }
 
-	public async createAndNotifyClassicChanEvent(
-		author: string,
-		concerned: string | null,
-		chanId: string,
-		event: (typeof ClassicChanEventType)[keyof typeof ClassicChanEventType],
-	) {
-		const newEvent = (
-			await this.prisma.chanDiscussionEvent.create({
-				data: {
-					classicChanDiscussionEvent: {
-						create: { eventType: event },
-					},
-					...(concerned
-                        ? { concernedUser: { connect: { name: concerned } } }
-                        : {}),
-					discussionElement: {
-						create: {
-							chan: { connect: { id: chanId } },
-							author: { connect: { name: author } },
-						},
-					},
-				},
-				select: {
-                    discussionElement: {
-                        select: {
-                            ...this.chanDiscussionElementsSelect,
-                            chan: { select: { users: { select: { name: true } } } }
-                        }
-                    }
-                },
-			})
-		).discussionElement
-		if (!newEvent)
-            return
-        newEvent.chan.users.forEach(({ name }) => {
-            this.sse.pushEvent(name, {
-                type: "CREATED_CHAN_ELEMENT",
-                data: {
-                    chanId,
-                    element: this.formatChanDiscussionElementForUser(name,
-                        newEvent as RetypeChanElement<typeof newEvent>)
-                }
-            })
-        });
-	}
+    notifyChanElement = async (users: string[],
+        unformattedElement: ChanDiscussionElementPayload,
+        chanId: string
+    ) => Promise.all(users.map(name => this.sse.pushEvent(name, {
+            type: 'CREATED_CHAN_ELEMENT',
+            data: {
+                chanId,
+                element: this.
+                    formatChanDiscussionElementForUser(name, unformattedElement)
+            }
+        })))
 
 	public async pushUserToChanAndNotifyUsers(username: string, chanId: string) {
 		const newChan = await this.prisma.chan.update({
@@ -829,29 +956,22 @@ export class ChansService {
         if (!newUser)
             return contractErrors.EntityModifiedBetweenCreationAndRead('ChanUser')
 
-        newChan.users.filter(el => el.name !== username).forEach(el => {
-            const { name, statusVisibilityLevel, ...rest } = el
-            this.sse.pushEvent(name,
-                {
-                    type: "CREATED_CHAN_USER",
-                    data: {
-                        chanId,
-                        user: this.formatChanUserForUser(el.name, {
-                            ...rest,
-                            name: username,
-                            statusVisibilityLevel: newUser.statusVisibilityLevel
-                        }, newChan)
-                    }
-                })
-        })
-		setTimeout(
-			this.createAndNotifyClassicChanEvent.bind(this),
-			0,
-			username,
-			null,
-			chanId,
-			ClassicChanEventType.AUTHOR_JOINED,
-		)
+        const users = newChan.users.filter(user => user.name !== username)
+        users.forEach(user => this.sse.pushEvent(user.name,
+            {
+                type: "CREATED_CHAN_USER",
+                data: {
+                    chanId,
+                    user: this.formatChanUserForUser(user.name, {
+                        ...user,
+                        name: username,
+                        statusVisibilityLevel: newUser.statusVisibilityLevel
+                    }, newChan)
+                }
+            }))
+        const newEvent = await this.eventsService
+            .createClassicChanEvent(chanId, 'AUTHOR_JOINED', username)
+        this.notifyChanElement(this.usersToNames(users), newEvent, chanId)
 		return this.formatChan(username, newChan)
 	}
 

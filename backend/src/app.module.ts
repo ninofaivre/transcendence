@@ -12,6 +12,7 @@ import { FriendsModule } from "./friends/friends.module"
 import { SseModule } from "./sse/sse.module"
 import { PrismaModule } from './prisma/prisma.module';
 import { EnvModule } from './env/env.module';
+import { CallbackModule } from './callback/callback.module';
 
 @Module({
 	imports: [
@@ -27,7 +28,8 @@ import { EnvModule } from './env/env.module';
 		FriendsModule,
 		SseModule,
 		PrismaModule,
-		EnvModule
+		EnvModule,
+		CallbackModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

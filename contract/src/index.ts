@@ -1,6 +1,6 @@
 export type { DmEvent } from "./routers/dms"
 export type { ChanEvent } from "./routers/chans"
-export type { SseEvent } from "./contract"
+export type { SseEvent, GetData } from "./contract"
 
 export { zChanInvitationStatus } from "./generated-zod"
 export { contractErrors, isContractError } from "./errors"

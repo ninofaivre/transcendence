@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { AccessPolicyLevel } from "./enums";
-import { CompleteRoleInput, CompleteRoleOutput, RelatedRoleModel, CompleteDirectMessageInput, CompleteDirectMessageOutput, RelatedDirectMessageModel, CompleteChanInput, CompleteChanOutput, RelatedChanModel, CompleteFriendShipInput, CompleteFriendShipOutput, RelatedFriendShipModel, CompleteFriendInvitationInput, CompleteFriendInvitationOutput, RelatedFriendInvitationModel, CompleteChanInvitationInput, CompleteChanInvitationOutput, RelatedChanInvitationModel, CompleteBlockedShipInput, CompleteBlockedShipOutput, RelatedBlockedShipModel, CompleteChanDiscussionElementInput, CompleteChanDiscussionElementOutput, RelatedChanDiscussionElementModel, CompleteChanDiscussionEventInput, CompleteChanDiscussionEventOutput, RelatedChanDiscussionEventModel, CompleteDeletedMessageChanDiscussionEventInput, CompleteDeletedMessageChanDiscussionEventOutput, RelatedDeletedMessageChanDiscussionEventModel, CompleteChanDiscussionMessageInput, CompleteChanDiscussionMessageOutput, RelatedChanDiscussionMessageModel, CompleteDmDiscussionMessageInput, CompleteDmDiscussionMessageOutput, RelatedDmDiscussionMessageModel, CompleteDeletedMessageDmDiscussionEventInput, CompleteDeletedMessageDmDiscussionEventOutput, RelatedDeletedMessageDmDiscussionEventModel, CompleteBlockedDmDiscussionEventInput, CompleteBlockedDmDiscussionEventOutput, RelatedBlockedDmDiscussionEventModel, CompleteMutedUserChanInput, CompleteMutedUserChanOutput, RelatedMutedUserChanModel } from "./index";
+import { CompleteRoleInput, CompleteRoleOutput, RelatedRoleModel, CompleteDirectMessageInput, CompleteDirectMessageOutput, RelatedDirectMessageModel, CompleteChanInput, CompleteChanOutput, RelatedChanModel, CompleteFriendShipInput, CompleteFriendShipOutput, RelatedFriendShipModel, CompleteFriendInvitationInput, CompleteFriendInvitationOutput, RelatedFriendInvitationModel, CompleteChanInvitationInput, CompleteChanInvitationOutput, RelatedChanInvitationModel, CompleteBlockedShipInput, CompleteBlockedShipOutput, RelatedBlockedShipModel, CompleteChanDiscussionElementInput, CompleteChanDiscussionElementOutput, RelatedChanDiscussionElementModel, CompleteChanDiscussionEventInput, CompleteChanDiscussionEventOutput, RelatedChanDiscussionEventModel, CompleteDeletedMessageChanDiscussionEventInput, CompleteDeletedMessageChanDiscussionEventOutput, RelatedDeletedMessageChanDiscussionEventModel, CompleteMutedUserChanDiscussionEventInput, CompleteMutedUserChanDiscussionEventOutput, RelatedMutedUserChanDiscussionEventModel, CompleteChanDiscussionMessageInput, CompleteChanDiscussionMessageOutput, RelatedChanDiscussionMessageModel, CompleteDmDiscussionMessageInput, CompleteDmDiscussionMessageOutput, RelatedDmDiscussionMessageModel, CompleteDeletedMessageDmDiscussionEventInput, CompleteDeletedMessageDmDiscussionEventOutput, RelatedDeletedMessageDmDiscussionEventModel, CompleteBlockedDmDiscussionEventInput, CompleteBlockedDmDiscussionEventOutput, RelatedBlockedDmDiscussionEventModel, CompleteMutedUserChanInput, CompleteMutedUserChanOutput, RelatedMutedUserChanModel } from "./index";
 
 export const UserModel = z.object({
   name: z.string(),
@@ -26,6 +26,7 @@ export interface CompleteUserInput extends z.input<typeof UserModel> {
   chanDiscussionElement: CompleteChanDiscussionElementInput[];
   chanDiscussionEvent: CompleteChanDiscussionEventInput[];
   deletedMessageChanDiscussionEvent: CompleteDeletedMessageChanDiscussionEventInput[];
+  mutedChanDiscussionEvent: CompleteMutedUserChanDiscussionEventInput[];
   chanDiscussionMessage: CompleteChanDiscussionMessageInput[];
   dmDiscussionMesssage: CompleteDmDiscussionMessageInput[];
   deletedMessageDmDiscussionEvent: CompleteDeletedMessageDmDiscussionEventInput[];
@@ -51,6 +52,7 @@ export interface CompleteUserOutput extends z.infer<typeof UserModel> {
   chanDiscussionElement: CompleteChanDiscussionElementOutput[];
   chanDiscussionEvent: CompleteChanDiscussionEventOutput[];
   deletedMessageChanDiscussionEvent: CompleteDeletedMessageChanDiscussionEventOutput[];
+  mutedChanDiscussionEvent: CompleteMutedUserChanDiscussionEventOutput[];
   chanDiscussionMessage: CompleteChanDiscussionMessageOutput[];
   dmDiscussionMesssage: CompleteDmDiscussionMessageOutput[];
   deletedMessageDmDiscussionEvent: CompleteDeletedMessageDmDiscussionEventOutput[];
@@ -81,6 +83,7 @@ export const RelatedUserModel: z.ZodSchema<CompleteUserOutput, z.ZodTypeDef, Com
   chanDiscussionElement: RelatedChanDiscussionElementModel.array(),
   chanDiscussionEvent: RelatedChanDiscussionEventModel.array(),
   deletedMessageChanDiscussionEvent: RelatedDeletedMessageChanDiscussionEventModel.array(),
+  mutedChanDiscussionEvent: RelatedMutedUserChanDiscussionEventModel.array(),
   chanDiscussionMessage: RelatedChanDiscussionMessageModel.array(),
   dmDiscussionMesssage: RelatedDmDiscussionMessageModel.array(),
   deletedMessageDmDiscussionEvent: RelatedDeletedMessageDmDiscussionEventModel.array(),

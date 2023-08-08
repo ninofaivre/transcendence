@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CompleteUserInput, CompleteUserOutput, RelatedUserModel, CompleteClassicChanDiscussionEventInput, CompleteClassicChanDiscussionEventOutput, RelatedClassicChanDiscussionEventModel, CompleteChangedTitleChanDiscussionEventInput, CompleteChangedTitleChanDiscussionEventOutput, RelatedChangedTitleChanDiscussionEventModel, CompleteDeletedMessageChanDiscussionEventInput, CompleteDeletedMessageChanDiscussionEventOutput, RelatedDeletedMessageChanDiscussionEventModel, CompleteChanDiscussionElementInput, CompleteChanDiscussionElementOutput, RelatedChanDiscussionElementModel } from "./index";
+import { CompleteUserInput, CompleteUserOutput, RelatedUserModel, CompleteClassicChanDiscussionEventInput, CompleteClassicChanDiscussionEventOutput, RelatedClassicChanDiscussionEventModel, CompleteChangedTitleChanDiscussionEventInput, CompleteChangedTitleChanDiscussionEventOutput, RelatedChangedTitleChanDiscussionEventModel, CompleteDeletedMessageChanDiscussionEventInput, CompleteDeletedMessageChanDiscussionEventOutput, RelatedDeletedMessageChanDiscussionEventModel, CompleteMutedUserChanDiscussionEventInput, CompleteMutedUserChanDiscussionEventOutput, RelatedMutedUserChanDiscussionEventModel, CompleteChanDiscussionElementInput, CompleteChanDiscussionElementOutput, RelatedChanDiscussionElementModel } from "./index";
 
 export const ChanDiscussionEventModel = z.object({
   id: z.string(),
@@ -7,6 +7,7 @@ export const ChanDiscussionEventModel = z.object({
   classicChanDiscussionEventId: z.string().nullish(),
   changedTitleChanDiscussionEventId: z.string().nullish(),
   deletedMessageChanDiscussionEventId: z.string().nullish(),
+  mutedUserChanDiscussionEventId: z.string().nullish(),
 });
 
 export interface CompleteChanDiscussionEventInput extends z.input<typeof ChanDiscussionEventModel> {
@@ -14,6 +15,7 @@ export interface CompleteChanDiscussionEventInput extends z.input<typeof ChanDis
   classicChanDiscussionEvent?: CompleteClassicChanDiscussionEventInput | null;
   changedTitleChanDiscussionEvent?: CompleteChangedTitleChanDiscussionEventInput | null;
   deletedMessageChanDiscussionEvent?: CompleteDeletedMessageChanDiscussionEventInput | null;
+  mutedUserChanDiscussionEvent?: CompleteMutedUserChanDiscussionEventInput | null;
   discussionElement?: CompleteChanDiscussionElementInput | null;
 }
 
@@ -22,6 +24,7 @@ export interface CompleteChanDiscussionEventOutput extends z.infer<typeof ChanDi
   classicChanDiscussionEvent?: CompleteClassicChanDiscussionEventOutput | null;
   changedTitleChanDiscussionEvent?: CompleteChangedTitleChanDiscussionEventOutput | null;
   deletedMessageChanDiscussionEvent?: CompleteDeletedMessageChanDiscussionEventOutput | null;
+  mutedUserChanDiscussionEvent?: CompleteMutedUserChanDiscussionEventOutput | null;
   discussionElement?: CompleteChanDiscussionElementOutput | null;
 }
 
@@ -35,5 +38,6 @@ export const RelatedChanDiscussionEventModel: z.ZodSchema<CompleteChanDiscussion
   classicChanDiscussionEvent: RelatedClassicChanDiscussionEventModel.nullish(),
   changedTitleChanDiscussionEvent: RelatedChangedTitleChanDiscussionEventModel.nullish(),
   deletedMessageChanDiscussionEvent: RelatedDeletedMessageChanDiscussionEventModel.nullish(),
+  mutedUserChanDiscussionEvent: RelatedMutedUserChanDiscussionEventModel.nullish(),
   discussionElement: RelatedChanDiscussionElementModel.nullish(),
 }));

@@ -50,6 +50,7 @@ export type ChanEventUnion =
     | "classicChanDiscussionEvent"
     | "changedTitleChanDiscussionEvent"
     | "deletedMessageChanDiscussionEvent"
+    | "mutedUserChanDiscussionEvent"
 ;(eventUnion: ChanEventUnion) => eventUnion satisfies keyof Prisma.ChanDiscussionEventSelect
 
 export type ChanElementUnion = "event" | "message"

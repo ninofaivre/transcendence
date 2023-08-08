@@ -101,7 +101,7 @@ export const zChanDiscussionMessageReturn = z.union([
 					}),
 					z.object({
 						type: z.literal("event"),
-						eventType: z.union([zClassicChanEventType, z.literal("CHANGED_TITLE")]),
+						eventType: z.union([zClassicChanEventType, z.literal("CHANGED_TITLE"), z.literal("AUTHOR_MUTED_CONCERNED")]),
 					}),
 				]),
 			})
@@ -128,6 +128,12 @@ export const zChanDiscussionEventReturn = z.union([
 		oldTitle: z.string(),
 		newTitle: z.string(),
 	}),
+    zChanDiscussionBaseEvent.extend({
+        eventType: z.literal("AUTHOR_MUTED_CONCERNED"),
+        concernedUserName: zUserName,
+        concernMe: z.boolean(),
+        timeoutInMs: z.union([z.number().positive(), z.literal('infinity')])
+    })
 ])
 
 export const zChanDiscussionElementReturn = z.union([
@@ -334,7 +340,7 @@ export const chansContract = c.router(
 			}),
 			body: c.type<null>(),
 			responses: {
-				202: zChanDiscussionMessageReturn,
+				200: zChanDiscussionMessageReturn,
                 ...getErrorsForContract(c,
                     [403, "ChanPermissionTooLowOverUser"],
                     [404, "NotFoundChan", "NotFoundChanEntity"],
@@ -350,12 +356,29 @@ export const chansContract = c.router(
 			}),
 			body: c.type<null>(),
 			responses: {
-				202: c.type<null>(),
+				204: c.type<null>(),
                 ...getErrorsForContract(c,
                     [403, "ChanPermissionTooLowOverUser"],
                     [404, "NotFoundChan", "NotFoundChanEntity"])
 			},
-		}
+		},
+        muteUserFromChan: {
+            method: "PUT",
+            path: "/:chanId/mutedUsers/:username",
+            pathParams: z.strictObject({
+                chanId: z.string().uuid(),
+                username: zUserName
+            }),
+            body: z.strictObject({
+                timeoutInMs: z.number().positive().optional()
+            }),
+            responses: {
+                202: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [403, "ChanPermissionTooLowOverUser"],
+                    [404, "NotFoundChan", "NotFoundChanEntity"])
+            }
+        }
 	},
 	{
 		pathPrefix: "/chans",

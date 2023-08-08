@@ -56,7 +56,6 @@ export const ClassicChanEventType = {
   AUTHOR_LEAVED: 'AUTHOR_LEAVED',
   AUTHOR_KICKED_CONCERNED: 'AUTHOR_KICKED_CONCERNED',
   AUTHOR_JOINED: 'AUTHOR_JOINED',
-  AUTHOR_MUTED_CONCERNED: 'AUTHOR_MUTED_CONCERNED',
 } as const;
 
 export const zPermissionList = z.enum([
@@ -115,5 +114,4 @@ export const zClassicChanEventType = z.enum([
   "AUTHOR_LEAVED",
   "AUTHOR_KICKED_CONCERNED",
   "AUTHOR_JOINED",
-  "AUTHOR_MUTED_CONCERNED",
 ]);

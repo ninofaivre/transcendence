@@ -185,6 +185,7 @@ model User {
   chanDiscussionElement ChanDiscussionElement[]
   chanDiscussionEvent   ChanDiscussionEvent[]
   deletedMessageChanDiscussionEvent DeletedMessageChanDiscussionEvent[]
+  mutedChanDiscussionEvent         MutedUserChanDiscussionEvent[] @relation("muted")
   chanDiscussionMessage ChanDiscussionMessage[]
 
   dmDiscussionMesssage DmDiscussionMessage[]
@@ -365,8 +366,6 @@ model MutedUserChan {
 
   chan   Chan @relation(fields: [chanId], references: [id])
   chanId String
-
-  @@unique([chanId, mutedUserName])
 }
 
 enum ChanType {
@@ -430,8 +429,21 @@ model ChanDiscussionEvent {
   changedTitleChanDiscussionEventId String? @unique
   deletedMessageChanDiscussionEvent DeletedMessageChanDiscussionEvent? @relation(fields: [deletedMessageChanDiscussionEventId], references: [id])
   deletedMessageChanDiscussionEventId String? @unique
+  mutedUserChanDiscussionEvent  MutedUserChanDiscussionEvent? @relation(fields: [mutedUserChanDiscussionEventId], references: [id])
+  mutedUserChanDiscussionEventId String? @unique
 
   discussionElement   ChanDiscussionElement?
+}
+
+model MutedUserChanDiscussionEvent {
+	id String @id @default(uuid())
+
+    mutedUser User @relation(name: "muted", fields: [mutedUserName], references: [name])
+    mutedUserName String
+
+    timeoutInMs Int?
+
+	chanDiscussionEvent ChanDiscussionEvent?
 }
 
 model ChangedTitleChanDiscussionEvent {
@@ -464,5 +476,4 @@ enum ClassicChanEventType {
   AUTHOR_LEAVED
   AUTHOR_KICKED_CONCERNED
   AUTHOR_JOINED
-  AUTHOR_MUTED_CONCERNED
 }

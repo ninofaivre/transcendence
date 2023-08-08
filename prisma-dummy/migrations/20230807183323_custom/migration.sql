@@ -1,11 +1,5 @@
 ------------------USER------------------
 
---- name !== "@me" ---
-ALTER TABLE "User"
-    ADD CONSTRAINT "UserName"
-    CHECK("name" != "@me")
---- name !== "@me" ---
-
 ------------------USER------------------
 
 ------------------CHAN------------------
@@ -21,22 +15,10 @@ ALTER TABLE "ChanDiscussionEvent"
   ADD CONSTRAINT event_union
   CHECK (("classicChanDiscussionEventId" IS NOT NULL)::int +
 	("changedTitleChanDiscussionEventId" IS NOT NULL)::int +
-	("deletedMessageChanDiscussionEventId" IS NOT NULL)::int
+	("deletedMessageChanDiscussionEventId" IS NOT NULL)::int +
+	("mutedUserChanDiscussionEventId" IS NOT NULL)::int
 		= 1);
 --- classicEvent | changedTitleEvent | deletedMessageEvent ---
-
---- type: 'PUBLIC' && title !== null || type: 'PRIVATE' ---
-ALTER TABLE "Chan"
-    ADD CONSTRAINT "ChanType_Title"
-    CHECK(("type" = "PRIVATE" AND "password" IS NULL)
-        OR ("title" IS NOT NULL AND "type" = "PUBLIC"))
---- type: 'PUBLIC' && title !== null || type: 'PRIVATE' ---
-
---- title !== "@me" ---
-ALTER TABLE "Chan"
-    ADD CONSTRAINT "ChanTitle"
-    CHECK("title" != "@me")
---- title !== "@me" ---
 
 ------------------CHAN------------------
 

@@ -63,12 +63,17 @@ export class ChansController {
 
             deleteChanMessage: async ({ params }) => {
                 const res = await this.chansService.deleteChanMessageIfRightTo(username, params)
-                return isContractError(res) ? res : { status: 202, body: res }
+                return isContractError(res) ? res : { status: 200, body: res }
             },
 
             kickUserFromChan: async ({ params }) => {
                 const res = await this.chansService.kickUserFromChanIfRightTo(username, params)
-                return isContractError(res) ? res : { status: 202, body: null }
+                return isContractError(res) ? res : { status: 204, body: null }
+            },
+
+            muteUserFromChan: async ({ params, body: { timeoutInMs } }) => {
+                const res = await this.chansService.muteUserFromChanIfRightTo(username, params, timeoutInMs)
+                return isContractError(res) ? res : { status: 204, body: null }
             }
         })
     }

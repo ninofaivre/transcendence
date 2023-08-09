@@ -8,6 +8,7 @@
 	import { page } from "$app/stores"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { listenOutsideClick } from "$lib/global"
+	import CreateDiscussion from "$lib/CreateDiscussion.svelte"
 
 	// Get our discussions
 	// export let data: LayoutData // TODO wtf
@@ -34,7 +35,7 @@
 		}
 	})
 
-	let sending_friend_request = false
+	let creating_channel = false
 </script>
 
 {#if $page.data.chanList.length}
@@ -53,16 +54,19 @@
 			<section
 				class="mt-2"
 				use:listenOutsideClick
-				on:outsideclick={() => (sending_friend_request = false)}
+				on:outsideclick={() => (creating_channel = false)}
 			>
-				{#if sending_friend_request}
-					<SendFriendRequest />
+				{#if creating_channel}
+					<CreateDiscussion
+						friendList={$page.data.friendList}
+						on:submit={() => (creating_channel = false)}
+					/>
 				{:else}
 					<button
-						class="btn btn-sm variant-filled-tertiary mt-1 rounded-md"
-						on:click={() => (sending_friend_request = true)}
+						class="btn btn-sm variant-filled-tertiary mt-1 rounded-md text-xs"
+						on:click={() => (creating_channel = true)}
 					>
-						Send friend request
+						+
 					</button>
 				{/if}
 			</section>
@@ -78,10 +82,15 @@
 		<slot />
 	</div>
 {:else}
-	<div id="convo" class="my-10 flex h-full flex-col justify-center">
-		<div class="mx-auto text-center text-3xl font-bold">You don't have any friends yet</div>
+	<div class="my-2 flex h-full flex-col justify-center">
+		<div class="text-center text-xl font-bold">
+			You are not participating in any channel yet
+		</div>
 		<div class="mx-auto my-10">
+			<h2 class="my-2">Invite a friend:</h2>
 			<SendFriendRequest />
+			<h2 class="my-2">Create a new Discussion:</h2>
+			<CreateDiscussion friendList={$page.data.friendList} />
 		</div>
 	</div>
 {/if}

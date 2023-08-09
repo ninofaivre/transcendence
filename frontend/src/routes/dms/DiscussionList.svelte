@@ -13,7 +13,7 @@
 			const destroyer = new Array(
 				addListenerToEventSource($sse_store, "CREATED_DM", (data) => {
 					console.log("A new dm was created!")
-					invalidate(":discussions") // Does this work ?
+					invalidate(":dms") // Does this work ?
 				}),
 				addListenerToEventSource($sse_store, "UPDATED_USER_STATUS", (data) => {
 					console.log("Got a event about a dm")

@@ -18,9 +18,9 @@
 
 	$: {
 		if ($logged_in == true) {
-			goto("/dms")
-		} else if ($logged_in == false) {
 			goto("/chans")
+		} else if ($logged_in == false) {
+			goto("/auth")
 		}
 		// if ($logged_in == false) {
 		// 	goto("/auth")
@@ -31,7 +31,7 @@
 
 	const menuItems = [
 		{ inner: "🏓", href: "/pong" },
-		{ inner: "💬", href: "/chat" },
+		{ inner: "💬", href: "/chans" },
 		{ inner: "✉️", href: "/dms" },
 		{ inner: "🤝", href: "/friends" },
 	]

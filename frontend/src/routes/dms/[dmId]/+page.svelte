@@ -8,7 +8,7 @@
 	import type { Message, MessageOrEvent } from "$types"
 
 	/* Components */
-	import DiscussionDisplay from "./DiscussionDisplay.svelte"
+	import DiscussionDisplay from "$lib/DiscussionDisplay.svelte"
 	import ChatBox from "$lib/ChatBox.svelte"
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"

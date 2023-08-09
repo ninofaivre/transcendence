@@ -3,7 +3,7 @@
 
 	import type { CreateMessageFunction, MessageOrEvent } from "$types"
 
-	import ChatBubble from "./ChatBubble.svelte"
+	import ChatBubble from "$lib/ChatBubble.svelte"
 	import { onMount } from "svelte"
 	import { my_name } from "$stores"
 	import { createEventDispatcher } from "svelte"

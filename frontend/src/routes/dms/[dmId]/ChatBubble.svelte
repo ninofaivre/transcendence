@@ -137,16 +137,19 @@
 
 	.message-bubble {
 		max-width: 80%;
-		white-space: pre-wrap;
-		overflow-wrap: break-word; /*So that max-width is not ignored if a word is too long*/
 		border-radius: 10px;
-		padding: 4px;
+		padding: 0.5rem;
 	}
 
 	.from-field,
 	.message-container {
-		margin-left: 0.5rem;
-		margin-right: 0.5rem;
+		max-width: 100%;
+		overflow: hidden;
+		overflow-wrap: break-word; /*So that max-width is not ignored if a word is too long*/
+	}
+
+	.message-container {
+		white-space: pre-wrap;
 	}
 
 	.from-field {

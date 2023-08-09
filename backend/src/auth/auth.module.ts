@@ -11,10 +11,10 @@ import { EnvService } from "src/env/env.service"
 @Module({
 	imports: [
 		PassportModule,
-		JwtModule.register({
-			secret: EnvService.env.PGPASSWORD,
-			signOptions: { expiresIn: "2d" },
-		}),
+        JwtModule.register({
+            secret: EnvService.env.JWT_SECRET,
+            signOptions: { expiresIn: "2d" }
+        }),
 		UserModule,
 	],
 	providers: [AuthService, LocalStrategy, JwtStrategy],

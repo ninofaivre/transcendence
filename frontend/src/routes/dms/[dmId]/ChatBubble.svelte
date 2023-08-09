@@ -137,6 +137,7 @@
 
 	.message-bubble {
 		max-width: 80%;
+		white-space: pre-wrap;
 		overflow-wrap: break-word; /*So that max-width is not ignored if a word is too long*/
 		border-radius: 10px;
 		padding: 4px;

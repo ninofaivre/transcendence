@@ -1,6 +1,9 @@
 #!/bin/bash
 
-source ".env"
+script_location=$(dirname "$0")
+
+source "$script_location/../../.env"
+
 export PGHOST PGUSER PGPORT PGPASSWORD PGDATABASE
 
-psql --file="prisma-dummy/customSql/CUSTOM.sql"
+psql --file="$script_location/CUSTOM.sql"

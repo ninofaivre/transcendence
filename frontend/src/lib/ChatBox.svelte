@@ -20,7 +20,6 @@
 	let textarea: HTMLTextAreaElement
 	// let chatbox: HTMLDivElement
 
-	let i = 0
 	async function sendMessage() {
 		value = value.trim()
 		if (value) {
@@ -70,19 +69,7 @@
 		{disabled}
 		{placeholder}
 		spellcheck="true"
-		class="
-            textarea
-            w-full
-            resize-none
-            overflow-hidden
-            break-all
-            border-none
-            drop-shadow
-            [grid-area:1/1/2/2]
-            read-only:!cursor-default
-            focus:ring-0
-            disabled:!cursor-default
-        "
+		class="textarea resize-none overflow-hidden break-all [grid-area:1/1/2/2]"
 		on:keypress={handleKeypress}
 		aria-label="Type your message here"
 	/>

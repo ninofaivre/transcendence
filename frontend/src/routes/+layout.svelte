@@ -20,7 +20,7 @@
 		if ($logged_in == true) {
 			goto("/dms")
 		} else if ($logged_in == false) {
-			goto("/auth")
+			goto("/chans")
 		}
 		// if ($logged_in == false) {
 		// 	goto("/auth")

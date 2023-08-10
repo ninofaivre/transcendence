@@ -17,14 +17,14 @@ importers:
   .:
     dependencies:
       '@ts-rest/core':
-        specifier: ^3.26.4
-        version: 3.26.4(zod@3.21.4)
+        specifier: ^3.27.0
+        version: 3.27.0(zod@3.21.4)
       '@ts-rest/nest':
-        specifier: ^3.26.4
-        version: 3.26.4(@nestjs/common@9.4.3)(@nestjs/core@9.4.3)(@ts-rest/core@3.26.4)(rxjs@7.8.1)(zod@3.21.4)
+        specifier: ^3.27.0
+        version: 3.27.0(@nestjs/common@9.4.3)(@nestjs/core@9.4.3)(@ts-rest/core@3.27.0)(rxjs@7.8.1)(zod@3.21.4)
       '@ts-rest/open-api':
-        specifier: ^3.26.4
-        version: 3.26.4(@ts-rest/core@3.26.4)(zod@3.21.4)
+        specifier: ^3.27.0
+        version: 3.27.0(@ts-rest/core@3.27.0)(zod@3.21.4)
       zod:
         specifier: ^3.21.4
         version: 3.21.4
@@ -1419,10 +1419,10 @@ packages:
       path-browserify: 1.0.1
     dev: true
 
-  /@ts-rest/core@3.26.4(zod@3.21.4):
-    resolution: {integrity: sha512-mgDkGKnE+N67dtD2xkHh9vstlUI++p1INj93hFhQYsT9Awx+oUBY2GwzU4fSaJybKFIvQEC9NEMMWx1/E+7kiQ==}
+  /@ts-rest/core@3.27.0(zod@3.21.4):
+    resolution: {integrity: sha512-Wy0Agj5pV9KN5Fch2thezTlGEEfGwUqrZW1h5oJUw6cKakhnvndYCjSPgt0/X7OycZfWIX0OAufrBAQ9FuYj3A==}
     peerDependencies:
-      zod: ^3.0.0
+      zod: ^3.21.0
     peerDependenciesMeta:
       zod:
         optional: true
@@ -1430,33 +1430,33 @@ packages:
       zod: 3.21.4
     dev: false
 
-  /@ts-rest/nest@3.26.4(@nestjs/common@9.4.3)(@nestjs/core@9.4.3)(@ts-rest/core@3.26.4)(rxjs@7.8.1)(zod@3.21.4):
-    resolution: {integrity: sha512-LTn6ouJ27IXgZvq13Agc4f9GQ4Vu8VX9U3pQ2tbmeBSl+/blye6+pGXhNPmSHArFd71cff6LS8KppTrZMN+ilw==}
+  /@ts-rest/nest@3.27.0(@nestjs/common@9.4.3)(@nestjs/core@9.4.3)(@ts-rest/core@3.27.0)(rxjs@7.8.1)(zod@3.21.4):
+    resolution: {integrity: sha512-M7QdL/v5z8EczBQHkOmlItEr3Mvc2B6dFYzqHlM9Uts+5uUcLEydC+WoT5g7BIfvzmj63jGfQb1jhi98nNlKwA==}
     peerDependencies:
       '@nestjs/common': ^9.0.0
       '@nestjs/core': ^9.0.0
-      '@ts-rest/core': 3.26.4
+      '@ts-rest/core': 3.27.0
       rxjs: ^7.1.0
-      zod: ^3.0.0
+      zod: ^3.21.0
     peerDependenciesMeta:
       zod:
         optional: true
     dependencies:
       '@nestjs/common': 9.4.3(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/core': 9.4.3(@nestjs/common@9.4.3)(@nestjs/platform-express@9.4.3)(@nestjs/websockets@9.4.3)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@ts-rest/core': 3.26.4(zod@3.21.4)
+      '@ts-rest/core': 3.27.0(zod@3.21.4)
       rxjs: 7.8.1
       zod: 3.21.4
     dev: false
 
-  /@ts-rest/open-api@3.26.4(@ts-rest/core@3.26.4)(zod@3.21.4):
-    resolution: {integrity: sha512-RopH8p9APBVPAap6ZW9uCvfOGecSc4jud2sug9ERZvqd6KTDR8/QmMe0UHplFwdGEs+QOCtY0L2PWnHMIQ6UVg==}
+  /@ts-rest/open-api@3.27.0(@ts-rest/core@3.27.0)(zod@3.21.4):
+    resolution: {integrity: sha512-/BGQvLOiJ/VRDt3p0jTi+PGD8w80uBaTZddYjCKYQQops9kL6jDuf0Ars2woOYU5zlaeVy0eEDqVPjbWGMDKsQ==}
     peerDependencies:
-      '@ts-rest/core': 3.26.4
-      zod: ^3.0.0
+      '@ts-rest/core': 3.27.0
+      zod: ^3.21.0
     dependencies:
       '@anatine/zod-openapi': 1.14.2(openapi3-ts@2.0.2)(zod@3.21.4)
-      '@ts-rest/core': 3.26.4(zod@3.21.4)
+      '@ts-rest/core': 3.27.0(zod@3.21.4)
       openapi3-ts: 2.0.2
       zod: 3.21.4
     dev: false

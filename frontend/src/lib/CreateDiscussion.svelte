@@ -9,6 +9,12 @@
 
 	export let friendList: string[]
 
+	let friendOptions: AutocompleteOption[]
+	$: friendOptions = friendList.map((username) => ({
+		label: username,
+		value: username,
+	}))
+
 	let minlength = 3
 	let maxlength = 100
 	const dispatch = createEventDispatcher()
@@ -42,19 +48,11 @@
 	}
 
 	function validation(_username: string): boolean {
-		const friends = $page.data?.friendships
-		if (friends) {
-			return friends.indexOf(_username) !== -1
-		}
-		return true
+		return friendList.indexOf(_username) !== -1
 	}
 
 	let input: string
 	let value: string[]
-	let friendOptions: AutocompleteOption[] = friendList.map((username) => ({
-		label: username,
-		value: username,
-	}))
 
 	function onInputChipSelect(event: any): void {
 		value = [...value, event.detail.value]

@@ -11,12 +11,12 @@
 	onMount(() => {
 		if ($sse_store) {
 			const destroyer = new Array(
-				addListenerToEventSource($sse_store, "CREATED_DM", (data) => {
-					console.log("A new dm was created!")
-					invalidate(":dms") // Does this work ?
+				addListenerToEventSource($sse_store, "CREATED_CHAN", (data) => {
+					console.log("A new chan was created!")
+					invalidate(":discussions") // Does this work ?
 				}),
 				addListenerToEventSource($sse_store, "UPDATED_USER_STATUS", (data) => {
-					console.log("Got a event about a dm")
+					console.log("Got a event about a chan")
 					const dot_to_update = document.querySelector(
 						`span.online-dot[data-relatedto=${data.userName}]`,
 					) as HTMLElement
@@ -30,7 +30,7 @@
 						}
 					} else console.log("IT WAS NULL !")
 				}),
-				addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (data) => {
+				addListenerToEventSource($sse_store, "UPDATED_CHAN_MESSAGE", (data) => {
 					// Mark unread the discussion that corresponds to the discussion who got a new message
 					// How to I differentiate a modified message from a new message
 				}),
@@ -44,7 +44,7 @@
 
 {#each discussions as d}
 	<a
-		href={`/dms/${d.id}`}
+		href={`/chans/${d.id}`}
 		class={d.id != currentDiscussionId
 			? "p-4 font-medium rounded-container-token hover:variant-soft-secondary hover:font-semibold"
 			: "variant-ghost-secondary p-4 font-semibold rounded-container-token"}

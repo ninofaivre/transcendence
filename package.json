@@ -22,9 +22,9 @@
     }
   },
   "dependencies": {
-    "@ts-rest/core": "^3.26.4",
-    "@ts-rest/nest": "^3.26.4",
-    "@ts-rest/open-api": "^3.26.4",
+    "@ts-rest/core": "^3.27.0",
+    "@ts-rest/nest": "^3.27.0",
+    "@ts-rest/open-api": "^3.27.0",
     "zod": "^3.21.4"
   }
 }

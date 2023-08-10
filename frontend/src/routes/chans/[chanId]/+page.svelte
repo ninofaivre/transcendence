@@ -25,7 +25,7 @@
 
 	// Important, resets variable on route parameter change
 	$: messages = $page.data.messages
-	$: $page.params.dmId, (sendLoadEvents = true)
+	$: $page.params.chanId, (sendLoadEvents = true)
 
 	// for (let idx in messages) {
 	// 	message_indexes.set(messages[idx], idx)
@@ -64,9 +64,9 @@
 				isDeleted: false,
 			},
 		]
-		const { status, body } = await client.dms.createDmMessage({
+		const { status, body } = await client.chans.createChanMessage({
 			params: {
-				dmId: $page.params.dmId,
+				chanId: $page.params.chanId,
 			},
 			body: {
 				content: e.detail,
@@ -83,11 +83,11 @@
 	}
 
 	async function deletionHandler({ detail: { id: elementId } }: CustomEvent<{ id: string }>) {
-		const { status, body } = await client.dms.deleteDmMessage({
+		const { status, body } = await client.chans.deleteChanMessage({
 			body: null,
 			params: {
 				elementId,
-				dmId: $page.params.dmId,
+				chanId: $page.params.chanId,
 			},
 		})
 		if (status === 202) {
@@ -104,11 +104,11 @@
 	async function editHandler({
 		detail: { id: elementId, new_message },
 	}: CustomEvent<{ id: string; new_message: string }>) {
-		const { status, body } = await client.dms.updateDmMessage({
+		const { status, body } = await client.chans.updateChanMessage({
 			body: { content: new_message },
 			params: {
 				elementId,
-				dmId: $page.params.dmId,
+				chanId: $page.params.chanId,
 			},
 		})
 		if (status === 200) {
@@ -125,8 +125,8 @@
 	async function loadPreviousMessages({
 		detail: { loading_greediness, cursor, canary },
 	}: CustomEvent<{ loading_greediness: number; cursor: string; canary: HTMLElement }>) {
-		const { status, body } = await client.dms.getDmElements({
-			params: { dmId: $page.params.dmId },
+		const { status, body } = await client.chans.getChanElements({
+			params: { chanId: $page.params.chanId },
 			query: { nElements: loading_greediness, cursor },
 		})
 		if (status == 200) {
@@ -165,22 +165,22 @@
 		resizeObserver.observe(header!)
 
 		const destroyer: (() => void)[] = new Array(
-			addListenerToEventSource($sse_store!, "CREATED_DM_ELEMENT", (data) => {
+			addListenerToEventSource($sse_store!, "CREATED_CHAN_ELEMENT", (data) => {
 				console.log("Server message: New message", data)
-				if (data.dmId === $page.params.dmId) {
+				if (data.chanId === $page.params.chanId) {
 					messages = [...messages, data.element]
 					// const len = messages.length
 					// message_indexes.set(messages[len - 1], len - 1)
 				}
 			}),
 
-			addListenerToEventSource($sse_store!, "UPDATED_DM_MESSAGE", (data) => {
+			addListenerToEventSource($sse_store!, "UPDATED_CHAN_MESSAGE", (data) => {
 				console.log("Server message: Message was modified", data)
-				if (data.dmId === $page.data.dmId) {
+				if (data.chanId === $page.data.chanId) {
 					updateSomeMessage(data.message.id, data.message.content)
 				}
 			}),
-			addListenerToEventSource($sse_store!, "UPDATED_DM_STATUS", (data) => {
+			addListenerToEventSource($sse_store!, "UPDATED_CHAN_STATUS", (data) => {
 				disabled = data.status === "DISABLED" ? true : false
 			}),
 		)

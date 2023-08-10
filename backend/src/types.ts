@@ -61,7 +61,7 @@ type RetypeChanEvent<T> = T extends Record<ChanEventUnion, unknown>
     : T
 
 type RetypeChanMessage<T> = T extends Record<"related", (Record<ChanElementUnion, unknown> | null)>
-    ? Omit<T, "related"> & (Record<"related", RetypeChanElement<Exclude<T['related'], null>>> | null)
+    ? Omit<T, "related"> & (Record<"related", RetypeChanElement<Exclude<T['related'], null>> | null>)
     : T
 
 export type RetypeChanEventInElement<T extends Record<"event", unknown>> =

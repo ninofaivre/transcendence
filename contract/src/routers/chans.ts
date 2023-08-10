@@ -83,29 +83,9 @@ const zChanDiscussionBaseEvent = zChanDiscussionBaseElement.extend({
 	type: z.literal("event"),
 })
 
-export const zChanDiscussionMessageReturn = z.union([
+export const zChanDiscussionMessageReturnTest = z.union([
 	zChanDiscussionBaseMessage.extend({
 		content: z.string(),
-		relatedTo: z
-			.object({
-				id: z.string().uuid(),
-				preview: z.union([
-					z.object({
-						type: z.literal("message"),
-						isDeleted: z.literal(true),
-					}),
-					z.object({
-						type: z.literal("message"),
-						isDeleted: z.literal(false),
-						content: z.string(),
-					}),
-					z.object({
-						type: z.literal("event"),
-						eventType: z.union([zClassicChanEventType, z.literal("CHANGED_TITLE"), z.literal("AUTHOR_MUTED_CONCERNED")]),
-					}),
-				]),
-			})
-			.nullable(),
 		isDeleted: z.literal(false),
 		hasBeenEdited: z.boolean(),
         mentionMe: z.boolean(),
@@ -134,6 +114,21 @@ export const zChanDiscussionEventReturn = z.union([
         concernMe: z.boolean(),
         timeoutInMs: z.union([z.number().positive(), z.literal('infinity')])
     })
+])
+
+export const zChanDiscussionMessageReturn = z.union([
+	zChanDiscussionBaseMessage.extend({
+		content: z.string(),
+        relatedTo: z.union([ zChanDiscussionMessageReturnTest, zChanDiscussionEventReturn ]).nullable(),
+		isDeleted: z.literal(false),
+		hasBeenEdited: z.boolean(),
+        mentionMe: z.boolean(),
+	}),
+	zChanDiscussionBaseMessage.extend({
+		content: z.literal(""),
+		isDeleted: z.literal(true),
+		deletingUserName: zUserName,
+	}),
 ])
 
 export const zChanDiscussionElementReturn = z.union([

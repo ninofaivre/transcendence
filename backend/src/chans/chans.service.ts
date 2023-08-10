@@ -182,25 +182,28 @@ export class ChansService {
 
 	private chanDiscussionMessagesSelect = {
 		content: true,
-		related: {
-            select: {
-                id: true,
-                authorName: true,
-                message: { select: { content: true } },
-                event: { select: this.chanDiscussionEventsSelect }
-            }
-        },
 		relatedUsers: { select: { name: true } },
 		relatedRoles: { select: { name: true } },
         modificationDate: true
 	} satisfies Prisma.ChanDiscussionMessageSelect
 
-	public chanDiscussionElementsSelect = {
+
+	public chanDiscussionElementsSelectBase = {
 		id: true,
 		event: { select: this.chanDiscussionEventsSelect },
 		message: { select: this.chanDiscussionMessagesSelect },
 		authorName: true,
 		creationDate: true,
+	} satisfies Prisma.ChanDiscussionElementSelect
+
+	public chanDiscussionElementsSelect = {
+        ...this.chanDiscussionElementsSelectBase,
+        message: {
+            select: {
+                ...this.chanDiscussionElementsSelectBase['message']['select'],
+                related: { select: this.chanDiscussionElementsSelectBase }
+            }
+        }
 	} satisfies Prisma.ChanDiscussionElementSelect
 
 	private defaultPermissions: PermissionList[] = [
@@ -298,24 +301,7 @@ export class ChansService {
             ...elementRest,
             author,
             isDeleted: false,
-            relatedTo: related && {
-                id: related.id,
-                // TODO this is just for testing purpose, do something cleaner if tom likes preview
-                preview: (() => {
-                    const { event, message } = related
-                    if (event) {
-                        if (event.deletedMessageChanDiscussionEvent)
-                            return { type: 'message', isDeleted: true } as const
-                        else if (event.changedTitleChanDiscussionEvent)
-                            return { type: 'event', eventType: "CHANGED_TITLE" } as const
-                        else if (event.mutedUserChanDiscussionEvent)
-                            return { type: 'event', eventType: "AUTHOR_MUTED_CONCERNED" } as const
-                        else
-                            return { type: 'event', eventType: event.classicChanDiscussionEvent.eventType } as const
-                    }
-                    return { type: 'message', isDeleted: false, content: message.content } as const
-                })()
-            },
+            relatedTo: related && this.formatChanDiscussionElementForUser(username, (related.message) ? { ...related, message: { ...related['message'], related: null } } : { ...related, message: null }),
             ...messageRest,
             mentionMe: !!(this.namesArrayToStringArray(relatedRoles.concat(relatedUsers))
                     .includes(username)

@@ -80,7 +80,7 @@
 		<InputChip bind:input bind:value name="users" id="invites" {validation} />
 		<Autocomplete
 			bind:input
-			blacklist={value}
+			denylist={value}
 			options={friendOptions}
 			on:selection={onInputChipSelect}
 			emptyState="No such friend found"

@@ -54,8 +54,8 @@
 	let input: string
 	let value: string[]
 
-	function onInputChipSelect(event: any): void {
-		value = [...value, event.detail.value]
+	function onInputChipSelect(event: CustomEvent<AutocompleteOption>) {
+		value = [...value, event.detail.value as string]
 	}
 </script>
 

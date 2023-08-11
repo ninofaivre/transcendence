@@ -31,7 +31,7 @@
 		})
 		if (status == 201) {
 			console.log("Server returned:", status, body)
-			for (let invitedUserName in usernames) {
+			for (let invitedUserName of usernames) {
 				client.invitations.chan.createChanInvitation({
 					body: { chanId: body.id, invitedUserName },
 				})

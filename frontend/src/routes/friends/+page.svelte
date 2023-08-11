@@ -8,6 +8,7 @@
 	import { toastStore } from "@skeletonlabs/skeleton"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { invalidate } from "$app/navigation"
+	import CreateDiscussion from "$lib/CreateDiscussion.svelte"
 
 	async function acceptFriendInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
 		const id = e.currentTarget.dataset.id
@@ -127,6 +128,9 @@
 		<div class="pb-8 text-center text-2xl font-bold">You have no pending chan invitations</div>
 	{/if}
 </ul>
+
+<p>Create a new discussion</p>
+<CreateDiscussion friendList={$page.data.friendList} />
 
 <ul class="m-3">
 	{#if $page.data.friend_requests.incoming.length != 0}

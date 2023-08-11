@@ -69,6 +69,12 @@
 	/>
 	<label for="priv" class="label">Make private</label>
 	<input id="priv" type="checkbox" bind:checked={priv} />
+	<div class="mt-3">
+		<button type="submit" class="btn variant-filled"> Create room </button>
+		<button type="button" class="btn variant-filled" on:click={() => dispatch("cancel")}>
+			Cancel
+		</button>
+	</div>
 </form>
 
 <style>

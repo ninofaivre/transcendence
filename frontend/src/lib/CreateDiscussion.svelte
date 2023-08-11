@@ -31,7 +31,7 @@
 		})
 		if (status == 201) {
 			console.log("Server returned:", status, body)
-			for (let invitedUserName in usernames) {
+			for (let invitedUserName of usernames) {
 				client.invitations.chan.createChanInvitation({
 					body: { chanId: body.id, invitedUserName },
 				})
@@ -54,8 +54,8 @@
 	let input: string
 	let value: string[]
 
-	function onInputChipSelect(event: any): void {
-		value = [...value, event.detail.value]
+	function onInputChipSelect(event: CustomEvent<AutocompleteOption>) {
+		value = [...value, event.detail.value as string]
 	}
 </script>
 
@@ -80,7 +80,7 @@
 		<InputChip bind:input bind:value name="users" id="invites" {validation} />
 		<Autocomplete
 			bind:input
-			blacklist={value}
+			denylist={value}
 			options={friendOptions}
 			on:selection={onInputChipSelect}
 			emptyState="No such friend found"

@@ -5,7 +5,6 @@ import { SseModule } from "src/sse/sse.module"
 import { ChanInvitationsModule } from "src/invitations/chan-invitations/chan-invitations.module"
 import { UserModule } from "src/user/user.module"
 import { CallbackModule } from "src/callback/callback.module"
-import { EventsService } from './events/events.service';
 
 @Module({
 	imports: [
@@ -15,7 +14,7 @@ import { EventsService } from './events/events.service';
         forwardRef(() => ChanInvitationsModule),
     ],
 	controllers: [ChansController],
-	providers: [ChansService, EventsService /* , AppService */],
+	providers: [ChansService /* , AppService */],
 	exports: [ChansService],
 })
 export class ChansModule {}

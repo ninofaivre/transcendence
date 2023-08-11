@@ -20,7 +20,7 @@ import { zChanDiscussionMessageReturn } from "contract"
 import { ChanElementUnion, RetypeChanElement } from "src/types"
 import { zPermissionOverList } from "contract"
 import { CallbackService } from "src/callback/callback.service"
-import { EventsService } from "./events/events.service"
+import { ChanElementFactory } from "./element"
 
 type RequestShapes = NestRequestShapes<typeof contract.chans>
 
@@ -29,6 +29,21 @@ export type ChanDiscussionElementPayload = RetypeChanElement<Prisma.ChanDiscussi
 
 type ChanDiscussionElementEventPayload = Extract<ChanDiscussionElementPayload, { event: {} }>
 type ChanDiscussionElementMessagePayload = Extract<ChanDiscussionElementPayload, { message: {} }>
+export type ChanDiscussionElementEventWithoutDeletedPayload =
+    Omit<ChanDiscussionElementEventPayload, "event">
+    & {
+        event: Exclude<ChanDiscussionElementEventPayload['event'],
+            { deletedMessageChanDiscussionEvent: {} }>
+    }
+export type ChanDiscussionElementMessageWithDeletedPayload =
+    | ChanDiscussionElementMessagePayload
+    | (
+        Omit<ChanDiscussionElementEventPayload, "event">
+        & {
+            event: Extract<ChanDiscussionElementEventPayload['event'],
+                { deletedMessageChanDiscussionEvent: {} }>
+        }
+    )
 
 type ChanPayload = Prisma.ChanGetPayload<
     { select: ReturnType<ChansService['getChansSelect']> }>
@@ -72,14 +87,13 @@ export class ChansService {
     }
 
     constructor(
-		private readonly prisma: PrismaService,
-		private readonly sse: SseService,
+		public readonly prisma: PrismaService,
+		public readonly sse: SseService,
 		@Inject(forwardRef(() => UserService))
 		private readonly usersService: UserService,
 		@Inject(forwardRef(() => ChanInvitationsService))
 		private readonly chanInvitationsService: ChanInvitationsService,
-        private readonly callbackService: CallbackService,
-        private readonly eventsService: EventsService
+        private readonly callbackService: CallbackService
 	) {
         this.prisma.chan.findMany({
             where: { mutedUsers: { some: this.getMutedUsersWhere(new Date()) } },
@@ -275,13 +289,7 @@ export class ChansService {
 
 	private formatChanDiscussionMessageForUser(
         username: string,
-        element: ChanDiscussionElementMessagePayload
-            | (
-                Omit<ChanDiscussionElementEventPayload, "event">
-                & {
-                    event: Extract<ChanDiscussionElementEventPayload['event'],
-                        { deletedMessageChanDiscussionEvent: {} }>
-                })
+        element: ChanDiscussionElementMessageWithDeletedPayload
 	) {
         if (element.event) {
             const { event: { deletedMessageChanDiscussionEvent: { deletingUserName } }, authorName: author, ...elementRest } = element
@@ -301,7 +309,7 @@ export class ChansService {
             ...elementRest,
             author,
             isDeleted: false,
-            relatedTo: related && this.formatChanDiscussionElementForUser(username, (related.message) ? { ...related, message: { ...related['message'], related: null } } : { ...related, message: null }),
+            relatedTo: related && this.formatChanDiscussionElementForUser(username, (related.message) ? { ...related, message: { ...related['message'], related: null } } : related),
             ...messageRest,
             mentionMe: !!(this.namesArrayToStringArray(relatedRoles.concat(relatedUsers))
                     .includes(username)
@@ -315,11 +323,7 @@ export class ChansService {
 
 	private formatChanDiscussionEvent(
         username: string,
-        element: Omit<ChanDiscussionElementEventPayload, "event">
-            & {
-                event: Exclude<ChanDiscussionElementEventPayload['event'],
-                    { deletedMessageChanDiscussionEvent: {} }>
-            }
+        element: ChanDiscussionElementEventWithoutDeletedPayload
     ) {
         const { event, authorName: author, ...elementRest } = element
         const {
@@ -364,7 +368,7 @@ export class ChansService {
         } as const
 	}
 
-	private formatChanDiscussionElementForUser(
+	public formatChanDiscussionElementForUser(
         username: string,
 		element: ChanDiscussionElementPayload
 	): z.infer<typeof zChanDiscussionElementReturn> {
@@ -523,9 +527,15 @@ export class ChansService {
 			data: { users: { disconnect: { name: username } } },
 		})
 
-        this.eventsService.createClassicChanEvent(chanId, 'AUTHOR_LEAVED', username)
-            .then(newEvent =>
-                this.notifyChanElement(this.usersToNames(chan.users), newEvent, chanId))
+        const chanUserNames = this.usersToNames(chan.users, username)
+
+        new ChanElementFactory(chanId, username, this)
+            .createClassicEvent(['AUTHOR_LEAVED'])
+            .then(event => event.notify(chanUserNames))
+        this.sse.pushEventMultipleUser(chanUserNames, {
+            type: 'DELETED_CHAN_USER',
+            data: { chanId, username }
+        })
 	}
 
 	async createChanMessage(
@@ -796,7 +806,7 @@ export class ChansService {
 
     async muteUserFromChanIfRightTo(username: string,
         { username: otherUserName, chanId }: RequestShapes['muteUserFromChan']['params'],
-        timeoutInMs: number | undefined
+        timeoutInMs: number | 'infinity' 
     ) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
@@ -818,7 +828,7 @@ export class ChansService {
         if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, 'MUTE'))
             return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'MUTE')
 
-        const untilDate = (timeoutInMs) ? new Date((new Date()).getTime() + timeoutInMs) : null
+        const untilDate = (timeoutInMs !== 'infinity') ? new Date((new Date()).getTime() + timeoutInMs) : null
 
         this.callbackService.deleteCallback(otherUserName, "unMute")
         await this.prisma.chan.update({ where: { id: chanId },
@@ -838,21 +848,22 @@ export class ChansService {
                     })
             }})
 
-        const newEvent = await this.eventsService.createMutedUserChanEvent(chanId, username, 
-            otherUserName, timeoutInMs)
+        new ChanElementFactory(chanId, username, this)
+            .createMutedUserEvent(otherUserName, timeoutInMs)
+            .then(event => event.notify(this.usersToNames(chan.users)))
 
-        this.notifyChanElement(this.usersToNames(chan.users), newEvent, chanId)
-        
         this.sse.pushEvent(otherUserName, {
             type: 'UPDATED_CHAN_SELF_PERMS',
             data: {
                 chanId,
-                selfPerms: this.getSelfPerm(
-                    otherUserName,
-                    { ...chan, mutedUsers: [{ untilDate, mutedUserName: otherUserName }] })
+                selfPerms: this.getSelfPerm(otherUserName,
+                    {
+                        ...chan,
+                        mutedUsers: [{ untilDate, mutedUserName: otherUserName }]
+                    })
             }
         })
-        if (!untilDate)
+        if (timeoutInMs === 'infinity')
             return
         const timeoutId = setTimeout(
             this.unmuteUserInChan.bind(this),
@@ -890,7 +901,7 @@ export class ChansService {
         })
 
         const chanUserNames = this.usersToNames(chan.users, otherUserName)
-        this.sse.pushEventMultipleUser(chanUserNames,
+        this.sse.pushEventMultipleUser(chanUserNames.filter(name => name !== username),
             {
                 type: 'DELETED_CHAN_USER',
                 data: {
@@ -903,12 +914,9 @@ export class ChansService {
                 type: 'DELETED_CHAN',
                 data: { chanId }
             })
-        this.eventsService
-            .createClassicChanEvent(
-                chanId, 'AUTHOR_KICKED_CONCERNED',
-                username, otherUserName)
-            .then(newEvent => this.notifyChanElement(chanUserNames, newEvent, chanId))
-        
+        new ChanElementFactory(chanId, username, this)
+            .createClassicEvent(['AUTHOR_KICKED_CONCERNED', otherUserName])
+            .then(event => event.notify(chanUserNames))
     }
 
     notifyChanElement = async (users: string[],
@@ -955,9 +963,9 @@ export class ChansService {
                     }, newChan)
                 }
             }))
-        const newEvent = await this.eventsService
-            .createClassicChanEvent(chanId, 'AUTHOR_JOINED', username)
-        this.notifyChanElement(this.usersToNames(users), newEvent, chanId)
+        new ChanElementFactory(chanId, username, this)
+            .createClassicEvent(['AUTHOR_JOINED'])
+            .then(event => event.notify(this.usersToNames(users)))
 		return this.formatChan(username, newChan)
 	}
 

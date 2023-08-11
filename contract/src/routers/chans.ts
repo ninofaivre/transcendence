@@ -22,6 +22,9 @@ export const zChanTitle = z
 export const zChanPassword = z.string().nonempty().min(8).max(150)
 export const zRoleName = z.string().nonempty()
 
+// limitation of javascript setTimeout
+export const zTimeOut = z.union([z.number().positive().int().lt(2147483647/*, { message: "timeout is 24 days max" }*/), z.literal('infinity') ])
+
 export const zCreatePublicChan = z.strictObject({
 	type: z.literal(zChanType.enum.PUBLIC),
 	title: zChanTitle,
@@ -112,7 +115,7 @@ export const zChanDiscussionEventReturn = z.union([
         eventType: z.literal("AUTHOR_MUTED_CONCERNED"),
         concernedUserName: zUserName,
         concernMe: z.boolean(),
-        timeoutInMs: z.union([z.number().positive(), z.literal('infinity')])
+        timeoutInMs: zTimeOut
     })
 ])
 
@@ -365,7 +368,7 @@ export const chansContract = c.router(
                 username: zUserName
             }),
             body: z.strictObject({
-                timeoutInMs: z.number().positive().optional()
+                timeoutInMs: zTimeOut 
             }),
             responses: {
                 202: c.type<null>(),

@@ -21,13 +21,7 @@
 	let form: HTMLFormElement
 	async function handleDiscussionCreation() {
 		let formdata = new FormData(form) // `form` is bound to the form node
-		const title: string = formdata.get("title") as string
-		const type = priv ? "PRIVATE" : "PUBLIC"
 		const usernames: string[] = formdata.getAll("users") as string[]
-		const { status, body } = await client.chans.createChan({
-			body: { type, title },
-		})
-		console.log("Server returned:", status, body)
 		for (let invitedUserName of usernames) {
 			client.invitations.chan.createChanInvitation({
 				body: { chanId: chan_id, invitedUserName },

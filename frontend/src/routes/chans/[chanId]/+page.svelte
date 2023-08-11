@@ -17,14 +17,12 @@
 	import { sse_store, my_name } from "$stores"
 	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
 	import Toggle from "$lib/Toggle.svelte"
-	import { createEventDispatcher } from "svelte"
 
 	console.log($page.route.id, " init")
 
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
 	sendLoadEvents = true
-	const dispatch = createEventDispatcher()
 
 	// Important, resets variable on route parameter change
 	$: messages = $page.data.messages
@@ -210,6 +208,7 @@
 					friendList={$page.data.friendList}
 					chan_id={$page.params.chanId}
 					on:cancel={toggle}
+					on:submit={toggle}
 				/>
 			</svelte:fragment>
 			<button class="btn btn-sm variant-filled" on:click={toggle}

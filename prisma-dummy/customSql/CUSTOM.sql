@@ -38,6 +38,15 @@ alter table "Chan" add constraint "ChanTitle"
     CHECK("title" != '@me');
 --- title !== "@me" ---
 
+-- TODO if eventType end with _CONCERNED concernedUser not null else null
+-- alter table "ChanDiscussionEvent" drop constraint if exists "eventType";
+-- alter table "ChanDiscussionEvent" add constraint "eventType"
+--     CHECK(
+--         ("classicChanDiscussionEventId" is null) or
+--         ("classicChanDiscussionEvent.eventType"::text like '%_CONCERNED' and concernedUser is not null) or
+--         concernedUser is null
+--     );
+
 ------------------CHAN------------------
 
 -------------------DM-------------------

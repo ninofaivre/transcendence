@@ -22,6 +22,9 @@ export const zChanTitle = z
 export const zChanPassword = z.string().nonempty().min(8).max(150)
 export const zRoleName = z.string().nonempty()
 
+// limitation of javascript setTimeout
+export const zTimeOut = z.union([z.number().positive().int().lt(2147483647/*, { message: "timeout is 24 days max" }*/), z.literal('infinity') ])
+
 export const zCreatePublicChan = z.strictObject({
 	type: z.literal(zChanType.enum.PUBLIC),
 	title: zChanTitle,
@@ -83,29 +86,9 @@ const zChanDiscussionBaseEvent = zChanDiscussionBaseElement.extend({
 	type: z.literal("event"),
 })
 
-export const zChanDiscussionMessageReturn = z.union([
+export const zChanDiscussionMessageReturnTest = z.union([
 	zChanDiscussionBaseMessage.extend({
 		content: z.string(),
-		relatedTo: z
-			.object({
-				id: z.string().uuid(),
-				preview: z.union([
-					z.object({
-						type: z.literal("message"),
-						isDeleted: z.literal(true),
-					}),
-					z.object({
-						type: z.literal("message"),
-						isDeleted: z.literal(false),
-						content: z.string(),
-					}),
-					z.object({
-						type: z.literal("event"),
-						eventType: z.union([zClassicChanEventType, z.literal("CHANGED_TITLE"), z.literal("AUTHOR_MUTED_CONCERNED")]),
-					}),
-				]),
-			})
-			.nullable(),
 		isDeleted: z.literal(false),
 		hasBeenEdited: z.boolean(),
         mentionMe: z.boolean(),
@@ -132,8 +115,23 @@ export const zChanDiscussionEventReturn = z.union([
         eventType: z.literal("AUTHOR_MUTED_CONCERNED"),
         concernedUserName: zUserName,
         concernMe: z.boolean(),
-        timeoutInMs: z.union([z.number().positive(), z.literal('infinity')])
+        timeoutInMs: zTimeOut
     })
+])
+
+export const zChanDiscussionMessageReturn = z.union([
+	zChanDiscussionBaseMessage.extend({
+		content: z.string(),
+        relatedTo: z.union([ zChanDiscussionMessageReturnTest, zChanDiscussionEventReturn ]).nullable(),
+		isDeleted: z.literal(false),
+		hasBeenEdited: z.boolean(),
+        mentionMe: z.boolean(),
+	}),
+	zChanDiscussionBaseMessage.extend({
+		content: z.literal(""),
+		isDeleted: z.literal(true),
+		deletingUserName: zUserName,
+	}),
 ])
 
 export const zChanDiscussionElementReturn = z.union([
@@ -370,7 +368,7 @@ export const chansContract = c.router(
                 username: zUserName
             }),
             body: z.strictObject({
-                timeoutInMs: z.number().positive().optional()
+                timeoutInMs: zTimeOut 
             }),
             responses: {
                 202: c.type<null>(),

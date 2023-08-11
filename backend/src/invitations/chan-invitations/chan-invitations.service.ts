@@ -121,12 +121,12 @@ export class ChanInvitationsService {
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
-        if (this.chansService.doesUserHasSelfPermInChan(
+        if (!this.chansService.doesUserHasSelfPermInChan(
             invitingUserName,
             PermissionList.INVITE,
-            chan)) {
+            chan)
+        )
             return contractErrors.ChanPermissionTooLow(invitingUserName, chanId, 'INVITE')
-        }
         const { users } = chan
 		if (users.length)
 			throw new ForbiddenException(`${invitedUserName} already in chan ${chanId}`)

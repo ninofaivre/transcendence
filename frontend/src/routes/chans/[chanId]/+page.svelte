@@ -15,7 +15,8 @@
 	import { client } from "$clients"
 	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store, my_name } from "$stores"
-	// import { message_indexes } from "$lib/indexes"
+	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
+	import Toggle from "$lib/Toggle.svelte"
 
 	console.log($page.route.id, " init")
 
@@ -180,9 +181,6 @@
 					updateSomeMessage(data.message.id, data.message.content)
 				}
 			}),
-			addListenerToEventSource($sse_store!, "UPDATED_CHAN_STATUS", (data) => {
-				disabled = data.status === "DISABLED" ? true : false
-			}),
 		)
 		return () => {
 			destroyer.forEach((func) => void func())
@@ -204,6 +202,19 @@
 		on:loadprevious={loadPreviousMessages}
 	/>
 	<section id="input-row" class="p-4">
+		<Toggle let:toggle>
+			<svelte:fragment let:toggle slot="active">
+				<InviteFriendToChan
+					friendList={$page.data.friendList}
+					chan_id={$page.params.chanId}
+					on:cancel={toggle}
+					on:submit={toggle}
+				/>
+			</svelte:fragment>
+			<button class="btn btn-sm variant-filled" on:click={toggle}
+				>Invite friends to this channel</button
+			>
+		</Toggle>
 		<ChatBox
 			outline
 			on:message_sent={messageSentHandler}

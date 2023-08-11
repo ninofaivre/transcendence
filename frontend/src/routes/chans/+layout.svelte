@@ -3,7 +3,7 @@
 	import type { LayoutData } from "./$types"
 
 	/* Components */
-	import DiscussionList from "./DiscussionList.svelte"
+	import ChanList from "./ChanList.svelte"
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
@@ -71,7 +71,7 @@
 				{/if}
 			</section>
 			<section id="discussions" class="overflow-y-auto">
-				<DiscussionList
+				<ChanList
 					discussions={$page.data.chanList}
 					currentDiscussionId={$page.params.chanId}
 				/>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	/*  This page is responsible for displaying the current conversation with a friend.
+	/*  This page is responsible for displaying a channel
         and the associated input box. While the Chatbox could have been part of the layout
         it was deemed too complex for little benefit */
 
@@ -30,9 +30,6 @@
 		chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
 		sendLoadEvents = true
 	}
-	// $: $page.params.chanId,
-	// 	(sendLoadEvents = true),
-	// 	(chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId))
 
 	function updateSomeMessage(to_update_id: string, new_message: string) {
 		const to_update_idx: number = messages.findLastIndex((message: MessageOrEvent) => {
@@ -172,11 +169,8 @@
 				console.log("Server message: New message", data)
 				if (data.chanId === $page.params.chanId) {
 					messages = [...messages, data.element]
-					// const len = messages.length
-					// message_indexes.set(messages[len - 1], len - 1)
 				}
 			}),
-
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_MESSAGE", (data) => {
 				console.log("Server message: Message was modified", data)
 				if (data.chanId === $page.data.chanId) {

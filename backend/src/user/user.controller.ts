@@ -1,10 +1,11 @@
-import { UseGuards } from "@nestjs/common"
+import { UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common"
 import { Controller, Request } from "@nestjs/common"
 import { JwtAuthGuard } from "../auth/jwt-auth.guard"
 import { UserService } from "./user.service"
 import { TsRest, TsRestHandler, tsRestHandler } from "@ts-rest/nest"
 import { contract, isContractError } from "contract"
 import { EnrichedRequest } from "src/auth/auth.service"
+import { FilesInterceptor } from "@nestjs/platform-express"
 
 const c = contract.users
 
@@ -38,10 +39,23 @@ export class UserController {
 		})
 	}
 
+    @UseGuards(JwtAuthGuard)
+    @UseInterceptors(FilesInterceptor('profilePicture'))
+    @TsRestHandler(c.setMyProfilePicture)
+    async setMyProfilePicture(@Request() req: EnrichedRequest, @UploadedFile()profilePicture: Express.Multer.File) {
+        return tsRestHandler(c.setMyProfilePicture, async ({ body }) => {
+            if (!profilePicture)
+                console.log('empty file')
+            else
+                console.log(profilePicture.filename, profilePicture.mimetype, profilePicture.path)
+            return { status: 204, body: null }
+        })
+    }
+
 	@UseGuards(JwtAuthGuard)
 	@TsRestHandler(c)
 	async handler(@Request() req: EnrichedRequest) {
-		return tsRestHandler<Omit<typeof c, "signUp">>(c, {
+		return tsRestHandler<Omit<typeof c, "signUp" | "setMyProfilePicture">>(c, {
 			getMe: async () => {
 				const res = await this.userService.getMe(req.user.username)
 				return isContractError(res) ? res : { status: 200, body: res }

@@ -80,15 +80,13 @@ export class ChansController {
             setUserAdminState: async ({ body: { state }, params }) => {
                 const res = await this.chansService.setUserAdminStateIfRightTo(username, state, params)
                 return isContractError(res) ? res : { status: 204, body: null }
-            }
+            },
             // BH //
+            
+            updateChan: async ({ params: { chanId }, body }) => {
+                const res = await this.chansService.updateChan(username, chanId, body)
+                return isContractError(res) ? res : { status: 200, body: null }
+            }
         })
     }
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.updateChan)
-	// async updateChan(@Req()req: EnrichedRequest, @TsRestRequest(){ params: { chanId }, body: requestBody }: RequestShapes['updateChan'])
-	// {
-	// 	const responseBody = this.chansService.formatChan(await this.chansService.updateChan(req.user.username, chanId, requestBody))
-	// 	return { status: 204 as const, body: responseBody }
-	// }
 }

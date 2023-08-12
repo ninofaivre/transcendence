@@ -10,23 +10,63 @@
 	//Hack
 	import { page } from "$app/stores"
 	import type { z } from "zod"
+	import { client } from "$clients"
 
 	export let message: Message
 	export let avatar_src: string
 	export let from_me = message.author === $my_name
 	export let discussion: Chan | DirectConversation
 
+	// POPUP SECTION
+
+	let perms: string[] | undefined
+	let roles: string[] | undefined
+	let isAdmin: boolean | undefined
+	let popuptitems = [
+		{ label: "Kick", handler: kickHandler },
+		{ label: "Mute", handler: muteHandler },
+	]
+	let admin_button: (typeof popuptitems)[number]
+	if (isChan(discussion)) {
+		const user = discussion?.users.find(({ name }) => {
+			return message.author === name
+		})
+		if (user) {
+			perms = user.myPermissionOver
+			roles = user.roles
+			isAdmin = roles.includes("ADMIN")
+			admin_button =
+				isAdmin === true
+					? { label: "Remove Admin status", handler: GrantAdminHandler }
+					: { label: "Grant Adminstatus", handler: GrantAdminHandler }
+			popuptitems = [...popuptitems, admin_button]
+		}
+	}
+
+	const popupClick: PopupSettings = {
+		event: "click",
+		target: "popupClick",
+		placement: "top",
+	}
+
+	function kickHandler() {}
+	function muteHandler() {}
+	function GrantAdminHandler() {
+		client.chans.setUserAdminState({
+			params: {
+				chanId: discussion.id,
+				username: message.author,
+			},
+			body: {
+				state: true,
+			},
+		})
+	}
 	function isChan(arg: DirectConversation | Chan): arg is Chan {
 		return !!(arg as any).users
 	}
 
-	let perms: string[] | undefined
-	if (isChan(discussion)) {
-		perms = discussion?.users.find(({ name }) => {
-			return message.author === name
-		})?.myPermissionOver
-	}
-
+	// MENU SECTION
 	const dispatch = createEventDispatcher()
 	let is_menu_open = false
 	let contenteditable = false
@@ -65,21 +105,6 @@
 		is_sent = false
 		dispatch("delete", { id: message.id })
 	}
-
-	const popupClick: PopupSettings = {
-		event: "click",
-		target: "popupClick",
-		placement: "top",
-	}
-
-	function kickHandler() {}
-	function muteHandler() {}
-	function permHandler() {}
-	const popuptitems = [
-		{ label: "Kick", handler: kickHandler },
-		{ label: "Mute", handler: muteHandler },
-		{ label: "Grant Admin Permission", handler: permHandler },
-	]
 </script>
 
 <div
@@ -92,19 +117,21 @@
 	<div use:popup={popupClick}>
 		<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" loading="lazy" />
 	</div>
-	<div data-popup="popupClick">
-		<ol class="list variant-filled-primary rounded px-2 py-2">
-			{#each popuptitems as popuptitem}
-				<li>
-					<button
-						class="btn btn-sm variant-filled-secondary flex-auto"
-						on:click={popuptitem.handler}>{popuptitem.label}</button
-					>
-				</li>
-			{/each}
-			<div class="arrow variant-filled-primary" />
-		</ol>
-	</div>
+	{#if isChan(discussion)}
+		<div data-popup="popupClick">
+			<ol class="list variant-filled-primary rounded px-2 py-2">
+				{#each popuptitems as popuptitem}
+					<li>
+						<button
+							class="btn btn-sm variant-filled-secondary flex-auto"
+							on:click={popuptitem.handler}>{popuptitem.label}</button
+						>
+					</li>
+				{/each}
+				<div class="arrow variant-filled-primary" />
+			</ol>
+		</div>
+	{/if}
 	<!-- {/if} -->
 	<div
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}

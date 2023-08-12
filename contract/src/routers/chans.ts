@@ -219,39 +219,25 @@ export const chansContract = c.router(
                     [500, "EntityModifiedBetweenCreationAndRead"]),
 			},
 		},
-		// updateChan:
-		// {
-		// 	method: 'PATCH',
-		// 	path: '/:chanId',
-		// 	pathParams: z.strictObject
-		// 	({
-		// 		chanId: zChanId
-		// 	}),
-		// 	body: z.discriminatedUnion("type",
-		// 	[
-		// 		z.strictObject
-		// 		({
-		// 			type: z.literal(ChanType.PUBLIC),
-		// 			title: zChanTitle.optional(),
-		// 			password: zChanPassword.nullable().optional()
-		// 		}),
-		// 		z.strictObject
-		// 		({
-		// 			type: z.literal(ChanType.PRIVATE),
-		// 			title: zChanTitle.nullable().optional()
-		// 		}),
-		// 		z.strictObject
-		// 		({
-		// 			type: z.undefined(),
-		// 			title: zChanTitle.nullable().optional(),
-		// 			password: zChanPassword.nullable().optional()
-		// 		})
-		// 	]),
-		// 	responses:
-		// 	{
-		// 		204: zChanReturn
-		// 	}
-		// },
+		updateChan:
+		{
+            method: "PUT",
+            path: "/:chanId/infos",
+            pathParams: z.strictObject({
+                chanId: z.string().uuid()
+            }),
+            body: z.discriminatedUnion("type", [
+                zCreatePublicChan,
+                zCreatePrivateChan
+            ]),
+            responses: {
+                204: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [403, "ChanPermissionTooLow"],
+                    [404, "NotFoundChan"],
+                    [409, "ChanAlreadyExist"])
+            }
+		},
 		deleteChan: {
 			method: "DELETE",
 			path: "/:chanId",
@@ -391,7 +377,7 @@ export const chansContract = c.router(
 	},
 )
 
-const zUpdatedChan = zChanReturn.pick({ title: true, type: true, ownerName: true, id: true })
+const zUpdatedChan = zChanReturn.pick({ title: true, type: true, id: true })
 const zUpdatedChanUser = zChanUser.pick({ roles: true, myPermissionOver: true }).partial()
 
 export type ChanEvent =

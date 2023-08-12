@@ -1120,52 +1120,31 @@ export class ChansService {
         })
     }
     // BH //
+    
+    async updateChan(username: string, chanId: string, body: RequestShapes['updateChan']['body']) {
+        const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
+            {
+                ...this.getDoesUserHasSelfPermSelect(username),
+                users: { select: { name: true } }
+            })
+        if (!chan)
+            return contractErrors.NotFoundChan(chanId)
+        if (!this.doesUserHasSelfPermInChan(username, 'EDIT', chan))
+            return contractErrors.ChanPermissionTooLow(username, chanId, 'EDIT')
+        if (body.type === 'PUBLIC' && body.password)
+            body.password = await hash(body.password, 10)
+        if (body.title && await this.getChan({ title: body.title }, {}))
+            return contractErrors.ChanAlreadyExist(body.title)
+        await this.prisma.chan.update({ where: { title: body.title }, data: body })
+        const toNotify = chan.users.map(({ name }) => name).filter(name => name !== username)
+        this.sse.pushEventMultipleUser(toNotify, {
+            type: 'UPDATED_CHAN_INFO',
+            data: {
+                id: chanId,
+                ...body,
+                title: (body.title) ? body.title : null
+            }
+        })
+    }
 
-	// // TODO: test updateChan (untested)
-	// // UNSTABLE
-	// async updateChan(username: string, chanId: number, dto: RequestShapes['updateChan']['body']) {
-	// 	const res = await this.prisma.chan.findUnique({
-	// 		where: { id: chanId },
-	// 		select:
-	// 		{
-	// 			roles:
-	// 			{
-	// 				where: this.permissionsService.getRolesDoesUserHasRighTo(username, username, PermissionList.EDIT),
-	// 				select: { name: true },
-	// 				take: 1
-	// 			},
-	// 			type: true,
-	// 			title: true,
-	// 			password: true
-	// 		}
-	// 	})
-	// 	if (!res)
-	// 		throw new NotFoundException(`chan with id ${chanId} not found`)
-	// 	if (!res.roles.length)
-	// 		throw new ForbiddenException(`you don't have right to edit chan with id ${chanId}`)
-	// 	const tmp = new Map<string, null>()
-	// 	if (!dto.type) {
-	// 		const error = ((res.type === 'PRIVATE') ? zCreatePrivateChan : zCreatePublicChan).safeParse({ ...res, ...dto })
-	// 		if (!error.success) {
-	// 			console.log(error.error)
-	// 			throw new BadRequestException(`${error.error}`)
-	// 		}
-	// 	}
-	// 	else if (dto.type !== res.type) {
-	// 		const error = ((res.type === 'PRIVATE') ? zCreatePrivateChan : zCreatePublicChan).strip().safeParse({ ...res, ...dto })
-	// 		if (!error.success) {
-	// 			console.log(error.error)
-	// 			throw new BadRequestException(`${error.error}`)
-	// 		}
-	// 		for (const k in res) {
-	// 			if (!(k in ((dto.type === 'PRIVATE') ? zCreatePrivateChan : zCreatePublicChan).shape))
-	// 				tmp.set(k, null)
-	// 		}
-	// 	}
-	// 	// TODO:
-	// 	// * notify all members of the chan by sse
-	// 	// * handle title unique constraint faillure
-	// 	return this.prisma.chan.update({ where: { id: chanId }, data: { ...Object.fromEntries(tmp), ...dto }, select: ChansService.chansSelect })
-	// }
-	//
 }

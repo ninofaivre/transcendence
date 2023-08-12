@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Avatar, popup, type PopupSettings } from "@skeletonlabs/skeleton"
 	import { blur, slide } from "svelte/transition"
-	import type { Chan, Message } from "$types"
+	import type { Chan, DirectConversation, Message } from "$types"
 	import { my_name } from "$stores"
 	import ChatBox from "$lib/ChatBox.svelte"
 	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
@@ -14,25 +14,18 @@
 	export let message: Message
 	export let avatar_src: string
 	export let from_me = message.author === $my_name
-	const perms_enum = [
-		"SEND_MESSAGE",
-		"UPDATE_MESSAGE",
-		"DELETE_MESSAGE",
-		"EDIT",
-		"INVITE",
-		"KICK",
-		"BAN",
-		"MUTE",
-		"DESTROY",
-	] as const
-	// Hack
+	export let discussion: Chan | DirectConversation
 
-	import type { zChanUser } from "contract"
-	let perms: string[] | undefined = $page.data?.chanList
-		.find((chan: Chan) => $page.params?.chanId == chan.id)
-		.users.find(
-			(user: z.infer<typeof zChanUser>) => user.name === message.author,
-		).myPermissionOver
+	function isChan(arg: DirectConversation | Chan): arg is Chan {
+		return !!(arg as any).users
+	}
+
+	let perms: string[] | undefined
+	if (isChan(discussion)) {
+		perms = discussion?.users.find(({ name }) => {
+			return message.author === name
+		})?.myPermissionOver
+	}
 
 	const dispatch = createEventDispatcher()
 	let is_menu_open = false
@@ -127,6 +120,14 @@
 				>
 					<div class="spinner" out:blur={{ duration: 500 }} />
 				</div>
+			{/if}
+			{#if perms}
+				{#each perms as perm}
+					<div>
+						{perm}
+					</div>
+				{/each}
+				<br />
 			{/if}
 			<div class="message-container">
 				{#if !contenteditable}

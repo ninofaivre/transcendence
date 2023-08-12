@@ -5,7 +5,7 @@
 
 	/* types */
 	import type { PageData } from "./$types"
-	import type { Message, MessageOrEvent } from "$types"
+	import type { Chan, Message, MessageOrEvent } from "$types"
 
 	/* Components */
 	import DiscussionDisplay from "$lib/DiscussionDisplay.svelte"
@@ -22,15 +22,17 @@
 
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
-	sendLoadEvents = true
+	let chan: Chan
 
 	// Important, resets variable on route parameter change
 	$: messages = $page.data.messages
-	$: $page.params.chanId, (sendLoadEvents = true)
-
-	// for (let idx in messages) {
-	// 	message_indexes.set(messages[idx], idx)
-	// }
+	$: {
+		chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
+		sendLoadEvents = true
+	}
+	// $: $page.params.chanId,
+	// 	(sendLoadEvents = true),
+	// 	(chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId))
 
 	function updateSomeMessage(to_update_id: string, new_message: string) {
 		const to_update_idx: number = messages.findLastIndex((message: MessageOrEvent) => {
@@ -181,6 +183,7 @@
 					updateSomeMessage(data.message.id, data.message.content)
 				}
 			}),
+			// Add event listener to listen to mute event
 		)
 		return () => {
 			destroyer.forEach((func) => void func())
@@ -195,6 +198,7 @@
 	<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
 	<!-- Messages -->
 	<DiscussionDisplay
+		discussion={chan}
 		{messages}
 		{sendLoadEvents}
 		on:delete={deletionHandler}

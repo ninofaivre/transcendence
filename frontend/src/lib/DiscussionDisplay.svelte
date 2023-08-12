@@ -1,7 +1,7 @@
 <script lang="ts">
 	// DiscussionDisplay.svelte
 
-	import type { CreateMessageFunction, MessageOrEvent } from "$types"
+	import type { Chan, DirectConversation, MessageOrEvent } from "$types"
 
 	import ChatBubble from "$lib/ChatBubble.svelte"
 	import { onMount } from "svelte"
@@ -11,6 +11,7 @@
 
 	console.log("DiscussionDisplay init")
 
+	export let discussion: Chan | DirectConversation
 	export let messages: MessageOrEvent[] = []
 	export let sendLoadEvents: boolean
 
@@ -55,6 +56,7 @@
 		{#each messages as message}
 			{#if message.type === "message"}
 				<ChatBubble
+					{discussion}
 					{message}
 					from_me={message.author === $my_name}
 					avatar_src="https://i.pravatar.cc/?img={bs_hash(message.author)}"

@@ -5,7 +5,7 @@
 
 	/* types */
 	import type { PageData } from "./$types"
-	import type { Message, MessageOrEvent } from "$types"
+	import type { DirectConversation, Message, MessageOrEvent } from "$types"
 
 	/* Components */
 	import DiscussionDisplay from "$lib/DiscussionDisplay.svelte"
@@ -22,10 +22,14 @@
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
 	sendLoadEvents = true
+	let dm: DirectConversation
 
 	// Important, resets variable on route parameter change
 	$: messages = $page.data.messages
-	$: $page.params.dmId, (sendLoadEvents = true)
+	$: {
+		dm = $page.data.dmList.find((el: DirectConversation) => el.id === $page.params.dmId)
+		sendLoadEvents = true
+	}
 
 	// for (let idx in messages) {
 	// 	message_indexes.set(messages[idx], idx)
@@ -197,6 +201,7 @@
 	<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
 	<!-- Messages -->
 	<DiscussionDisplay
+		discussion={dm}
 		{messages}
 		{sendLoadEvents}
 		on:delete={deletionHandler}

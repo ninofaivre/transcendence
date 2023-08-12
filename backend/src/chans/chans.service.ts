@@ -1088,20 +1088,9 @@ export class ChansService {
             type: 'UPDATED_CHAN_SELF_PERMS',
             data: { chanId, selfPerms: this.getSelfPerm(otherUserName, updatedChan) }
         })
-        const newPermOver = chan.users.map(({ name }) => ({ name, permOver: this.getPermOverUserInChan(otherUserName, name, updatedChan) }))
         chan.users.filter(user => user.name !== username).forEach(({ name }) => {
             const newPermOverOther = this.getPermOverUserInChan(name, otherUserName, updatedChan)
             const otherNewPermOver = this.getPermOverUserInChan(otherUserName, name, updatedChan)
-            this.sse.pushEvent(otherUserName, {
-                type: 'UPDATED_CHAN_USER',
-                data: {
-                    chanId,
-                    user: {
-                        name,
-                        myPermissionOver: otherNewPermOver
-                    }
-                }
-            })
             this.sse.pushEvent(name, {
                 type: 'UPDATED_CHAN_USER',
                 data: {
@@ -1113,6 +1102,18 @@ export class ChansService {
                                 .some(user => user.name === otherUserName))
                             .map(role => role.name),
                         myPermissionOver: newPermOverOther
+                    }
+                }
+            })
+            if (name === otherUserName)
+                return
+            this.sse.pushEvent(otherUserName, {
+                type: 'UPDATED_CHAN_USER',
+                data: {
+                    chanId,
+                    user: {
+                        name,
+                        myPermissionOver: otherNewPermOver
                     }
                 }
             })

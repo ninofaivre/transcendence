@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Avatar } from "@skeletonlabs/skeleton"
+	import { Avatar, popup, type PopupSettings } from "@skeletonlabs/skeleton"
 	import { blur, slide } from "svelte/transition"
 	import type { Message } from "$types"
 	import { my_name } from "$stores"
@@ -49,6 +49,12 @@
 		is_sent = false
 		dispatch("delete", { id: message.id })
 	}
+
+	const popupClick: PopupSettings = {
+		event: "click",
+		target: "popupClick",
+		placement: "top",
+	}
 </script>
 
 <div
@@ -58,7 +64,23 @@
 >
 	<div class="message-spacer" />
 	<!-- {#if !from_me} -->
-	<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" loading="lazy" />
+	<div use:popup={popupClick}>
+		<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" loading="lazy" />
+	</div>
+	<div data-popup="popupClick">
+		<ol class="list variant-filled-primary rounded px-2 py-2">
+			<li>
+				<span class="flex-auto">Kick</span>
+			</li>
+			<li>
+				<span class="flex-auto">Mute</span>
+			</li>
+			<li>
+				<span class="flex-auto">Grant admin rights</span>
+			</li>
+			<div class="arrow variant-filled-primary" />
+		</ol>
+	</div>
 	<!-- {/if} -->
 	<div
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}

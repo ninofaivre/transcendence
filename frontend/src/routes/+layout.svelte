@@ -6,11 +6,16 @@
 	// Most of your app wide CSS should be put in this file
 	import "../app.postcss"
 
+	import { computePosition, autoUpdate, offset, shift, flip, arrow } from "@floating-ui/dom"
+	import { storePopup } from "@skeletonlabs/skeleton"
+
 	import { AppShell, AppBar, LightSwitch, Toast, Avatar } from "@skeletonlabs/skeleton"
 	import { bs_hash, logout } from "$lib/global"
 	import { logged_in, my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
+
+	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
 
 	function setup_logout(node: HTMLButtonElement) {
 		node.addEventListener("click", () => logout())
@@ -73,14 +78,16 @@
 					>
 						Log out
 					</button>
-					<Avatar
-						src="https://i.pravatar.cc/?img={bs_hash($my_name)}"
-						class="h-8 w-8"
-						rounded="rounded-full"
-					/>
-					<div class="chip variant-ghost ml-1">
-						{$my_name}
-					</div>
+					<a href="/myprofile" class="chip variant-ghost ml-1 flex">
+						<Avatar
+							src="https://i.pravatar.cc/?img={bs_hash($my_name)}"
+							class="h-8 w-8"
+							rounded="rounded-full"
+						/>
+						<div>
+							{$my_name}
+						</div>
+					</a>
 				{/if}
 				<LightSwitch />
 			</svelte:fragment>

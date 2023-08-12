@@ -278,6 +278,7 @@ export class ChansService {
 		const { password, roles, users, mutedUsers, ...rest } = chan
 		return {
             ...rest,
+            roles: roles.map(role => role.name),
             passwordProtected: !!password,
             selfPerms: this.getSelfPerm(username, chan),
             users: users.map(user =>
@@ -1059,7 +1060,7 @@ export class ChansService {
             return contractErrors.ChanPermissionTooLow(username, chanId, 'ROLES_ATTRIBUTION')
         if (!chan.users.some(user => user.name === otherUserName))
             return contractErrors.NotFoundChanEntity(chanId, 'user', otherUserName)
-        const adminRole = chan.roles.filter(role => role.name === 'ADMIN').pop()
+        const adminRole = chan.roles.find(role => role.name === 'ADMIN')
         if (!adminRole)
             return contractErrors.NotFoundChanEntity(chanId, 'role', 'ADMIN')
 

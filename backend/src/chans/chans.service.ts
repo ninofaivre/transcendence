@@ -1040,6 +1040,86 @@ export class ChansService {
 		})
 	}
 
+    // BH //
+    async setUserAdminStateIfRightTo(
+        username: string,
+        state: boolean,
+        { chanId, username: otherUserName }: RequestShapes['setUserAdminState']['params']
+    ) {
+        const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
+            {
+                users: { select: { name: true } },
+                ...this.getDoesUserHasPermOverUserSelect(otherUserName, {})
+            })
+        if (!chan)
+            return contractErrors.NotFoundChan(chanId)
+        if (chan.ownerName !== username)
+            return contractErrors.ChanPermissionTooLow(username, chanId, 'ROLES_ATTRIBUTION')
+        if (!chan.users.some(user => user.name === otherUserName))
+            return contractErrors.NotFoundChanEntity(chanId, 'user', otherUserName)
+        const adminRole = chan.roles.filter(role => role.name === 'ADMIN').pop()
+        if (!adminRole)
+            return contractErrors.NotFoundChanEntity(chanId, 'role', 'ADMIN')
+
+        const isOtherUserAdmin = !!adminRole.users.some(user => user.name === otherUserName)
+        if ((isOtherUserAdmin && state) || (!isOtherUserAdmin && !state))
+            return ;
+
+        // prisma sucks lol (at least as much as myself)
+        await this.prisma.role.update({ where: { chanId_name: { chanId, name: 'ADMIN' } },
+            data: {
+                users: (state
+                    ? { connect: { name: otherUserName } }
+                    : { disconnect: { name: otherUserName } })
+            }})
+        const updatedChan = await this.getChan({ id: chanId },
+            {
+                ...this.getDoesUserHasPermOverUserSelect(otherUserName, {}),
+                mutedUsers: {
+                    where: {
+                        mutedUserName: otherUserName,
+                        ...this.getMutedUsersWhere(new Date())
+                    }
+                }
+            })
+        if (!updatedChan)
+            return
+        this.sse.pushEvent(otherUserName, {
+            type: 'UPDATED_CHAN_SELF_PERMS',
+            data: { chanId, selfPerms: this.getSelfPerm(otherUserName, updatedChan) }
+        })
+        const newPermOver = chan.users.map(({ name }) => ({ name, permOver: this.getPermOverUserInChan(otherUserName, name, updatedChan) }))
+        chan.users.filter(user => user.name !== username).forEach(({ name }) => {
+            const newPermOverOther = this.getPermOverUserInChan(name, otherUserName, updatedChan)
+            const otherNewPermOver = this.getPermOverUserInChan(otherUserName, name, updatedChan)
+            this.sse.pushEvent(otherUserName, {
+                type: 'UPDATED_CHAN_USER',
+                data: {
+                    chanId,
+                    user: {
+                        name,
+                        myPermissionOver: otherNewPermOver
+                    }
+                }
+            })
+            this.sse.pushEvent(name, {
+                type: 'UPDATED_CHAN_USER',
+                data: {
+                    chanId,
+                    user: {
+                        name: otherUserName,
+                        roles: updatedChan.roles
+                            .filter(role => role.users
+                                .some(user => user.name === otherUserName))
+                            .map(role => role.name),
+                        myPermissionOver: newPermOverOther
+                    }
+                }
+            })
+        })
+    }
+    // BH //
+
 	// // TODO: test updateChan (untested)
 	// // UNSTABLE
 	// async updateChan(username: string, chanId: number, dto: RequestShapes['updateChan']['body']) {

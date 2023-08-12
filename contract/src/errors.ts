@@ -109,7 +109,7 @@ export const contractErrors = {
         }
     } as const),
 
-    ChanPermissionTooLow: (username: string, chanId: string, perm: z.infer<typeof zSelfPermissionList>) => ({
+    ChanPermissionTooLow: (username: string, chanId: string, perm: z.infer<typeof zSelfPermissionList> | 'ROLES_ATTRIBUTION') => ({
         status: 403,
         body: {
             code: "ChanPermissionTooLow",
@@ -172,7 +172,7 @@ export const contractErrors = {
     } as const),
 
     NotFoundChanEntity: (chanId: string,
-        entityType: "relatedTo element" | "element" | "message" | "user",
+        entityType: "relatedTo element" | "element" | "message" | "user" | "role",
         entityId: string,
     ) => ({
         status: 404,

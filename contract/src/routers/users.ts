@@ -98,12 +98,22 @@ export const usersContract = c.router(
 		updateMe: {
 			method: "PATCH",
 			path: "/@me",
-			body: zMyProfileReturn.partial(),
+            // TODO after BH add userName
+			body: zMyProfileReturn.omit({ userName: true }).partial(),
 			responses: {
 				200: zMyProfileReturn,
 				...getErrorsForContract(c, [404, "NotFoundUser"]),
 			},
 		},
+        setMyProfilePicture: {
+            method: "PUT",
+            path: "/@me/PP",
+            contentType: "multipart/form-data",
+            body: c.type<{ profilePicture: File }>(),
+            responses: {
+                204: c.type<null>()
+            }
+        },
 		signUp: {
 			method: "POST",
 			path: "/",

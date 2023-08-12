@@ -5,7 +5,7 @@
 
 	/* types */
 	import type { PageData } from "./$types"
-	import type { Message, MessageOrEvent } from "$types"
+	import type { DirectConversation, Message, MessageOrEvent } from "$types"
 
 	/* Components */
 	import DiscussionDisplay from "$lib/DiscussionDisplay.svelte"
@@ -15,21 +15,19 @@
 	import { client } from "$clients"
 	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store, my_name } from "$stores"
-	// import { message_indexes } from "$lib/indexes"
 
 	console.log($page.route.id, " init")
 
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
-	sendLoadEvents = true
+	let dm: DirectConversation
 
 	// Important, resets variable on route parameter change
 	$: messages = $page.data.messages
-	$: $page.params.dmId, (sendLoadEvents = true)
-
-	// for (let idx in messages) {
-	// 	message_indexes.set(messages[idx], idx)
-	// }
+	$: {
+		dm = $page.data.dmList.find((el: DirectConversation) => el.id === $page.params.dmId)
+		sendLoadEvents = true
+	}
 
 	function updateSomeMessage(to_update_id: string, new_message: string) {
 		const to_update_idx: number = messages.findLastIndex((message: MessageOrEvent) => {
@@ -169,11 +167,8 @@
 				console.log("Server message: New message", data)
 				if (data.dmId === $page.params.dmId) {
 					messages = [...messages, data.element]
-					// const len = messages.length
-					// message_indexes.set(messages[len - 1], len - 1)
 				}
 			}),
-
 			addListenerToEventSource($sse_store!, "UPDATED_DM_MESSAGE", (data) => {
 				console.log("Server message: Message was modified", data)
 				if (data.dmId === $page.data.dmId) {
@@ -197,6 +192,7 @@
 	<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
 	<!-- Messages -->
 	<DiscussionDisplay
+		discussion={dm}
 		{messages}
 		{sendLoadEvents}
 		on:delete={deletionHandler}

@@ -5,7 +5,10 @@ import { UserService } from "./user.service"
 import { TsRest, TsRestHandler, tsRestHandler } from "@ts-rest/nest"
 import { contract, isContractError } from "contract"
 import { EnrichedRequest } from "src/auth/auth.service"
-import { FilesInterceptor } from "@nestjs/platform-express"
+import { FileInterceptor } from "@nestjs/platform-express"
+import { writeFile } from "fs/promises"
+import { EnvService } from "src/env/env.service"
+import { join } from "path"
 
 const c = contract.users
 
@@ -29,7 +32,9 @@ passed to the *TsRestHandler* decorator too.
 @TsRest({ jsonQuery: true })
 @Controller()
 export class UserController {
-	constructor(private userService: UserService) {}
+	constructor(
+        private userService: UserService
+    ) {}
 
 	@TsRestHandler(c.signUp)
 	async signUp() {
@@ -40,14 +45,17 @@ export class UserController {
 	}
 
     @UseGuards(JwtAuthGuard)
-    @UseInterceptors(FilesInterceptor('profilePicture'))
+    @UseInterceptors(FileInterceptor('profilePicture'))
     @TsRestHandler(c.setMyProfilePicture)
-    async setMyProfilePicture(@Request() req: EnrichedRequest, @UploadedFile()profilePicture: Express.Multer.File) {
+    async setMyProfilePicture(@Request() { user: { username } }: EnrichedRequest, @UploadedFile()profilePicture: Express.Multer.File) {
         return tsRestHandler(c.setMyProfilePicture, async ({ body }) => {
-            if (!profilePicture)
-                console.log('empty file')
-            else
-                console.log(profilePicture.filename, profilePicture.mimetype, profilePicture.path)
+            if (!profilePicture) {}
+                // return errorEmptyFile
+            try {
+                await writeFile(join(EnvService.env.PROFILE_PICTURE_DIR, username), profilePicture.buffer, { flag: 'w+' })
+            } catch {
+                
+            }
             return { status: 204, body: null }
         })
     }

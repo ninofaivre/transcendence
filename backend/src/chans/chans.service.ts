@@ -144,7 +144,8 @@ export class ChansService {
             },
             select: { untilDate: true, mutedUserName: true }
         },
-		...this.getDoesUserHasPermOverUserSelect(username, {})
+		...this.getDoesUserHasPermOverUserSelect(username, {}),
+        password: true
 	} satisfies Prisma.ChanSelect)
 
     // TODO for both functions under this comment add select and remove username + perm
@@ -274,9 +275,10 @@ export class ChansService {
     }
 
 	private formatChan(username: string, chan: ChanPayload) {
-		const { roles, users, mutedUsers, ...rest } = chan
+		const { password, roles, users, mutedUsers, ...rest } = chan
 		return {
             ...rest,
+            passwordProtected: !!password,
             selfPerms: this.getSelfPerm(username, chan),
             users: users.map(user =>
                 this.formatChanUserForUser(username, user, chan),

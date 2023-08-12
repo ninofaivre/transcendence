@@ -69,6 +69,7 @@ const zChanReturn = z.object({
 	ownerName: zUserName,
 	id: z.string().uuid(),
 	users: z.array(zChanUser).min(1),
+    passwordProtected: z.boolean(),
 	selfPerms: z.array(zSelfPermissionList),
 })
 
@@ -227,7 +228,9 @@ export const chansContract = c.router(
                 chanId: z.string().uuid()
             }),
             body: z.discriminatedUnion("type", [
-                zCreatePublicChan,
+                zCreatePublicChan.extend({
+                    password: zChanPassword.nullable()
+                }),
                 zCreatePrivateChan
             ]),
             responses: {

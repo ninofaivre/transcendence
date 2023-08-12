@@ -1,15 +1,38 @@
 <script lang="ts">
 	import { Avatar, popup, type PopupSettings } from "@skeletonlabs/skeleton"
 	import { blur, slide } from "svelte/transition"
-	import type { Message } from "$types"
+	import type { Chan, Message } from "$types"
 	import { my_name } from "$stores"
 	import ChatBox from "$lib/ChatBox.svelte"
 	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
 
+	//Hack
+	import { page } from "$app/stores"
+	import type { z } from "zod"
+
 	export let message: Message
 	export let avatar_src: string
 	export let from_me = message.author === $my_name
+	const perms_enum = [
+		"SEND_MESSAGE",
+		"UPDATE_MESSAGE",
+		"DELETE_MESSAGE",
+		"EDIT",
+		"INVITE",
+		"KICK",
+		"BAN",
+		"MUTE",
+		"DESTROY",
+	] as const
+	// Hack
+
+	import type { zChanUser } from "contract"
+	let perms: string[] | undefined = $page.data?.chanList
+		.find((chan: Chan) => $page.params?.chanId == chan.id)
+		.users.find(
+			(user: z.infer<typeof zChanUser>) => user.name === message.author,
+		).myPermissionOver
 
 	const dispatch = createEventDispatcher()
 	let is_menu_open = false

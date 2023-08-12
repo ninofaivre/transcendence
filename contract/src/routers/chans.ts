@@ -4,11 +4,7 @@ import { extendApi } from "@anatine/zod-openapi"
 import { unique } from "../zod/global.zod"
 import { zUserName } from "../zod/user.zod"
 import { z } from "zod"
-import {
-	zChanType,
-	zClassicChanEventType,
-	zPermissionList,
-} from "../generated-zod"
+import { zChanType, zClassicChanEventType, zPermissionList } from "../generated-zod"
 import { zUserStatus } from "../zod/user.zod"
 import { getErrorsForContract } from "../errors"
 
@@ -23,7 +19,10 @@ export const zChanPassword = z.string().nonempty().min(8).max(150)
 export const zRoleName = z.string().nonempty()
 
 // limitation of javascript setTimeout
-export const zTimeOut = z.union([z.number().positive().int().lt(2147483647/*, { message: "timeout is 24 days max" }*/), z.literal('infinity') ])
+export const zTimeOut = z.union([
+	z.number().positive().int().lt(2147483647 /*, { message: "timeout is 24 days max" }*/),
+	z.literal("infinity"),
+])
 
 export const zCreatePublicChan = z.strictObject({
 	type: z.literal(zChanType.enum.PUBLIC),
@@ -49,27 +48,27 @@ export const zSelfPermissionList = zPermissionList.extract([
 	"DESTROY",
 	"INVITE",
 	"SEND_MESSAGE",
-    "UPDATE_MESSAGE"
+	"UPDATE_MESSAGE",
 ])
 
 // TODO use this in the backend instead of the craps it currently use
 export const zPermissionOverList = zPermissionList.exclude(zSelfPermissionList.options)
 
-const zChanUser = z.object({
+export const zChanUser = z.object({
 	name: zUserName,
 	status: zUserStatus,
-    roles: z.array(zRoleName),
-    myPermissionOver: z.array(zPermissionOverList),
+	roles: z.array(zRoleName),
+	myPermissionOver: z.array(zPermissionOverList),
 })
 
 // TODO typer title en fonction de PUBLIC | PRIVATE avec un zBaseChan j'imagine
-const zChanReturn = z.object({
+export const zChanReturn = z.object({
 	title: zChanTitle.nullable(),
 	type: zChanType,
 	ownerName: zUserName,
 	id: z.string().uuid(),
 	users: z.array(zChanUser).min(1),
-    passwordProtected: z.boolean(),
+	passwordProtected: z.boolean(),
 	selfPerms: z.array(zSelfPermissionList),
 })
 
@@ -92,7 +91,7 @@ export const zChanDiscussionMessageReturnTest = z.union([
 		content: z.string(),
 		isDeleted: z.literal(false),
 		hasBeenEdited: z.boolean(),
-        mentionMe: z.boolean(),
+		mentionMe: z.boolean(),
 	}),
 	zChanDiscussionBaseMessage.extend({
 		content: z.literal(""),
@@ -112,21 +111,23 @@ export const zChanDiscussionEventReturn = z.union([
 		oldTitle: z.string(),
 		newTitle: z.string(),
 	}),
-    zChanDiscussionBaseEvent.extend({
-        eventType: z.literal("AUTHOR_MUTED_CONCERNED"),
-        concernedUserName: zUserName,
-        concernMe: z.boolean(),
-        timeoutInMs: zTimeOut
-    })
+	zChanDiscussionBaseEvent.extend({
+		eventType: z.literal("AUTHOR_MUTED_CONCERNED"),
+		concernedUserName: zUserName,
+		concernMe: z.boolean(),
+		timeoutInMs: zTimeOut,
+	}),
 ])
 
 export const zChanDiscussionMessageReturn = z.union([
 	zChanDiscussionBaseMessage.extend({
 		content: z.string(),
-        relatedTo: z.union([ zChanDiscussionMessageReturnTest, zChanDiscussionEventReturn ]).nullable(),
+		relatedTo: z
+			.union([zChanDiscussionMessageReturnTest, zChanDiscussionEventReturn])
+			.nullable(),
 		isDeleted: z.literal(false),
 		hasBeenEdited: z.boolean(),
-        mentionMe: z.boolean(),
+		mentionMe: z.boolean(),
 	}),
 	zChanDiscussionBaseMessage.extend({
 		content: z.literal(""),
@@ -215,31 +216,34 @@ export const chansContract = c.router(
 			]),
 			responses: {
 				201: zChanReturn,
-				...getErrorsForContract(c,
-                    [409, "ChanAlreadyExist"],
-                    [500, "EntityModifiedBetweenCreationAndRead"]),
+				...getErrorsForContract(
+					c,
+					[409, "ChanAlreadyExist"],
+					[500, "EntityModifiedBetweenCreationAndRead"],
+				),
 			},
 		},
-		updateChan:
-		{
-            method: "PUT",
-            path: "/:chanId/infos",
-            pathParams: z.strictObject({
-                chanId: z.string().uuid()
-            }),
-            body: z.discriminatedUnion("type", [
-                zCreatePublicChan.extend({
-                    password: zChanPassword.nullable()
-                }),
-                zCreatePrivateChan
-            ]),
-            responses: {
-                204: c.type<null>(),
-                ...getErrorsForContract(c,
-                    [403, "ChanPermissionTooLow"],
-                    [404, "NotFoundChan"],
-                    [409, "ChanAlreadyExist"])
-            }
+		updateChan: {
+			method: "PUT",
+			path: "/:chanId/infos",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+			}),
+			body: z.discriminatedUnion("type", [
+				zCreatePublicChan.extend({
+					password: zChanPassword.nullable(),
+				}),
+				zCreatePrivateChan,
+			]),
+			responses: {
+				204: c.type<null>(),
+				...getErrorsForContract(
+					c,
+					[403, "ChanPermissionTooLow"],
+					[404, "NotFoundChan"],
+					[409, "ChanAlreadyExist"],
+				),
+			},
 		},
 		deleteChan: {
 			method: "DELETE",
@@ -267,9 +271,11 @@ export const chansContract = c.router(
 			}),
 			responses: {
 				201: zChanDiscussionMessageReturn,
-                ...getErrorsForContract(c,
-                    [403, "ChanPermissionTooLow"],
-                    [404, "NotFoundChan", "NotFoundChanEntity"])
+				...getErrorsForContract(
+					c,
+					[403, "ChanPermissionTooLow"],
+					[404, "NotFoundChan", "NotFoundChanEntity"],
+				),
 			},
 		},
 		getChanElements: {
@@ -285,47 +291,50 @@ export const chansContract = c.router(
 			}),
 			responses: {
 				200: z.array(zChanDiscussionElementReturn),
-                ...getErrorsForContract(c,
-                    [404, "NotFoundChan", "NotFoundChanEntity"])
+				...getErrorsForContract(c, [404, "NotFoundChan", "NotFoundChanEntity"]),
 			},
 		},
-        // BH //
-        setUserAdminState: {
-            method: "PUT",
-            path: "/:chanId/admins/:username",
-            pathParams: z.strictObject({
-                chanId: z.string().uuid(),
-                username: zUserName
-            }),
-            body: z.strictObject({
-                state: z.boolean().describe("true ==> admin, false ==> non-admin")
-            }),
-            responses: {
-                204: c.type<null>(),
-                ...getErrorsForContract(c,
-                    [404, "NotFoundChan", "NotFoundChanEntity"],
-                    [403, "ChanPermissionTooLow"])
-            }
-        },
-        // BH //
-        updateChanMessage: {
-            method: "PATCH",
-            path: "/:chanId/elements/:elementId",
-            pathParams: z.strictObject({
-                chanId: z.string().uuid(),
-                elementId: z.string().uuid(),
-            }),
-            body: z.strictObject({
-                content: z.string().nonempty()
-            }),
-            responses: {
-                200: zChanDiscussionMessageReturn,
-                ...getErrorsForContract(c,
-                    [403, "ChanPermissionTooLow", "NotOwnedChanMessage"],
-                    [404, "NotFoundChan", "NotFoundChanEntity"],
-                    [500, "EntityModifiedBetweenUpdateAndRead"])
-            }
-        },
+		// BH //
+		setUserAdminState: {
+			method: "PUT",
+			path: "/:chanId/admins/:username",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+				username: zUserName,
+			}),
+			body: z.strictObject({
+				state: z.boolean().describe("true ==> admin, false ==> non-admin"),
+			}),
+			responses: {
+				204: c.type<null>(),
+				...getErrorsForContract(
+					c,
+					[404, "NotFoundChan", "NotFoundChanEntity"],
+					[403, "ChanPermissionTooLow"],
+				),
+			},
+		},
+		// BH //
+		updateChanMessage: {
+			method: "PATCH",
+			path: "/:chanId/elements/:elementId",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+				elementId: z.string().uuid(),
+			}),
+			body: z.strictObject({
+				content: z.string().nonempty(),
+			}),
+			responses: {
+				200: zChanDiscussionMessageReturn,
+				...getErrorsForContract(
+					c,
+					[403, "ChanPermissionTooLow", "NotOwnedChanMessage"],
+					[404, "NotFoundChan", "NotFoundChanEntity"],
+					[500, "EntityModifiedBetweenUpdateAndRead"],
+				),
+			},
+		},
 		deleteChanMessage: {
 			method: "DELETE",
 			path: "/:chanId/elements/:elementId",
@@ -336,10 +345,12 @@ export const chansContract = c.router(
 			body: c.type<null>(),
 			responses: {
 				200: zChanDiscussionMessageReturn,
-                ...getErrorsForContract(c,
-                    [403, "ChanPermissionTooLowOverUser"],
-                    [404, "NotFoundChan", "NotFoundChanEntity"],
-                    [500, "EntityModifiedBetweenUpdateAndRead"])
+				...getErrorsForContract(
+					c,
+					[403, "ChanPermissionTooLowOverUser"],
+					[404, "NotFoundChan", "NotFoundChanEntity"],
+					[500, "EntityModifiedBetweenUpdateAndRead"],
+				),
 			},
 		},
 		kickUserFromChan: {
@@ -352,35 +363,44 @@ export const chansContract = c.router(
 			body: c.type<null>(),
 			responses: {
 				204: c.type<null>(),
-                ...getErrorsForContract(c,
-                    [403, "ChanPermissionTooLowOverUser"],
-                    [404, "NotFoundChan", "NotFoundChanEntity"])
+				...getErrorsForContract(
+					c,
+					[403, "ChanPermissionTooLowOverUser"],
+					[404, "NotFoundChan", "NotFoundChanEntity"],
+				),
 			},
 		},
-        muteUserFromChan: {
-            method: "PUT",
-            path: "/:chanId/mutedUsers/:username",
-            pathParams: z.strictObject({
-                chanId: z.string().uuid(),
-                username: zUserName
-            }),
-            body: z.strictObject({
-                timeoutInMs: zTimeOut 
-            }),
-            responses: {
-                202: c.type<null>(),
-                ...getErrorsForContract(c,
-                    [403, "ChanPermissionTooLowOverUser"],
-                    [404, "NotFoundChan", "NotFoundChanEntity"])
-            }
-        }
+		muteUserFromChan: {
+			method: "PUT",
+			path: "/:chanId/mutedUsers/:username",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+				username: zUserName,
+			}),
+			body: z.strictObject({
+				timeoutInMs: zTimeOut,
+			}),
+			responses: {
+				202: c.type<null>(),
+				...getErrorsForContract(
+					c,
+					[403, "ChanPermissionTooLowOverUser"],
+					[404, "NotFoundChan", "NotFoundChanEntity"],
+				),
+			},
+		},
 	},
 	{
 		pathPrefix: "/chans",
 	},
 )
 
-const zUpdatedChan = zChanReturn.pick({ title: true, type: true, passwordProtected: true, id: true })
+const zUpdatedChan = zChanReturn.pick({
+	title: true,
+	type: true,
+	passwordProtected: true,
+	id: true,
+})
 const zUpdatedChanUser = zChanUser.pick({ roles: true, myPermissionOver: true }).partial()
 
 export type ChanEvent =
@@ -395,23 +415,23 @@ export type ChanEvent =
 	| {
 			type: "CREATED_CHAN_USER"
 			data: {
-                chanId: string,
-                user: z.infer<typeof zChanUser>
-            }
+				chanId: string
+				user: z.infer<typeof zChanUser>
+			}
 	  }
-    | {
-            type: "UPDATED_CHAN_USER"
-            data: {
-                chanId: string,
-                user: z.infer<typeof zUpdatedChanUser> & { name: string }
-            }
-      }
+	| {
+			type: "UPDATED_CHAN_USER"
+			data: {
+				chanId: string
+				user: z.infer<typeof zUpdatedChanUser> & { name: string }
+			}
+	  }
 	| {
 			type: "DELETED_CHAN_USER"
 			data: {
-                chanId: string,
-                username: z.infer<typeof zUserName>
-            }
+				chanId: string
+				username: z.infer<typeof zUserName>
+			}
 	  }
 	| {
 			type: "UPDATED_CHAN_SELF_PERMS"

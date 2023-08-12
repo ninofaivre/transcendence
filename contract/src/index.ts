@@ -11,11 +11,7 @@ export {
 	zDmDiscussionEventReturn,
 	zDmDiscussionMessageReturn,
 } from "./routers/dms"
-export {
-	zUserProfileReturn,
-	zMyProfileReturn,
-	zUserProfilePreviewReturn,
-} from "./routers/users"
+export { zUserProfileReturn, zMyProfileReturn, zUserProfilePreviewReturn } from "./routers/users"
 export { zFriendShipReturn } from "./routers/friends"
 export { zChanInvitationReturn, zFriendInvitationReturn } from "./routers/invitations"
 export {
@@ -23,14 +19,14 @@ export {
 	zCreatePrivateChan,
 	zChanDiscussionEventReturn,
 	zChanDiscussionElementReturn,
-    zChanDiscussionMessageReturn,
-    zSelfPermissionList,
-    zPermissionOverList
+	zChanDiscussionMessageReturn,
+	zSelfPermissionList,
+	zPermissionOverList,
+	zChanReturn,
+	zChanUser,
 } from "./routers/chans"
 
-export {
-	zUserStatus,
-} from "./zod/user.zod"
+export { zUserStatus } from "./zod/user.zod"
 
 // const contract_module = {
 //   zodTypes: {

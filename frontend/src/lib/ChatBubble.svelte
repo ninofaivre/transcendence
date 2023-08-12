@@ -7,10 +7,8 @@
 	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
 
-	//Hack
-	import { page } from "$app/stores"
-	import type { z } from "zod"
 	import { client } from "$clients"
+	import Toggle from "./Toggle.svelte"
 
 	export let message: Message
 	export let avatar_src: string
@@ -35,10 +33,11 @@
 			perms = user.myPermissionOver
 			roles = user.roles
 			isAdmin = roles.includes("ADMIN")
+			console.log(isAdmin)
 			admin_button =
 				isAdmin === true
-					? { label: "Remove Admin status", handler: GrantAdminHandler }
-					: { label: "Grant Adminstatus", handler: GrantAdminHandler }
+					? { label: "Grant Admin status", handler: toggleAdmin }
+					: { label: "Remove Admin status", handler: toggleAdmin }
 			popuptitems = [...popuptitems, admin_button]
 		}
 	}
@@ -51,14 +50,15 @@
 
 	function kickHandler() {}
 	function muteHandler() {}
-	function GrantAdminHandler() {
+	function toggleAdmin() {
+		const state = !isAdmin
 		client.chans.setUserAdminState({
 			params: {
 				chanId: discussion.id,
 				username: message.author,
 			},
 			body: {
-				state: true,
+				state,
 			},
 		})
 	}
@@ -148,14 +148,22 @@
 					<div class="spinner" out:blur={{ duration: 500 }} />
 				</div>
 			{/if}
-			{#if perms}
-				{#each perms as perm}
-					<div>
-						{perm}
+			{#if roles}
+				{#each roles as role}
+					<div class="italic">
+						{role}<br />
 					</div>
+					<br />
 				{/each}
-				<br />
 			{/if}
+			<!-- {#if perms} -->
+			<!-- 	{#each perms as perm} -->
+			<!-- 		<div> -->
+			<!-- 			{perm} -->
+			<!-- 		</div> -->
+			<!-- 	{/each} -->
+			<!-- 	<br /> -->
+			<!-- {/if} -->
 			<div class="message-container">
 				{#if !contenteditable}
 					{#if !message.isDeleted}

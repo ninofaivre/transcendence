@@ -50,6 +50,7 @@
 	}
 
 	async function messageSentHandler(e: CustomEvent<string>) {
+		console.log("new mesage: ", e)
 		// conversation_container.scrollTop = conversation_container.scrollHeight
 		messages = [
 			...messages,

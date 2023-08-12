@@ -28,6 +28,6 @@ export const load = async ({ depends }: LoadEvent) => {
 		)
 	} else console.log("Loaded friend requests")
 
-	console.log({ friend_requests })
+	console.log({ friend_requests, chan_invites })
 	return { friend_requests, chan_invites }
 }

@@ -55,6 +55,15 @@
 		target: "popupClick",
 		placement: "top",
 	}
+
+	function kickHandler() {}
+	function muteHandler() {}
+	function permHandler() {}
+	const popuptitems = [
+		{ label: "Kick", handler: kickHandler },
+		{ label: "Mute", handler: muteHandler },
+		{ label: "Grant Admin Permission", handler: permHandler },
+	]
 </script>
 
 <div
@@ -69,15 +78,14 @@
 	</div>
 	<div data-popup="popupClick">
 		<ol class="list variant-filled-primary rounded px-2 py-2">
-			<li>
-				<span class="flex-auto">Kick</span>
-			</li>
-			<li>
-				<span class="flex-auto">Mute</span>
-			</li>
-			<li>
-				<span class="flex-auto">Grant admin rights</span>
-			</li>
+			{#each popuptitems as popuptitem}
+				<li>
+					<button
+						class="btn btn-sm variant-filled-secondary flex-auto"
+						on:click={popuptitem.handler}>{popuptitem.label}</button
+					>
+				</li>
+			{/each}
 			<div class="arrow variant-filled-primary" />
 		</ol>
 	</div>

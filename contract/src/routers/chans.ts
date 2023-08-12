@@ -232,9 +232,11 @@ export const chansContract = c.router(
 			}),
 			body: z.discriminatedUnion("type", [
 				zCreatePublicChan.extend({
-					password: zChanPassword.nullable(),
+					password: zChanPassword.nullable().optional(),
 				}),
-				zCreatePrivateChan,
+				zCreatePrivateChan.extend({
+                    title: zChanTitle.nullable()
+                })
 			]),
 			responses: {
 				204: c.type<null>(),

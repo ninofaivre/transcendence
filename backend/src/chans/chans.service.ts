@@ -290,7 +290,7 @@ export class ChansService {
 	private formatChanArray = (username: string, chans: ChanPayload[]) =>
 		chans.map((chan) => this.formatChan(username, chan))
 
-	private formatChanDiscussionMessageForUser(
+	public formatChanDiscussionMessageForUser(
         username: string,
         element: ChanDiscussionElementMessageWithDeletedPayload
 	) {
@@ -534,41 +534,11 @@ export class ChansService {
 
         new ChanElementFactory(chanId, username, this)
             .createClassicEvent(['AUTHOR_LEAVED'])
-            .then(event => event.notify(chanUserNames))
+            .then(event => event.notifyByNames(chanUserNames))
         this.sse.pushEventMultipleUser(chanUserNames, {
             type: 'DELETED_CHAN_USER',
             data: { chanId, username }
         })
-	}
-
-	async createChanMessage(
-		username: string,
-		chanId: string,
-		content: string,
-		relatedTo: string | undefined,
-        ats: { users: { name: string }[], roles: { name: string }[] }
-	) {
-        // TODO try to create from element instead
-		const element = (await this.prisma.chanDiscussionMessage.create({
-            data: {
-                content: content,
-                related: relatedTo ? { connect: { id: relatedTo } } : undefined,
-                relatedUsers: { connect: ats.users },
-                relatedRoles: {
-                    connect: ats.roles.map(role => ({ chanId_name: { chanId, ...role } }))
-                },
-                discussionElement: {
-                    create: {
-                        chanId: chanId,
-                        authorName: username,
-                    },
-                },
-            },
-            select: {
-                discussionElement: { select: this.chanDiscussionElementsSelect },
-            },
-        })).discussionElement
-        return element as (RetypeChanElement<Exclude<typeof element, null>> | null)
 	}
 
     getAtsFromChanMessageContent(chan: {
@@ -615,23 +585,11 @@ export class ChansService {
         if (relatedTo && !chan.elements?.length)
             return contractErrors.NotFoundChanEntity(chanId, "relatedTo element", relatedTo)
         const ats = this.getAtsFromChanMessageContent(chan, content)
-		const newMessage = await this.createChanMessage(username, chanId, content,
-			relatedTo, ats)
-		if (!newMessage || !newMessage.message)
-            return contractErrors.EntityModifiedBetweenCreationAndRead('ChanMessage')
-        const { message } = newMessage
-        chan.users.filter(user => user.name !== username).forEach(({ name }) => {
-            this.sse.pushEvent(name, {
-                type: 'CREATED_CHAN_ELEMENT',
-                data: {
-                    chanId,
-                    element: this.formatChanDiscussionMessageForUser(name,
-                        { ...newMessage, message, event: null })
-                }
-            })
-        })
-        return this.formatChanDiscussionMessageForUser(username,
-            { ...newMessage, message, event: null })
+
+        const newMessage = await (new ChanElementFactory(chanId, username, this)
+            .createMessage(content, relatedTo, ats))
+        newMessage.notifyByUsers(chan.users.filter(user => user.name !== username))
+        return newMessage.formatted()
 	}
 
 	async getChanElements(username: string, chanId: string,
@@ -853,7 +811,7 @@ export class ChansService {
 
         new ChanElementFactory(chanId, username, this)
             .createMutedUserEvent(otherUserName, timeoutInMs)
-            .then(event => event.notify(this.usersToNames(chan.users)))
+            .then(event => event.notifyByUsers(chan.users))
 
         this.sse.pushEvent(otherUserName, {
             type: 'UPDATED_CHAN_SELF_PERMS',
@@ -919,7 +877,7 @@ export class ChansService {
             })
         new ChanElementFactory(chanId, username, this)
             .createClassicEvent(['AUTHOR_KICKED_CONCERNED', otherUserName])
-            .then(event => event.notify(chanUserNames))
+            .then(event => event.notifyByNames(chanUserNames))
     }
 
     notifyChanElement = async (users: string[],
@@ -968,7 +926,7 @@ export class ChansService {
             }))
         new ChanElementFactory(chanId, username, this)
             .createClassicEvent(['AUTHOR_JOINED'])
-            .then(event => event.notify(this.usersToNames(users)))
+            .then(event => event.notifyByUsers(users))
 		return this.formatChan(username, newChan)
 	}
 
@@ -1129,7 +1087,8 @@ export class ChansService {
             {
                 ...this.getDoesUserHasSelfPermSelect(username),
                 password: true,
-                users: { select: { name: true } }
+                users: { select: { name: true } },
+                title: true
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
@@ -1139,11 +1098,16 @@ export class ChansService {
             body.password = await hash(body.password, 10)
         if (body.title && await this.getChan({ title: body.title }, {}))
             return contractErrors.ChanAlreadyExist(body.title)
-        await this.prisma.chan.update({ where: { title: body.title }, data: body })
+        await this.prisma.chan.update({ where: { id: chanId }, data: body })
         const toNotify = chan.users.map(({ name }) => name).filter(name => name !== username)
         const { password, ...bodyRest } = (body.type === 'PUBLIC')
             ? body
             : { ...body, password: chan.password }
+        if (body.title !== chan.title) {
+            new ChanElementFactory(chanId, username, this)
+                .createChangedTitleEvent(chan.title, body.title)
+                .then(event => event.notifyByNames(toNotify))
+        }
         this.sse.pushEventMultipleUser(toNotify, {
             type: 'UPDATED_CHAN_INFO',
             data: {

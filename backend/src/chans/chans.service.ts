@@ -620,7 +620,7 @@ export class ChansService {
 		if (!newMessage || !newMessage.message)
             return contractErrors.EntityModifiedBetweenCreationAndRead('ChanMessage')
         const { message } = newMessage
-        chan.users.forEach(({ name }) => {
+        chan.users.filter(user => user.name !== username).forEach(({ name }) => {
             this.sse.pushEvent(name, {
                 type: 'CREATED_CHAN_ELEMENT',
                 data: {

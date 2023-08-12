@@ -178,7 +178,8 @@ export const contractErrors = {
         status: 404,
         body: {
             code: "NotFoundChanEntity",
-            message: `not found ${entityType} ${entityId} in chan ${chanId}`
+            message: `not found ${entityType} ${entityId} in chan ${chanId}`,
+            entityType
         }
     } as const),
 

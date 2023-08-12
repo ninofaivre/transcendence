@@ -300,17 +300,25 @@ export const chansContract = c.router(
                     [404, "NotFoundChan", "NotFoundChanEntity"])
 			},
 		},
-		// getChanElementById: {
-		// 	method: "GET",
-		// 	path: "/:chanId/elements/:elementId",
-		// 	pathParams: z.strictObject({
-		// 		chanId: z.string().uuid(),
-		// 		elementId: z.string().uuid(),
-		// 	}),
-		// 	responses: {
-		// 		200: zChanDiscussionElementReturn,
-		// 	},
-		// },
+        // BH //
+        setUserAdminState: {
+            method: "PUT",
+            path: "/:chanId/admins/:username",
+            pathParams: z.strictObject({
+                chanId: z.string().uuid(),
+                username: zUserName
+            }),
+            body: z.strictObject({
+                state: z.boolean().describe("true ==> admin, false ==> non-admin")
+            }),
+            responses: {
+                204: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [404, "NotFoundChan", "NotFoundChanEntity"],
+                    [403, "ChanPermissionTooLow"])
+            }
+        },
+        // BH //
         updateChanMessage: {
             method: "PATCH",
             path: "/:chanId/elements/:elementId",
@@ -384,7 +392,7 @@ export const chansContract = c.router(
 )
 
 const zUpdatedChan = zChanReturn.pick({ title: true, type: true, ownerName: true, id: true })
-const zUpdatedChanUser = zChanUser.pick({ name: true, roles: true, myPermissionOver: true })
+const zUpdatedChanUser = zChanUser.pick({ roles: true, myPermissionOver: true }).partial()
 
 export type ChanEvent =
 	| {
@@ -406,7 +414,7 @@ export type ChanEvent =
             type: "UPDATED_CHAN_USER"
             data: {
                 chanId: string,
-                user: z.infer<typeof zUpdatedChanUser>
+                user: z.infer<typeof zUpdatedChanUser> & { name: string }
             }
       }
 	| {

@@ -74,7 +74,14 @@ export class ChansController {
             muteUserFromChan: async ({ params, body: { timeoutInMs } }) => {
                 const res = await this.chansService.muteUserFromChanIfRightTo(username, params, timeoutInMs)
                 return isContractError(res) ? res : { status: 204, body: null }
+            },
+
+            // BH //
+            setUserAdminState: async ({ body: { state }, params }) => {
+                const res = await this.chansService.setUserAdminStateIfRightTo(username, state, params)
+                return isContractError(res) ? res : { status: 204, body: null }
             }
+            // BH //
         })
     }
 	// @UseGuards(JwtAuthGuard)
@@ -83,19 +90,5 @@ export class ChansController {
 	// {
 	// 	const responseBody = this.chansService.formatChan(await this.chansService.updateChan(req.user.username, chanId, requestBody))
 	// 	return { status: 204 as const, body: responseBody }
-	// }
-
-	// @UseGuards(JwtAuthGuard)
-	// @TsRest(c.getChanElementById)
-	// async getChanElementById(
-	// 	@Req() req: EnrichedRequest,
-	// 	@TsRestRequest() { params: { chanId, elementId } }: RequestShapes["getChanElementById"],
-	// ) {
-	// 	const body = await this.chansService.getChanElementById(
-	// 		req.user.username,
-	// 		chanId,
-	// 		elementId,
-	// 	)
-	// 	return { status: 200 as const, body }
 	// }
 }

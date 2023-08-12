@@ -380,7 +380,7 @@ export const chansContract = c.router(
 	},
 )
 
-const zUpdatedChan = zChanReturn.pick({ title: true, type: true, id: true })
+const zUpdatedChan = zChanReturn.pick({ title: true, type: true, passwordProtected: true, id: true })
 const zUpdatedChanUser = zChanUser.pick({ roles: true, myPermissionOver: true }).partial()
 
 export type ChanEvent =

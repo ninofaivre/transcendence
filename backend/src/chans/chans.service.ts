@@ -1127,6 +1127,7 @@ export class ChansService {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 ...this.getDoesUserHasSelfPermSelect(username),
+                password: true,
                 users: { select: { name: true } }
             })
         if (!chan)
@@ -1139,11 +1140,15 @@ export class ChansService {
             return contractErrors.ChanAlreadyExist(body.title)
         await this.prisma.chan.update({ where: { title: body.title }, data: body })
         const toNotify = chan.users.map(({ name }) => name).filter(name => name !== username)
+        const { password, ...bodyRest } = (body.type === 'PUBLIC')
+            ? body
+            : { ...body, password: chan.password }
         this.sse.pushEventMultipleUser(toNotify, {
             type: 'UPDATED_CHAN_INFO',
             data: {
                 id: chanId,
-                ...body,
+                ...bodyRest,
+                passwordProtected: !!password,
                 title: (body.title) ? body.title : null
             }
         })

@@ -66,6 +66,7 @@ const zChanUser = z.object({
 const zChanReturn = z.object({
 	title: zChanTitle.nullable(),
 	type: zChanType,
+    roles: z.array(zRoleName),
 	ownerName: zUserName,
 	id: z.string().uuid(),
 	users: z.array(zChanUser).min(1),

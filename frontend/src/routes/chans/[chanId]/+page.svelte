@@ -187,10 +187,10 @@
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_USER", ({ chanId, user }) => {
 				if (chanId === chan.id) {
 					let index = chan.users.findIndex((o) => o.name == user.name)
-					let key: keyof (typeof chan.users)[number]
-					shallowCopyPartialToNotPartial(chan.users[index], user)
+					console.log("old user:", chan.users[index])
+					console.log("new user:", user)
+					shallowCopyPartialToNotPartial(user, chan.users[index])
 					chan = chan
-					console.log("user:", user)
 				}
 			}),
 			// Add event listener to listen to mute event

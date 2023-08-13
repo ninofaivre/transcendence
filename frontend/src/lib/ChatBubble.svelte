@@ -7,6 +7,7 @@
 	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
 	import { makeToast } from "$lib/global"
+	import { isContractError } from "contract"
 
 	import { client } from "$clients"
 	import Toggle from "./Toggle.svelte"
@@ -52,11 +53,49 @@
 		placement: "top",
 	}
 
-	function kickHandler() {}
-	function muteHandler() {}
+	async function kickHandler() {
+		const ret = await client.chans.kickUserFromChan({
+			params: {
+				chanId: discussion.id,
+				username: message.author,
+			},
+			body: null,
+		})
+		if (ret.status == 202) {
+			makeToast("Muted " + message.author)
+		} else if (isContractError(ret)) {
+			makeToast(`Failed to kick ${message.author} from chan: ${ret.body.message}`)
+			console.warn(ret.body.code)
+		} else
+			throw new Error(
+				`Unexpected return from server when trying to toggle ${message.author} ADMIN status`,
+			)
+	}
+
+	async function muteHandler() {
+		const ret = await client.chans.muteUserFromChan({
+			params: {
+				chanId: discussion.id,
+				username: message.author,
+			},
+			body: {
+				timeoutInMs: "infinity",
+			},
+		})
+		if (ret.status == 202) {
+			makeToast("Muted " + message.author)
+		} else if (isContractError(ret)) {
+			makeToast(`Failed to mute ${message.author}: ${ret.body.message}`)
+			console.warn(ret.body.code)
+		} else
+			throw new Error(
+				`Unexpected return from server when trying to toggle ${message.author} ADMIN status`,
+			)
+	}
+
 	async function toggleAdmin() {
 		const state = !isAdmin
-		const { status } = await client.chans.setUserAdminState({
+		const ret = await client.chans.setUserAdminState({
 			params: {
 				chanId: discussion.id,
 				username: message.author,
@@ -65,7 +104,7 @@
 				state,
 			},
 		})
-		if (status === 204) {
+		if (ret.status === 204) {
 			if (!isAdmin) {
 				makeToast(message.author + " was granted Admin status")
 				// popuptitems[2] = { label: "Remove Admin status", handler: toggleAdmin }
@@ -73,7 +112,15 @@
 				makeToast(message.author + " lost Admin status")
 				// popuptitems[2] = { label: "Grant Admin status", handler: toggleAdmin }
 			}
-		} else makeToast("Couldn't grant Admin status to user" + message.author)
+		} else if (isContractError(ret)) {
+			makeToast(
+				"Couldn't grant Admin status to user" + message.author + ": " + ret.body.message,
+			)
+			console.warn(ret.body.code)
+		} else
+			throw new Error(
+				`Unexpected return from server when trying to toggle ${message.author} ADMIN status`,
+			)
 	}
 
 	function isChan(arg: DirectConversation | Chan): arg is Chan {

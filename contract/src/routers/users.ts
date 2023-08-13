@@ -6,6 +6,7 @@ import { zChanTitle } from "./chans"
 import { zUserName, zUserStatus, zUserPassword } from "../zod/user.zod"
 import { z } from "zod"
 import { getErrorForContract, getErrorsForContract } from "../errors"
+import { StreamableFile } from "@nestjs/common"
 
 export type UserEvent = {
 	type: "UPDATED_USER_STATUS"
@@ -95,6 +96,16 @@ export const usersContract = c.router(
 				...getErrorsForContract(c, [404, "NotFoundUser"]),
 			},
 		},
+        getUserProfilePicture: {
+            method: "GET",
+            path: "/:userName/profilePicture",
+            pathParams: z.strictObject({
+                userName: zUserName
+            }),
+            responses: {
+                200: c.type<StreamableFile>()
+            }
+        },
 		updateMe: {
 			method: "PATCH",
 			path: "/@me",

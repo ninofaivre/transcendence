@@ -38,6 +38,7 @@ tags
 !.vscode/extensions.json
 
 .env
+PP
 package-lock.json
 Session.vim
 REMEMBER.md

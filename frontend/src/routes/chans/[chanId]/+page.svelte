@@ -13,7 +13,7 @@
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
 	import { client } from "$clients"
-	import { addListenerToEventSource } from "$lib/global"
+	import { addListenerToEventSource, shallowCopyPartialToNotPartial } from "$lib/global"
 	import { sse_store, my_name } from "$stores"
 	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
 	import Toggle from "$lib/Toggle.svelte"
@@ -176,6 +176,21 @@
 				console.log("Server message: Message was modified", data)
 				if (data.chanId === $page.data.chanId) {
 					updateSomeMessage(data.message.id, data.message.content)
+				}
+			}),
+			addListenerToEventSource($sse_store!, "KICKED_FROM_CHAN", (data) => {
+				console.log("You have been kicked from the chan:", data.chanId)
+			}),
+			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (data) => {
+				console.log("New perms have arrived !", data)
+			}),
+			addListenerToEventSource($sse_store!, "UPDATED_CHAN_USER", ({ chanId, user }) => {
+				if (chanId === chan.id) {
+					let index = chan.users.findIndex((o) => o.name == user.name)
+					console.log("old user:", chan.users[index])
+					console.log("new user:", user)
+					shallowCopyPartialToNotPartial(user, chan.users[index])
+					chan = chan
 				}
 			}),
 			// Add event listener to listen to mute event

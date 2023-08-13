@@ -223,3 +223,11 @@ export function bs_hash(str: string) {
 	sum = sum % 70
 	return String(sum)
 }
+
+export function shallowCopyPartialToNotPartial<T extends Object>(src: Partial<T>, dest: T) {
+	let key: keyof T
+	for (key in src) {
+		const value = src[key]
+		if (value) dest[key] = value
+	}
+}

@@ -11,6 +11,8 @@
 	import { client } from "$clients"
 	import Toggle from "./Toggle.svelte"
 
+	console.log("init ChatBubble")
+
 	export let message: Message
 	export let avatar_src: string
 	export let from_me = message.author === $my_name
@@ -25,20 +27,22 @@
 		{ label: "Kick", handler: kickHandler },
 		{ label: "Mute", handler: muteHandler },
 	]
-	let admin_button: (typeof popuptitems)[number]
-	if (isChan(discussion)) {
-		const user = discussion?.users.find(({ name }) => {
-			return message.author === name
-		})
-		if (user) {
-			perms = user.myPermissionOver
-			roles = user.roles
-			isAdmin = roles.includes("ADMIN")
-			admin_button =
-				isAdmin === true
-					? { label: "Grant Admin status", handler: toggleAdmin }
-					: { label: "Remove Admin status", handler: toggleAdmin }
-			popuptitems = [...popuptitems, admin_button]
+
+	$: {
+		if (discussion && isChan(discussion)) {
+			const user = discussion?.users.find(({ name }) => {
+				return message.author === name
+			})
+			if (user) {
+				console.log("reactive block")
+				roles = user.roles
+				isAdmin = roles.includes("ADMIN")
+				popuptitems[2] =
+					isAdmin == true
+						? { label: "Remove Admin status", handler: toggleAdmin }
+						: { label: "Grant Admin status", handler: toggleAdmin }
+				popuptitems = popuptitems
+			}
 		}
 	}
 
@@ -62,12 +66,22 @@
 			},
 		})
 		if (status === 204) {
-			makeToast(message.author + "was granted Admin status")
+			if (!isAdmin) {
+				makeToast(message.author + " was granted Admin status")
+				// popuptitems[2] = { label: "Remove Admin status", handler: toggleAdmin }
+			} else {
+				makeToast(message.author + " lost Admin status")
+				// popuptitems[2] = { label: "Grant Admin status", handler: toggleAdmin }
+			}
 		} else makeToast("Couldn't grant Admin status to user" + message.author)
 	}
 
 	function isChan(arg: DirectConversation | Chan): arg is Chan {
 		return !!(arg as any).users
+	}
+
+	$: {
+		console.log((discussion as Chan)?.users)
 	}
 
 	// MENU SECTION
@@ -160,14 +174,6 @@
 					<br />
 				{/each}
 			{/if}
-			<!-- {#if perms} -->
-			<!-- 	{#each perms as perm} -->
-			<!-- 		<div> -->
-			<!-- 			{perm} -->
-			<!-- 		</div> -->
-			<!-- 	{/each} -->
-			<!-- 	<br /> -->
-			<!-- {/if} -->
 			<div class="message-container">
 				{#if !contenteditable}
 					{#if !message.isDeleted}

@@ -6,6 +6,7 @@
 	import ChatBox from "$lib/ChatBox.svelte"
 	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
+	import { makeToast } from "$lib/global"
 
 	import { client } from "$clients"
 	import Toggle from "./Toggle.svelte"
@@ -33,7 +34,6 @@
 			perms = user.myPermissionOver
 			roles = user.roles
 			isAdmin = roles.includes("ADMIN")
-			console.log(isAdmin)
 			admin_button =
 				isAdmin === true
 					? { label: "Grant Admin status", handler: toggleAdmin }
@@ -50,9 +50,9 @@
 
 	function kickHandler() {}
 	function muteHandler() {}
-	function toggleAdmin() {
+	async function toggleAdmin() {
 		const state = !isAdmin
-		client.chans.setUserAdminState({
+		const { status } = await client.chans.setUserAdminState({
 			params: {
 				chanId: discussion.id,
 				username: message.author,
@@ -61,7 +61,11 @@
 				state,
 			},
 		})
+		if (status === 204) {
+			makeToast(message.author + "was granted Admin status")
+		} else makeToast("Couldn't grant Admin status to user" + message.author)
 	}
+
 	function isChan(arg: DirectConversation | Chan): arg is Chan {
 		return !!(arg as any).users
 	}
@@ -119,9 +123,9 @@
 	</div>
 	{#if isChan(discussion)}
 		<div data-popup="popupClick">
-			<ol class="list variant-filled-primary rounded px-2 py-2">
+			<ol class="list variant-filled-tertiary rounded px-2 py-2">
 				{#each popuptitems as popuptitem}
-					<li>
+					<li class="">
 						<button
 							class="btn btn-sm variant-filled-secondary flex-auto"
 							on:click={popuptitem.handler}>{popuptitem.label}</button

@@ -178,6 +178,23 @@
 					updateSomeMessage(data.message.id, data.message.content)
 				}
 			}),
+			addListenerToEventSource($sse_store!, "KICKED_FROM_CHAN", (data) => {
+				console.log("You have been kicked from the chan:", data.chanId)
+			}),
+			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (data) => {
+				console.log("New perms have arrived !", data)
+			}),
+			addListenerToEventSource(
+				$sse_store!,
+				"UPDATED_CHAN_USER",
+				({ chanId, user: { name } }) => {
+					if (chanId === chan.id) {
+						let user = chan.users.find((user) => user.name == name)
+						user = user
+						console.log("youpi")
+					}
+				},
+			),
 			// Add event listener to listen to mute event
 		)
 		return () => {

@@ -9,6 +9,8 @@
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { listenOutsideClick } from "$lib/global"
 	import CreateDiscussion from "$lib/CreateDiscussion.svelte"
+	import { addListenerToEventSource } from "$lib/global"
+	import { sse_store } from "$stores"
 
 	// Get our discussions
 	// export let data: LayoutData // TODO wtf
@@ -18,10 +20,11 @@
 
 	onMount(() => {
 		header = document.getElementById("shell-header")
+		let resizeObserver: ResizeObserver
 		if (header) {
 			header_height = header.offsetHeight || 0
 
-			const resizeObserver = new ResizeObserver((entries) => {
+			resizeObserver = new ResizeObserver((entries) => {
 				// We're only watching one element
 				const new_height = entries.at(0)?.contentRect.height
 				if (new_height && new_height !== header_height) {
@@ -31,7 +34,15 @@
 
 			resizeObserver.observe(header)
 			// This callback cleans up the observer
-			return () => resizeObserver.unobserve(header as HTMLElement)
+		}
+		const destroyer: (() => void)[] = new Array(
+			addListenerToEventSource($sse_store!, "UPDATED_CHAN_USER", (data) => {
+				console.log("layout received event about chan users field update")
+			}),
+		)
+		return () => {
+			if (header) resizeObserver.unobserve(header as HTMLElement)
+			destroyer.forEach((func) => void func())
 		}
 	})
 

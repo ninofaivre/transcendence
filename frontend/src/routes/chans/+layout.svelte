@@ -11,6 +11,7 @@
 	import CreateDiscussion from "$lib/CreateDiscussion.svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store } from "$stores"
+	import { invalidate } from "$app/navigation"
 
 	// Get our discussions
 	// export let data: LayoutData // TODO wtf
@@ -36,8 +37,10 @@
 			// This callback cleans up the observer
 		}
 		const destroyer: (() => void)[] = new Array(
-			addListenerToEventSource($sse_store!, "UPDATED_CHAN_USER", (data) => {
-				console.log("layout received event about chan users field update")
+			addListenerToEventSource($sse_store!, "KICKED_FROM_CHAN", (data) => {
+				if (data.chanId === $page.params.chanId) {
+					invalidate(":chans")
+				}
 			}),
 		)
 		return () => {

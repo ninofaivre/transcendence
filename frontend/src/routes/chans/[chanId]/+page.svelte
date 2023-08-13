@@ -178,9 +178,6 @@
 					updateSomeMessage(data.message.id, data.message.content)
 				}
 			}),
-			addListenerToEventSource($sse_store!, "KICKED_FROM_CHAN", (data) => {
-				console.log("You have been kicked from the chan:", data.chanId)
-			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (data) => {
 				console.log("New perms have arrived !", data)
 			}),

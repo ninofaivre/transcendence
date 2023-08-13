@@ -1049,7 +1049,7 @@ export class ChansService {
             type: 'UPDATED_CHAN_SELF_PERMS',
             data: { chanId, selfPerms: this.getSelfPerm(otherUserName, updatedChan) }
         })
-        chan.users.filter(user => user.name !== username).forEach(({ name }) => {
+        chan.users.forEach(({ name }) => {
             const newPermOverOther = this.getPermOverUserInChan(name, otherUserName, updatedChan)
             const otherNewPermOver = this.getPermOverUserInChan(otherUserName, name, updatedChan)
             this.sse.pushEvent(name, {
@@ -1066,7 +1066,7 @@ export class ChansService {
                     }
                 }
             })
-            if (name === otherUserName)
+            if (name === otherUserName || name === username)
                 return
             this.sse.pushEvent(otherUserName, {
                 type: 'UPDATED_CHAN_USER',

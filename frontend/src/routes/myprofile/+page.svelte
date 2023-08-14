@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { client } from "$clients"
 	import { FileDropzone, FileButton, toastStore } from "@skeletonlabs/skeleton"
 	import { makeToast } from "$lib/global"
@@ -27,6 +28,9 @@
 	</FileDropzone>
 	<button type="submit" class="btn variant-ringed"> Upload </button>
 </form>
+
+<!-- <img src="{PUBLIC_BACKEND_URL}/api/users/alice/profilePicture" alt="profile" /> -->
+<!-- <img src="{PUBLIC_BACKEND_URL}/api/users/cha/profilePicture" alt="profile" /> -->
 
 <style>
 </style>

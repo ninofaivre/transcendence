@@ -23,7 +23,7 @@
 
 	$: {
 		if ($logged_in == true) {
-			goto("/chans")
+			goto("/myprofile")
 		} else if ($logged_in == false) {
 			goto("/auth")
 		}

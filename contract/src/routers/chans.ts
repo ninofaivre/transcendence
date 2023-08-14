@@ -65,7 +65,7 @@ export const zChanUser = z.object({
 export const zChanReturn = z.object({
 	title: zChanTitle.nullable(),
 	type: zChanType,
-    roles: z.array(zRoleName),
+	roles: z.array(zRoleName),
 	ownerName: zUserName,
 	id: z.string().uuid(),
 	users: z.array(zChanUser).min(1),
@@ -235,8 +235,8 @@ export const chansContract = c.router(
 					password: zChanPassword.nullable().optional(),
 				}),
 				zCreatePrivateChan.extend({
-                    title: zChanTitle.nullable()
-                })
+					title: zChanTitle.nullable(),
+				}),
 			]),
 			responses: {
 				204: c.type<null>(),
@@ -383,6 +383,23 @@ export const chansContract = c.router(
 			body: z.strictObject({
 				timeoutInMs: zTimeOut,
 			}),
+			responses: {
+				202: c.type<null>(),
+				...getErrorsForContract(
+					c,
+					[403, "ChanPermissionTooLowOverUser"],
+					[404, "NotFoundChan", "NotFoundChanEntity"],
+				),
+			},
+		},
+		unmuteUserFromChan: {
+			method: "PUT",
+			path: "/:chanId/mutedUsers/:username",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+				username: zUserName,
+			}),
+			body: null,
 			responses: {
 				202: c.type<null>(),
 				...getErrorsForContract(

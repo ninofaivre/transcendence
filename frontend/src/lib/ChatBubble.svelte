@@ -183,26 +183,26 @@
 	class={`message-row ${from_me ? "space-x-2 space-x-reverse" : "space-x-2"}`}
 >
 	<div class="message-spacer" />
-	<!-- {#if !from_me} -->
-	<div use:popup={popupClick}>
-		<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" loading="lazy" />
-	</div>
-	{#if isChan(discussion)}
-		<div data-popup="popupClick">
-			<ol class="list variant-filled-tertiary rounded px-2 py-2">
-				{#each popuptitems as popuptitem}
-					<li class="">
-						<button
-							class="btn btn-sm variant-filled-secondary flex-auto"
-							on:click={popuptitem.handler}>{popuptitem.label}</button
-						>
-					</li>
-				{/each}
-				<div class="arrow variant-filled-primary" />
-			</ol>
+	{#if !from_me}
+		<div use:popup={popupClick}>
+			<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" loading="lazy" />
 		</div>
+		{#if isChan(discussion)}
+			<div data-popup="popupClick">
+				<ol class="list variant-filled-tertiary rounded px-2 py-2">
+					{#each popuptitems as popuptitem}
+						<li class="">
+							<button
+								class="btn btn-sm variant-filled-secondary flex-auto"
+								on:click={popuptitem.handler}>{popuptitem.label}</button
+							>
+						</li>
+					{/each}
+					<div class="arrow variant-filled-primary" />
+				</ol>
+			</div>
+		{/if}
 	{/if}
-	<!-- {/if} -->
 	<div
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}
 	>

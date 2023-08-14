@@ -242,9 +242,9 @@
 	{#if is_sent}
 		{#if is_menu_open}
 			<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
-				<menu class="card text-token mx-1 px-1">
+				<menu class="list text-token mx-1 px-1">
 					{#each menu_items as menu_item}
-						<li class="card my-1 px-2 hover:variant-filled-secondary">
+						<li class="my-1 list-item px-2 hover:variant-filled-secondary">
 							<button tabindex="0" on:click={menu_item.handler}>
 								{menu_item.label}
 							</button>

@@ -462,7 +462,7 @@ export class UserService {
             return contractErrors.NotFoundUserForValidToken(username)
         const { profilePicture: profilePictureFileName } = user
         if (username === 'tom')
-            image.fishEye()
+            image.posterize(5)
         image.write(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
     }
 

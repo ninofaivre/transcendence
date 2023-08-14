@@ -26,7 +26,7 @@
 	let isAdmin: boolean | undefined
 	let popuptitems = [
 		{ label: "Kick", handler: kickHandler },
-		{ label: "Mute", handler: toggleMute },
+		{ label: "Mute", handler: mute },
 		{ label: "Ban", handler: toggleBan },
 		{ label: "Grant Admin status", handler: toggleAdmin },
 	]
@@ -37,12 +37,14 @@
 				return message.author === name
 			})
 			if (user) {
-				popuptitems[1] =
-					discussion.users[0].myPermissionOver.includes("UNMUTE") === true
-						? { label: "UnMute", handler: unmute }
-						: { label: "Mute", handler: mute }
-				popuptitems[2].label =
-					discussion.users[0].myPermissionOver.includes("BAN") === true ? "Ban" : "UnBan"
+				// popuptitems[1] =
+				// 	user.myPermissionOver.includes("UNMUTE") === true
+				// 		? { label: "UnMute", handler: unmute }
+				// 		: { label: "Mute", handler: mute }
+				popuptitems[2] =
+					user.myPermissionOver.includes("UNBAN") === true
+						? { label: "UnBan", handler: ban }
+						: { label: "Ban", handler: unban }
 				isAdmin = user.roles.includes("ADMIN")
 				popuptitems[3].label =
 					isAdmin == true ? "Remove Admin status" : "Grant Admin status"
@@ -66,7 +68,7 @@
 			body: null,
 		})
 		if (ret.status == 202) {
-			makeToast("Muted " + message.author)
+			makeToast("Kicked " + message.author)
 		} else if (isContractError(ret)) {
 			makeToast(`Failed to kick ${message.author} from chan: ${ret.body.message}`)
 			console.warn(ret.body.code)
@@ -92,31 +94,61 @@
 			makeToast(`Failed to mute ${message.author}: ${ret.body.message}`)
 			console.warn(ret.body.code)
 		} else
-			throw new Error(
-				`Unexpected return from server when trying to toggle ${message.author} ADMIN status`,
-			)
+			throw new Error(`Unexpected return from server when trying to mute ${message.author}`)
 	}
 
 	async function unmute() {
-		// const ret = await client.chans.unmuteUserFromChan({
-		// 	params: {
-		// 		chanId: discussion.id,
-		// 		username: message.author,
-		// 	},
-		// 	body: null,
-		// })
-		// if (ret.status == 202) {
-		// 	makeToast("Muted " + message.author)
-		// } else if (isContractError(ret)) {
-		// 	makeToast(`Failed to mute ${message.author}: ${ret.body.message}`)
-		// 	console.warn(ret.body.code)
-		// } else
-		// 	throw new Error(
-		// 		`Unexpected return from server when trying to toggle ${message.author} ADMIN status`,
-		// 	)
+		const ret = await client.chans.unmuteUserFromChan({
+			params: {
+				chanId: discussion.id,
+				username: message.author,
+			},
+			body: null,
+		})
+		if (ret.status == 202) {
+			makeToast("Unmuted " + message.author)
+		} else if (isContractError(ret)) {
+			makeToast(`Failed to unmute ${message.author}: ${ret.body.message}`)
+			console.warn(ret.body.code)
+		} else
+			throw new Error(`Unexpected return from server when trying to mute ${message.author}`)
 	}
 
-	async function toggleBan() {}
+	async function ban() {
+		const ret = await client.chans.banUserFromChan({
+			params: {
+				chanId: discussion.id,
+				username: message.author,
+			},
+			body: {
+				timeoutInMs: "infinity",
+			},
+		})
+		if (ret.status == 202) {
+			makeToast("Banned " + message.author)
+		} else if (isContractError(ret)) {
+			makeToast(`Failed to ban ${message.author}: ${ret.body.message}`)
+			console.warn(ret.body.code)
+		} else throw new Error(`Unexpected return from server when trying to ban ${message.author}`)
+	}
+	async function unban() {
+		const ret = await client.chans.unbanUserFromChan({
+			params: {
+				chanId: discussion.id,
+				username: message.author,
+			},
+			body: {
+				timeoutInMs: "infinity",
+			},
+		})
+		if (ret.status == 202) {
+			makeToast("Unbanned " + message.author)
+		} else if (isContractError(ret)) {
+			makeToast(`Failed to unban ${message.author}: ${ret.body.message}`)
+			console.warn(ret.body.code)
+		} else
+			throw new Error(`Unexpected return from server when trying to unban ${message.author}`)
+	}
 
 	async function toggleAdmin() {
 		const state = !isAdmin
@@ -136,9 +168,21 @@
 				makeToast(message.author + " lost Admin status")
 			}
 		} else if (isContractError(ret)) {
-			makeToast(
-				"Couldn't grant Admin status to user" + message.author + ": " + ret.body.message,
-			)
+			if (state) {
+				makeToast(
+					"Couldn't grant Admin status to user" +
+						message.author +
+						": " +
+						ret.body.message,
+				)
+			} else {
+				makeToast(
+					"Couldn't remove Admin status from user" +
+						message.author +
+						": " +
+						ret.body.message,
+				)
+			}
 			console.warn(ret.body.code)
 		} else
 			throw new Error(

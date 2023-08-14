@@ -51,8 +51,7 @@ export const zSelfPermissionList = zPermissionList.extract([
 	"UPDATE_MESSAGE",
 ])
 
-// TODO use this in the backend instead of the craps it currently use
-export const zPermissionOverList = zPermissionList.exclude(zSelfPermissionList.options)
+export const zPermissionOverList = z.enum([...zPermissionList.exclude(zSelfPermissionList.options).options, "UNMUTE"])
 
 export const zChanUser = z.object({
 	name: zUserName,

@@ -116,16 +116,12 @@ export class ChanInvitationsService {
 		if (!directMessageId) throw new ForbiddenException("no dm with user")
         const chan = await this.chansService.getChan({ id: chanId },
             {
-                ...this.chansService.getDoesUserHasSelfPermSelect(invitingUserName),
+                ...this.chansService.getSelfPermSelect(invitingUserName),
 				users: { where: { name: invitedUserName }, select: { name: true } },
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
-        if (!this.chansService.doesUserHasSelfPermInChan(
-            invitingUserName,
-            PermissionList.INVITE,
-            chan)
-        )
+        if (!this.chansService.doesUserHasSelfPermInChan(invitingUserName,'INVITE', chan))
             return contractErrors.ChanPermissionTooLow(invitingUserName, chanId, 'INVITE')
         const { users } = chan
 		if (users.length)

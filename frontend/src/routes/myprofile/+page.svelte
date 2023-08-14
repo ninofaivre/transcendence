@@ -12,7 +12,8 @@
 	let croppedImage: string | null
 	let fileinput: HTMLInputElement
 
-	const defaultSrc = "https://cdn1-www.dogtime.com/assets/uploads/2011/03/puppy-development.jpg"
+	const defaultSrc =
+		"https://t4.ftcdn.net/jpg/03/03/62/45/240_F_303624505_u0bFT1Rnoj8CMUSs8wMCwoKlnWlh5Jiq.jpg"
 
 	function onFileSelected({
 		currentTarget: { files },
@@ -85,7 +86,7 @@
 		on:change={(e) => onFileSelected(e)}
 		bind:this={fileinput}
 	/>
-	<h2>Or... use this cute dog 🐕</h2>
+	<h2>Or... use this cute cat image</h2>
 	<button
 		type="button"
 		on:click={() => {
@@ -93,11 +94,10 @@
 		}}>Click me!</button
 	>
 {:else}
-	<h2>svelte-easy-crop</h2>
-	<div style="position: relative; width: 100%; height: 50%;">
+	<div style:position="relative" style:width="100%" style:height="50%">
 		<Cropper {image} aspect={1} zoom={1} crop={{ x: 0, y: 0 }} on:cropcomplete={previewCrop} />
 	</div>
-	<h2>Preview</h2>
+	<h3>Preview</h3>
 	<div class="prof-pic-wrapper">
 		<img
 			bind:this={profilePicture}

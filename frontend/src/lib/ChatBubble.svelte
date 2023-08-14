@@ -37,12 +37,10 @@
 				return message.author === name
 			})
 			if (user) {
-				roles = user.roles
-				console.log("bubble reactive block")
-				popuptitems[1].label =
-					discussion.users[0].myPermissionOver.includes("MUTE") === true
-						? "Mute"
-						: "UnMute"
+				popuptitems[1] =
+					discussion.users[0].myPermissionOver.includes("UNMUTE") === true
+						? { label: "UnMute", handler: unmute }
+						: { label: "Mute", handler: mute }
 				popuptitems[2].label =
 					discussion.users[0].myPermissionOver.includes("BAN") === true ? "Ban" : "UnBan"
 				isAdmin = user.roles.includes("ADMIN")
@@ -78,7 +76,7 @@
 			)
 	}
 
-	async function toggleMute() {
+	async function mute() {
 		const ret = await client.chans.muteUserFromChan({
 			params: {
 				chanId: discussion.id,
@@ -97,6 +95,25 @@
 			throw new Error(
 				`Unexpected return from server when trying to toggle ${message.author} ADMIN status`,
 			)
+	}
+
+	async function unmute() {
+		// const ret = await client.chans.unmuteUserFromChan({
+		// 	params: {
+		// 		chanId: discussion.id,
+		// 		username: message.author,
+		// 	},
+		// 	body: null,
+		// })
+		// if (ret.status == 202) {
+		// 	makeToast("Muted " + message.author)
+		// } else if (isContractError(ret)) {
+		// 	makeToast(`Failed to mute ${message.author}: ${ret.body.message}`)
+		// 	console.warn(ret.body.code)
+		// } else
+		// 	throw new Error(
+		// 		`Unexpected return from server when trying to toggle ${message.author} ADMIN status`,
+		// 	)
 	}
 
 	async function toggleBan() {}

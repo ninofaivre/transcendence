@@ -91,6 +91,7 @@ export class ChansService {
                 }
             })
         })
+        this.callbackService.deleteCallback(username, "unMute")
     }
 
     constructor(
@@ -528,7 +529,7 @@ export class ChansService {
         username: string,
         otherUserName: string,
         permPayload: PermPayload,
-        perm: Exclude<PermissionList, z.infer<typeof zSelfPermissionList>>
+        perm: z.infer<typeof zPermissionOverList>
     ) => this.getPermOverUserInChan(username, otherUserName, permPayload).includes(perm)
 
 	async deleteChan(username: string, chanId: string) {
@@ -861,6 +862,25 @@ export class ChansService {
         this.callbackService.setCallback(otherUserName,
             "unMute",
             timeoutId)
+    }
+
+    async unmuteUserIfRightTo(username: string, { chanId, username: otherUserName }: RequestShapes['unmuteUserFromChan']['params']) {
+        const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
+            {
+                // otherUserName needs to be here so it is included in
+                // selected mutedUsers. So it can be found on the getPermOverUserInChan
+                // and it can return the perm UNMUTE otherwise it will never return it
+                ...this.getPermSelect(username, otherUserName),
+                users: { where: { name: otherUserName }, select: { name: true } }
+            })
+        if (!chan)
+            return contractErrors.NotFoundChan(chanId)
+        if (!chan.users.some(user => user.name === otherUserName))
+            return contractErrors.NotFoundChanEntity(chanId, 'user', otherUserName)
+        // TODO: change this shit for unmute
+        if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, 'UNMUTE'))
+            return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'MUTE')
+        await this.unmuteUserInChan(otherUserName, chanId)
     }
 
     usersToNames = (users: { name: string }[], exclude?: string) => 

@@ -76,6 +76,11 @@ export class ChansController {
                 return isContractError(res) ? res : { status: 204, body: null }
             },
 
+            unmuteUserFromChan: async ({ params }) => {
+                const res = await this.chansService.unmuteUserIfRightTo(username, params)
+                return isContractError(res) ? res : { status: 204, body: null }
+            },
+
             // BH //
             setUserAdminState: async ({ body: { state }, params }) => {
                 const res = await this.chansService.setUserAdminStateIfRightTo(username, state, params)

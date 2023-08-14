@@ -92,7 +92,7 @@ export class ChanElementFactory {
 
 
     public async createClassicEvent(
-        [ eventType, concerned ]:
+        ...[ eventType, concerned ]:
             | [ eventType: ClassicChanEventType & `${string}_CONCERNED`, concerned: string ]
             | [ eventType: Exclude<ClassicChanEventType, `${string}_CONCERNED`> ]
     ) {

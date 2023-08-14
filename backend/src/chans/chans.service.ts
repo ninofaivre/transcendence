@@ -4,19 +4,17 @@ import {
 	PermissionList,
 	Prisma,
 	ChanInvitationStatus,
-	ClassicChanEventType,
 } from "@prisma/client"
 import { compareSync, hash } from "bcrypt"
 import { SseService } from "src/sse/sse.service"
 import { NestRequestShapes } from "@ts-rest/nest"
-import { GetData, SseEvent, contract, contractErrors, isContractError } from "contract"
-import { ChanEvent, zChanDiscussionElementReturn, zChanDiscussionEventReturn } from "contract"
+import { contract, contractErrors, isContractError } from "contract"
+import { zChanDiscussionElementReturn } from "contract"
 import { z } from "zod"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
 import { zSelfPermissionList } from "contract"
-import { zChanDiscussionMessageReturn } from "contract"
 import { ChanElementUnion, RetypeChanElement } from "src/types"
 import { zPermissionOverList } from "contract"
 import { CallbackService } from "src/callback/callback.service"
@@ -47,42 +45,51 @@ export type ChanDiscussionElementMessageWithDeletedPayload =
 
 type ChanPayload = Prisma.ChanGetPayload<
     { select: ReturnType<ChansService['getChansSelect']> }>
-type DoesUserHasSelfPermPayload = Prisma.ChanGetPayload<
-    { select: ReturnType<ChansService['getDoesUserHasSelfPermSelect']> }>
-type DoesUserHasPermOverUserPayload = Prisma.ChanGetPayload<
-    { select: ReturnType<ChansService['getDoesUserHasPermOverUserSelect']> }>
+type SelfPermPayload = Prisma.ChanGetPayload<
+    { select: ReturnType<ChansService['getSelfPermSelect']> }>
+type PermPayload = Prisma.ChanGetPayload<
+    { select: ReturnType<ChansService['getPermSelect']> }>
 
 @Injectable()
 export class ChansService {
 
-    private getMutedUsersWhere = (currentDate: Date) => ({
+    private getCurrentlyMutedUsersWhere = () => ({
         OR: [
-            { untilDate: { gte: currentDate } },
+            { untilDate: { gt: new Date() } },
             { untilDate: null }
         ]
     } satisfies Prisma.Chan$mutedUsersArgs['where'])
 
     private async unmuteUserInChan(username: string, chanId: string) {
-        await this.prisma.chan.update({ where: { id: chanId },
+        const res = await this.prisma.chan.update({ where: { id: chanId },
             data: {
                 mutedUsers: {
                     updateMany: {
                         where: {
                             mutedUserName: username,
-                            ...this.getMutedUsersWhere(new Date())
+                            ...this.getCurrentlyMutedUsersWhere()
                         },
                         data: { untilDate: new Date() }
                     }
                 }
+            },
+            select: {
+                ...this.getPermSelect(),
+                id: true,
+                users: { select: { name: true } }
             }})
-        const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
-            { ...this.getDoesUserHasSelfPermSelect(username) })
-        if (!chan)
-            return
-        const selfPerms = this.getSelfPerm(username, chan)
-        await this.sse.pushEvent(username, {
-            type: 'UPDATED_CHAN_SELF_PERMS',
-            data: { chanId, selfPerms }
+        this.notifyUpdatedSelfPerm(username, res)
+        res.users.forEach(({ name }) => {
+            this.sse.pushEvent(name, {
+                type: 'UPDATED_CHAN_USER',
+                data: {
+                    chanId,
+                    user: {
+                        name: username,
+                        myPermissionOver: this.getPermOverUserInChan(name, username, res)
+                    }
+                }
+            })
         })
     }
 
@@ -96,11 +103,11 @@ export class ChansService {
         private readonly callbackService: CallbackService
 	) {
         this.prisma.chan.findMany({
-            where: { mutedUsers: { some: this.getMutedUsersWhere(new Date()) } },
+            where: { mutedUsers: { some: this.getCurrentlyMutedUsersWhere() } },
             select: {
                 id: true,
                 mutedUsers: {
-                    where: this.getMutedUsersWhere(new Date()),
+                    where: this.getCurrentlyMutedUsersWhere(),
                     select: {
                         untilDate: true,
                         mutedUserName: true
@@ -137,55 +144,68 @@ export class ChansService {
                 name: true,
             }
         },
-        mutedUsers: {
-            where: {
-                mutedUserName: username,
-                ...this.getMutedUsersWhere(new Date())
-            },
-            select: { untilDate: true, mutedUserName: true }
-        },
-		...this.getDoesUserHasPermOverUserSelect(username, {}),
+		...this.getPermSelect(),
         password: true
 	} satisfies Prisma.ChanSelect)
 
-    // TODO for both functions under this comment add select and remove username + perm
+    private mutedUserChanSelect = {
+        untilDate: true,
+        mutedUserName: true
+    } satisfies Prisma.MutedUserChanSelect
 
-    // TODO change in something like get user self perm idk kqjsdkfljklqjsdfkljqk
-    public getDoesUserHasSelfPermSelect = (username: string) => ({
-        roles: {
-            select: {
-                users: {
-                    where: { name: username },
-                    select: { name: true }
-                },
-                permissions: true,
-            }
-        },
-        ownerName: true,
+    private permSelectBase = (...usernames: string[]) => ({
         mutedUsers: {
             where: {
-                mutedUserName: username,
-                ...this.getMutedUsersWhere(new Date())
+                ...(usernames.length ? { mutedUserName: { in: usernames } }: {}),
+                ...this.getCurrentlyMutedUsersWhere()
             },
-            select: { untilDate: true, mutedUserName: true }
-        }
-    } satisfies Prisma.ChanSelect)
-
-    public getDoesUserHasPermOverUserSelect = (
-        username: string,
-        where: Prisma.RoleWhereInput = { users: { some: { name: username } } }
-    ) => ({
-        roles: {
-            where,
-            select: {
-                users: { select: { name: true } },
-                roles: { select: { users: { select: { name: true } }, name: true } },
-                permissions: true,
-                name: true
-            },
+            select: this.mutedUserChanSelect
         },
-        ownerName: true,
-    } satisfies Prisma.ChanSelect)
+        ownerName: true
+    } as const satisfies Prisma.ChanSelect)
+
+    private rolePermSelectBase = {
+        users: { select: { name: true } },
+        permissions: true,
+        name: true
+    } as const satisfies Prisma.RoleSelect
+
+    public getSelfPermSelect = (...usernames: string[]) => ({
+        ...this.permSelectBase(...usernames),
+        roles: {
+            ...(usernames.length
+                ? {
+                    where: {
+                        users: {
+                            some: {
+                                name: { in: usernames }
+                            }
+                        }
+                    }
+                }
+                : {}),
+            select: this.rolePermSelectBase
+        }
+    } as const satisfies Prisma.ChanSelect)
+
+    public getPermSelect = (...usernames: string[]) => ({
+        ...this.permSelectBase(...usernames),
+        roles: {
+            ...(usernames.length
+                ? {
+                    where: { users: { some: { name: { in: usernames } } } },
+                }
+                : {}),
+            select: {
+                ...this.rolePermSelectBase,
+                roles: {
+                    select: {
+                        users: { select: { name: true } },
+                        name: true }
+                },
+            }
+        }
+    } as const satisfies Prisma.ChanSelect)
 
 	private chanDiscussionEventsSelect = {
 		concernedUserName: true,
@@ -241,7 +261,7 @@ export class ChansService {
     private formatChanUserForUser = (
         username: string,
         user: ChanPayload['users'][number],
-        permPayload: Pick<ChanPayload, "roles" | "ownerName">
+        permPayload: PermPayload
     ) => ({
             name: user.name,
             status: this.usersService.getUserStatusByProximity(
@@ -257,9 +277,20 @@ export class ChansService {
     private isSelfPerm = (perm: PermissionList)
     : perm is z.infer<typeof zSelfPermissionList> => !this.isPermOver(perm)
 
+    private notifyUpdatedSelfPerm = (
+        username: string,
+        payload: SelfPermPayload & { id: string }
+    ) => (this.sse.pushEvent(username, {
+        type: 'UPDATED_CHAN_SELF_PERMS',
+        data: {
+            chanId: payload.id,
+            selfPerms: this.getSelfPerm(username, payload)
+        }
+    }))
+
     private getSelfPerm(
         username: string,
-        { ownerName, roles, mutedUsers }: DoesUserHasSelfPermPayload
+        { ownerName, roles, mutedUsers }: SelfPermPayload
     ) {
         if (username === ownerName)
             return zSelfPermissionList.options
@@ -455,38 +486,48 @@ export class ChansService {
     public doesUserHasSelfPermInChan = (
         username: string,
         perm: z.infer<typeof zSelfPermissionList>,
-        permPayload : DoesUserHasSelfPermPayload
+        permPayload : SelfPermPayload
     ) =>
         this.getSelfPerm(username, permPayload).includes(perm)
 
     private isPermOver = (perm: PermissionList)
-    : perm is z.infer<typeof zPermissionOverList> =>
-        zPermissionOverList.safeParse(perm).success
+    : perm is Exclude<z.infer<typeof zPermissionOverList>, 'UNMUTE'> =>
+        (zPermissionOverList.safeParse(perm).success)
 
     private getPermOverUserInChan(username: string,
         otherUserName: string,
-        { roles, ownerName }: DoesUserHasPermOverUserPayload
-    ) {
+        { roles, ownerName, mutedUsers }: PermPayload
+    ): z.infer<typeof zPermissionOverList>[] {
         if (username === otherUserName)
             return ["DELETE_MESSAGE" as const]
         if (otherUserName === ownerName)
             return []
+        const isOtherUserMuted = mutedUsers
+            .some(el => el.mutedUserName === otherUserName)
+
+        let perms: z.infer<typeof zPermissionOverList>[];
+
         if (username === ownerName)
-            return zPermissionOverList.options
-        return [...new Set(roles
-            .filter(role => role.users.some(user => user.name === username))
-            .filter(role => role
-                .roles.some(el => el.users.some(user => user.name === otherUserName)))
-            .filter(role => (role.users.every(user => user.name !== otherUserName)
-                || (role.roles.some(el => el.name === role.name))))
-            .flatMap(role => role.permissions)
-            .filter(this.isPermOver))]
+            perms = zPermissionOverList.exclude(['UNMUTE']).options
+        else {
+            perms = [...new Set(roles
+                .filter(role => role.users.some(user => user.name === username))
+                .filter(role => role
+                    .roles.some(el => el.users.some(user => user.name === otherUserName)))
+                .filter(role => (role.users.every(user => user.name !== otherUserName)
+                    || (role.roles.some(el => el.name === role.name))))
+                .flatMap(role => role.permissions)
+                .filter(this.isPermOver))]
+        }
+        if (perms.includes('MUTE') && isOtherUserMuted)
+            perms.push('UNMUTE')
+        return perms
     }
 
     public doesUserHasPermOverUserInChan = (
         username: string,
         otherUserName: string,
-        permPayload: DoesUserHasPermOverUserPayload,
+        permPayload: PermPayload,
         perm: Exclude<PermissionList, z.infer<typeof zSelfPermissionList>>
     ) => this.getPermOverUserInChan(username, otherUserName, permPayload).includes(perm)
 
@@ -494,7 +535,7 @@ export class ChansService {
         
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                ...this.getDoesUserHasSelfPermSelect(username),
+                ...this.getSelfPermSelect(username),
                 users: { select: { name: true } }
             })
         if (!chan)
@@ -533,7 +574,7 @@ export class ChansService {
         const chanUserNames = this.usersToNames(chan.users, username)
 
         new ChanElementFactory(chanId, username, this)
-            .createClassicEvent(['AUTHOR_LEAVED'])
+            .createClassicEvent('AUTHOR_LEAVED')
             .then(event => event.notifyByNames(chanUserNames))
         this.sse.pushEventMultipleUser(chanUserNames, {
             type: 'DELETED_CHAN_USER',
@@ -565,15 +606,8 @@ export class ChansService {
 	) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                ...this.getDoesUserHasSelfPermSelect(username),
+                ...this.getSelfPermSelect(),
                 users: { select: { name: true } },
-                roles: {
-                    select: {
-                        ...(this.getDoesUserHasSelfPermSelect(username)
-                            .roles.select),
-                        name: true
-                    }
-                },
                 ...(relatedTo
                     ? { elements: { where: { id: relatedTo }, select: { id: true } } }
                     : {})
@@ -662,15 +696,8 @@ export class ChansService {
     ) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                ...this.getDoesUserHasSelfPermSelect(username),
+                ...this.getSelfPermSelect(),
                 users: { select: { name: true } },
-                roles: {
-                    select: {
-                        ...(this.getDoesUserHasSelfPermSelect(username)
-                            .roles.select),
-                        name: true
-                    }
-                },
                 elements: {
                     where: { id: elementId, message: { isNot: null } },
                     select: {
@@ -736,7 +763,7 @@ export class ChansService {
 	async deleteChanMessageIfRightTo(username: string, { chanId , elementId }: RequestShapes['deleteChanMessage']['params']) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                ...this.getDoesUserHasPermOverUserSelect(username),
+                ...this.getPermSelect(username),
                 elements: {
                     where: { id: elementId, message: { isNot: null } },
                     select: { authorName: true }
@@ -771,16 +798,9 @@ export class ChansService {
     ) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                mutedUsers: {
-                    where: {
-                        mutedUserName: otherUserName,
-                        ...this.getMutedUsersWhere(new Date())
-                    },
-                    select: { id: true }
-                },
+                id: true,
                 users: { select: { name: true } },
-                ...this.getDoesUserHasPermOverUserSelect(username,
-                    { users: { some: { OR: [{ name: username }, { name: otherUserName }] } } })
+                ...this.getPermSelect(username, otherUserName),
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
@@ -790,40 +810,46 @@ export class ChansService {
             return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'MUTE')
 
         const untilDate = (timeoutInMs !== 'infinity') ? new Date((new Date()).getTime() + timeoutInMs) : null
-
         this.callbackService.deleteCallback(otherUserName, "unMute")
-        await this.prisma.chan.update({ where: { id: chanId },
-            data: {
-                mutedUsers: (chan.mutedUsers.length
-                    ? {
-                        update: {
-                            where: { id: chan.mutedUsers[0].id },
-                            data: { untilDate }
-                        }
-                    }
-                    : {
-                        create: {
-                            mutedUserName: otherUserName,
-                            untilDate
-                        }
-                    })
-            }})
+
+        if (chan.mutedUsers.some(({ mutedUserName }) => mutedUserName === otherUserName)) {
+            await this.prisma.mutedUserChan.updateMany({
+                where: {
+                    ...this.getCurrentlyMutedUsersWhere(),
+                    mutedUserName: otherUserName
+                },
+                data: { untilDate }
+            })
+        }
+        else {
+            const mutedUsers = [await this.prisma.mutedUserChan.create({
+                data: {
+                    chanId,
+                    mutedUserName: otherUserName,
+                    untilDate
+                },
+                select: this.mutedUserChanSelect
+            })]
+            this.notifyUpdatedSelfPerm(otherUserName, { ...chan, mutedUsers })
+        }
 
         new ChanElementFactory(chanId, username, this)
             .createMutedUserEvent(otherUserName, timeoutInMs)
             .then(event => event.notifyByUsers(chan.users))
 
-        this.sse.pushEvent(otherUserName, {
-            type: 'UPDATED_CHAN_SELF_PERMS',
-            data: {
-                chanId,
-                selfPerms: this.getSelfPerm(otherUserName,
-                    {
-                        ...chan,
-                        mutedUsers: [{ untilDate, mutedUserName: otherUserName }]
-                    })
-            }
+        chan.users.forEach(({ name }) => {
+            this.sse.pushEvent(name, {
+                type: 'UPDATED_CHAN_USER',
+                data: {
+                    chanId,
+                    user: {
+                        name: otherUserName,
+                        myPermissionOver: [ ...this.getPermOverUserInChan(name, otherUserName, chan), 'UNMUTE']
+                    }
+                }
+            })
         })
+
         if (timeoutInMs === 'infinity')
             return
         const timeoutId = setTimeout(
@@ -846,7 +872,7 @@ export class ChansService {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 users: { select: { name: true } },
-                ...this.getDoesUserHasPermOverUserSelect(username)
+                ...this.getPermSelect(username)
             })
 
         if (!chan)
@@ -876,7 +902,7 @@ export class ChansService {
                 data: { chanId }
             })
         new ChanElementFactory(chanId, username, this)
-            .createClassicEvent(['AUTHOR_KICKED_CONCERNED', otherUserName])
+            .createClassicEvent('AUTHOR_KICKED_CONCERNED', otherUserName)
             .then(event => event.notifyByNames(chanUserNames))
     }
 
@@ -925,7 +951,7 @@ export class ChansService {
                 }
             }))
         new ChanElementFactory(chanId, username, this)
-            .createClassicEvent(['AUTHOR_JOINED'])
+            .createClassicEvent('AUTHOR_JOINED')
             .then(event => event.notifyByUsers(users))
 		return this.formatChan(username, newChan)
 	}
@@ -1010,7 +1036,7 @@ export class ChansService {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 users: { select: { name: true } },
-                ...this.getDoesUserHasPermOverUserSelect(otherUserName, {})
+                ...this.getSelfPermSelect()
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
@@ -1035,57 +1061,54 @@ export class ChansService {
             }})
         const updatedChan = await this.getChan({ id: chanId },
             {
-                ...this.getDoesUserHasPermOverUserSelect(otherUserName, {}),
-                mutedUsers: {
-                    where: {
-                        mutedUserName: otherUserName,
-                        ...this.getMutedUsersWhere(new Date())
-                    }
-                }
+                id: true,
+                ...this.getPermSelect(),
             })
         if (!updatedChan)
             return
-        this.sse.pushEvent(otherUserName, {
-            type: 'UPDATED_CHAN_SELF_PERMS',
-            data: { chanId, selfPerms: this.getSelfPerm(otherUserName, updatedChan) }
-        })
-        chan.users.forEach(({ name }) => {
-            const newPermOverOther = this.getPermOverUserInChan(name, otherUserName, updatedChan)
-            const otherNewPermOver = this.getPermOverUserInChan(otherUserName, name, updatedChan)
-            this.sse.pushEvent(name, {
-                type: 'UPDATED_CHAN_USER',
-                data: {
-                    chanId,
-                    user: {
-                        name: otherUserName,
-                        roles: updatedChan.roles
-                            .filter(role => role.users
-                                .some(user => user.name === otherUserName))
-                            .map(role => role.name),
-                        myPermissionOver: newPermOverOther
-                    }
-                }
-            })
-            if (name === otherUserName || name === username)
-                return
-            this.sse.pushEvent(otherUserName, {
-                type: 'UPDATED_CHAN_USER',
-                data: {
-                    chanId,
-                    user: {
-                        name,
-                        myPermissionOver: otherNewPermOver
-                    }
-                }
-            })
-        })
+        this.notifyUpdatedSelfPerm(otherUserName, updatedChan)
+        this.notifyUpdatedChanUser(otherUserName,
+            this.usersToNames(chan.users),
+            updatedChan)
     }
     // BH //
+    
+    private notifyUpdatedChanUser = (
+        username: string, usernames: string[],
+        payload: PermPayload & { id: string }
+    ) => (usernames.forEach(name => {
+        const usersNewPermOverUser = this.getPermOverUserInChan(name, username, payload)
+        const userNewRolesSet = payload.roles
+            .filter(role => role.users.some(user => user.name === username))
+            .map(role => role.name)
+        this.sse.pushEvent(name, {
+            type: 'UPDATED_CHAN_USER',
+            data: {
+                chanId: payload.id,
+                user: {
+                    name: username,
+                    roles: userNewRolesSet,
+                    myPermissionOver: usersNewPermOverUser
+                }
+            }
+        })
+        const userNewPermOverUsers = this.getPermOverUserInChan(username, name, payload)
+        this.sse.pushEvent(username, {
+            type: 'UPDATED_CHAN_USER',
+            data: {
+                chanId: payload.id,
+                user: {
+                    name,
+                    myPermissionOver: userNewPermOverUsers
+                }
+            }
+        })
+    }))
     
     async updateChan(username: string, chanId: string, body: RequestShapes['updateChan']['body']) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
-                ...this.getDoesUserHasSelfPermSelect(username),
+                ...this.getSelfPermSelect(username),
                 password: true,
                 users: { select: { name: true } },
                 title: true

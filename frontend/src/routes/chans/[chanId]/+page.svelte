@@ -23,6 +23,8 @@
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
 	let chan: Chan
+	let disabled: boolean = false // ChatBox disabled or not
+	let disabled_placeholder = "You have been muted" // ChatBox placeholder
 
 	// Important, resets variable on route parameter change
 	$: messages = $page.data.messages
@@ -148,11 +150,8 @@
 
 	let header: HTMLElement | null
 	let header_height: number
-	let disabled: boolean = false
-	let disabled_placeholder = "This user blocked you"
-
-	// Calculate the NavBar height in order to adapt the layout
 	onMount(() => {
+		// Calculate the NavBar height in order to adapt the layout
 		console.log("Mounting ", $page.route.id, "component")
 		header = document.getElementById("shell-header")
 		header_height = header?.offsetHeight || 0
@@ -174,15 +173,18 @@
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_MESSAGE", (data) => {
 				console.log("Server message: Message was modified", data)
-				if (data.chanId === $page.data.chanId) {
+				if (data.chanId === $page.params.chanId) {
 					updateSomeMessage(data.message.id, data.message.content)
 				}
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (data) => {
-				console.log("New perms have arrived !", data)
+				if (data.chanId === $page.params.chanId) {
+					if (data.selfPerms.includes("SEND_MESSAGE")) disabled = false
+					else disabled = true
+				}
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_USER", ({ chanId, user }) => {
-				if (chanId === chan.id) {
+				if (chanId === $page.params.chanId) {
 					let index = chan.users.findIndex((o) => o.name == user.name)
 					console.log("old user:", chan.users[index])
 					console.log("new user:", user)

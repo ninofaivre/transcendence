@@ -21,12 +21,13 @@
 
 	// POPUP SECTION
 
-	let perms: string[] | undefined
 	let roles: string[] | undefined
 	let isAdmin: boolean | undefined
 	let popuptitems = [
 		{ label: "Kick", handler: kickHandler },
-		{ label: "Mute", handler: muteHandler },
+		{ label: "Mute", handler: toggleMute },
+		{ label: "Ban", handler: toggleBan },
+		{ label: "Grant Admin status", handler: toggleAdmin },
 	]
 
 	$: {
@@ -35,13 +36,17 @@
 				return message.author === name
 			})
 			if (user) {
-				console.log("reactive block")
 				roles = user.roles
-				isAdmin = roles.includes("ADMIN")
-				popuptitems[2] =
-					isAdmin == true
-						? { label: "Remove Admin status", handler: toggleAdmin }
-						: { label: "Grant Admin status", handler: toggleAdmin }
+				console.log("bubble reactive block")
+				popuptitems[1].label =
+					discussion.users[0].myPermissionOver.includes("MUTE") === true
+						? "Mute"
+						: "UnMute"
+				popuptitems[2].label =
+					discussion.users[0].myPermissionOver.includes("BAN") === true ? "Ban" : "UnBan"
+				isAdmin = user.roles.includes("ADMIN")
+				popuptitems[3].label =
+					isAdmin == true ? "Remove Admin status" : "Grant Admin status"
 				popuptitems = popuptitems
 			}
 		}
@@ -72,7 +77,7 @@
 			)
 	}
 
-	async function muteHandler() {
+	async function toggleMute() {
 		const ret = await client.chans.muteUserFromChan({
 			params: {
 				chanId: discussion.id,
@@ -93,6 +98,8 @@
 			)
 	}
 
+	async function toggleBan() {}
+
 	async function toggleAdmin() {
 		const state = !isAdmin
 		const ret = await client.chans.setUserAdminState({
@@ -105,12 +112,10 @@
 			},
 		})
 		if (ret.status === 204) {
-			if (!isAdmin) {
+			if (state) {
 				makeToast(message.author + " was granted Admin status")
-				// popuptitems[2] = { label: "Remove Admin status", handler: toggleAdmin }
 			} else {
 				makeToast(message.author + " lost Admin status")
-				// popuptitems[2] = { label: "Grant Admin status", handler: toggleAdmin }
 			}
 		} else if (isContractError(ret)) {
 			makeToast(

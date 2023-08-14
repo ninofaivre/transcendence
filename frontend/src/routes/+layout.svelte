@@ -14,6 +14,7 @@
 	import { logged_in, my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
+	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
 
@@ -80,7 +81,8 @@
 					</button>
 					<a href="/myprofile" class="chip variant-ghost ml-1 flex">
 						<Avatar
-							src="https://i.pravatar.cc/?img={bs_hash($my_name)}"
+							src="{PUBLIC_BACKEND_URL}/api/users/{$my_name}/profilePicture"
+							fallback="https://i.pravatar.cc/?img={bs_hash($my_name)}"
 							class="h-8 w-8"
 							rounded="rounded-full"
 						/>

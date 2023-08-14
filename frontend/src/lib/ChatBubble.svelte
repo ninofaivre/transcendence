@@ -8,6 +8,8 @@
 	import { createEventDispatcher } from "svelte"
 	import { makeToast } from "$lib/global"
 	import { isContractError } from "contract"
+	import { bs_hash } from "$lib/global"
+	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 
 	import { client } from "$clients"
 	import Toggle from "./Toggle.svelte"
@@ -15,7 +17,6 @@
 	console.log("init ChatBubble")
 
 	export let message: Message
-	export let avatar_src: string
 	export let from_me = message.author === $my_name
 	export let discussion: Chan | DirectConversation
 
@@ -185,7 +186,12 @@
 	<div class="message-spacer" />
 	{#if !from_me}
 		<div use:popup={popupClick}>
-			<Avatar src={avatar_src} width="w-8 h-8" rounded="rounded-full" loading="lazy" />
+			<Avatar
+				src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture"
+				fallback="https://i.pravatar.cc/?img={bs_hash($my_name)}"
+				class="h-8 w-8"
+				rounded="rounded-full"
+			/>
 		</div>
 		{#if isChan(discussion)}
 			<div data-popup="popupClick">

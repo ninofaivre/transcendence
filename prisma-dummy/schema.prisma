@@ -165,6 +165,8 @@ model User {
 
   roles Role[]
 
+  profilePicture   String @default(uuid()) 
+
   directMessage   DirectMessage[] @relation(name: "directMessage")
   directMessageOf DirectMessage[] @relation(name: "directMessageOf")
   chans           Chan[]

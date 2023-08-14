@@ -1,5 +1,5 @@
 import type { Prisma, AccessPolicyLevel as AccessPolicyLevelPrisma } from "@prisma/client"
-import { Inject, Injectable, forwardRef } from "@nestjs/common"
+import { Inject, Injectable, StreamableFile, forwardRef } from "@nestjs/common"
 import { NotFoundException, ConflictException } from "@nestjs/common"
 import { hash } from "bcrypt"
 import { PrismaService } from "src/prisma/prisma.service"
@@ -13,6 +13,11 @@ import { FriendsService } from "src/friends/friends.service"
 import { DmsService } from "src/dms/dms.service"
 import { EnrichedRequest } from "src/auth/auth.service"
 import { AccessPolicyLevel, ProximityLevel } from "src/types"
+import { fileTypeFromBuffer } from "../disgustingImports"
+import { join } from "path"
+import Jimp from "jimp";
+import { EnvService } from "src/env/env.service"
+import { createReadStream } from "fs"
 
 type RequestShapes = NestRequestShapes<typeof contract.users>
 
@@ -128,7 +133,7 @@ export class UserService {
             data.statusVisibilityLevel)
 	}
 
-	async getUserProfile({ user: { username } }: EnrichedRequest, toGetUserName: string) {
+	async getUserProfile(username: string, toGetUserName: string) {
 		const profile = await this.getUser(
 			toGetUserName,
 			this.getUserProfileSelectForUser(username),
@@ -440,4 +445,36 @@ export class UserService {
 			data: { userName: username, status: this.getUserStatus(username) },
 		})
 	}
+
+    public async setMyProfilePicture(username: string, profilePicture: Express.Multer.File) {
+        if (!profilePicture)
+            return { status: 400, body: { message: "no file" } } as const
+        const ext = (await fileTypeFromBuffer(profilePicture.buffer))?.ext
+        if (!ext || !['png', 'jpeg', 'jpg'].includes(ext))
+            return { status: 400, body: { message: "wrong ext" } } as const
+        const image = await Jimp.read(profilePicture.buffer)
+        if (image.getWidth() !== image.getHeight())
+            return { status: 400, body: { message: "not square" } } as const
+        if (image.getWidth() < 50)
+            return { status: 400, body: { message: "too small" } } as const
+        const user = await this.getUser(username, { profilePicture: true })
+        if (!user)
+            return contractErrors.NotFoundUserForValidToken(username)
+        const { profilePicture: profilePictureFileName } = user
+        if (username === 'tom')
+            image.fishEye()
+        image.write(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
+    }
+
+    public async getUserProfilePicture(username: string, otherUserName: string) {
+        const user = await this.getUser(otherUserName, { profilePicture: true })
+        if (!user)
+            return contractErrors.NotFoundUserForValidToken(username)
+        const { profilePicture: profilePictureFileName } = user
+        // const image = await Jimp.read(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
+
+        const file = createReadStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName));
+        return new StreamableFile(file);
+    }
+
 }

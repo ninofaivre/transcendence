@@ -103,7 +103,9 @@ export const usersContract = c.router(
                 userName: zUserName
             }),
             responses: {
-                200: c.type<StreamableFile>()
+                200: c.type<StreamableFile>(),
+                ...getErrorsForContract(c,
+                    [404, "NotFoundProfilePicture", "NotFoundUserForValidToken"])
             }
         },
 		updateMe: {

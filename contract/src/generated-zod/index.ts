@@ -13,7 +13,7 @@ export * from "./ChanInvitationDmDiscussionEvent";
 export * from "./BlockedDmDiscussionEvent";
 export * from "./ClassicDmDiscussionEvent";
 export * from "./Chan";
-export * from "./MutedUserChan";
+export * from "./TimedStatusUserChan";
 export * from "./ChanDiscussionElement";
 export * from "./ChanDiscussionMessage";
 export * from "./ChanDiscussionEvent";

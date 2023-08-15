@@ -13,6 +13,7 @@ import { SseModule } from "./sse/sse.module"
 import { PrismaModule } from './prisma/prisma.module';
 import { EnvModule } from './env/env.module';
 import { CallbackModule } from './callback/callback.module';
+import { Reflector } from "@nestjs/core"
 
 @Module({
 	imports: [
@@ -29,7 +30,8 @@ import { CallbackModule } from './callback/callback.module';
 		SseModule,
 		PrismaModule,
 		EnvModule,
-		CallbackModule
+		CallbackModule,
+        Reflector
 	],
 	controllers: [AppController],
 	providers: [AppService],

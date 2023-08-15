@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-type CallBackType = "unMute"
+type CallBackType = "UNMUTE" | "UNBAN"
 
 @Injectable()
 export class CallbackService {
@@ -12,7 +12,7 @@ export class CallbackService {
 
     setCallback = (username: string, callback: CallBackType, id: NodeJS.Timeout) => {
         const userCallbacks = this.data.get(username) ||
-            this.data.set(username, { unMute: null }).get(username)
+            this.data.set(username, { UNMUTE: null, UNBAN: null }).get(username)
         if (!userCallbacks)
             return
         this.deleteCallback(username, callback)

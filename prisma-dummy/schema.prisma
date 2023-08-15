@@ -196,7 +196,7 @@ model User {
   blockedDmDiscussionEvent_Blocking BlockedDmDiscussionEvent[] @relation(name: "blocking")
 
 
-  mutedUserChan MutedUserChan[]
+  timedUserChan TimedStatusUserChan[]
 
   dmPolicyLevel	AccessPolicyLevel @default(ONLY_FRIEND)
   statusVisibilityLevel AccessPolicyLevel @default(IN_COMMON_CHAN)
@@ -348,7 +348,7 @@ model Chan {
   owner     User   @relation("owner", fields: [ownerName], references: [name])
   ownerName String
 
-  mutedUsers MutedUserChan[]
+  timedStatusUsers TimedStatusUserChan[]
 
   invitations ChanInvitation[]
 
@@ -357,17 +357,26 @@ model Chan {
 	@@unique([id, title])
 }
 
-model MutedUserChan {
+enum TimedStatusType {
+    MUTE
+    BAN
+}
+
+model TimedStatusUserChan {
   id String @id @default(uuid())
+
+    type TimedStatusType
 
   creationDate DateTime  @default(now())
   untilDate    DateTime?
 
-  mutedUser     User   @relation(fields: [mutedUserName], references: [name])
-  mutedUserName String
+  timedUser     User   @relation(fields: [timedUserName], references: [name])
+  timedUserName String
 
   chan   Chan @relation(fields: [chanId], references: [id])
   chanId String
+
+  @@index([untilDate(sort: Asc)])
 }
 
 enum ChanType {

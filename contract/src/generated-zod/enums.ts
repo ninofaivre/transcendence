@@ -47,6 +47,11 @@ export const ClassicDmEventType = {
   DELETED_FRIENDSHIP: 'DELETED_FRIENDSHIP',
 } as const;
 
+export const TimedStatusType = {
+  MUTE: 'MUTE',
+  BAN: 'BAN',
+} as const;
+
 export const ChanType = {
   PUBLIC: 'PUBLIC',
   PRIVATE: 'PRIVATE',
@@ -103,6 +108,11 @@ export const zDirectMessageStatus = z.enum([
 export const zClassicDmEventType = z.enum([
   "CREATED_FRIENDSHIP",
   "DELETED_FRIENDSHIP",
+]);
+
+export const zTimedStatusType = z.enum([
+  "MUTE",
+  "BAN",
 ]);
 
 export const zChanType = z.enum([

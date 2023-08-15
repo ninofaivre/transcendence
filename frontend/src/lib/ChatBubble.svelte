@@ -22,7 +22,9 @@
 
 	// POPUP SECTION
 
+	let perms: string[] | undefined
 	let roles: string[] | undefined
+
 	let isAdmin: boolean | undefined
 	let popuptitems = [
 		{ label: "Kick", handler: kickHandler },
@@ -37,19 +39,17 @@
 				return message.author === name
 			})
 			if (user) {
-				popuptitems[1] =
-					user.myPermissionOver.includes("UNMUTE") === true
-						? { label: "UnMute", handler: unmute }
-						: { label: "Mute", handler: mute }
-				// popuptitems[2] =
-				// 	user.myPermissionOver.includes("UNBAN") === true
-				// 		? { label: "UnBan", handler: ban }
-				// 		: { label: "Ban", handler: unban }
+				popuptitems[1] = user.myPermissionOver.includes("UNMUTE")
+					? { label: "UnMute", handler: unmute }
+					: { label: "Mute", handler: mute }
+				// popuptitems[2] = user.myPermissionOver.includes("UNBAN")
+				// 	? { label: "UnBan", handler: ban }
+				// 	: { label: "Ban", handler: unban }
 				isAdmin = user.roles.includes("ADMIN")
-				popuptitems[3].label =
-					isAdmin == true ? "Remove Admin status" : "Grant Admin status"
+				popuptitems[3].label = isAdmin ? "Remove Admin status" : "Grant Admin status"
 				popuptitems = popuptitems
 				roles = user.roles
+				perms = user.myPermissionOver
 			}
 		}
 	}
@@ -104,7 +104,6 @@
 				chanId: discussion.id,
 				username: message.author,
 			},
-			body: null,
 		})
 		if (ret.status == 202) {
 			makeToast("Unmuted " + message.author)
@@ -116,39 +115,39 @@
 	}
 
 	async function ban() {
-		const ret = await client.chans.banUserFromChan({
-			params: {
-				chanId: discussion.id,
-				username: message.author,
-			},
-			body: {
-				timeoutInMs: "infinity",
-			},
-		})
-		if (ret.status == 202) {
-			makeToast("Banned " + message.author)
-		} else if (isContractError(ret)) {
-			makeToast(`Failed to ban ${message.author}: ${ret.body.message}`)
-			console.warn(ret.body.code)
-		} else throw new Error(`Unexpected return from server when trying to ban ${message.author}`)
+		// const ret = await client.chans.banUserFromChan({
+		// 	params: {
+		// 		chanId: discussion.id,
+		// 		username: message.author,
+		// 	},
+		// 	body: {
+		// 		timeoutInMs: "infinity",
+		// 	},
+		// })
+		// if (ret.status == 202) {
+		// 	makeToast("Banned " + message.author)
+		// } else if (isContractError(ret)) {
+		// 	makeToast(`Failed to ban ${message.author}: ${ret.body.message}`)
+		// 	console.warn(ret.body.code)
+		// } else throw new Error(`Unexpected return from server when trying to ban ${message.author}`)
 	}
 	async function unban() {
-		const ret = await client.chans.unbanUserFromChan({
-			params: {
-				chanId: discussion.id,
-				username: message.author,
-			},
-			body: {
-				timeoutInMs: "infinity",
-			},
-		})
-		if (ret.status == 202) {
-			makeToast("Unbanned " + message.author)
-		} else if (isContractError(ret)) {
-			makeToast(`Failed to unban ${message.author}: ${ret.body.message}`)
-			console.warn(ret.body.code)
-		} else
-			throw new Error(`Unexpected return from server when trying to unban ${message.author}`)
+		// const ret = await client.chans.unbanUserFromChan({
+		// 	params: {
+		// 		chanId: discussion.id,
+		// 		username: message.author,
+		// 	},
+		// 	body: {
+		// 		timeoutInMs: "infinity",
+		// 	},
+		// })
+		// if (ret.status == 202) {
+		// 	makeToast("Unbanned " + message.author)
+		// } else if (isContractError(ret)) {
+		// 	makeToast(`Failed to unban ${message.author}: ${ret.body.message}`)
+		// 	console.warn(ret.body.code)
+		// } else
+		// 	throw new Error(`Unexpected return from server when trying to unban ${message.author}`)
 	}
 
 	async function toggleAdmin() {
@@ -250,7 +249,7 @@
 		<div use:popup={popupClick}>
 			<Avatar
 				src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture"
-				fallback="https://i.pravatar.cc/?img={bs_hash($my_name)}"
+				fallback="https://i.pravatar.cc/?u={message.author}"
 				class="h-8 w-8"
 				rounded="rounded-full"
 			/>
@@ -290,6 +289,14 @@
 				{#each roles as role}
 					<div class="italic">
 						{role}<br />
+					</div>
+					<br />
+				{/each}
+			{/if}
+			{#if perms}
+				{#each perms as perm}
+					<div class="italic">
+						{perm}<br />
 					</div>
 					<br />
 				{/each}

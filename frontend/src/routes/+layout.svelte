@@ -24,7 +24,7 @@
 
 	$: {
 		if ($logged_in == true) {
-			goto("/myprofile")
+			goto("/chans")
 		} else if ($logged_in == false) {
 			goto("/auth")
 		}
@@ -82,7 +82,7 @@
 					<a href="/myprofile" class="chip variant-ghost ml-1 flex">
 						<Avatar
 							src="{PUBLIC_BACKEND_URL}/api/users/{$my_name}/profilePicture"
-							fallback="https://i.pravatar.cc/?img={bs_hash($my_name)}"
+							fallback="https://i.pravatar.cc/?u={$my_name}"
 							class="h-8 w-8"
 							rounded="rounded-full"
 						/>

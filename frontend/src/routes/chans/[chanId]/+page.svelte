@@ -27,15 +27,16 @@
 
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
-	let chan: Chan
+	let chan: Chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
 	let disabled: boolean = false // ChatBox disabled or not
 	let disabled_placeholder = "You have been muted" // ChatBox placeholder
 
 	// Important, resets variable on route parameter change
-	$: messages = $page.data.messages
+	$: messages = $page.data.messages // Need this because I can't mody the store directly
 	$: {
 		chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
 		sendLoadEvents = true
+		disabled = !chan.selfPerms.includes("SEND_MESSAGE")
 	}
 
 	function updateSomeMessage(to_update_id: string, new_message: string) {

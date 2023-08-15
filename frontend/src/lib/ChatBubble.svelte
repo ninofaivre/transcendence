@@ -30,10 +30,11 @@
 
 	let isAdmin: boolean | undefined
 	let popuptitems = [
+		{ label: "Grant Admin status", handler: toggleAdmin },
 		{ label: "Kick", handler: kickHandler },
 		{ label: "Mute", handler: mute },
-		{ label: "Ban", handler: ban },
-		{ label: "Grant Admin status", handler: toggleAdmin },
+		{ label: "UnMute", handler: unmute },
+		// { label: "Ban", handler: ban },
 	]
 
 	$: {
@@ -42,14 +43,14 @@
 				return message.author === name
 			})
 			if (user) {
-				popuptitems[1] = user.myPermissionOver.includes("UNMUTE")
-					? { label: "UnMute", handler: unmute }
-					: { label: "Mute", handler: mute }
+				isAdmin = user.roles.includes("ADMIN")
+				popuptitems[0].label = isAdmin ? "Remove Admin status" : "Grant Admin status"
+				// popuptitems[1] = user.myPermissionOver.includes("UNMUTE")
+				// 	? { label: "UnMute", handler: unmute }
+				// 	: { label: "Mute", handler: mute }
 				// popuptitems[2] = user.myPermissionOver.includes("UNBAN")
 				// 	? { label: "UnBan", handler: ban }
 				// 	: { label: "Ban", handler: unban }
-				isAdmin = user.roles.includes("ADMIN")
-				popuptitems[3].label = isAdmin ? "Remove Admin status" : "Grant Admin status"
 				popuptitems = popuptitems
 				roles = user.roles
 				perms = user.myPermissionOver
@@ -83,6 +84,7 @@
 	}
 
 	async function mute() {
+		console.log(message.author)
 		const ret = await client.chans.muteUserFromChan({
 			params: {
 				chanId: discussion.id,

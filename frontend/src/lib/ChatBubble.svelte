@@ -14,11 +14,14 @@
 	import { client } from "$clients"
 	import Toggle from "./Toggle.svelte"
 
-	console.log("init ChatBubble")
+	// console.log("init ChatBubble")
 
 	export let message: Message
 	export let from_me = message.author === $my_name
 	export let discussion: Chan | DirectConversation
+	// $: {
+	// console.log((discussion as Chan)?.users)
+	// }
 
 	// POPUP SECTION
 
@@ -192,10 +195,6 @@
 
 	function isChan(arg: DirectConversation | Chan): arg is Chan {
 		return !!(arg as any).users
-	}
-
-	$: {
-		console.log((discussion as Chan)?.users)
 	}
 
 	// MENU SECTION

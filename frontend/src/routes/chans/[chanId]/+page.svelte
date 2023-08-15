@@ -28,16 +28,19 @@
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
 	let chan: Chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
-	let disabled: boolean = false // ChatBox disabled or not
+	// let disabled: boolean = !$page?.data?.chanList?.selfPerms.includes("SEND_MESSAGE") ?? false
+	let disabled: boolean = false
 	let disabled_placeholder = "You have been muted" // ChatBox placeholder
 
 	// Important, resets variable on route parameter change
-	$: messages = $page.data.messages // Need this because I can't mody the store directly
+	$: messages = $page.data.messages // Need this becaus I can't mody the store directly
 	$: {
 		chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
 		sendLoadEvents = true
 		disabled = !chan.selfPerms.includes("SEND_MESSAGE")
+		console.log("from page reactive block: ", disabled)
 	}
+	// $: disabled, console.log(disabled)
 
 	function updateSomeMessage(to_update_id: string, new_message: string) {
 		const to_update_idx: number = messages.findLastIndex((message: MessageOrEvent) => {
@@ -172,7 +175,7 @@
 
 		const destroyer: (() => void)[] = new Array(
 			addListenerToEventSource($sse_store!, "CREATED_CHAN_ELEMENT", (data) => {
-				console.log("Server message: New message", data)
+				console.log("Server message: New chan element", data)
 				if (data.chanId === $page.params.chanId) {
 					messages = [...messages, data.element]
 				}
@@ -185,15 +188,15 @@
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (data) => {
 				if (data.chanId === $page.params.chanId) {
-					if (data.selfPerms.includes("SEND_MESSAGE")) disabled = false
-					else disabled = true
+					console.log("Self perms updated", data)
+					chan.selfPerms = data.selfPerms
 				}
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_USER", ({ chanId, user }) => {
 				if (chanId === $page.params.chanId) {
 					let index = chan.users.findIndex((o) => o.name == user.name)
-					console.log("old user:", chan.users[index])
-					console.log("new user:", user)
+					// console.log("old user:", chan.users[index])
+					// console.log("new user:", user)
 					shallowCopyPartialToNotPartial(user, chan.users[index])
 					chan = chan
 				}

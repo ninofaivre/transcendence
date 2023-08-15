@@ -51,10 +51,7 @@ export const zSelfPermissionList = zPermissionList.extract([
 	"UPDATE_MESSAGE",
 ])
 
-export const zPermissionOverList = z.enum([
-	...zPermissionList.exclude(zSelfPermissionList.options).options,
-	"UNMUTE",
-])
+export const zPermissionOverList = z.enum([...zPermissionList.exclude(zSelfPermissionList.options).options, "UNMUTE"])
 
 export const zChanUser = z.object({
 	name: zUserName,
@@ -395,7 +392,7 @@ export const chansContract = c.router(
 			},
 		},
 		unmuteUserFromChan: {
-			method: "DELETE",
+			method: "PUT",
 			path: "/:chanId/mutedUsers/:username",
 			pathParams: z.strictObject({
 				chanId: z.string().uuid(),

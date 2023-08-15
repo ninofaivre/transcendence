@@ -285,14 +285,14 @@
 					<div class="spinner" out:blur={{ duration: 500 }} />
 				</div>
 			{/if}
-			{#if roles}
-				{#each roles as role}
-					<div class="italic">
-						{role}<br />
-					</div>
-					<br />
-				{/each}
-			{/if}
+			<!-- {#if roles} -->
+			<!-- 	{#each roles as role} -->
+			<!-- 		<div class="italic"> -->
+			<!-- 			{role}<br /> -->
+			<!-- 		</div> -->
+			<!-- 		<br /> -->
+			<!-- 	{/each} -->
+			<!-- {/if} -->
 			{#if perms}
 				{#each perms as perm}
 					<div class="italic">

@@ -1,22 +1,22 @@
-import { z } from "zod"
-import { CompleteUserInput, CompleteUserOutput, RelatedUserModel } from "./index"
+import { z } from "zod";
+import { CompleteUserInput, CompleteUserOutput, RelatedUserModel } from "./index";
 
 export const FriendShipModel = z.object({
-	id: z.string(),
-	creationDate: z.date(),
-	modificationDate: z.date().nullish(),
-	requestingUserName: z.string(),
-	requestedUserName: z.string(),
-})
+  id: z.string(),
+  creationDate: z.date(),
+  modificationDate: z.date().nullish(),
+  requestingUserName: z.string(),
+  requestedUserName: z.string(),
+});
 
 export interface CompleteFriendShipInput extends z.input<typeof FriendShipModel> {
-	requestingUser: CompleteUserInput
-	requestedUser: CompleteUserInput
+  requestingUser: CompleteUserInput;
+  requestedUser: CompleteUserInput;
 }
 
 export interface CompleteFriendShipOutput extends z.infer<typeof FriendShipModel> {
-	requestingUser: CompleteUserOutput
-	requestedUser: CompleteUserOutput
+  requestingUser: CompleteUserOutput;
+  requestedUser: CompleteUserOutput;
 }
 
 /**
@@ -24,13 +24,7 @@ export interface CompleteFriendShipOutput extends z.infer<typeof FriendShipModel
  *
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
-export const RelatedFriendShipModel: z.ZodSchema<
-	CompleteFriendShipOutput,
-	z.ZodTypeDef,
-	CompleteFriendShipInput
-> = z.lazy(() =>
-	FriendShipModel.extend({
-		requestingUser: RelatedUserModel,
-		requestedUser: RelatedUserModel,
-	}),
-)
+export const RelatedFriendShipModel: z.ZodSchema<CompleteFriendShipOutput, z.ZodTypeDef, CompleteFriendShipInput> = z.lazy(() => FriendShipModel.extend({
+  requestingUser: RelatedUserModel,
+  requestedUser: RelatedUserModel,
+}));

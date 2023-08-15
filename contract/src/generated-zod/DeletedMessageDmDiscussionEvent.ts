@@ -1,28 +1,19 @@
-import { z } from "zod"
-import {
-	CompleteUserInput,
-	CompleteUserOutput,
-	RelatedUserModel,
-	CompleteDmDiscussionEventInput,
-	CompleteDmDiscussionEventOutput,
-	RelatedDmDiscussionEventModel,
-} from "./index"
+import { z } from "zod";
+import { CompleteUserInput, CompleteUserOutput, RelatedUserModel, CompleteDmDiscussionEventInput, CompleteDmDiscussionEventOutput, RelatedDmDiscussionEventModel } from "./index";
 
 export const DeletedMessageDmDiscussionEventModel = z.object({
-	id: z.string(),
-	author: z.string(),
-})
+  id: z.string(),
+  author: z.string(),
+});
 
-export interface CompleteDeletedMessageDmDiscussionEventInput
-	extends z.input<typeof DeletedMessageDmDiscussionEventModel> {
-	authorRelation: CompleteUserInput
-	dmDiscussionEvent?: CompleteDmDiscussionEventInput | null
+export interface CompleteDeletedMessageDmDiscussionEventInput extends z.input<typeof DeletedMessageDmDiscussionEventModel> {
+  authorRelation: CompleteUserInput;
+  dmDiscussionEvent?: CompleteDmDiscussionEventInput | null;
 }
 
-export interface CompleteDeletedMessageDmDiscussionEventOutput
-	extends z.infer<typeof DeletedMessageDmDiscussionEventModel> {
-	authorRelation: CompleteUserOutput
-	dmDiscussionEvent?: CompleteDmDiscussionEventOutput | null
+export interface CompleteDeletedMessageDmDiscussionEventOutput extends z.infer<typeof DeletedMessageDmDiscussionEventModel> {
+  authorRelation: CompleteUserOutput;
+  dmDiscussionEvent?: CompleteDmDiscussionEventOutput | null;
 }
 
 /**
@@ -30,13 +21,7 @@ export interface CompleteDeletedMessageDmDiscussionEventOutput
  *
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
-export const RelatedDeletedMessageDmDiscussionEventModel: z.ZodSchema<
-	CompleteDeletedMessageDmDiscussionEventOutput,
-	z.ZodTypeDef,
-	CompleteDeletedMessageDmDiscussionEventInput
-> = z.lazy(() =>
-	DeletedMessageDmDiscussionEventModel.extend({
-		authorRelation: RelatedUserModel,
-		dmDiscussionEvent: RelatedDmDiscussionEventModel.nullish(),
-	}),
-)
+export const RelatedDeletedMessageDmDiscussionEventModel: z.ZodSchema<CompleteDeletedMessageDmDiscussionEventOutput, z.ZodTypeDef, CompleteDeletedMessageDmDiscussionEventInput> = z.lazy(() => DeletedMessageDmDiscussionEventModel.extend({
+  authorRelation: RelatedUserModel,
+  dmDiscussionEvent: RelatedDmDiscussionEventModel.nullish(),
+}));

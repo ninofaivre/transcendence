@@ -4,7 +4,7 @@ import { zPermissionList } from "./generated-zod/"
 import { zSelfPermissionList } from "./routers/chans"
 
 type Codes =
-    | "NotFoundUser" | "NotFoundUserForValidToken" | "NotFoundChan"
+    | "NotFoundUser" | "NotFoundUserForValidToken" | "NotFoundChan" | "NotFoundProfilePicture"
     | "UserAlreadyExist" | "DmAlreadyExist" | "ChanUserAlreadyExist" | "ChanAlreadyExist"
     | "BlockedByUser" | "BlockedUser" | "ProximityLevelTooLow" | "OwnerCannotLeaveChan" | "ChanPermissionTooLow" | "ChanPermissionTooLowOverUser"
     | "EntityModifiedBetweenCreationAndRead" | "EntityModifiedBetweenUpdateAndRead"
@@ -24,6 +24,14 @@ export const contractErrors = {
         body: {
             code: "NotFoundUserForValidToken",
             message: `not found user ${username} from valid token (account has probably been deleted)`
+        }
+    } as const),
+
+    NotFoundProfilePicture: (username: string) => ({
+        status: 404,
+        body: {
+            code: "NotFoundProfilePicture",
+            message: `not found profilePicture for user ${username}`
         }
     } as const),
 

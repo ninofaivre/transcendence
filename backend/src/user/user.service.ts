@@ -469,11 +469,15 @@ export class UserService {
     public async getUserProfilePicture(username: string, otherUserName: string) {
         const user = await this.getUser(otherUserName, { profilePicture: true })
         if (!user)
-            return contractErrors.NotFoundUserForValidToken(username)
+            return contractErrors.NotFoundUserForValidToken(otherUserName)
         const { profilePicture: profilePictureFileName } = user
 
-        const file = createReadStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName));
-        return new StreamableFile(file);
+        let error = false
+        try {
+            const file = createReadStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName));
+            return new StreamableFile(file);
+        } catch {}
+        return contractErrors.NotFoundProfilePicture(otherUserName)
     }
 
 }

@@ -34,6 +34,7 @@
 		{ label: "Kick", handler: kickHandler },
 		{ label: "Mute", handler: mute },
 		{ label: "UnMute", handler: unmute },
+		{ label: "show user", handler: () => alert(message.author) },
 		// { label: "Ban", handler: ban },
 	]
 

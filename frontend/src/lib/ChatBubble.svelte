@@ -34,7 +34,6 @@
 		{ label: "Kick", handler: kickHandler },
 		{ label: "Mute", handler: mute },
 		{ label: "UnMute", handler: unmute },
-		{ label: "show user", handler: () => alert(message.author) },
 		// { label: "Ban", handler: ban },
 	]
 
@@ -274,6 +273,7 @@
 	{/if}
 	<div
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}
+		on:click={() => alert(message.author)}
 	>
 		<!-- {#if !from_me} -->
 		<div class="from-field font-medium">{message.author}</div>

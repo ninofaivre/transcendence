@@ -1,18 +1,24 @@
-import { z } from "zod";
-import { CompleteChanDiscussionEventInput, CompleteChanDiscussionEventOutput, RelatedChanDiscussionEventModel } from "./index";
+import { z } from "zod"
+import {
+	CompleteChanDiscussionEventInput,
+	CompleteChanDiscussionEventOutput,
+	RelatedChanDiscussionEventModel,
+} from "./index"
 
 export const ChangedTitleChanDiscussionEventModel = z.object({
-  id: z.string(),
-  oldTitle: z.string(),
-  newTitle: z.string(),
-});
+	id: z.string(),
+	oldTitle: z.string(),
+	newTitle: z.string(),
+})
 
-export interface CompleteChangedTitleChanDiscussionEventInput extends z.input<typeof ChangedTitleChanDiscussionEventModel> {
-  chanDiscussionEvent?: CompleteChanDiscussionEventInput | null;
+export interface CompleteChangedTitleChanDiscussionEventInput
+	extends z.input<typeof ChangedTitleChanDiscussionEventModel> {
+	chanDiscussionEvent?: CompleteChanDiscussionEventInput | null
 }
 
-export interface CompleteChangedTitleChanDiscussionEventOutput extends z.infer<typeof ChangedTitleChanDiscussionEventModel> {
-  chanDiscussionEvent?: CompleteChanDiscussionEventOutput | null;
+export interface CompleteChangedTitleChanDiscussionEventOutput
+	extends z.infer<typeof ChangedTitleChanDiscussionEventModel> {
+	chanDiscussionEvent?: CompleteChanDiscussionEventOutput | null
 }
 
 /**
@@ -20,6 +26,12 @@ export interface CompleteChangedTitleChanDiscussionEventOutput extends z.infer<t
  *
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
-export const RelatedChangedTitleChanDiscussionEventModel: z.ZodSchema<CompleteChangedTitleChanDiscussionEventOutput, z.ZodTypeDef, CompleteChangedTitleChanDiscussionEventInput> = z.lazy(() => ChangedTitleChanDiscussionEventModel.extend({
-  chanDiscussionEvent: RelatedChanDiscussionEventModel.nullish(),
-}));
+export const RelatedChangedTitleChanDiscussionEventModel: z.ZodSchema<
+	CompleteChangedTitleChanDiscussionEventOutput,
+	z.ZodTypeDef,
+	CompleteChangedTitleChanDiscussionEventInput
+> = z.lazy(() =>
+	ChangedTitleChanDiscussionEventModel.extend({
+		chanDiscussionEvent: RelatedChanDiscussionEventModel.nullish(),
+	}),
+)

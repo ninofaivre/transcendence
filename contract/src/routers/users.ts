@@ -68,7 +68,7 @@ export const usersContract = c.router(
 						friends: z.boolean().default(false),
 						hasDm: z.boolean().default(false),
 						blocked: z.boolean().default(false),
-                        blockedBy: z.boolean().default(false)
+						blockedBy: z.boolean().default(false),
 						// canStartDm: z.boolean().default(false)
 					}),
 				}),
@@ -96,37 +96,40 @@ export const usersContract = c.router(
 				...getErrorsForContract(c, [404, "NotFoundUser"]),
 			},
 		},
-        getUserProfilePicture: {
-            method: "GET",
-            path: "/:userName/profilePicture",
-            pathParams: z.strictObject({
-                userName: zUserName
-            }),
-            responses: {
-                200: c.type<StreamableFile>(),
-                ...getErrorsForContract(c,
-                    [404, "NotFoundProfilePicture", "NotFoundUserForValidToken"])
-            }
-        },
+		getUserProfilePicture: {
+			method: "GET",
+			path: "/:userName/profilePicture",
+			pathParams: z.strictObject({
+				userName: zUserName,
+			}),
+			responses: {
+				200: c.type<StreamableFile>(),
+				...getErrorsForContract(c, [
+					404,
+					"NotFoundProfilePicture",
+					"NotFoundUserForValidToken",
+				]),
+			},
+		},
 		updateMe: {
 			method: "PATCH",
 			path: "/@me",
-            // TODO after BH add userName
+			// TODO after BH add userName
 			body: zMyProfileReturn.omit({ userName: true }).partial(),
 			responses: {
 				200: zMyProfileReturn,
 				...getErrorsForContract(c, [404, "NotFoundUser"]),
 			},
 		},
-        setMyProfilePicture: {
-            method: "PUT",
-            path: "/@me/PP",
-            contentType: "multipart/form-data",
-            body: c.type<{ profilePicture: File }>(),
-            responses: {
-                204: c.type<null>()
-            }
-        },
+		setMyProfilePicture: {
+			method: "PUT",
+			path: "/@me/PP",
+			contentType: "multipart/form-data",
+			body: c.type<{ profilePicture: File }>(),
+			responses: {
+				204: c.type<null>(),
+			},
+		},
 		signUp: {
 			method: "POST",
 			path: "/",

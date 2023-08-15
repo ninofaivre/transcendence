@@ -1,22 +1,22 @@
-import { z } from "zod";
-import { CompleteUserInput, CompleteUserOutput, RelatedUserModel } from "./index";
+import { z } from "zod"
+import { CompleteUserInput, CompleteUserOutput, RelatedUserModel } from "./index"
 
 export const BlockedShipModel = z.object({
-  id: z.string(),
-  creationDate: z.date(),
-  modificationDate: z.date().nullish(),
-  blockingUserName: z.string(),
-  blockedUserName: z.string(),
-});
+	id: z.string(),
+	creationDate: z.date(),
+	modificationDate: z.date().nullish(),
+	blockingUserName: z.string(),
+	blockedUserName: z.string(),
+})
 
 export interface CompleteBlockedShipInput extends z.input<typeof BlockedShipModel> {
-  blockingUser: CompleteUserInput;
-  blockedUser: CompleteUserInput;
+	blockingUser: CompleteUserInput
+	blockedUser: CompleteUserInput
 }
 
 export interface CompleteBlockedShipOutput extends z.infer<typeof BlockedShipModel> {
-  blockingUser: CompleteUserOutput;
-  blockedUser: CompleteUserOutput;
+	blockingUser: CompleteUserOutput
+	blockedUser: CompleteUserOutput
 }
 
 /**
@@ -24,7 +24,13 @@ export interface CompleteBlockedShipOutput extends z.infer<typeof BlockedShipMod
  *
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
-export const RelatedBlockedShipModel: z.ZodSchema<CompleteBlockedShipOutput, z.ZodTypeDef, CompleteBlockedShipInput> = z.lazy(() => BlockedShipModel.extend({
-  blockingUser: RelatedUserModel,
-  blockedUser: RelatedUserModel,
-}));
+export const RelatedBlockedShipModel: z.ZodSchema<
+	CompleteBlockedShipOutput,
+	z.ZodTypeDef,
+	CompleteBlockedShipInput
+> = z.lazy(() =>
+	BlockedShipModel.extend({
+		blockingUser: RelatedUserModel,
+		blockedUser: RelatedUserModel,
+	}),
+)

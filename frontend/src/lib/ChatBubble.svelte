@@ -43,8 +43,8 @@
 			})
 			if (user) {
 				popuptitems[1] = user.myPermissionOver.includes("UNMUTE")
-					? { label: "Mute", handler: mute }
-					: { label: "UnMute", handler: unmute }
+					? { label: "UnMute", handler: unmute }
+					: { label: "Mute", handler: mute }
 				// popuptitems[2] = user.myPermissionOver.includes("UNBAN")
 				// 	? { label: "UnBan", handler: ban }
 				// 	: { label: "Ban", handler: unban }

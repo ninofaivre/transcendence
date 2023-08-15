@@ -9,6 +9,7 @@
 	import { makeToast } from "$lib/global"
 	import { isContractError } from "contract"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
+	import { filter, Noir } from "@skeletonlabs/skeleton"
 
 	import { client } from "$clients"
 
@@ -27,13 +28,9 @@
 	let roles: string[] | undefined
 
 	let isAdmin: boolean | undefined
-	let menu_admin = [
-		{ label: "Grant Admin status", handler: toggleAdmin },
-		{ label: "Kick", handler: kickHandler },
-		{ label: "Mute", handler: mute },
-		{ label: "UnMute", handler: unmute },
-		// { label: "Ban", handler: ban },
-	]
+	let isMuted: boolean | undefined
+	let filterType: "#Noir" | "" = ""
+	let menu_admin = [{ label: "Kick", handler: kickHandler }]
 
 	$: {
 		if (discussion && isChan(discussion)) {
@@ -41,15 +38,24 @@
 				return message.author === name
 			})
 			if (user) {
+				// Admin
 				isAdmin = user.roles.includes("ADMIN")
-				menu_admin[0].label = isAdmin ? "Remove Admin status" : "Grant Admin status"
-				// menu_admin[1] = user.myPermissionOver.includes("UNMUTE")
-				// 	? { label: "UnMute", handler: unmute }
-				// 	: { label: "Mute", handler: mute }
-				// menu_admin[2] = user.myPermissionOver.includes("UNBAN")
-				// 	? { label: "UnBan", handler: ban }
-				// 	: { label: "Ban", handler: unban }
+				menu_admin[1] = isAdmin
+					? { label: "Remove Admin status", handler: toggleAdmin }
+					: { label: "Grant Admin status", handler: toggleAdmin }
+				// Muting
+				isMuted = user.myPermissionOver.includes("UNMUTE")
+				menu_admin[2] = isMuted
+					? { label: "UnMute", handler: unmute }
+					: { label: "Mute", handler: mute }
+				filterType = isMuted ? "#Noir" : ""
+				// Banning
+				menu_admin[3] =
+					// user.myPermissionOver.includes("UNBAN") ? { label: "UnBan", handler: unban } :
+					{ label: "Ban", handler: ban }
+				menu_admin[4] = { label: "UnBan", handler: unban }
 				menu_admin = menu_admin
+				//DEBUG
 				roles = user.roles
 				perms = user.myPermissionOver
 			}
@@ -117,39 +123,37 @@
 	}
 
 	async function ban() {
-		// const ret = await client.chans.banUserFromChan({
-		// 	params: {
-		// 		chanId: discussion.id,
-		// 		username: message.author,
-		// 	},
-		// 	body: {
-		// 		timeoutInMs: "infinity",
-		// 	},
-		// })
-		// if (ret.status == 202) {
-		// 	makeToast("Banned " + message.author)
-		// } else if (isContractError(ret)) {
-		// 	makeToast(`Failed to ban ${message.author}: ${ret.body.message}`)
-		// 	console.warn(ret.body.code)
-		// } else throw new Error(`Unexpected return from server when trying to ban ${message.author}`)
+		const ret = await client.chans.banUserFromChan({
+			params: {
+				chanId: discussion.id,
+				username: message.author,
+			},
+			body: {
+				timeoutInMs: "infinity",
+			},
+		})
+		if (ret.status == 204) {
+			makeToast("Banned " + message.author)
+		} else if (isContractError(ret)) {
+			makeToast(`Failed to ban ${message.author}: ${ret.body.message}`)
+			console.warn(ret.body.code)
+		} else throw new Error(`Unexpected return from server when trying to ban ${message.author}`)
 	}
 	async function unban() {
-		// const ret = await client.chans.unbanUserFromChan({
-		// 	params: {
-		// 		chanId: discussion.id,
-		// 		username: message.author,
-		// 	},
-		// 	body: {
-		// 		timeoutInMs: "infinity",
-		// 	},
-		// })
-		// if (ret.status == 202) {
-		// 	makeToast("Unbanned " + message.author)
-		// } else if (isContractError(ret)) {
-		// 	makeToast(`Failed to unban ${message.author}: ${ret.body.message}`)
-		// 	console.warn(ret.body.code)
-		// } else
-		// 	throw new Error(`Unexpected return from server when trying to unban ${message.author}`)
+		const ret = await client.chans.unbanUserFromChan({
+			params: {
+				chanId: discussion.id,
+				username: message.author,
+			},
+			body: null,
+		})
+		if (ret.status == 204) {
+			makeToast("Unbanned " + message.author)
+		} else if (isContractError(ret)) {
+			makeToast(`Failed to unban ${message.author}: ${ret.body.message}`)
+			console.warn(ret.body.code)
+		} else
+			throw new Error(`Unexpected return from server when trying to unban ${message.author}`)
 	}
 
 	async function toggleAdmin() {
@@ -237,8 +241,10 @@
 	}
 
 	let is_admin_menu_open = false
+	// let filterType: "#Noir" | "" = ""
 </script>
 
+<Noir />
 <div
 	id={message.id}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
@@ -252,6 +258,8 @@
 			class="h-8 w-8"
 			rounded="rounded-full"
 			on:click={() => (is_admin_menu_open = true)}
+			action={filter}
+			actionParams={filterType}
 		/>
 		{#if isChan(discussion) && is_admin_menu_open}
 			<ol

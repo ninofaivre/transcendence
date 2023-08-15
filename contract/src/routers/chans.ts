@@ -401,7 +401,7 @@ export const chansContract = c.router(
 				chanId: z.string().uuid(),
 				username: zUserName,
 			}),
-			body: null,
+			body: c.type<null>(),
 			responses: {
 				202: c.type<null>(),
 				...getErrorsForContract(

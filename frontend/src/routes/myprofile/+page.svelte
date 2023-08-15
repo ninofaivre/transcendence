@@ -10,7 +10,6 @@
 		height: number
 	}
 	let croppedImage: string | null
-	let fileinput: HTMLInputElement
 
 	const defaultSrc =
 		"https://t4.ftcdn.net/jpg/03/03/62/45/240_F_303624505_u0bFT1Rnoj8CMUSs8wMCwoKlnWlh5Jiq.jpg"
@@ -48,9 +47,8 @@
 		image = null
 	}
 
-	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { client } from "$clients"
-	import { FileDropzone, FileButton, toastStore } from "@skeletonlabs/skeleton"
+	import { FileDropzone } from "@skeletonlabs/skeleton"
 	import { makeToast } from "$lib/global"
 
 	let files: FileList
@@ -69,26 +67,25 @@
 	}
 </script>
 
-<form on:submit|preventDefault={handleSubmit}>
-	<FileDropzone name="pp" bind:files>
-		<div slot="lead" class="text-3xl">📁</div>
-		<svelte:fragment slot="message">Upload your profile picture</svelte:fragment>
-		<svelte:fragment slot="meta">PNG and JPEG files only</svelte:fragment>
-	</FileDropzone>
-	<button type="submit" class="btn variant-ringed"> Upload </button>
-</form>
-
 {#if !image}
 	<h2>Upload a picture for cropping?</h2>
-	<input
-		type="file"
-		accept=".jpg, .jpeg, .png"
-		on:change={(e) => onFileSelected(e)}
-		bind:this={fileinput}
-	/>
+	<form on:submit|preventDefault={handleSubmit}>
+		<FileDropzone
+			bind:files
+			name="pp"
+			accept=".jpg, .jpeg, .png"
+			on:change={(e) => onFileSelected(e)}
+		>
+			<div slot="lead" class="text-3xl">📁</div>
+			<svelte:fragment slot="message">Upload your profile picture</svelte:fragment>
+			<svelte:fragment slot="meta">PNG and JPEG files only</svelte:fragment>
+		</FileDropzone>
+		<button type="submit" class="btn variant-ringed block"> Upload </button>
+	</form>
 	<h2>Or... use this cute cat image</h2>
 	<button
 		type="button"
+		class="btn variant-ringed"
 		on:click={() => {
 			image = defaultSrc
 		}}>Click me!</button
@@ -113,12 +110,13 @@
 	{:else}
 		<br /><button
 			type="button"
+			class="btn variant-ringed"
 			on:click={async () => {
 				cropImage(image, pixelCrop)
 			}}>Crop!</button
 		>
 	{/if}
-	<button type="button" on:click={reset}>Start over?</button>
+	<button type="button" class="btn variant-ringed" on:click={reset}>Start over?</button>
 {/if}
 
 <style>

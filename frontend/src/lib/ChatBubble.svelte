@@ -27,7 +27,7 @@
 	let popuptitems = [
 		{ label: "Kick", handler: kickHandler },
 		{ label: "Mute", handler: mute },
-		{ label: "Ban", handler: toggleBan },
+		{ label: "Ban", handler: ban },
 		{ label: "Grant Admin status", handler: toggleAdmin },
 	]
 
@@ -37,18 +37,19 @@
 				return message.author === name
 			})
 			if (user) {
-				// popuptitems[1] =
-				// 	user.myPermissionOver.includes("UNMUTE") === true
-				// 		? { label: "UnMute", handler: unmute }
-				// 		: { label: "Mute", handler: mute }
-				popuptitems[2] =
-					user.myPermissionOver.includes("UNBAN") === true
-						? { label: "UnBan", handler: ban }
-						: { label: "Ban", handler: unban }
+				popuptitems[1] =
+					user.myPermissionOver.includes("UNMUTE") === true
+						? { label: "UnMute", handler: unmute }
+						: { label: "Mute", handler: mute }
+				// popuptitems[2] =
+				// 	user.myPermissionOver.includes("UNBAN") === true
+				// 		? { label: "UnBan", handler: ban }
+				// 		: { label: "Ban", handler: unban }
 				isAdmin = user.roles.includes("ADMIN")
 				popuptitems[3].label =
 					isAdmin == true ? "Remove Admin status" : "Grant Admin status"
 				popuptitems = popuptitems
+				roles = user.roles
 			}
 		}
 	}

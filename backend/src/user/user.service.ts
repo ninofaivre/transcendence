@@ -471,7 +471,6 @@ export class UserService {
         if (!user)
             return contractErrors.NotFoundUserForValidToken(username)
         const { profilePicture: profilePictureFileName } = user
-        // const image = await Jimp.read(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
 
         const file = createReadStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName));
         return new StreamableFile(file);

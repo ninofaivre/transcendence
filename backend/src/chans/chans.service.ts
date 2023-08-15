@@ -4,6 +4,7 @@ import {
 	PermissionList,
 	Prisma,
 	ChanInvitationStatus,
+    TimedStatusType
 } from "@prisma/client"
 import { compareSync, hash } from "bcrypt"
 import { SseService } from "src/sse/sse.service"
@@ -53,21 +54,22 @@ type PermPayload = Prisma.ChanGetPayload<
 @Injectable()
 export class ChansService {
 
-    private getCurrentlyMutedUsersWhere = () => ({
+    private getTimedChanUsersByStatus = (type?: TimedStatusType) => ({
+        type,
         OR: [
             { untilDate: { gt: new Date() } },
             { untilDate: null }
         ]
-    } satisfies Prisma.Chan$mutedUsersArgs['where'])
+    } satisfies Prisma.Chan$timedStatusUsersArgs['where'])
 
-    private async unmuteUserInChan(username: string, chanId: string) {
+    private async endTimedStatusUserInChan(username: string, chanId: string, type: TimedStatusType) {
         const res = await this.prisma.chan.update({ where: { id: chanId },
             data: {
-                mutedUsers: {
+                timedStatusUsers: {
                     updateMany: {
                         where: {
-                            mutedUserName: username,
-                            ...this.getCurrentlyMutedUsersWhere()
+                            timedUserName: username,
+                            ...this.getTimedChanUsersByStatus(type)
                         },
                         data: { untilDate: new Date() }
                     }
@@ -91,7 +93,7 @@ export class ChansService {
                 }
             })
         })
-        this.callbackService.deleteCallback(username, "unMute")
+        this.callbackService.deleteCallback(username, `UN${type}`)
     }
 
     constructor(
@@ -104,30 +106,32 @@ export class ChansService {
         private readonly callbackService: CallbackService
 	) {
         this.prisma.chan.findMany({
-            where: { mutedUsers: { some: this.getCurrentlyMutedUsersWhere() } },
+            where: { timedStatusUsers: { some: this.getTimedChanUsersByStatus('MUTE') } },
             select: {
                 id: true,
-                mutedUsers: {
-                    where: this.getCurrentlyMutedUsersWhere(),
+                timedStatusUsers: {
+                    where: this.getTimedChanUsersByStatus(),
                     select: {
                         untilDate: true,
-                        mutedUserName: true
+                        timedUserName: true,
+                        type: true
                     }
                 }
             }})
             .then(chans => {
                 const currentDateMs = (new Date()).getTime()
-                chans.forEach(({ id: chanId, mutedUsers }) => {
-                    mutedUsers.forEach(({ mutedUserName, untilDate }) => {
+                chans.forEach(({ id: chanId, timedStatusUsers }) => {
+                    timedStatusUsers.forEach(({ type, timedUserName, untilDate }) => {
                         if (!untilDate)
                             return
                         const timeoutId = setTimeout(
-                            this.unmuteUserInChan.bind(this),
+                            this.endTimedStatusUserInChan.bind(this),
                             untilDate.getTime() - currentDateMs,
-                            mutedUserName,
-                            chanId)
-                        this.callbackService.setCallback(mutedUserName,
-                            "unMute",
+                            timedUserName,
+                            chanId,
+                            type)
+                        this.callbackService.setCallback(timedUserName,
+                            `UN${type}`,
                             timeoutId)
                     })
                 })
@@ -149,18 +153,19 @@ export class ChansService {
         password: true
 	} satisfies Prisma.ChanSelect)
 
-    private mutedUserChanSelect = {
+    private timedStatusUserChanSelect = {
         untilDate: true,
-        mutedUserName: true
-    } satisfies Prisma.MutedUserChanSelect
+        timedUserName: true,
+        type: true
+    } satisfies Prisma.TimedStatusUserChanSelect
 
     private permSelectBase = (...usernames: string[]) => ({
-        mutedUsers: {
+        timedStatusUsers: {
             where: {
-                ...(usernames.length ? { mutedUserName: { in: usernames } }: {}),
-                ...this.getCurrentlyMutedUsersWhere()
+                ...(usernames.length ? { timedUserName: { in: usernames } }: {}),
+                ...this.getTimedChanUsersByStatus('MUTE')
             },
-            select: this.mutedUserChanSelect
+            select: this.timedStatusUserChanSelect
         },
         ownerName: true
     } as const satisfies Prisma.ChanSelect)
@@ -291,7 +296,7 @@ export class ChansService {
 
     private getSelfPerm(
         username: string,
-        { ownerName, roles, mutedUsers }: SelfPermPayload
+        { ownerName, roles, timedStatusUsers }: SelfPermPayload
     ) {
         if (username === ownerName)
             return zSelfPermissionList.options
@@ -299,7 +304,7 @@ export class ChansService {
             .filter(role => role.users.some(user => user.name === username))
             .flatMap(role => role.permissions)
             .filter(this.isSelfPerm))]
-        if (mutedUsers.some(user => user.mutedUserName === username)) {
+        if (timedStatusUsers.some(user => user.timedUserName === username)) {
             return perms 
                 .filter(perm => (perm !== 'SEND_MESSAGE' && perm !== 'UPDATE_MESSAGE'))
         }
@@ -307,7 +312,7 @@ export class ChansService {
     }
 
 	private formatChan(username: string, chan: ChanPayload) {
-		const { password, roles, users, mutedUsers, ...rest } = chan
+		const { password, roles, users, timedStatusUsers, ...rest } = chan
 		return {
             ...rest,
             roles: roles.map(role => role.name),
@@ -497,14 +502,14 @@ export class ChansService {
 
     private getPermOverUserInChan(username: string,
         otherUserName: string,
-        { roles, ownerName, mutedUsers }: PermPayload
+        { roles, ownerName, timedStatusUsers }: PermPayload
     ): z.infer<typeof zPermissionOverList>[] {
         if (username === otherUserName)
             return ["DELETE_MESSAGE" as const]
         if (otherUserName === ownerName)
             return []
-        const isOtherUserMuted = mutedUsers
-            .some(el => el.mutedUserName === otherUserName)
+        const isOtherUserMuted = timedStatusUsers
+            .some(el => el.timedUserName === otherUserName && el.type === 'MUTE')
 
         let perms: z.infer<typeof zPermissionOverList>[];
 
@@ -811,27 +816,31 @@ export class ChansService {
             return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'MUTE')
 
         const untilDate = (timeoutInMs !== 'infinity') ? new Date((new Date()).getTime() + timeoutInMs) : null
-        this.callbackService.deleteCallback(otherUserName, "unMute")
+        this.callbackService.deleteCallback(otherUserName, "UNMUTE")
 
-        if (chan.mutedUsers.some(({ mutedUserName }) => mutedUserName === otherUserName)) {
-            await this.prisma.mutedUserChan.updateMany({
+        if (chan.timedStatusUsers
+                .some(({ timedUserName, type }) => 
+                    (timedUserName === otherUserName && type === 'MUTE'))
+        ) {
+            await this.prisma.timedStatusUserChan.updateMany({
                 where: {
-                    ...this.getCurrentlyMutedUsersWhere(),
-                    mutedUserName: otherUserName
+                    ...this.getTimedChanUsersByStatus('MUTE'),
+                    timedUserName: otherUserName
                 },
                 data: { untilDate }
             })
         }
         else {
-            const mutedUsers = [await this.prisma.mutedUserChan.create({
+            const timedStatusUsers = [await this.prisma.timedStatusUserChan.create({
                 data: {
+                    type: 'MUTE',
                     chanId,
-                    mutedUserName: otherUserName,
+                    timedUserName: otherUserName,
                     untilDate
                 },
-                select: this.mutedUserChanSelect
+                select: this.timedStatusUserChanSelect
             })]
-            this.notifyUpdatedSelfPerm(otherUserName, { ...chan, mutedUsers })
+            this.notifyUpdatedSelfPerm(otherUserName, { ...chan, timedStatusUsers })
         }
 
         new ChanElementFactory(chanId, username, this)
@@ -839,36 +848,31 @@ export class ChansService {
             .then(event => event.notifyByUsers(chan.users))
 
         chan.users.forEach(({ name }) => {
+            const myPermissionOver = this.getPermOverUserInChan(name, otherUserName, chan)
+            if (!myPermissionOver.includes('UNMUTE') && name !== otherUserName)
+                myPermissionOver.push('UNMUTE')
             this.sse.pushEvent(name, {
                 type: 'UPDATED_CHAN_USER',
-                data: {
-                    chanId,
-                    user: {
-                        name: otherUserName,
-                        myPermissionOver: [ ...this.getPermOverUserInChan(name, otherUserName, chan), 'UNMUTE']
-                    }
-                }
+                data: { chanId, user: { name: otherUserName, myPermissionOver } }
             })
         })
 
         if (timeoutInMs === 'infinity')
             return
         const timeoutId = setTimeout(
-            this.unmuteUserInChan.bind(this),
+            this.endTimedStatusUserInChan.bind(this),
             timeoutInMs,
             otherUserName,
             chanId
         )
-        this.callbackService.setCallback(otherUserName,
-            "unMute",
-            timeoutId)
+        this.callbackService.setCallback(otherUserName, "UNMUTE", timeoutId)
     }
 
     async unmuteUserIfRightTo(username: string, { chanId, username: otherUserName }: RequestShapes['unmuteUserFromChan']['params']) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 // otherUserName needs to be here so it is included in
-                // selected mutedUsers. So it can be found on the getPermOverUserInChan
+                // selected timedStatusUsers. So it can be found on the getPermOverUserInChan
                 // and it can return the perm UNMUTE otherwise it will never return it
                 ...this.getPermSelect(username, otherUserName),
                 users: { where: { name: otherUserName }, select: { name: true } }
@@ -877,10 +881,9 @@ export class ChansService {
             return contractErrors.NotFoundChan(chanId)
         if (!chan.users.some(user => user.name === otherUserName))
             return contractErrors.NotFoundChanEntity(chanId, 'user', otherUserName)
-        // TODO: change this shit for unmute
         if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, 'UNMUTE'))
             return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'MUTE')
-        await this.unmuteUserInChan(otherUserName, chanId)
+        await this.endTimedStatusUserInChan(otherUserName, chanId, 'MUTE')
     }
 
     usersToNames = (users: { name: string }[], exclude?: string) => 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ChanType } from "./enums";
-import { CompleteUserInput, CompleteUserOutput, RelatedUserModel, CompleteRoleInput, CompleteRoleOutput, RelatedRoleModel, CompleteMutedUserChanInput, CompleteMutedUserChanOutput, RelatedMutedUserChanModel, CompleteChanInvitationInput, CompleteChanInvitationOutput, RelatedChanInvitationModel, CompleteChanDiscussionElementInput, CompleteChanDiscussionElementOutput, RelatedChanDiscussionElementModel } from "./index";
+import { CompleteUserInput, CompleteUserOutput, RelatedUserModel, CompleteRoleInput, CompleteRoleOutput, RelatedRoleModel, CompleteTimedStatusUserChanInput, CompleteTimedStatusUserChanOutput, RelatedTimedStatusUserChanModel, CompleteChanInvitationInput, CompleteChanInvitationOutput, RelatedChanInvitationModel, CompleteChanDiscussionElementInput, CompleteChanDiscussionElementOutput, RelatedChanDiscussionElementModel } from "./index";
 
 export const ChanModel = z.object({
   id: z.string(),
@@ -16,7 +16,7 @@ export interface CompleteChanInput extends z.input<typeof ChanModel> {
   users: CompleteUserInput[];
   roles: CompleteRoleInput[];
   owner: CompleteUserInput;
-  mutedUsers: CompleteMutedUserChanInput[];
+  timedStatusUsers: CompleteTimedStatusUserChanInput[];
   invitations: CompleteChanInvitationInput[];
   elements: CompleteChanDiscussionElementInput[];
 }
@@ -25,7 +25,7 @@ export interface CompleteChanOutput extends z.infer<typeof ChanModel> {
   users: CompleteUserOutput[];
   roles: CompleteRoleOutput[];
   owner: CompleteUserOutput;
-  mutedUsers: CompleteMutedUserChanOutput[];
+  timedStatusUsers: CompleteTimedStatusUserChanOutput[];
   invitations: CompleteChanInvitationOutput[];
   elements: CompleteChanDiscussionElementOutput[];
 }
@@ -39,7 +39,7 @@ export const RelatedChanModel: z.ZodSchema<CompleteChanOutput, z.ZodTypeDef, Com
   users: RelatedUserModel.array(),
   roles: RelatedRoleModel.array(),
   owner: RelatedUserModel,
-  mutedUsers: RelatedMutedUserChanModel.array(),
+  timedStatusUsers: RelatedTimedStatusUserChanModel.array(),
   invitations: RelatedChanInvitationModel.array(),
   elements: RelatedChanDiscussionElementModel.array(),
 }));

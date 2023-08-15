@@ -84,9 +84,10 @@ export class UserController {
 			},
 
             getUserProfilePicture: async ({ params: { userName: otherUserName } }) => {
+                // TODO get correct mime type instead of hard coded png
                 res.set({
                     'Content-Type': 'image/png',
-                    'Content-Disposition': `attachment; filename="profilePicture${otherUserName}.png"`,
+                    'Content-Disposition': `attachment; filename="profilePicture_${otherUserName}.png"`,
                 });
                 const ress = await this.userService.getUserProfilePicture(username, otherUserName)
                 return isContractError(ress) ? ress: { status: 200, body: ress as any }

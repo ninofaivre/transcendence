@@ -86,13 +86,15 @@
 				timeoutInMs: "infinity",
 			},
 		})
-		if (ret.status == 202) {
+		if (ret.status == 204) {
 			makeToast("Muted " + message.author)
 		} else if (isContractError(ret)) {
 			makeToast(`Failed to mute ${message.author}: ${ret.body.message}`)
 			console.warn(ret.body.code)
 		} else
-			throw new Error(`Unexpected return from server when trying to mute ${message.author}`)
+			throw new Error(
+				`Unexpected return from server when trying to mute ${message.author}: Server returned ${ret.status}`,
+			)
 	}
 
 	async function unmute() {
@@ -103,13 +105,15 @@
 			},
 			body: null,
 		})
-		if (ret.status == 202) {
+		if (ret.status == 204) {
 			makeToast("Unmuted " + message.author)
 		} else if (isContractError(ret)) {
 			makeToast(`Failed to unmute ${message.author}: ${ret.body.message}`)
 			console.warn(ret.body.code)
 		} else
-			throw new Error(`Unexpected return from server when trying to unmute ${message.author}`)
+			throw new Error(
+				`Unexpected return from server when trying to unmute ${message.author}: Server returned ${ret.status}`,
+			)
 	}
 
 	async function ban() {

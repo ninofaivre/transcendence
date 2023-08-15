@@ -35,7 +35,7 @@
 					makeToast("Succesfully signed up " + username)
 				} else if (isContractError(signup_ret.status)) {
 					makeToast("Sign-up failed with code: " + signup_ret.status)
-				}
+				} else throw new Error("Unexpected return from server:" + signup_ret.status)
 			}
 		}
 	}

@@ -53,13 +53,19 @@
 				bind:value={password}
 				type="password"
 				name="password"
-				class="input"
+				class="input mb-3"
 				autocomplete="current-password"
 				required
 				minlength="3"
 			/>
-			<button id="login" type="submit" class="btn variant-filled-success"> Log in </button>
-			<button id="signup" type="submit" class="btn variant-filled-primary"> Sign up </button>
+			<div class="flex justify-around">
+				<button id="login" type="submit" class="btn variant-filled-success">
+					Log in
+				</button>
+				<button id="signup" type="submit" class="btn variant-filled-primary">
+					Sign up
+				</button>
+			</div>
 		</form>
 	</div>
 </div>

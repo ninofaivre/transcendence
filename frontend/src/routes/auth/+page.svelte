@@ -1,37 +1,42 @@
 <script lang="ts">
 	import { type ToastSettings, toastStore } from "@skeletonlabs/skeleton"
-	import { login, signup } from "$lib/global"
+	import { isContractError } from "contract"
+	import { logout, makeToast } from "$lib/global"
+	import { logged_in } from "$stores"
+	import { client } from "$clients"
 
 	let username = ""
 	let password = ""
 
-	const signup_failed_toast: ToastSettings = {
-		message: "Signup failed",
-	}
-	const login_failed_toast: ToastSettings = {
-		message: "Log in failed",
-	}
-
 	async function formSubmit(e: SubmitEvent) {
 		if (e.submitter) {
 			if (e.submitter.id === "login") {
-				const errcode = await login(username, password)
-				if (errcode > 400) {
-					toastStore.trigger(login_failed_toast)
-				}
+				await logout()
+				const login_ret = await client.auth.login({
+					body: {
+						username,
+						password,
+					},
+				})
+				if (login_ret.status === 202) {
+					makeToast("Login successful")
+					logged_in.set(true)
+				} else if (isContractError(login_ret)) {
+					makeToast("Login UNsuccessful: $ Server returned:" + login_ret.status)
+				} else throw new Error("Unexpected return from server:" + login_ret.status)
 			} else if (e.submitter.id === "signup") {
-				const { status, body } = await signup(username, password)
-				if (status > 400) {
-					toastStore.trigger(signup_failed_toast)
-					console.log(
-						`Sign-up failed with code ${status}: `,
-						(body as { message?: string })?.message,
-					)
-				} else console.log(`Signed up ${username}...`)
-			} else
-				throw new Error(
-					`Trying to submit data from unknown submitter with id=${e.submitter.id}`,
-				)
+				const signup_ret = await client.users.signUp({
+					body: {
+						name: username,
+						password,
+					},
+				})
+				if (signup_ret.status === 201) {
+					makeToast("Succesfully signed up " + username)
+				} else if (isContractError(signup_ret.status)) {
+					makeToast("Sign-up failed with code: " + signup_ret.status)
+				}
+			}
 		}
 	}
 </script>

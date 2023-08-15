@@ -76,23 +76,6 @@ export async function fetchPostJSON(apiEndPoint: string, jsBody: object, urlArgs
 	return response
 }
 
-export async function login(username: string, password: string) {
-	await logout()
-	const { status } = await client.auth.login({
-		body: {
-			username,
-			password,
-		},
-	})
-	if (status < 400) {
-		console.log("Login successful")
-		logged_in.set(true)
-	} else {
-		console.log("Login UNsuccessful. Server returned:", status)
-	}
-	return status
-}
-
 export async function logout() {
 	return client.auth
 		.logout()
@@ -108,15 +91,6 @@ export async function logout() {
 			logged_in.set(false)
 			return result
 		})
-}
-
-export async function signup(name: string, password: string) {
-	return client.users.signUp({
-		body: {
-			name,
-			password,
-		},
-	})
 }
 
 type GetDataFromEventType<T extends SseEvent["type"]> = Extract<SseEvent, { type: T }>["data"]

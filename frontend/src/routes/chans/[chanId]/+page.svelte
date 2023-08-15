@@ -13,10 +13,15 @@
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
 	import { client } from "$clients"
-	import { addListenerToEventSource, shallowCopyPartialToNotPartial } from "$lib/global"
+	import {
+		addListenerToEventSource,
+		makeToast,
+		shallowCopyPartialToNotPartial,
+	} from "$lib/global"
 	import { sse_store, my_name } from "$stores"
 	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
 	import Toggle from "$lib/Toggle.svelte"
+	import { isContractError } from "contract"
 
 	console.log($page.route.id, " init")
 
@@ -86,42 +91,42 @@
 	}
 
 	async function deletionHandler({ detail: { id: elementId } }: CustomEvent<{ id: string }>) {
-		const { status, body } = await client.chans.deleteChanMessage({
+		const ret = await client.chans.deleteChanMessage({
 			body: null,
 			params: {
 				elementId,
 				chanId: $page.params.chanId,
 			},
 		})
-		if (status === 202) {
+		if (ret.status === 200) {
 			deleteSomeMessage(elementId)
-		} else {
-			console.error(
-				`Message deletion denied. Server returned code ${status}\n with message \"${
-					(body as any)?.message
-				}\"`,
+		} else if (isContractError(ret)) {
+			makeToast(
+				`Message deletion denied. Server returned code ${ret.status}\n with message \"${ret.body.message}\"`,
 			)
+			console.warn(ret.body.code)
+		} else {
+			throw new Error("Unexpected return from server: " + JSON.stringify(ret))
 		}
 	}
 
 	async function editHandler({
 		detail: { id: elementId, new_message },
 	}: CustomEvent<{ id: string; new_message: string }>) {
-		const { status, body } = await client.chans.updateChanMessage({
+		const ret = await client.chans.updateChanMessage({
 			body: { content: new_message },
 			params: {
 				elementId,
 				chanId: $page.params.chanId,
 			},
 		})
-		if (status === 200) {
+		if (ret.status === 200) {
 			updateSomeMessage(elementId, new_message)
-		} else {
-			console.error(
-				`Server refused to edit message, returned code ${status}\n with message \"${
-					(body as any)?.message
-				}\"`,
+		} else if (isContractError(ret)) {
+			makeToast(
+				`Server refused to edit message, returned code ${ret.status}\n with message \"${ret.body.message}\"`,
 			)
+			console.warn(ret.body.code)
 		}
 	}
 

@@ -76,6 +76,16 @@ export class ChansController {
                 return isContractError(res) ? res : { status: 204, body: null }
             },
 
+            banUserFromChan: async ({ params, body: { timeoutInMs } }) => {
+                const res = await this.chansService.banUserFromChanIfRighTo(username, params, timeoutInMs)
+                return isContractError(res) ? res : { status: 204, body: null }
+            },
+
+            unbanUserFromChan: async ({ params }) => {
+                const res = await this.chansService.unbanUserIfRightTo(username, params)
+                return isContractError(res) ? res : { status: 204, body: null }
+            },
+
             unmuteUserFromChan: async ({ params }) => {
                 const res = await this.chansService.unmuteUserIfRightTo(username, params)
                 return isContractError(res) ? res : { status: 204, body: null }

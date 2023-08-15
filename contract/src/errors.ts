@@ -180,7 +180,7 @@ export const contractErrors = {
     } as const),
 
     NotFoundChanEntity: (chanId: string,
-        entityType: "relatedTo element" | "element" | "message" | "user" | "role",
+        entityType: "relatedTo element" | "element" | "message" | "user" | "bannedUser" | "role",
         entityId: string,
     ) => ({
         status: 404,

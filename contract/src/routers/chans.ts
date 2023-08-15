@@ -71,6 +71,7 @@ export const zChanReturn = z.object({
 	ownerName: zUserName,
 	id: z.string().uuid(),
 	users: z.array(zChanUser).min(1),
+    bannedUsers: z.array(zUserName),
 	passwordProtected: z.boolean(),
 	selfPerms: z.array(zSelfPermissionList),
 })
@@ -380,10 +381,10 @@ export const chansContract = c.router(
 			path: "/:chanId/mutedUsers/:username",
 			pathParams: z.strictObject({
 				chanId: z.string().uuid(),
-				username: zUserName,
+				username: zUserName
 			}),
 			body: z.strictObject({
-				timeoutInMs: zTimeOut,
+				timeoutInMs: zTimeOut
 			}),
 			responses: {
 				204: c.type<null>(),
@@ -404,13 +405,38 @@ export const chansContract = c.router(
 			body: c.type<null>(),
 			responses: {
 				204: c.type<null>(),
-				...getErrorsForContract(
-					c,
+				...getErrorsForContract(c,
 					[403, "ChanPermissionTooLowOverUser"],
 					[404, "NotFoundChan", "NotFoundChanEntity"],
 				),
 			},
 		},
+        banUserFromChan: {
+            method: "PUT",
+            path: "/:chanId/bannedUsers/:username",
+            pathParams: z.strictObject({
+                chanId: z.string().uuid(),
+                username: zUserName
+            }),
+            body: z.strictObject({
+                timeoutInMs: zTimeOut
+            }),
+            responses: {
+                204: c.type<null>()
+            }
+        },
+        unbanUserFromChan: {
+            method: "DELETE",
+            path: "/:chanId/bannedUsers/:username",
+            pathParams: z.strictObject({
+                chanId: z.string().uuid(),
+                username: zUserName
+            }),
+            body: c.type<null>(),
+            responses: {
+                204: c.type<null>()
+            }
+        }
 	},
 	{
 		pathPrefix: "/chans",
@@ -449,7 +475,7 @@ export type ChanEvent =
 			}
 	  }
 	| {
-			type: "DELETED_CHAN_USER"
+			type: "DELETED_CHAN_USER" | "BANNED_CHAN_USER" | "UNBANNED_CHAN_USER"
 			data: {
 				chanId: string
 				username: z.infer<typeof zUserName>
@@ -471,6 +497,6 @@ export type ChanEvent =
 			data: { chanId: string; message: z.infer<typeof zChanDiscussionMessageReturn> }
 	  }
 	| {
-			type: "DELETED_CHAN" | "KICKED_FROM_CHAN"
+			type: "DELETED_CHAN" | "KICKED_FROM_CHAN" | "BANNED_FROM_CHAN"
 			data: { chanId: string }
 	  }

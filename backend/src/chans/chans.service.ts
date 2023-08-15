@@ -62,7 +62,11 @@ export class ChansService {
         ]
     } satisfies Prisma.Chan$timedStatusUsersArgs['where'])
 
-    private async endTimedStatusUserInChan(username: string, chanId: string, type: TimedStatusType) {
+    private async endTimedStatusUserInChan<Select extends Prisma.ChanSelect>(
+        username: string, chanId: string,
+        type: TimedStatusType, select: Prisma.Subset<Select, Prisma.ChanSelect>
+    ) {
+        this.callbackService.deleteCallback(username, `UN${type}`)
         const res = await this.prisma.chan.update({ where: { id: chanId },
             data: {
                 timedStatusUsers: {
@@ -75,25 +79,8 @@ export class ChansService {
                     }
                 }
             },
-            select: {
-                ...this.getPermSelect(),
-                id: true,
-                users: { select: { name: true } }
-            }})
-        this.notifyUpdatedSelfPerm(username, res)
-        res.users.forEach(({ name }) => {
-            this.sse.pushEvent(name, {
-                type: 'UPDATED_CHAN_USER',
-                data: {
-                    chanId,
-                    user: {
-                        name: username,
-                        myPermissionOver: this.getPermOverUserInChan(name, username, res)
-                    }
-                }
-            })
-        })
-        this.callbackService.deleteCallback(username, `UN${type}`)
+            select })
+        return res
     }
 
     constructor(
@@ -125,11 +112,11 @@ export class ChansService {
                         if (!untilDate)
                             return
                         const timeoutId = setTimeout(
-                            this.endTimedStatusUserInChan.bind(this),
+                            (type === 'MUTE'
+                                ? this.unmuteUser.bind(this)
+                                : this.unbanUser.bind(this)),
                             untilDate.getTime() - currentDateMs,
-                            timedUserName,
-                            chanId,
-                            type)
+                            timedUserName, chanId)
                         this.callbackService.setCallback(timedUserName,
                             `UN${type}`,
                             timeoutId)
@@ -163,7 +150,7 @@ export class ChansService {
         timedStatusUsers: {
             where: {
                 ...(usernames.length ? { timedUserName: { in: usernames } }: {}),
-                ...this.getTimedChanUsersByStatus('MUTE')
+                ...this.getTimedChanUsersByStatus()
             },
             select: this.timedStatusUserChanSelect
         },
@@ -318,6 +305,9 @@ export class ChansService {
             roles: roles.map(role => role.name),
             passwordProtected: !!password,
             selfPerms: this.getSelfPerm(username, chan),
+            bannedUsers: timedStatusUsers
+                .filter(({ type }) => type === 'BAN')
+                .map(({ timedUserName }) => timedUserName),
             users: users.map(user =>
                 this.formatChanUserForUser(username, user, chan),
             )
@@ -552,7 +542,7 @@ export class ChansService {
         this.chanInvitationsService.updateAndNotifyManyInvsStatus(
             ChanInvitationStatus.DELETED_CHAN,
             { chanId })
-        this.sse.pushEventMultipleUser(chan.users.map(el => el.name),
+        this.sse.pushEventMultipleUser(this.usersToNames(chan.users),
             {
                 type: 'DELETED_CHAN',
                 data: { chanId }
@@ -798,6 +788,89 @@ export class ChansService {
         return this.formatChanDiscussionMessageForUser(username, deletedElement)
 	}
 
+    async banUserFromChanIfRighTo(username: string,
+        { username: otherUserName, chanId }: RequestShapes['banUserFromChan']['params'],
+        timeoutInMs: number | 'infinity'
+    ) {
+        const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
+            {
+                id: true,
+                ...this.getPermSelect(username, otherUserName)
+            })
+        if (!chan)
+            return contractErrors.NotFoundChan(chanId)
+        if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, 'BAN'))
+            return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'BAN')
+
+        const untilDate = (timeoutInMs !== 'infinity') ? new Date((new Date()).getTime() + timeoutInMs) : null
+        this.callbackService.deleteCallback(otherUserName, "UNBAN")
+
+        if (chan.timedStatusUsers
+                .some(({ timedUserName, type }) =>
+                    (timedUserName === otherUserName && type === 'BAN'))
+        ) {
+            await this.prisma.timedStatusUserChan.updateMany({
+                where: {
+                    ...this.getTimedChanUsersByStatus('BAN'),
+                    timedUserName: otherUserName
+                },
+                data: { untilDate }
+            })
+        } else {
+            await this.prisma.timedStatusUserChan.create({
+                data: {
+                    type: 'BAN',
+                    chanId,
+                    timedUserName: otherUserName,
+                    untilDate
+                },
+                select: this.timedStatusUserChanSelect
+            })
+        }
+        const updatedChan = await this.prisma.chan.update({ where: { id: chanId },
+            data: { users: { disconnect: { name: otherUserName } } },
+            select: { users: { select: { name: true } } }
+        })
+        this.sse.pushEvent(otherUserName, { type: 'BANNED_FROM_CHAN', data: { chanId } })
+        this.sse.pushEventMultipleUser(this.usersToNames(updatedChan.users), {
+            type: 'BANNED_CHAN_USER', data: { chanId, username: otherUserName }
+        })
+        if (timeoutInMs === 'infinity')
+            return
+        const timeoutId = setTimeout(
+            this.unbanUser.bind(this),
+            timeoutInMs,
+            otherUserName,
+            chanId
+        )
+        this.callbackService.setCallback(otherUserName, "UNBAN", timeoutId)
+    }
+
+    async unbanUserIfRightTo(username: string, { chanId, username: otherUserName }: RequestShapes['unbanUserFromChan']['params']) {
+        const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
+            this.getPermSelect(username, otherUserName))
+        if (!chan)
+            return contractErrors.NotFoundChan(chanId)
+        if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, 'BAN'))
+            return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'BAN')
+        if (!chan.timedStatusUsers
+                .some(({ timedUserName, type }) =>
+                    (timedUserName === otherUserName && type === 'BAN'))
+        ) {
+            return contractErrors.NotFoundChanEntity(chanId, 'bannedUser', otherUserName)
+        }
+        await this.unbanUser(otherUserName, chanId)
+    }
+
+    async unbanUser(username: string, chanId: string) {
+        const res = await this.endTimedStatusUserInChan(username, chanId,
+            'BAN', { users: { select: { name: true } } })
+        this.sse.pushEventMultipleUser(this.usersToNames(res.users, username), {
+            type: 'UNBANNED_CHAN_USER',
+            data: { chanId, username }
+        })
+    }
+
     async muteUserFromChanIfRightTo(username: string,
         { username: otherUserName, chanId }: RequestShapes['muteUserFromChan']['params'],
         timeoutInMs: number | 'infinity' 
@@ -829,8 +902,7 @@ export class ChansService {
                 },
                 data: { untilDate }
             })
-        }
-        else {
+        } else {
             const timedStatusUsers = [await this.prisma.timedStatusUserChan.create({
                 data: {
                     type: 'MUTE',
@@ -842,30 +914,43 @@ export class ChansService {
             })]
             this.notifyUpdatedSelfPerm(otherUserName, { ...chan, timedStatusUsers })
         }
-
         new ChanElementFactory(chanId, username, this)
             .createMutedUserEvent(otherUserName, timeoutInMs)
             .then(event => event.notifyByUsers(chan.users))
-
-        chan.users.forEach(({ name }) => {
+        chan.users.filter(({ name }) => name !== otherUserName).forEach(({ name }) => {
             const myPermissionOver = this.getPermOverUserInChan(name, otherUserName, chan)
-            if (!myPermissionOver.includes('UNMUTE') && name !== otherUserName)
-                myPermissionOver.push('UNMUTE')
             this.sse.pushEvent(name, {
                 type: 'UPDATED_CHAN_USER',
                 data: { chanId, user: { name: otherUserName, myPermissionOver } }
             })
         })
-
         if (timeoutInMs === 'infinity')
             return
         const timeoutId = setTimeout(
-            this.endTimedStatusUserInChan.bind(this),
+            this.unmuteUser.bind(this),
             timeoutInMs,
             otherUserName,
             chanId
         )
         this.callbackService.setCallback(otherUserName, "UNMUTE", timeoutId)
+    }
+
+    async unmuteUser(username: string, chanId: string) {
+        const res = await this.endTimedStatusUserInChan(username, chanId,
+            'MUTE', { ...this.getPermSelect(), id: true, users: { select: { name: true } } })
+        this.notifyUpdatedSelfPerm(username, res)
+        this.usersToNames(res.users, username).forEach(name => {
+            this.sse.pushEvent(name, {
+                type: 'UPDATED_CHAN_USER',
+                data: {
+                    chanId,
+                    user: {
+                        name: username,
+                        myPermissionOver: this.getPermOverUserInChan(name, username, res)
+                    }
+                }
+            })
+        })
     }
 
     async unmuteUserIfRightTo(username: string, { chanId, username: otherUserName }: RequestShapes['unmuteUserFromChan']['params']) {
@@ -883,7 +968,7 @@ export class ChansService {
             return contractErrors.NotFoundChanEntity(chanId, 'user', otherUserName)
         if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, 'UNMUTE'))
             return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'MUTE')
-        await this.endTimedStatusUserInChan(otherUserName, chanId, 'MUTE')
+        await this.unmuteUser(otherUserName, chanId)
     }
 
     usersToNames = (users: { name: string }[], exclude?: string) => 
@@ -919,11 +1004,7 @@ export class ChansService {
                     username: otherUserName
                 }
             })
-        this.sse.pushEvent(otherUserName,
-            {
-                type: 'DELETED_CHAN',
-                data: { chanId }
-            })
+        this.sse.pushEvent(otherUserName, { type: 'KICKED_FROM_CHAN', data: { chanId } })
         new ChanElementFactory(chanId, username, this)
             .createClassicEvent('AUTHOR_KICKED_CONCERNED', otherUserName)
             .then(event => event.notifyByNames(chanUserNames))

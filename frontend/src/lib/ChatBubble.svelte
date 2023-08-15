@@ -109,7 +109,7 @@
 			makeToast(`Failed to unmute ${message.author}: ${ret.body.message}`)
 			console.warn(ret.body.code)
 		} else
-			throw new Error(`Unexpected return from server when trying to mute ${message.author}`)
+			throw new Error(`Unexpected return from server when trying to unmute ${message.author}`)
 	}
 
 	async function ban() {

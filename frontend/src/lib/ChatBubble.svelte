@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Avatar, popup, type PopupSettings } from "@skeletonlabs/skeleton"
+	import { Avatar } from "@skeletonlabs/skeleton"
 	import { blur, slide } from "svelte/transition"
 	import type { Chan, DirectConversation, Message } from "$types"
 	import { my_name } from "$stores"
@@ -8,11 +8,9 @@
 	import { createEventDispatcher } from "svelte"
 	import { makeToast } from "$lib/global"
 	import { isContractError } from "contract"
-	import { bs_hash } from "$lib/global"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 
 	import { client } from "$clients"
-	import Toggle from "./Toggle.svelte"
 
 	// console.log("init ChatBubble")
 
@@ -29,7 +27,7 @@
 	let roles: string[] | undefined
 
 	let isAdmin: boolean | undefined
-	let popuptitems = [
+	let menu_admin = [
 		{ label: "Grant Admin status", handler: toggleAdmin },
 		{ label: "Kick", handler: kickHandler },
 		{ label: "Mute", handler: mute },
@@ -44,24 +42,18 @@
 			})
 			if (user) {
 				isAdmin = user.roles.includes("ADMIN")
-				popuptitems[0].label = isAdmin ? "Remove Admin status" : "Grant Admin status"
-				// popuptitems[1] = user.myPermissionOver.includes("UNMUTE")
+				menu_admin[0].label = isAdmin ? "Remove Admin status" : "Grant Admin status"
+				// menu_admin[1] = user.myPermissionOver.includes("UNMUTE")
 				// 	? { label: "UnMute", handler: unmute }
 				// 	: { label: "Mute", handler: mute }
-				// popuptitems[2] = user.myPermissionOver.includes("UNBAN")
+				// menu_admin[2] = user.myPermissionOver.includes("UNBAN")
 				// 	? { label: "UnBan", handler: ban }
 				// 	: { label: "Ban", handler: unban }
-				popuptitems = popuptitems
+				menu_admin = menu_admin
 				roles = user.roles
 				perms = user.myPermissionOver
 			}
 		}
-	}
-
-	const popupClick: PopupSettings = {
-		event: "click",
-		target: "popupClick",
-		placement: "top",
 	}
 
 	async function kickHandler() {
@@ -109,6 +101,7 @@
 				chanId: discussion.id,
 				username: message.author,
 			},
+			body: null,
 		})
 		if (ret.status == 202) {
 			makeToast("Unmuted " + message.author)
@@ -201,13 +194,13 @@
 
 	// MENU SECTION
 	const dispatch = createEventDispatcher()
-	let is_menu_open = false
+	let is_message_menu_open = false
 	let contenteditable = false
 	let openMenu = () => {
-		is_menu_open = true
+		is_message_menu_open = true
 	}
 	let closeMenu = () => {
-		is_menu_open = false
+		is_message_menu_open = false
 	}
 	let editHandler = () => {
 		closeMenu()
@@ -238,6 +231,8 @@
 		is_sent = false
 		dispatch("delete", { id: message.id })
 	}
+
+	let is_admin_menu_open = false
 </script>
 
 <div
@@ -247,28 +242,28 @@
 >
 	<div class="message-spacer" />
 	{#if !from_me}
-		<div use:popup={popupClick}>
-			<Avatar
-				src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture"
-				fallback="https://i.pravatar.cc/?u={message.author}"
-				class="h-8 w-8"
-				rounded="rounded-full"
-			/>
-		</div>
-		{#if isChan(discussion)}
-			<div data-popup="popupClick">
-				<ol class="list variant-filled-tertiary rounded px-2 py-2">
-					{#each popuptitems as popuptitem}
-						<li class="">
-							<button
-								class="btn btn-sm variant-filled-secondary flex-auto"
-								on:click={popuptitem.handler}>{popuptitem.label}</button
-							>
-						</li>
-					{/each}
-					<div class="arrow variant-filled-primary" />
-				</ol>
-			</div>
+		<Avatar
+			src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture"
+			fallback="https://i.pravatar.cc/?u={message.author}"
+			class="h-8 w-8"
+			rounded="rounded-full"
+			on:click={() => (is_admin_menu_open = true)}
+		/>
+		{#if isChan(discussion) && is_admin_menu_open}
+			<ol
+				use:listenOutsideClick
+				on:outsideclick={() => (is_admin_menu_open = false)}
+				class="list variant-filled-tertiary rounded px-2 py-2"
+			>
+				{#each menu_admin as item}
+					<li class="">
+						<button
+							class="btn btn-sm variant-filled-secondary flex-auto"
+							on:click={item.handler}>{item.label}</button
+						>
+					</li>
+				{/each}
+			</ol>
 		{/if}
 	{/if}
 	<div
@@ -317,7 +312,7 @@
 		</div>
 	</div>
 	{#if is_sent}
-		{#if is_menu_open}
+		{#if is_message_menu_open}
 			<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
 				<menu class="list text-token mx-1 px-1">
 					{#each menu_items as menu_item}

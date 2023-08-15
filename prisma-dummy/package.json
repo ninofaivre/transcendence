@@ -5,11 +5,11 @@
     },
     "devDependencies": {
         "@gabrola/zod-prisma": "^0.11.0",
-        "prisma": "^5.0.0",
-        "tsup": "^7.1.0",
-        "zod": "^3.21.4"
+        "prisma": "^5.1.1",
+        "tsup": "^7.2.0",
+        "zod": "^3.22.0"
     },
     "dependencies": {
-        "@prisma/client": "^5.0.0"
+        "@prisma/client": "^5.1.1"
     }
 }

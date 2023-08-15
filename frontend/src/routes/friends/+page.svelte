@@ -63,7 +63,7 @@
 					message,
 				})
 				console.error(message)
-			} else invalidate(":friends")
+			} else invalidate(":friends:invitations")
 		}
 	}
 
@@ -82,7 +82,7 @@
 					message,
 				})
 				console.error(message)
-			} else invalidate(":friends")
+			} else invalidate(":friends:invitations")
 		}
 	}
 

@@ -1,0 +1,8 @@
+pnpm install
+for package in $(/bin/cat pnpm-workspace.yaml | sed -n " s:-:: ; 1,2d ; p;" | /bin/tr -d "\'\"\n" )
+do
+    printf "\n$(tput bold)Upating $package...\n$(tput sgr0)" &&
+    cd $package &&
+    pnpm update --latest
+    cd ..
+done

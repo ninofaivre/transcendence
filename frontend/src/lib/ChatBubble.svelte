@@ -85,8 +85,8 @@
 			)
 	}
 
-	function mute() {
-		new Promise<boolean>((resolve) => {
+	async function mute() {
+		const r = await new Promise<string>((resolve) => {
 			const modal: ModalSettings = {
 				type: "prompt",
 				title: "Enter duration",
@@ -95,36 +95,31 @@
 				response: (r) => resolve(r),
 				valueAttr: {
 					type: "range",
-					max: (2074000000).toString(),
-					min: (1800).toString(),
-					step: (1800).toString(),
+					max: "2074000000",
+					min: "1800",
+					step: "1800",
 				},
 			}
 			modalStore.trigger(modal)
 		})
-			.then((r) => {
-				return client.chans.muteUserFromChan({
-					params: {
-						chanId: discussion.id,
-						username: message.author,
-					},
-					body: {
-						// timeoutInMs: Number(r),
-						timeoutInMs: 10000,
-					},
-				})
-			})
-			.then((ret) => {
-				if (ret.status == 204) {
-					makeToast("Muted " + message.author)
-				} else if (isContractError(ret)) {
-					makeToast(`Failed to mute ${message.author}: ${ret.body.message}`)
-					console.warn(ret.body.code)
-				} else
-					throw new Error(
-						`Unexpected return from server when trying to mute ${message.author}: Server returned ${ret.status}`,
-					)
-			})
+		const ret = await client.chans.muteUserFromChan({
+			params: {
+				chanId: discussion.id,
+				username: message.author,
+			},
+			body: {
+				timeoutInMs: Number(r),
+			},
+		})
+		if (ret.status == 204) {
+			makeToast("Muted " + message.author)
+		} else if (isContractError(ret)) {
+			makeToast(`Failed to mute ${message.author}: ${ret.body.message}`)
+			console.warn(ret.body.code)
+		} else
+			throw new Error(
+				`Unexpected return from server when trying to mute ${message.author}: Server returned ${ret.status}`,
+			)
 	}
 
 	function modalPrompt(): void {

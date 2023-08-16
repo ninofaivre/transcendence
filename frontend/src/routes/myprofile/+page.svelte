@@ -14,9 +14,7 @@
 	const defaultSrc =
 		"https://t4.ftcdn.net/jpg/03/03/62/45/240_F_303624505_u0bFT1Rnoj8CMUSs8wMCwoKlnWlh5Jiq.jpg"
 
-	function onFileSelected({
-		currentTarget: { files },
-	}: Event & { currentTarget: EventTarget & HTMLInputElement }) {
+	function onFileSelected() {
 		if (files && files[0]) {
 			const imageFile = files[0]
 			const reader = new FileReader()
@@ -74,7 +72,7 @@
 			bind:files
 			name="pp"
 			accept=".jpg, .jpeg, .png"
-			on:change={(e) => onFileSelected(e)}
+			on:change={onFileSelected}
 		>
 			<div slot="lead" class="text-3xl">📁</div>
 			<svelte:fragment slot="message">Upload your profile picture</svelte:fragment>

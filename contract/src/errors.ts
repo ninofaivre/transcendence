@@ -25,6 +25,7 @@ type Codes =
 	| "ChanWrongPassword"
 	| "NotFoundChanEntity"
 	| "NotOwnedChanMessage"
+    | "UserBannedFromChan"
 
 // as const is only useful for precise type of message
 export const contractErrors = {
@@ -241,6 +242,14 @@ export const contractErrors = {
         body: {
             code: "NotOwnedChanMessage",
             message: `user ${username} can't ${action} message ${messageId} in chan ${chanId} because he is not the owner of it`
+        }
+    } as const),
+
+    UserBannedFromChan: (username: string, chanId: string, timeout: Date | null) => ({
+        status: 403,
+        body: {
+            code: "UserBannedFromChan",
+            message: `user ${username} is banned from chan ${chanId} ${timeout ? `until ${timeout}` : 'for ever'}`
         }
     } as const),
 

@@ -832,6 +832,12 @@ export class ChansService {
             select: { users: { select: { name: true } } }
         })
         this.sse.pushEvent(otherUserName, { type: 'BANNED_FROM_CHAN', data: { chanId } })
+        this.chanInvitationsService.updateAndNotifyManyInvsStatus('BANNED_FROM_CHAN',
+            {
+                chanId,
+                OR: [{invitingUserName: otherUserName },
+                    {invitedUserName: otherUserName}]
+            })
         this.sse.pushEventMultipleUser(this.usersToNames(updatedChan.users), {
             type: 'BANNED_CHAN_USER', data: { chanId, username: otherUserName }
         })
@@ -1083,14 +1089,20 @@ export class ChansService {
 			{
 				password: true,
 				users: { where: { name: username }, select: { name: true } },
-                // TODO check for ban here
+                timedStatusUsers: {
+                    where: { ...this.getTimedChanUsersByStatus('BAN'), timedUserName: username },
+                    select: { timedUserName: true, untilDate: true }
+                }
 			}
 		)
         if (!res)
             return contractErrors.NotFoundChan(chanId)
-        const { password: chanPassword, users } = res
-		if (users.length)
+        const { password: chanPassword, users, timedStatusUsers } = res
+		if (users.some(({ name }) => name === username))
             return contractErrors.ChanUserAlreadyExist(username, chanId)
+        const timedStatusUser = timedStatusUsers.find(({ timedUserName }) => timedUserName === username)
+        if (timedStatusUser)
+            return contractErrors.UserBannedFromChan(username, chanId, timedStatusUser.untilDate)
 		if (password && !chanPassword)
             return contractErrors.ChanDoesntNeedPassword(chanId)
 		if (!password && chanPassword)

@@ -116,7 +116,7 @@ export class ChanInvitationsService {
 		if (!directMessageId) throw new ForbiddenException("no dm with user")
         const chan = await this.chansService.getChan({ id: chanId },
             {
-                ...this.chansService.getSelfPermSelect(invitingUserName),
+                ...this.chansService.getSelfPermSelect(invitingUserName, invitedUserName),
 				users: { where: { name: invitedUserName }, select: { name: true } },
             })
         if (!chan)
@@ -124,9 +124,11 @@ export class ChanInvitationsService {
         if (!this.chansService.doesUserHasSelfPermInChan(invitingUserName,'INVITE', chan))
             return contractErrors.ChanPermissionTooLow(invitingUserName, chanId, 'INVITE')
         const { users } = chan
-		if (users.length)
+		if (users.some(({ name }) => name === invitedUserName))
 			throw new ForbiddenException(`${invitedUserName} already in chan ${chanId}`)
-		// TODO: check if user is ban when ban user in chan added to schema
+        const timedStatusUser = chan.timedStatusUsers.find(({ timedUserName }) => timedUserName === invitedUserName)
+        if (timedStatusUser)
+            return contractErrors.UserBannedFromChan(invitedUserName, chanId, timedStatusUser.untilDate)
 		const { chanInv, dmEvent } = await this.prisma.$transaction(async (tx) => {
 			const chanInv = this.formatChanInvitation(
 				await tx.chanInvitation.create({
@@ -185,50 +187,6 @@ export class ChanInvitationsService {
 			),
 		)
     }
-
-	// public async updateAndNotifyManyInvs(
-	// 	newStatus: (typeof ChanInvitationStatus)[keyof typeof ChanInvitationStatus],
-	// 	invs: { id: string; invitedUserName: string; invitingUserName: string }[],
-	// ) {
-	// 	await this.prisma.chanInvitation.updateMany({
-	// 		where: { id: { in: invs.map((el) => el.id) } },
-	// 		data: {
-	// 			status: newStatus,
-	// 		},
-	// 	})
-	// 	return Promise.all(
-	// 		invs.map(async (el) => {
-	// 			return this.sse.pushEventMultipleUser([el.invitingUserName, el.invitedUserName], {
-	// 				type: "UPDATED_CHAN_INVITATION_STATUS",
-	// 				data: { chanInvitationId: el.id, status: newStatus },
-	// 			})
-	// 		}),
-	// 	)
-	// }
-
-	// async acceptAllChanInvitationsForUser(
-	// 	username: string,
-	// 	chanId: string,
-	// 	exceptionInvitationId?: string,
-	// ) {
-	// 	const res = await this.usersService.getUser(username, {
- //            incomingChanInvitation: {
- //                where: {
- //                    status: ChanInvitationStatus.PENDING,
- //                    chanId: chanId,
- //                    ...(!!exceptionInvitationId ? { id: { not: exceptionInvitationId } } : {}),
- //                },
- //                select: {
- //                    id: true,
- //                    invitedUserName: true,
- //                    invitingUserName: true,
- //                },
- //            },
- //        })
- //        if (!res)
- //            return contractErrors.NotFoundUserForValidToken(username)
-	// 	return this.updateAndNotifyManyInvs(ChanInvitationStatus.ACCEPTED, res.incomingChanInvitation)
-	// }
 
 	async updateChanInvitation(
 		username: string,

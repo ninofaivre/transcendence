@@ -472,7 +472,6 @@ export class UserService {
             return contractErrors.NotFoundUserForValidToken(otherUserName)
         const { profilePicture: profilePictureFileName } = user
 
-        let error = false
         try {
             const file = createReadStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName));
             return new StreamableFile(file);

@@ -127,11 +127,6 @@ const chanInvitationsContract = c.router(
 			}),
 			body: z.strictObject({
 				status: zChanInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"]),
-				// status: z.enum([
-				// 	zChanInvitationStatus.enum.ACCEPTED,
-				// 	zChanInvitationStatus.enum.REFUSED,
-				// 	zChanInvitationStatus.enum.CANCELED,
-				// ]),
 			}),
 			responses: {
 				200: zChanInvitationReturn,

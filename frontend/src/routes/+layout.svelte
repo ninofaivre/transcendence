@@ -14,6 +14,7 @@
 	import { logged_in, my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
+	import { Modal } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
@@ -44,6 +45,7 @@
 </script>
 
 <!-- App Shell -->
+<Modal />
 <AppShell regionPage="w-full">
 	<svelte:fragment slot="header">
 		<!-- App Bar -->

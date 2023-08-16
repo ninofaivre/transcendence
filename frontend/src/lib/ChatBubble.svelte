@@ -10,6 +10,8 @@
 	import { isContractError } from "contract"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { filter, Noir } from "@skeletonlabs/skeleton"
+	import { Modal, modalStore } from "@skeletonlabs/skeleton"
+	import type { ModalSettings, ModalComponent } from "@skeletonlabs/skeleton"
 
 	import { client } from "$clients"
 
@@ -30,7 +32,9 @@
 	let isAdmin: boolean | undefined
 	let isMuted: boolean | undefined
 	let filterType: "#Noir" | "" = ""
-	let menu_admin = [{ label: "Kick", handler: kickHandler }]
+	let menu_admin: { label: string; handler: () => void | Promise<void> }[] = [
+		{ label: "Kick", handler: kickHandler },
+	]
 
 	$: {
 		if (discussion && isChan(discussion)) {
@@ -81,26 +85,58 @@
 			)
 	}
 
-	async function mute() {
-		console.log(message.author)
-		const ret = await client.chans.muteUserFromChan({
-			params: {
-				chanId: discussion.id,
-				username: message.author,
-			},
-			body: {
-				timeoutInMs: "infinity",
-			},
+	function mute() {
+		new Promise<boolean>((resolve) => {
+			const modal: ModalSettings = {
+				type: "prompt",
+				title: "Enter duration",
+				body: `How long do you want to mute ${message.author} for ?`,
+				value: "1800",
+				response: (r) => resolve(r),
+				valueAttr: {
+					type: "range",
+					max: (2074000000).toString(),
+					min: (1800).toString(),
+					step: (1800).toString(),
+				},
+			}
+			modalStore.trigger(modal)
 		})
-		if (ret.status == 204) {
-			makeToast("Muted " + message.author)
-		} else if (isContractError(ret)) {
-			makeToast(`Failed to mute ${message.author}: ${ret.body.message}`)
-			console.warn(ret.body.code)
-		} else
-			throw new Error(
-				`Unexpected return from server when trying to mute ${message.author}: Server returned ${ret.status}`,
-			)
+			.then((r) => {
+				return client.chans.muteUserFromChan({
+					params: {
+						chanId: discussion.id,
+						username: message.author,
+					},
+					body: {
+						// timeoutInMs: Number(r),
+						timeoutInMs: 10000,
+					},
+				})
+			})
+			.then((ret) => {
+				if (ret.status == 204) {
+					makeToast("Muted " + message.author)
+				} else if (isContractError(ret)) {
+					makeToast(`Failed to mute ${message.author}: ${ret.body.message}`)
+					console.warn(ret.body.code)
+				} else
+					throw new Error(
+						`Unexpected return from server when trying to mute ${message.author}: Server returned ${ret.status}`,
+					)
+			})
+	}
+
+	function modalPrompt(): void {
+		const modal: ModalSettings = {
+			type: "prompt",
+			title: "Enter duration",
+			body: `How long in ms do you want to mute ${message.author} for ?`,
+			value: 3600,
+			valueAttr: { type: "text", minlength: 3, maxlength: 10, required: true },
+			response: (r: string) => console.log("response:", r),
+		}
+		modalStore.trigger(modal)
 	}
 
 	async function unmute() {

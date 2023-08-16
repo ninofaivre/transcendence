@@ -116,7 +116,7 @@ export class ChanInvitationsService {
 		if (!directMessageId) throw new ForbiddenException("no dm with user")
         const chan = await this.chansService.getChan({ id: chanId },
             {
-                ...this.chansService.getSelfPermSelect(invitingUserName),
+                ...this.chansService.getSelfPermSelect(invitingUserName, invitedUserName),
 				users: { where: { name: invitedUserName }, select: { name: true } },
             })
         if (!chan)
@@ -124,9 +124,11 @@ export class ChanInvitationsService {
         if (!this.chansService.doesUserHasSelfPermInChan(invitingUserName,'INVITE', chan))
             return contractErrors.ChanPermissionTooLow(invitingUserName, chanId, 'INVITE')
         const { users } = chan
-		if (users.length)
+		if (users.some(({ name }) => name === invitedUserName))
 			throw new ForbiddenException(`${invitedUserName} already in chan ${chanId}`)
-		// TODO: check if user is ban when ban user in chan added to schema
+        const timedStatusUser = chan.timedStatusUsers.find(({ timedUserName }) => timedUserName === invitedUserName)
+        if (timedStatusUser)
+            return contractErrors.UserBannedFromChan(invitedUserName, chanId, timedStatusUser.untilDate)
 		const { chanInv, dmEvent } = await this.prisma.$transaction(async (tx) => {
 			const chanInv = this.formatChanInvitation(
 				await tx.chanInvitation.create({

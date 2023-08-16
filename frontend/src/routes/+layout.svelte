@@ -10,12 +10,13 @@
 	import { storePopup } from "@skeletonlabs/skeleton"
 
 	import { AppShell, AppBar, LightSwitch, Toast, Avatar } from "@skeletonlabs/skeleton"
-	import { bs_hash, logout } from "$lib/global"
+	import { logout } from "$lib/global"
 	import { logged_in, my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
-	import { Modal } from "@skeletonlabs/skeleton"
+	import { Modal, type ModalComponent } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
+	import MuteSlider from "$lib/MuteSlider.svelte"
 
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
 
@@ -34,6 +35,12 @@
 		// }
 	}
 
+	const modalComponentRegistry: Record<string, ModalComponent> = {
+		MuteSlider: {
+			ref: MuteSlider,
+		},
+	}
+
 	onMount(() => console.log("Layout mounted"))
 
 	const menuItems = [
@@ -45,7 +52,7 @@
 </script>
 
 <!-- App Shell -->
-<Modal />
+<Modal components={modalComponentRegistry} />
 <AppShell regionPage="w-full">
 	<svelte:fragment slot="header">
 		<!-- App Bar -->

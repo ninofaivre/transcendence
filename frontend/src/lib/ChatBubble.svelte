@@ -10,7 +10,7 @@
 	import { isContractError } from "contract"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { filter, Noir } from "@skeletonlabs/skeleton"
-	import { Modal, modalStore } from "@skeletonlabs/skeleton"
+	import { modalStore } from "@skeletonlabs/skeleton"
 	import type { ModalSettings, ModalComponent } from "@skeletonlabs/skeleton"
 
 	import { client } from "$clients"
@@ -88,16 +88,11 @@
 	async function mute() {
 		const r = await new Promise<string | false | undefined>((resolve) => {
 			const modal: ModalSettings = {
-				type: "prompt",
-				title: "Enter duration",
-				body: `How long do you want to mute ${message.author} for ?`,
-				value: "1800",
-				response: (r) => resolve(r),
-				valueAttr: {
-					type: "range",
-					max: "2074000000",
-					min: "1800",
-					step: "1800",
+				type: "component",
+				component: "MuteSlider",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
 				},
 			}
 			modalStore.trigger(modal)
@@ -123,18 +118,6 @@
 					`Unexpected return from server when trying to mute ${message.author}: Server returned ${ret.status}`,
 				)
 		}
-	}
-
-	function modalPrompt(): void {
-		const modal: ModalSettings = {
-			type: "prompt",
-			title: "Enter duration",
-			body: `How long in ms do you want to mute ${message.author} for ?`,
-			value: 3600,
-			valueAttr: { type: "text", minlength: 3, maxlength: 10, required: true },
-			response: (r: string) => console.log("response:", r),
-		}
-		modalStore.trigger(modal)
 	}
 
 	async function unmute() {

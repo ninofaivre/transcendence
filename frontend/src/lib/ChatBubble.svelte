@@ -14,6 +14,7 @@
 	import type { ModalSettings, ModalComponent } from "@skeletonlabs/skeleton"
 
 	import { client } from "$clients"
+	import { goto } from "$app/navigation"
 
 	// console.log("init ChatBubble")
 
@@ -25,15 +26,16 @@
 	// }
 
 	// POPUP SECTION
-
 	let perms: string[] | undefined
 	let roles: string[] | undefined
 
+	let is_admin_menu_open = false
+	let toggleAdminMenu = () => (is_admin_menu_open = !is_admin_menu_open)
 	let isAdmin: boolean | undefined
 	let isMuted: boolean | undefined
 	let filterType: "#Noir" | "" = ""
-	let menu_admin: { label: string; handler: () => void | Promise<void> }[] = [
-		{ label: "Kick", handler: kickHandler },
+	let menu_admin: { label: string; handler: () => void }[] = [
+		{ label: "Show profile", handler: () => goto(`/users/${message.author}`) },
 	]
 
 	$: {
@@ -42,23 +44,20 @@
 				return message.author === name
 			})
 			if (user) {
-				// Admin
 				isAdmin = user.roles.includes("ADMIN")
-				menu_admin[1] = isAdmin
-					? { label: "Remove Admin status", handler: toggleAdmin }
-					: { label: "Grant Admin status", handler: toggleAdmin }
-				// Muting
 				isMuted = user.myPermissionOver.includes("UNMUTE")
-				menu_admin[2] = isMuted
-					? { label: "UnMute", handler: unmute }
-					: { label: "Mute", handler: mute }
+				menu_admin = [
+					...menu_admin,
+					{ label: "Kick", handler: kickHandler },
+					isAdmin
+						? { label: "Remove Admin status", handler: toggleAdmin }
+						: { label: "Grant Admin status", handler: toggleAdmin },
+					isMuted
+						? { label: "UnMute", handler: unmute }
+						: { label: "Mute", handler: mute },
+					{ label: "Ban", handler: ban },
+				]
 				filterType = isMuted ? "#Noir" : ""
-				// Banning
-				menu_admin[3] =
-					// user.myPermissionOver.includes("UNBAN") ? { label: "UnBan", handler: unban } :
-					{ label: "Ban", handler: ban }
-				menu_admin[4] = { label: "UnBan", handler: unban }
-				menu_admin = menu_admin
 				//DEBUG
 				roles = user.roles
 				perms = user.myPermissionOver
@@ -256,9 +255,6 @@
 		is_sent = false
 		dispatch("delete", { id: message.id })
 	}
-
-	let is_admin_menu_open = false
-	// let filterType: "#Noir" | "" = ""
 </script>
 
 <Noir />
@@ -274,14 +270,17 @@
 			fallback="https://i.pravatar.cc/?u={message.author}"
 			class="h-8 w-8"
 			rounded="rounded-full"
-			on:click={() => (is_admin_menu_open = true)}
+			on:click={() => {
+				menu_admin.length > 1 ? toggleAdminMenu() : menu_admin[0].handler()
+			}}
 			action={filter}
 			actionParams={filterType}
 		/>
-		{#if isChan(discussion) && is_admin_menu_open}
+		{#if is_admin_menu_open}
 			<ol
 				use:listenOutsideClick
 				on:outsideclick={() => (is_admin_menu_open = false)}
+				transition:slide={{ axis: "x", duration: 200 }}
 				class="list variant-filled-tertiary rounded px-2 py-2"
 			>
 				{#each menu_admin as item}

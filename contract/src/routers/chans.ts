@@ -201,6 +201,7 @@ export const chansContract = c.router(
 					c,
 					[400, "ChanDoesntNeedPassword", "ChanNeedPassword"],
 					[404, "NotFoundChan", "NotFoundUserForValidToken"],
+                    [403, "UserBannedFromChan", "ChanWrongPassword"],
 					[409, "ChanUserAlreadyExist"],
 					[500, "EntityModifiedBetweenCreationAndRead"],
 				),

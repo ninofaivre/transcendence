@@ -34,7 +34,7 @@
 
 	function onClose() {
 		if ($modalStore[0].response) {
-			$modalStore[0].response(false)
+			$modalStore[0].response(undefined)
 		}
 	}
 </script>

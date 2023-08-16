@@ -186,50 +186,6 @@ export class ChanInvitationsService {
 		)
     }
 
-	// public async updateAndNotifyManyInvs(
-	// 	newStatus: (typeof ChanInvitationStatus)[keyof typeof ChanInvitationStatus],
-	// 	invs: { id: string; invitedUserName: string; invitingUserName: string }[],
-	// ) {
-	// 	await this.prisma.chanInvitation.updateMany({
-	// 		where: { id: { in: invs.map((el) => el.id) } },
-	// 		data: {
-	// 			status: newStatus,
-	// 		},
-	// 	})
-	// 	return Promise.all(
-	// 		invs.map(async (el) => {
-	// 			return this.sse.pushEventMultipleUser([el.invitingUserName, el.invitedUserName], {
-	// 				type: "UPDATED_CHAN_INVITATION_STATUS",
-	// 				data: { chanInvitationId: el.id, status: newStatus },
-	// 			})
-	// 		}),
-	// 	)
-	// }
-
-	// async acceptAllChanInvitationsForUser(
-	// 	username: string,
-	// 	chanId: string,
-	// 	exceptionInvitationId?: string,
-	// ) {
-	// 	const res = await this.usersService.getUser(username, {
- //            incomingChanInvitation: {
- //                where: {
- //                    status: ChanInvitationStatus.PENDING,
- //                    chanId: chanId,
- //                    ...(!!exceptionInvitationId ? { id: { not: exceptionInvitationId } } : {}),
- //                },
- //                select: {
- //                    id: true,
- //                    invitedUserName: true,
- //                    invitingUserName: true,
- //                },
- //            },
- //        })
- //        if (!res)
- //            return contractErrors.NotFoundUserForValidToken(username)
-	// 	return this.updateAndNotifyManyInvs(ChanInvitationStatus.ACCEPTED, res.incomingChanInvitation)
-	// }
-
 	async updateChanInvitation(
 		username: string,
 		newStatus: (typeof ChanInvitationStatus)[keyof typeof ChanInvitationStatus],

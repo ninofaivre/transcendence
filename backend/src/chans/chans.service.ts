@@ -832,6 +832,12 @@ export class ChansService {
             select: { users: { select: { name: true } } }
         })
         this.sse.pushEvent(otherUserName, { type: 'BANNED_FROM_CHAN', data: { chanId } })
+        this.chanInvitationsService.updateAndNotifyManyInvsStatus('BANNED_FROM_CHAN',
+            {
+                chanId,
+                OR: [{invitingUserName: otherUserName },
+                    {invitedUserName: otherUserName}]
+            })
         this.sse.pushEventMultipleUser(this.usersToNames(updatedChan.users), {
             type: 'BANNED_CHAN_USER', data: { chanId, username: otherUserName }
         })

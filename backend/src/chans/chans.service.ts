@@ -879,7 +879,7 @@ export class ChansService {
             {
                 id: true,
                 users: { select: { name: true } },
-                ...this.getPermSelect(username, otherUserName),
+                ...this.getPermSelect(),
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
@@ -891,6 +891,9 @@ export class ChansService {
         const untilDate = (timeoutInMs !== 'infinity') ? new Date((new Date()).getTime() + timeoutInMs) : null
         this.callbackService.deleteCallback(otherUserName, "UNMUTE")
 
+        const timedStatusUser = { timedUserName: otherUserName, type: 'MUTE', untilDate } as const
+        const timedStatusUsers = [timedStatusUser]
+        const updatedChan = { ...chan, timedStatusUsers }
         if (chan.timedStatusUsers
                 .some(({ timedUserName, type }) => 
                     (timedUserName === otherUserName && type === 'MUTE'))
@@ -898,27 +901,25 @@ export class ChansService {
             await this.prisma.timedStatusUserChan.updateMany({
                 where: {
                     ...this.getTimedChanUsersByStatus('MUTE'),
+                    chanId,
                     timedUserName: otherUserName
                 },
-                data: { untilDate }
+                data: { untilDate },
             })
         } else {
-            const timedStatusUsers = [await this.prisma.timedStatusUserChan.create({
+            await this.prisma.timedStatusUserChan.create({
                 data: {
-                    type: 'MUTE',
+                    ...timedStatusUser,
                     chanId,
-                    timedUserName: otherUserName,
-                    untilDate
-                },
-                select: this.timedStatusUserChanSelect
-            })]
-            this.notifyUpdatedSelfPerm(otherUserName, { ...chan, timedStatusUsers })
+                }
+            })
+            this.notifyUpdatedSelfPerm(otherUserName, updatedChan)
         }
         new ChanElementFactory(chanId, username, this)
             .createMutedUserEvent(otherUserName, timeoutInMs)
             .then(event => event.notifyByUsers(chan.users))
         chan.users.filter(({ name }) => name !== otherUserName).forEach(({ name }) => {
-            const myPermissionOver = this.getPermOverUserInChan(name, otherUserName, chan)
+            const myPermissionOver = this.getPermOverUserInChan(name, otherUserName, updatedChan)
             this.sse.pushEvent(name, {
                 type: 'UPDATED_CHAN_USER',
                 data: { chanId, user: { name: otherUserName, myPermissionOver } }

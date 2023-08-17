@@ -200,10 +200,9 @@ export const chansContract = c.router(
 				...getErrorsForContract(
 					c,
 					[400, "ChanDoesntNeedPassword", "ChanNeedPassword"],
-					[404, "NotFoundChan", "NotFoundUserForValidToken"],
+					[404, "NotFoundChan"],
                     [403, "UserBannedFromChan", "ChanWrongPassword"],
 					[409, "ChanUserAlreadyExist"],
-					[500, "EntityModifiedBetweenCreationAndRead"],
 				),
 			},
 		},
@@ -223,8 +222,7 @@ export const chansContract = c.router(
 				201: zChanReturn,
 				...getErrorsForContract(
 					c,
-					[409, "ChanAlreadyExist"],
-					[500, "EntityModifiedBetweenCreationAndRead"],
+					[409, "ChanAlreadyExist"]
 				),
 			},
 		},
@@ -337,8 +335,7 @@ export const chansContract = c.router(
 				...getErrorsForContract(
 					c,
 					[403, "ChanPermissionTooLow", "NotOwnedChanMessage"],
-					[404, "NotFoundChan", "NotFoundChanEntity"],
-					[500, "EntityModifiedBetweenUpdateAndRead"],
+					[404, "NotFoundChan", "NotFoundChanEntity"]
 				),
 			},
 		},
@@ -356,7 +353,6 @@ export const chansContract = c.router(
 					c,
 					[403, "ChanPermissionTooLowOverUser"],
 					[404, "NotFoundChan", "NotFoundChanEntity"],
-					[500, "EntityModifiedBetweenUpdateAndRead"],
 				),
 			},
 		},

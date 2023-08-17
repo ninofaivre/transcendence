@@ -5,6 +5,7 @@ import { zSelfPermissionList } from "./routers/chans"
 
 type Codes =
 	| "NotFoundUser"
+    | "InvalidProfilePicture"
 	| "NotFoundUserForValidToken"
 	| "NotFoundChan"
 	| "NotFoundProfilePicture"
@@ -18,8 +19,6 @@ type Codes =
 	| "OwnerCannotLeaveChan"
 	| "ChanPermissionTooLow"
 	| "ChanPermissionTooLowOverUser"
-	| "EntityModifiedBetweenCreationAndRead"
-	| "EntityModifiedBetweenUpdateAndRead"
 	| "ChanDoesntNeedPassword"
 	| "ChanNeedPassword"
 	| "ChanWrongPassword"
@@ -50,6 +49,15 @@ export const contractErrors = {
 				message: `not found profilePicture for user ${username}`,
 			},
 		}) as const,
+
+    InvalidProfilePicture: (reason: 'no file' | 'unsupported mimetype' | 'not square' | 'too small') => 
+    ({
+        status: 400,
+        body: {
+            code: "InvalidProfilePicture",
+            message: `profile picture is not valid for ${reason}`
+        }
+    } as const),
 
 	NotFoundUser: (username: string, custom?: string) =>
 		({
@@ -170,32 +178,6 @@ export const contractErrors = {
 			body: {
 				code: "ChanPermissionTooLowOverUser",
 				message: `user ${username} doesn't have permission ${perm} over user ${otherUserName} in chan ${chanId}`,
-			},
-		}) as const,
-
-	/**
-	 * @remarks error that should theoretically never happens, it exists mostly for type safety
-	 */
-	EntityModifiedBetweenCreationAndRead: (
-		entityType: "ChanMessage" | "DmMessage" | "ChanUser" | "Chan",
-	) =>
-		({
-			status: 500,
-			body: {
-				code: "EntityModifiedBetweenCreationAndRead",
-				message: `Entity ${entityType} has beed modified between it's creation (with your parameters) and the read, making the server unable to return expected data`,
-			},
-		}) as const,
-
-	/**
-	 * @remarks error that should theoretically never happens, it exists mostly for type safety
-	 */
-	EntityModifiedBetweenUpdateAndRead: (entityType: "ChanMessage" | "DmMessage") =>
-		({
-			status: 500,
-			body: {
-				code: "EntityModifiedBetweenUpdateAndRead",
-				message: `Entity ${entityType} has beed modified between it's creation (with your parameters) and the read, making the server unable to return expected data`,
 			},
 		}) as const,
 

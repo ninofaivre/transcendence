@@ -129,24 +129,20 @@ export class ChanInvitationsService {
         const timedStatusUser = chan.timedStatusUsers.find(({ timedUserName }) => timedUserName === invitedUserName)
         if (timedStatusUser)
             return contractErrors.UserBannedFromChan(invitedUserName, chanId, timedStatusUser.untilDate)
-		const { chanInv, dmEvent } = await this.prisma.$transaction(async (tx) => {
-			const chanInv = this.formatChanInvitation(
-				await tx.chanInvitation.create({
-					data: {
-						chan: { connect: { id: chanId } },
-						invitingUser: { connect: { name: invitingUserName } },
-						invitedUser: { connect: { name: invitedUserName } },
-					},
-					select: this.chanInvitationSelect,
-				}),
-			)
-			const dmEvent = await this.dmsService.createChanInvitationDmEvent(
-				directMessageId,
-				chanInv.id,
-				tx,
-			)
-			return { chanInv, dmEvent }
-		})
+        const chanInv = this.formatChanInvitation(
+            await this.prisma.chanInvitation.create({
+                data: {
+                    chan: { connect: { id: chanId } },
+                    invitingUser: { connect: { name: invitingUserName } },
+                    invitedUser: { connect: { name: invitedUserName } },
+                },
+                select: this.chanInvitationSelect,
+            }),
+        )
+        const dmEvent = await this.dmsService.createChanInvitationDmEvent(
+            directMessageId,
+            chanInv.id
+        )
 		await this.dmsService.formatAndNotifyDmElement(
 			invitingUserName,
 			invitedUserName,

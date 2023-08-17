@@ -167,6 +167,7 @@ export class UserService {
 
 		return {
 			...rest,
+            // TODO rule this shit to avoir having NO_ONE via CUSTOM.sql
             dmPolicyLevel: (dmPolicyLevel === "NO_ONE") ? "ONLY_FRIEND" : dmPolicyLevel,
 			status: await this.formatUserStatusForUser(username, name),
 			...this.formatUserProfilePreviewForUser(username, { name }),

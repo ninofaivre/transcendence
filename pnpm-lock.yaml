@@ -153,6 +153,9 @@ importers:
       '@nestjs/common':
         specifier: ^10.1.3
         version: 10.1.3(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      prisma-dummy:
+        specifier: workspace:*
+        version: link:../prisma-dummy
       tsup:
         specifier: ^7.2.0
         version: 7.2.0

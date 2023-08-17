@@ -18,7 +18,8 @@
 	},
 	"devDependencies": {
 		"@nestjs/common": "^10.1.3",
-		"tsup": "^7.2.0"
+		"tsup": "^7.2.0",
+        "prisma-dummy": "workspace:*"
 	},
 	"dependencies": {
 	}

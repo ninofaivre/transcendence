@@ -229,4 +229,17 @@ export class UpdateChanElementFactory {
         })), this.chanId, this.chansService, 'UPDATED')
     }
 
+    public deleteMessage = async (deletingUserName: string) => {
+        return new ChanElementMessage((await this.updateChanElement({
+            event: {
+                create: {
+                    deletedMessageChanDiscussionEvent: {
+                        create: { deletingUserName },
+                    },
+                },
+            },
+            message: { delete: {} }
+        })), this.chanId, this.chansService, 'UPDATED')
+    }
+
 }

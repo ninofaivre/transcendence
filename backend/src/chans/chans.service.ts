@@ -687,23 +687,6 @@ export class ChansService {
         return updatedElement.formatted(username)
     }
 
-    private async deleteChanMessage(elementId: string, deletingUserName: string) {
-        return (await this.prisma.chanDiscussionElement.update({
-			where: { id: elementId, message: { isNot: null } },
-			data: {
-				event: {
-					create: {
-						deletedMessageChanDiscussionEvent: {
-							create: { deletingUserName },
-						},
-					},
-				},
-                message: { delete: {} }
-			},
-            select: this.chanDiscussionElementsSelect
-		})) as ChanDiscussionElementMessageWithDeletedPayload
-    }
-
 	async deleteChanMessageIfRightTo(username: string, { chanId , elementId }: RequestShapes['deleteChanMessage']['params']) {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
@@ -721,17 +704,10 @@ export class ChansService {
         const { authorName } = chan.elements[0]
         if (!this.doesUserHasPermOverUserInChan(username, authorName, chan, 'DELETE_MESSAGE'))
             return contractErrors.ChanPermissionTooLowOverUser(username, authorName, chanId, 'DELETE_MESSAGE')
-		const deletedElement = await this.deleteChanMessage(elementId, username)
-        chan.users.filter(user => user.name !== username).forEach(({ name }) => {
-            this.sse.pushEvent(name, {
-                type: 'UPDATED_CHAN_MESSAGE',
-                data: {
-                    chanId,
-                    message: this.formatChanDiscussionMessageForUser(name, deletedElement)
-                }
-            })
-        })
-        return this.formatChanDiscussionMessageForUser(username, deletedElement)
+        const deletedElement = await new UpdateChanElementFactory(chanId, elementId, this)
+            .deleteMessage(username)
+        deletedElement.notifyByUsers(chan.users.filter(({ name }) => name !== username))
+        return deletedElement.formatted()
 	}
 
     async banUserFromChanIfRighTo(username: string,
@@ -962,18 +938,6 @@ export class ChansService {
             .createClassicEvent('AUTHOR_KICKED_CONCERNED', otherUserName)
             .then(event => event.notifyByNames(chanUserNames))
     }
-
-    notifyChanElement = async (users: string[],
-        unformattedElement: ChanDiscussionElementPayload,
-        chanId: string
-    ) => Promise.all(users.map(name => this.sse.pushEvent(name, {
-            type: 'CREATED_CHAN_ELEMENT',
-            data: {
-                chanId,
-                element: this.
-                    formatChanDiscussionElementForUser(name, unformattedElement)
-            }
-        })))
 
 	public async pushUserToChanAndNotifyUsers(username: string, chanId: string) {
         const newChan = await this.prisma.$transaction(async (tx) => {

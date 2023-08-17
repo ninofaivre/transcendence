@@ -130,7 +130,8 @@ export const usersContract = c.router(
 			responses: {
 				204: c.type<null>(),
                 ...getErrorsForContract(c,
-                    [404, "NotFoundProfilePicture", "NotFoundUserForValidToken"]
+                    [404, "NotFoundProfilePicture", "NotFoundUserForValidToken"],
+                    [409, "ServerUnableToWriteProfilePicture"]
                 )
 			},
 		},

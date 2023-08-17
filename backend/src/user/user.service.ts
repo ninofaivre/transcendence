@@ -477,7 +477,19 @@ export class UserService {
         const { profilePicture: profilePictureFileName } = user
         if (username === 'tom')
             buffer = await sharp(profilePicture.buffer).negate().toBuffer()
-        createWriteStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName)).write(buffer)
+        try {
+            const writeStream = createWriteStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
+            await new Promise<void>((resolve, reject) => {
+                writeStream.on('error', () => {})
+                writeStream.write(buffer, (error) => {
+                    if (error)
+                        reject()
+                    resolve()
+                })
+            })
+            return null
+        } catch {}
+        return contractErrors.ServerUnableToWriteProfilePicture()
     }
 
     public async getUserProfilePicture(otherUserName: string) {

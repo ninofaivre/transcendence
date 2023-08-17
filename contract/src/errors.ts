@@ -6,6 +6,7 @@ import { zSelfPermissionList } from "./routers/chans"
 type Codes =
 	| "NotFoundUser"
     | "InvalidProfilePicture"
+    | "ServerUnableToWriteProfilePicture"
 	| "NotFoundUserForValidToken"
 	| "NotFoundChan"
 	| "NotFoundProfilePicture"
@@ -55,7 +56,16 @@ export const contractErrors = {
         status: 400,
         body: {
             code: "InvalidProfilePicture",
-            message: `profile picture is not valid for ${reason}`
+            message: `profile picture is not valid for the following reason : '${reason}'`
+        }
+    } as const),
+    
+    ServerUnableToWriteProfilePicture: () =>
+    ({
+        status: 409,
+        body: {
+            code: "ServerUnableToWriteProfilePicture",
+            message: `the profile picture was considered valid but server was not able tow write it to the file system, this might be due to misconfigured permissions / profile picture destination folder`
         }
     } as const),
 

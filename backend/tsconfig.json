@@ -16,6 +16,9 @@
 		"strictBindCallApply": false,
 		"forceConsistentCasingInFileNames": false,
 		"noFallthroughCasesInSwitch": false,
+        //TODO: make backend transpiles with that flag
+        //"noUncheckedIndexedAccess": true,
 		"strict": true,
+        "noImplicitAny": true
 	}
 }

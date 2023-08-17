@@ -435,7 +435,7 @@ export class ChansService {
             chan.password = await hash(chan.password, 10)
         if (chan.title && await this.getChan({ title: chan.title }, { id: true }))
             return contractErrors.ChanAlreadyExist(chan.title)
-        const { id: chanId } = await this.prisma.chan.create({
+        const newChan = await this.prisma.chan.create({
             data: {
                 ...chan,
                 owner: { connect: { name: username } },
@@ -455,28 +455,29 @@ export class ChansService {
                     },
                 },
             },
-            select: { id: true },
+            select: { ...this.getChansSelect(username), id: true }
         })
-        await Promise.all([this.prisma.role.update({
-            where: { chanId_name: { chanId, name: "ADMIN" } },
+        const adminRolePayload = await this.prisma.role.update({
+            where: { chanId_name: { chanId: newChan.id, name: "ADMIN" } },
             data: {
                 users: { connect: { name: username } },
                 roles: {
                     connect: [
-                        { chanId_name: { chanId, name: "DEFAULT" } },
-                        { chanId_name: { chanId, name: "ADMIN" } },
+                        { chanId_name: { chanId: newChan.id, name: "DEFAULT" } },
+                        { chanId_name: { chanId: newChan.id, name: "ADMIN" } },
                     ]
                 },
-            },
-        }),
-        this.prisma.role.update({
-            where: { chanId_name: { chanId, name: "DEFAULT" } },
-            data: { users: { connect: { name: username } } }
-        })])
-        const res = await this.getChan({ id: chanId }, this.getChansSelect(username))
-        if (!res)
-            return contractErrors.EntityModifiedBetweenCreationAndRead("Chan")
-        return this.formatChan(username, res)
+            }, select: this.getChansSelect(username)['roles']['select']
+        })
+        const defaultRolePayload = await this.prisma.role.update({
+            where: { chanId_name: { chanId: newChan.id, name: "DEFAULT" } },
+            data: { users: { connect: { name: username } } },
+            select: this.getChansSelect(username)['roles']['select']
+        })
+        return this.formatChan(username, {
+            ...newChan,
+            roles: [adminRolePayload, defaultRolePayload]
+        })
 	}
 
     public doesUserHasSelfPermInChan = (
@@ -654,7 +655,7 @@ export class ChansService {
         newAts: { roles: { name: string }[], users: { name: string }[] },
         content: string
     ) {
-        const updatedElement = await this.prisma.chanDiscussionElement.update({
+        return (await this.prisma.chanDiscussionElement.update({
             where: { id: elementId, message: { isNot: null } },
             data: {
                 message: {
@@ -678,12 +679,7 @@ export class ChansService {
                 }
             },
             select: this.chanDiscussionElementsSelect
-        })
-        const retypedUpdatedElement = updatedElement as RetypeChanElement<typeof updatedElement>
-        const { message } = retypedUpdatedElement 
-        if (!message)
-            return contractErrors.EntityModifiedBetweenUpdateAndRead('ChanMessage')
-        return { ...retypedUpdatedElement, message } as const
+        })) as ChanDiscussionElementMessagePayload
     }
 
     async updateChanMessageIfRightTo(username: string,
@@ -720,8 +716,6 @@ export class ChansService {
         const updatedElement = await this.updateChanMessage(chanId, elementId,
             { users: oldMessage.relatedUsers, roles: oldMessage.relatedRoles },
             newAts, content)
-        if (isContractError(updatedElement))
-            return updatedElement
         chan.users.forEach(({ name }) => {
             this.sse.pushEvent(name, {
                 type: 'UPDATED_CHAN_MESSAGE',
@@ -735,7 +729,7 @@ export class ChansService {
     }
 
     private async deleteChanMessage(elementId: string, deletingUserName: string) {
-        const deletedElement = await this.prisma.chanDiscussionElement.update({
+        return (await this.prisma.chanDiscussionElement.update({
 			where: { id: elementId, message: { isNot: null } },
 			data: {
 				event: {
@@ -748,12 +742,7 @@ export class ChansService {
                 message: { delete: {} }
 			},
             select: this.chanDiscussionElementsSelect
-		})
-        const retypedDeletedElement = deletedElement as RetypeChanElement<typeof deletedElement>
-        const { event } = retypedDeletedElement
-        if (!event?.deletedMessageChanDiscussionEvent)
-            return contractErrors.EntityModifiedBetweenUpdateAndRead('ChanMessage')
-        return { ...retypedDeletedElement, event } as const
+		})) as ChanDiscussionElementMessageWithDeletedPayload
     }
 
 	async deleteChanMessageIfRightTo(username: string, { chanId , elementId }: RequestShapes['deleteChanMessage']['params']) {
@@ -774,8 +763,6 @@ export class ChansService {
         if (!this.doesUserHasPermOverUserInChan(username, authorName, chan, 'DELETE_MESSAGE'))
             return contractErrors.ChanPermissionTooLowOverUser(username, authorName, chanId, 'DELETE_MESSAGE')
 		const deletedElement = await this.deleteChanMessage(elementId, username)
-        if (isContractError(deletedElement))
-            return deletedElement
         chan.users.filter(user => user.name !== username).forEach(({ name }) => {
             this.sse.pushEvent(name, {
                 type: 'UPDATED_CHAN_MESSAGE',
@@ -1030,24 +1017,35 @@ export class ChansService {
         })))
 
 	public async pushUserToChanAndNotifyUsers(username: string, chanId: string) {
-		const newChan = await this.prisma.chan.update({
-            where: { id: chanId },
-            data: {
-                users: { connect: { name: username } },
-                roles: {
-                    update: {
-                        where: { chanId_name: { chanId, name: "DEFAULT" } },
-                        data: { users: { connect: { name: username } } },
+        const newChan = await this.prisma.$transaction(async (tx) => {
+            const newChan = await tx.chan.update({
+                where: { id: chanId },
+                data: {
+                    users: { connect: { name: username } },
+                    roles: {
+                        update: {
+                            where: { chanId_name: { chanId, name: "DEFAULT" } },
+                            data: { users: { connect: { name: username } } },
+                        },
                     },
                 },
-            },
-            select: this.getChansSelect(username),
+                select: this.getChansSelect(username),
+            })
+
+            if (newChan.timedStatusUsers.find(({ timedUserName, type }) => 
+                timedUserName === username && type === 'BAN')
+            )
+                throw new Error('ban')
+
+            return newChan
+        }).catch((error: unknown) => {
+            if (error instanceof Error && error.message === 'ban')
+                return contractErrors.UserBannedFromChan(username, chanId, null)
+            throw error
         })
-
-        const newUser = newChan.users.find(el => el.name === username)
-        if (!newUser)
-            return contractErrors.EntityModifiedBetweenCreationAndRead('ChanUser')
-
+        if (isContractError(newChan))
+            return newChan
+        const newUser = newChan.users.find(({ name }) => name === username)
         const users = newChan.users.filter(user => user.name !== username)
         users.forEach(user => this.sse.pushEvent(user.name,
             {
@@ -1057,7 +1055,7 @@ export class ChansService {
                     user: this.formatChanUserForUser(user.name, {
                         ...user,
                         name: username,
-                        statusVisibilityLevel: newUser.statusVisibilityLevel
+                        statusVisibilityLevel: newUser!.statusVisibilityLevel
                     }, newChan)
                 }
             }))
@@ -1081,7 +1079,7 @@ export class ChansService {
     }
 
 	async joinChanById(username: string, { chanId, password }: RequestShapes['joinChanById']['body']) {
-		const res = await this.getChan(
+		const chan = await this.getChan(
 			{
 				id: chanId,
 				type: ChanType.PUBLIC,
@@ -1091,16 +1089,17 @@ export class ChansService {
 				users: { where: { name: username }, select: { name: true } },
                 timedStatusUsers: {
                     where: { ...this.getTimedChanUsersByStatus('BAN'), timedUserName: username },
-                    select: { timedUserName: true, untilDate: true }
+                    select: { type: true, timedUserName: true, untilDate: true }
                 }
 			}
 		)
-        if (!res)
+        if (!chan)
             return contractErrors.NotFoundChan(chanId)
-        const { password: chanPassword, users, timedStatusUsers } = res
+        const { password: chanPassword, users, timedStatusUsers } = chan
 		if (users.some(({ name }) => name === username))
             return contractErrors.ChanUserAlreadyExist(username, chanId)
-        const timedStatusUser = timedStatusUsers.find(({ timedUserName }) => timedUserName === username)
+        const timedStatusUser = timedStatusUsers.find(({ timedUserName, type }) =>
+                timedUserName === username && type === 'BAN')
         if (timedStatusUser)
             return contractErrors.UserBannedFromChan(username, chanId, timedStatusUser.untilDate)
 		if (password && !chanPassword)
@@ -1111,6 +1110,7 @@ export class ChansService {
             return contractErrors.ChanWrongPassword(chanId)
         await this.chanInvitationsService
             .updateAndNotifyManyInvsStatus('ACCEPTED', { chanId, invitedUserName: username })
+        // TODO test this with invalid token user to see if prisma global catch is working
 		return this.pushUserToChanAndNotifyUsers(username, chanId)
 	}
 

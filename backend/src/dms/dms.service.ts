@@ -322,8 +322,7 @@ export class DmsService {
 
 	public async createChanInvitationDmEvent(
 		dmId: string,
-		chanId: string,
-		prismaInstance: Tx = this.prisma,
+		chanId: string
 	) {
 		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId)
 		const createArgs = {
@@ -333,11 +332,9 @@ export class DmsService {
 				...data,
 			},
 		} satisfies Prisma.DmDiscussionEventCreateArgs
-		const newEvent = (await prismaInstance.dmDiscussionEvent.create(createArgs))
+		const newEvent = (await this.prisma.dmDiscussionEvent.create(createArgs))
 			.discussionElement
-		if (!newEvent?.event?.chanInvitationDmDiscussionEvent)
-			throw new InternalServerErrorException("a discussion event has failed to be created")
-		return newEvent
+		return newEvent as Exclude<typeof newEvent, null>
 	}
 
 	public async findOneDmElement(

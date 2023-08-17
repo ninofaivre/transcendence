@@ -23,6 +23,7 @@ export const zUserProfilePreviewReturn = z.strictObject({
 })
 
 export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
+    // TODO CUSTOM.sql (see usersservice)
 	dmPolicyLevel: zAccessPolicyLevel.exclude(["NO_ONE"]),
 	commonChans: z.array(
 		z.strictObject({ type: zChanType, title: zChanTitle.nullable(), id: z.string().uuid() }),

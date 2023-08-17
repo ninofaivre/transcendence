@@ -6,7 +6,7 @@ import { ClassicChanEventType, Prisma } from "@prisma/client"
 import { Inject, forwardRef } from "@nestjs/common"
 import { SseEvent } from "contract"
 
-// TODO after BH, remove unnecessary Inject, refact update too
+// TODO after BH, remove unnecessary Inject
 
 type ChanMessageType = 'CREATED' | 'UPDATED'
 
@@ -16,18 +16,15 @@ abstract class ChanElement {
     protected readonly abstract chanId: string
     protected readonly abstract element: ChanDiscussionElementPayload
 
-    public notifyByUsers = async (users: { name: string }[]) =>
+    public notifyByUsers = (users: { name: string }[]) =>
         this.notifyByNames(users.map(user => user.name))
 
-    public notifyByNames = async (users: string[]) =>
-    (Promise.all(
-            users.map(name => 
-                this.chansService.sse.pushEvent(name, this.getSSEvent(name))
-            )
-        )
-    )
+    public notifyByNames(users: string[]) {
+        users.forEach(name => this.chansService.sse.pushEvent(name, this.getSseEvent(name)))
+        return this
+    }
 
-    protected getSSEvent = (name: string): SseEvent => ({
+    protected getSseEvent = (name: string): SseEvent => ({
         type: `CREATED_CHAN_ELEMENT`,
         data: {
             chanId: this.chanId,
@@ -76,7 +73,7 @@ class ChanElementMessage extends ChanElement {
         this.element
     ))
 
-    protected getSSEvent = (name: string): SseEvent => ({
+    protected getSseEvent = (name: string): SseEvent => ({
         type: `UPDATED_CHAN_MESSAGE`,
         data: {
             chanId: this.chanId,
@@ -180,6 +177,7 @@ export class ChanElementFactory {
 
 }
 
+// TODO moove at gestion here
 export class UpdateChanElementFactory {
     
     private readonly prisma: PrismaService;

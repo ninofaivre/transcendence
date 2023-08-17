@@ -617,10 +617,10 @@ export class ChansService {
             return contractErrors.NotFoundChanEntity(chanId, "relatedTo element", relatedTo)
         const ats = this.getAtsFromChanMessageContent(chan, content)
 
-        const newMessage = await (new ChanElementFactory(chanId, username, this)
+        return (await new ChanElementFactory(chanId, username, this)
             .createMessage(content, relatedTo, ats))
-        newMessage.notifyByUsers(chan.users.filter(user => user.name !== username))
-        return newMessage.formatted()
+            .notifyByUsers(chan.users.filter(user => user.name !== username))
+            .formatted()
 	}
 
 	async getChanElements(username: string, chanId: string,
@@ -679,12 +679,12 @@ export class ChansService {
         if (chan.elements[0].authorName !== username)
             return contractErrors.NotOwnedChanMessage(username, 'update', elementId, chanId)
         const newAts = this.getAtsFromChanMessageContent(chan, content)
-        const updatedElement = (await (new UpdateChanElementFactory(chanId, elementId, this)
+        return (await new UpdateChanElementFactory(chanId, elementId, this)
             .updateMessage(content,
                 { users: oldMessage.relatedUsers, roles: oldMessage.relatedRoles },
-                newAts)))
-        updatedElement.notifyByUsers(chan.users.filter(({ name }) => name !== username))
-        return updatedElement.formatted(username)
+                newAts))
+            .notifyByUsers(chan.users.filter(({ name }) => name !== username))
+            .formatted(username)
     }
 
 	async deleteChanMessageIfRightTo(username: string, { chanId , elementId }: RequestShapes['deleteChanMessage']['params']) {
@@ -704,10 +704,10 @@ export class ChansService {
         const { authorName } = chan.elements[0]
         if (!this.doesUserHasPermOverUserInChan(username, authorName, chan, 'DELETE_MESSAGE'))
             return contractErrors.ChanPermissionTooLowOverUser(username, authorName, chanId, 'DELETE_MESSAGE')
-        const deletedElement = await new UpdateChanElementFactory(chanId, elementId, this)
-            .deleteMessage(username)
-        deletedElement.notifyByUsers(chan.users.filter(({ name }) => name !== username))
-        return deletedElement.formatted()
+        return (await new UpdateChanElementFactory(chanId, elementId, this)
+            .deleteMessage(username))
+            .notifyByUsers(chan.users.filter(({ name }) => name !== username))
+            .formatted()
 	}
 
     async banUserFromChanIfRighTo(username: string,

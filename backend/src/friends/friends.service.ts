@@ -1,9 +1,5 @@
 import { Inject, Injectable, NotFoundException, forwardRef } from "@nestjs/common"
-import {
-	ClassicDmEventType,
-	DirectMessageStatus,
-	Prisma,
-} from "@prisma/client"
+import { ClassicDmEventType, DirectMessageStatus, Prisma } from "@prisma/client"
 import { zFriendShipReturn } from "contract"
 import { DmsService } from "src/dms/dms.service"
 import { SseService } from "src/sse/sse.service"
@@ -32,13 +28,13 @@ export class FriendsService {
 
 	private friendShipGetPayload = {
 		select: this.friendShipSelect,
-	} satisfies Prisma.FriendShipArgs
+	} satisfies Prisma.FriendShipDefaultArgs
 
 	public formatFriendShip(
 		friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,
 		username: string, // why the fuck can't I use z.infer here ? (can't find 'this')
-	) //: z.infer<typeof zFriendShipReturn>
-	{
+		//: z.infer<typeof zFriendShipReturn>
+	) {
 		const {
 			requestedUserName,
 			requestingUserName,
@@ -53,9 +49,11 @@ export class FriendsService {
 		const formattedFriendShip: z.infer<typeof zFriendShipReturn> = {
 			...rest,
 			friendName: friend.name,
-			friendStatus: this.usersService.getUserStatusByProximity(friend.name,
-                "FRIEND",
-                friend.visibility),
+			friendStatus: this.usersService.getUserStatusByProximity(
+				friend.name,
+				"FRIEND",
+				friend.visibility,
+			),
 		}
 		return formattedFriendShip
 	}

@@ -6,7 +6,12 @@ import { PrismaService } from "src/prisma/prisma.service"
 import { NestRequestShapes } from "@ts-rest/nest"
 import { contract, contractErrors } from "contract"
 import { z } from "zod"
-import { zUserProfileReturn, zMyProfileReturn, zUserProfilePreviewReturn, zUserStatus } from "contract"
+import {
+	zUserProfileReturn,
+	zMyProfileReturn,
+	zUserProfilePreviewReturn,
+	zUserStatus,
+} from "contract"
 import { SseService } from "src/sse/sse.service"
 import { ChansService } from "src/chans/chans.service"
 import { FriendsService } from "src/friends/friends.service"
@@ -15,7 +20,7 @@ import { EnrichedRequest } from "src/auth/auth.service"
 import { AccessPolicyLevel, ProximityLevel } from "src/types"
 import { fileTypeFromBuffer } from "../disgustingImports"
 import { join } from "path"
-import Jimp from "jimp";
+import Jimp from "jimp"
 import { EnvService } from "src/env/env.service"
 import { createReadStream } from "fs"
 
@@ -61,19 +66,19 @@ export class UserService {
 
 	private myProfileSelectGetPayload = {
 		select: this.myProfileSelect,
-	} satisfies Prisma.UserArgs
+	} satisfies Prisma.UserDefaultArgs
 
 	private userProfilePreviewSelectGetPayload = {
 		select: this.getUserProfilePreviewSelectForUser("example"),
-	} satisfies Prisma.UserArgs
+	} satisfies Prisma.UserDefaultArgs
 
 	private userProfileSelectGetPayload = {
 		select: this.getUserProfileSelectForUser("example"),
-	} satisfies Prisma.UserArgs
+	} satisfies Prisma.UserDefaultArgs
 
 	private userOwnProfileSelectGetPayload = {
 		select: this.myProfileSelect,
-	} satisfies Prisma.UserArgs
+	} satisfies Prisma.UserDefaultArgs
 
 	private formatUserProfilePreviewForUser(
 		username: string,
@@ -90,35 +95,35 @@ export class UserService {
 		return toFormat.map((el) => this.formatUserProfilePreviewForUser(username, el))
 	}
 
-    public getProximityLevelSelect(username: string) {
-        return {
-            friend: {
-                where: { requestedUserName: username },
-                take: 1,
-                select: { id: true }
-            },
-            friendOf: {
-                where: { requestingUserName: username },
-                take: 1,
-                select: { id: true }
-            },
-            chans: {
-                where: { users: { some: { name: username } } },
-                take: 1,
-                select: { id: true }
-            },
-            blockedUser: {
-                where: { blockedUserName: username },
-                take: 1,
-                select: { blockedUserName: true }
-            },
-            blockedByUser: {
-                where: { blockingUserName: username },
-                take: 1,
-                select: { blockingUserName: true }
-            }
-        } satisfies Prisma.UserSelect
-    }
+	public getProximityLevelSelect(username: string) {
+		return {
+			friend: {
+				where: { requestedUserName: username },
+				take: 1,
+				select: { id: true },
+			},
+			friendOf: {
+				where: { requestingUserName: username },
+				take: 1,
+				select: { id: true },
+			},
+			chans: {
+				where: { users: { some: { name: username } } },
+				take: 1,
+				select: { id: true },
+			},
+			blockedUser: {
+				where: { blockedUserName: username },
+				take: 1,
+				select: { blockedUserName: true },
+			},
+			blockedByUser: {
+				where: { blockingUserName: username },
+				take: 1,
+				select: { blockingUserName: true },
+			},
+		} satisfies Prisma.UserSelect
+	}
 
 	private async formatUserStatusForUser(
 		username: string,
@@ -126,11 +131,13 @@ export class UserService {
 	): Promise<z.infer<typeof zUserStatus>> {
 		const data = await this.getUserByNameOrThrow(toGetStatusUserName, {
 			statusVisibilityLevel: true,
-            ...this.getProximityLevelSelect(username)
+			...this.getProximityLevelSelect(username),
 		})
-        return this.getUserStatusByProximity(toGetStatusUserName,
-            this.getProximityLevel(data),
-            data.statusVisibilityLevel)
+		return this.getUserStatusByProximity(
+			toGetStatusUserName,
+			this.getProximityLevel(data),
+			data.statusVisibilityLevel,
+		)
 	}
 
 	async getUserProfile(username: string, toGetUserName: string) {
@@ -146,17 +153,17 @@ export class UserService {
 		friend,
 		friendOf,
 		chans,
-        blockedUser
+		blockedUser,
 	}: {
-		friend: {}[],
-		friendOf: {}[],
-		chans: {}[],
-        blockedUser: {}[]
+		friend: {}[]
+		friendOf: {}[]
+		chans: {}[]
+		blockedUser: {}[]
 	}): keyof typeof ProximityLevel {
-        let level: keyof typeof ProximityLevel = chans.length ? "COMMON_CHAN" : "ANYONE"
-        level = (friend.length || friendOf.length) ? "FRIEND" : level
-        level = blockedUser.length ? "BLOCKED" : level
-        return level
+		let level: keyof typeof ProximityLevel = chans.length ? "COMMON_CHAN" : "ANYONE"
+		level = friend.length || friendOf.length ? "FRIEND" : level
+		level = blockedUser.length ? "BLOCKED" : level
+		return level
 	}
 
 	private async formatUserProfileForUser(
@@ -167,7 +174,7 @@ export class UserService {
 
 		return {
 			...rest,
-            dmPolicyLevel: (dmPolicyLevel === "NO_ONE") ? "ONLY_FRIEND" : dmPolicyLevel,
+			dmPolicyLevel: dmPolicyLevel === "NO_ONE" ? "ONLY_FRIEND" : dmPolicyLevel,
 			status: await this.formatUserStatusForUser(username, name),
 			...this.formatUserProfilePreviewForUser(username, { name }),
 			commonChans: chans,
@@ -186,12 +193,8 @@ export class UserService {
 				{ directMessage: { some: { requestedUserName: username } } },
 				{ directMessageOf: { some: { requestingUserName: username } } },
 			],
-			blocked: [
-				{ blockedUser: { some: { blockedUserName: username } } },
-			],
-            blockedBy: [
-				{ blockedByUser: { some: { blockingUserName: username } } },
-            ]
+			blocked: [{ blockedUser: { some: { blockedUserName: username } } }],
+			blockedBy: [{ blockedByUser: { some: { blockingUserName: username } } }],
 		} satisfies Record<
 			keyof Omit<
 				Extract<RequestShapes["searchUsers"]["query"]["filter"], { type: "inc" }>,
@@ -243,10 +246,10 @@ export class UserService {
 	): z.infer<typeof zMyProfileReturn> {
 		const { name, dmPolicyLevel, ...rest } = toFormat
 		return {
-            ...rest,
-            dmPolicyLevel: (dmPolicyLevel === "NO_ONE") ? "ONLY_FRIEND" : dmPolicyLevel,
-            userName: name
-        }
+			...rest,
+			dmPolicyLevel: dmPolicyLevel === "NO_ONE" ? "ONLY_FRIEND" : dmPolicyLevel,
+			userName: name,
+		}
 	}
 
 	async getMe(username: string) {
@@ -258,8 +261,9 @@ export class UserService {
 	getArrayOfUniqueUserNamesFromStatusData(
 		data: Exclude<Awaited<ReturnType<typeof this.getNotifyStatusData>>, null>,
 	) {
-        const blockUserNames = data.blockedUser.map(el => el.blockedUserName)
-            .concat(data.blockedByUser.map(el => el.blockingUserName))
+		const blockUserNames = data.blockedUser
+			.map((el) => el.blockedUserName)
+			.concat(data.blockedByUser.map((el) => el.blockingUserName))
 		return [
 			...new Set<string>(
 				data.friend
@@ -268,7 +272,7 @@ export class UserService {
 					.concat(data.directMessage.map((el) => el.requestedUserName))
 					.concat(data.directMessageOf.map((el) => el.requestingUserName)),
 			),
-		].filter(el => !blockUserNames.includes(el))
+		].filter((el) => !blockUserNames.includes(el))
 	}
 
 	async updateMe(username: string, dto: RequestShapes["updateMe"]["body"]) {
@@ -341,12 +345,12 @@ export class UserService {
 
 	private async getNotifyStatusData(username: string) {
 		return this.getUser(username, {
-            blockedUser: {
-                select: { blockedUserName: true }
-            },
-            blockedByUser: {
-                select: { blockingUserName: true }
-            },
+			blockedUser: {
+				select: { blockedUserName: true },
+			},
+			blockedByUser: {
+				select: { blockingUserName: true },
+			},
 			friend: {
 				where: { requestingUser: { statusVisibilityLevel: { not: "NO_ONE" } } },
 				select: { requestedUserName: true },
@@ -424,17 +428,17 @@ export class UserService {
 		})
 	}
 
-    public getUserStatus = (username: string) => this.sse.isUserOnline(username)
-        ? "ONLINE"
-        : "OFFLINE"
+	public getUserStatus = (username: string) =>
+		this.sse.isUserOnline(username) ? "ONLINE" : "OFFLINE"
 
 	public getUserStatusByProximity = (
-        username: string,
-        proximity: keyof typeof ProximityLevel,
-        visibility: AccessPolicyLevelPrisma
-    ) => (ProximityLevel[proximity] < AccessPolicyLevel[visibility])
-        ? "INVISIBLE"
-        : this.getUserStatus(username)
+		username: string,
+		proximity: keyof typeof ProximityLevel,
+		visibility: AccessPolicyLevelPrisma,
+	) =>
+		ProximityLevel[proximity] < AccessPolicyLevel[visibility]
+			? "INVISIBLE"
+			: this.getUserStatus(username)
 
 	public async notifyStatus(username: string) {
 		const data = await this.getNotifyStatusData(username)
@@ -446,37 +450,33 @@ export class UserService {
 		})
 	}
 
-    public async setMyProfilePicture(username: string, profilePicture: Express.Multer.File) {
-        if (!profilePicture)
-            return { status: 400, body: { message: "no file" } } as const
-        const ext = (await fileTypeFromBuffer(profilePicture.buffer))?.ext
-        if (!ext || !['png', 'jpeg', 'jpg'].includes(ext))
-            return { status: 400, body: { message: "wrong ext" } } as const
-        const image = await Jimp.read(profilePicture.buffer)
-        if (image.getWidth() !== image.getHeight())
-            return { status: 400, body: { message: "not square" } } as const
-        if (image.getWidth() < 50)
-            return { status: 400, body: { message: "too small" } } as const
-        const user = await this.getUser(username, { profilePicture: true })
-        if (!user)
-            return contractErrors.NotFoundUserForValidToken(username)
-        const { profilePicture: profilePictureFileName } = user
-        if (username === 'tom')
-            image.posterize(5)
-        image.write(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
-    }
+	public async setMyProfilePicture(username: string, profilePicture: Express.Multer.File) {
+		if (!profilePicture) return { status: 400, body: { message: "no file" } } as const
+		const ext = (await fileTypeFromBuffer(profilePicture.buffer))?.ext
+		if (!ext || !["png", "jpeg", "jpg"].includes(ext))
+			return { status: 400, body: { message: "wrong ext" } } as const
+		const image = await Jimp.read(profilePicture.buffer)
+		if (image.getWidth() !== image.getHeight())
+			return { status: 400, body: { message: "not square" } } as const
+		if (image.getWidth() < 50) return { status: 400, body: { message: "too small" } } as const
+		const user = await this.getUser(username, { profilePicture: true })
+		if (!user) return contractErrors.NotFoundUserForValidToken(username)
+		const { profilePicture: profilePictureFileName } = user
+		if (username === "tom") image.posterize(5)
+		image.write(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
+	}
 
-    public async getUserProfilePicture(username: string, otherUserName: string) {
-        const user = await this.getUser(otherUserName, { profilePicture: true })
-        if (!user)
-            return contractErrors.NotFoundUserForValidToken(otherUserName)
-        const { profilePicture: profilePictureFileName } = user
+	public async getUserProfilePicture(username: string, otherUserName: string) {
+		const user = await this.getUser(otherUserName, { profilePicture: true })
+		if (!user) return contractErrors.NotFoundUserForValidToken(otherUserName)
+		const { profilePicture: profilePictureFileName } = user
 
-        try {
-            const file = createReadStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName));
-            return new StreamableFile(file);
-        } catch {}
-        return contractErrors.NotFoundProfilePicture(otherUserName)
-    }
-
+		try {
+			const file = createReadStream(
+				join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName),
+			)
+			return new StreamableFile(file)
+		} catch {}
+		return contractErrors.NotFoundProfilePicture(otherUserName)
+	}
 }

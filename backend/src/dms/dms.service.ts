@@ -10,7 +10,15 @@ import { ClassicDmEventType, DirectMessageStatus, Prisma } from "@prisma/client"
 import { SseService } from "src/sse/sse.service"
 import { z } from "zod"
 import { DmEvent, contractErrors, zDmDiscussionElementReturn, zDmReturn } from "contract"
-import { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx, AccessPolicyLevel, ProximityLevel } from "src/types"
+import {
+	ElementUnion,
+	EventUnion,
+	RetypedElement,
+	RetypedEvent,
+	Tx,
+	AccessPolicyLevel,
+	ProximityLevel,
+} from "src/types"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
 import type { zDmDiscussionEventReturn, zDmDiscussionMessageReturn } from "contract"
@@ -37,18 +45,18 @@ export class DmsService {
 		//         ...this.usersService.getProximitySelect(username),
 		//         name: true
 		//     }
-		// } satisfies Prisma.UserArgs
+		// } satisfies Prisma.UserDefaultArgs
 		return {
 			requestedUser: {
 				select: {
-                    ...this.usersService.getProximityLevelSelect(username),
+					...this.usersService.getProximityLevelSelect(username),
 					name: true,
 					statusVisibilityLevel: true,
 				},
 			},
 			requestingUser: {
 				select: {
-                    ...this.usersService.getProximityLevelSelect(username),
+					...this.usersService.getProximityLevelSelect(username),
 					name: true,
 					statusVisibilityLevel: true,
 				},
@@ -69,7 +77,7 @@ export class DmsService {
 
 	private directMessageGetPayload = {
 		select: this.getDirectMessageSelect("example"),
-	} satisfies Prisma.DirectMessageArgs
+	} satisfies Prisma.DirectMessageDefaultArgs
 
 	private dmDiscussionEventSelect = {
 		classicDmDiscussionEvent: { select: { eventType: true } },
@@ -82,7 +90,7 @@ export class DmsService {
 
 	private dmDiscussionEventGetPayload = {
 		select: this.dmDiscussionEventSelect,
-	} satisfies Prisma.DmDiscussionEventArgs
+	} satisfies Prisma.DmDiscussionEventDefaultArgs
 
 	private dmDiscussionMessageSelect = {
 		content: true,
@@ -93,7 +101,7 @@ export class DmsService {
 
 	private dmDiscussionMessageGetPayload = {
 		select: this.dmDiscussionMessageSelect,
-	} satisfies Prisma.DmDiscussionMessageArgs
+	} satisfies Prisma.DmDiscussionMessageDefaultArgs
 
 	private dmDiscussionElementSelect = {
 		id: true,
@@ -104,7 +112,7 @@ export class DmsService {
 
 	private dmDiscussionElementGetPayload = {
 		select: this.dmDiscussionElementSelect,
-	} satisfies Prisma.DmDiscussionElementArgs
+	} satisfies Prisma.DmDiscussionElementDefaultArgs
 
 	public formatDirectMessage(
 		dm: Prisma.DirectMessageGetPayload<typeof this.directMessageGetPayload>,
@@ -117,9 +125,11 @@ export class DmsService {
 		const formattedDirectMessage: z.infer<typeof zDmReturn> = {
 			...rest,
 			otherName: other.name,
-			otherStatus: this.usersService.getUserStatusByProximity(other.name,
+			otherStatus: this.usersService.getUserStatusByProximity(
+				other.name,
 				this.usersService.getProximityLevel(other),
-				other.statusVisibilityLevel),
+				other.statusVisibilityLevel,
+			),
 		}
 		return formattedDirectMessage
 	}
@@ -216,7 +226,7 @@ export class DmsService {
 		}
 	}
 
-    // TODO: stop doing db query in this shit
+	// TODO: stop doing db query in this shit
 	private async formatDmElementForUser(
 		element: Prisma.DmDiscussionElementGetPayload<typeof this.dmDiscussionElementGetPayload>,
 		username: string,
@@ -354,8 +364,8 @@ export class DmsService {
 		return this.formatDmElementForUser(dmDiscussionElement, username)
 	}
 
-    public createDm = async(requestingUserName: string, requestedUserName: string) => this
-		.prisma.directMessage.create({
+	public createDm = async (requestingUserName: string, requestedUserName: string) =>
+		this.prisma.directMessage.create({
 			data: {
 				requestingUserName: requestingUserName,
 				requestedUserName: requestedUserName,
@@ -364,7 +374,7 @@ export class DmsService {
 		})
 
 	public async createAndNotifyDm(requestingUserName: string, requestedUserName: string) {
-        const newDm = await this.createDm(requestingUserName, requestedUserName)
+		const newDm = await this.createDm(requestingUserName, requestedUserName)
 		await this.sse.pushEvent(requestingUserName, {
 			type: "CREATED_DM",
 			data: this.formatDirectMessage(newDm, requestingUserName),
@@ -471,34 +481,38 @@ export class DmsService {
 		)
 	}
 
-    async createDmIfRightTo(username: string, otherUserName: string) {
-        const res = await this.usersService.getUser(otherUserName, {
-            dmPolicyLevel: true,
-            directMessage: { where: { requestedUserName: username }, select: { id: true } },
-            directMessageOf: { where: { requestingUserName: username }, select: { id: true } },
-            ...this.usersService.getProximityLevelSelect(username)
-        })
-        if (!res) return contractErrors.NotFoundUser(otherUserName)
-        if (res.directMessage.length || res.directMessageOf.length)
-            return contractErrors.DmAlreadyExist(username, otherUserName)
-        const { dmPolicyLevel } = res
-        const proximity = this.usersService.getProximityLevel(res)
-        if (proximity === "BLOCKED") {
-            return res.blockedUser.length
-                ? contractErrors.BlockedByUser(otherUserName, "createDm")
-                : contractErrors.BlockedUser(username, "createDm")
-        }
-        if (ProximityLevel[proximity] < AccessPolicyLevel[dmPolicyLevel]) {
-            return contractErrors.ProximityLevelTooLow(otherUserName,
-                "createDm", proximity, dmPolicyLevel)
-        }
-        const newDm = await this.createDm(username, otherUserName)
-        this.sse.pushEvent(otherUserName, {
-            type: "CREATED_DM",
-            data: this.formatDirectMessage(newDm, otherUserName)
-        })
-        return this.formatDirectMessage(newDm, username)
-    }
+	async createDmIfRightTo(username: string, otherUserName: string) {
+		const res = await this.usersService.getUser(otherUserName, {
+			dmPolicyLevel: true,
+			directMessage: { where: { requestedUserName: username }, select: { id: true } },
+			directMessageOf: { where: { requestingUserName: username }, select: { id: true } },
+			...this.usersService.getProximityLevelSelect(username),
+		})
+		if (!res) return contractErrors.NotFoundUser(otherUserName)
+		if (res.directMessage.length || res.directMessageOf.length)
+			return contractErrors.DmAlreadyExist(username, otherUserName)
+		const { dmPolicyLevel } = res
+		const proximity = this.usersService.getProximityLevel(res)
+		if (proximity === "BLOCKED") {
+			return res.blockedUser.length
+				? contractErrors.BlockedByUser(otherUserName, "createDm")
+				: contractErrors.BlockedUser(username, "createDm")
+		}
+		if (ProximityLevel[proximity] < AccessPolicyLevel[dmPolicyLevel]) {
+			return contractErrors.ProximityLevelTooLow(
+				otherUserName,
+				"createDm",
+				proximity,
+				dmPolicyLevel,
+			)
+		}
+		const newDm = await this.createDm(username, otherUserName)
+		this.sse.pushEvent(otherUserName, {
+			type: "CREATED_DM",
+			data: this.formatDirectMessage(newDm, otherUserName),
+		})
+		return this.formatDirectMessage(newDm, username)
+	}
 
 	async createDmMessage(username: string, dmId: string, content: string, relatedId?: string) {
 		const toCheck = await this.getDmOfUserOrThrow(username, dmId, {

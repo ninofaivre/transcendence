@@ -32,7 +32,7 @@ export class FriendsService {
 
 	private friendShipGetPayload = {
 		select: this.friendShipSelect,
-	} satisfies Prisma.FriendShipArgs
+	} satisfies Prisma.FriendShipDefaultArgs
 
 	public formatFriendShip(
 		friendShip: Prisma.FriendShipGetPayload<typeof this.friendShipGetPayload>,

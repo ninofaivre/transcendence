@@ -61,19 +61,19 @@ export class UserService {
 
 	private myProfileSelectGetPayload = {
 		select: this.myProfileSelect,
-	} satisfies Prisma.UserArgs
+	} satisfies Prisma.UserDefaultArgs
 
 	private userProfilePreviewSelectGetPayload = {
 		select: this.getUserProfilePreviewSelectForUser("example"),
-	} satisfies Prisma.UserArgs
+	} satisfies Prisma.UserDefaultArgs
 
 	private userProfileSelectGetPayload = {
 		select: this.getUserProfileSelectForUser("example"),
-	} satisfies Prisma.UserArgs
+	} satisfies Prisma.UserDefaultArgs
 
 	private userOwnProfileSelectGetPayload = {
 		select: this.myProfileSelect,
-	} satisfies Prisma.UserArgs
+	} satisfies Prisma.UserDefaultArgs
 
 	private formatUserProfilePreviewForUser(
 		username: string,

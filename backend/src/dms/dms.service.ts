@@ -37,7 +37,7 @@ export class DmsService {
 		//         ...this.usersService.getProximitySelect(username),
 		//         name: true
 		//     }
-		// } satisfies Prisma.UserArgs
+		// } satisfies Prisma.UserDefaultArgs
 		return {
 			requestedUser: {
 				select: {
@@ -69,7 +69,7 @@ export class DmsService {
 
 	private directMessageGetPayload = {
 		select: this.getDirectMessageSelect("example"),
-	} satisfies Prisma.DirectMessageArgs
+	} satisfies Prisma.DirectMessageDefaultArgs
 
 	private dmDiscussionEventSelect = {
 		classicDmDiscussionEvent: { select: { eventType: true } },
@@ -82,7 +82,7 @@ export class DmsService {
 
 	private dmDiscussionEventGetPayload = {
 		select: this.dmDiscussionEventSelect,
-	} satisfies Prisma.DmDiscussionEventArgs
+	} satisfies Prisma.DmDiscussionEventDefaultArgs
 
 	private dmDiscussionMessageSelect = {
 		content: true,
@@ -93,7 +93,7 @@ export class DmsService {
 
 	private dmDiscussionMessageGetPayload = {
 		select: this.dmDiscussionMessageSelect,
-	} satisfies Prisma.DmDiscussionMessageArgs
+	} satisfies Prisma.DmDiscussionMessageDefaultArgs
 
 	private dmDiscussionElementSelect = {
 		id: true,
@@ -104,7 +104,7 @@ export class DmsService {
 
 	private dmDiscussionElementGetPayload = {
 		select: this.dmDiscussionElementSelect,
-	} satisfies Prisma.DmDiscussionElementArgs
+	} satisfies Prisma.DmDiscussionElementDefaultArgs
 
 	public formatDirectMessage(
 		dm: Prisma.DirectMessageGetPayload<typeof this.directMessageGetPayload>,

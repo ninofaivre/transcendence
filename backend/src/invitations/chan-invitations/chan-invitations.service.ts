@@ -39,7 +39,7 @@ export class ChanInvitationsService {
 
 	private chanInvitationGetPayload = {
 		select: this.chanInvitationSelect,
-	} satisfies Prisma.ChanInvitationArgs
+	} satisfies Prisma.ChanInvitationDefaultArgs
 
 	private getChanInvitationArgViaUser(
 		status: (typeof ChanInvitationStatus)[keyof typeof ChanInvitationStatus][],

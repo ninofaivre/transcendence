@@ -17,6 +17,7 @@
 	import { Modal, type ModalComponent } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import MuteSlider from "$lib/MuteSlider.svelte"
+	import { get } from "svelte/store"
 
 	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
 
@@ -26,7 +27,7 @@
 
 	$: {
 		if ($logged_in == true) {
-			goto("/chans")
+			goto(`/users/${get(my_name)}`)
 		} else if ($logged_in == false) {
 			goto("/auth")
 		}

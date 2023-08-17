@@ -247,10 +247,6 @@ export class ChansService {
 		"DELETE_MESSAGE",
 	]
 
-	private namesArrayToStringArray(users: { name: string }[]) {
-		return users.map((el) => el.name)
-	}
-
     private formatChanUserForUser = (
         username: string,
         user: ChanPayload['users'][number],
@@ -341,7 +337,7 @@ export class ChansService {
             isDeleted: false,
             relatedTo: related && this.formatChanDiscussionElementForUser(username, (related.message) ? { ...related, message: { ...related['message'], related: null } } : related),
             ...messageRest,
-            mentionMe: !!(this.namesArrayToStringArray(relatedRoles.concat(relatedUsers))
+            mentionMe: !!(this.usersToNames(relatedRoles.concat(relatedUsers))
                     .includes(username)
                 || (related?.authorName === username)
                 || (related?.event?.concernedUserName === username)),
@@ -619,7 +615,7 @@ export class ChansService {
 
         return (await new ChanElementFactory(chanId, username, this)
             .createMessage(content, relatedTo, ats))
-            .notifyByUsers(chan.users.filter(user => user.name !== username))
+            .notifyByUsers(chan.users, username)
             .formatted()
 	}
 
@@ -683,7 +679,7 @@ export class ChansService {
             .updateMessage(content,
                 { users: oldMessage.relatedUsers, roles: oldMessage.relatedRoles },
                 newAts))
-            .notifyByUsers(chan.users.filter(({ name }) => name !== username))
+            .notifyByUsers(chan.users, username)
             .formatted(username)
     }
 
@@ -706,7 +702,7 @@ export class ChansService {
             return contractErrors.ChanPermissionTooLowOverUser(username, authorName, chanId, 'DELETE_MESSAGE')
         return (await new UpdateChanElementFactory(chanId, elementId, this)
             .deleteMessage(username))
-            .notifyByUsers(chan.users.filter(({ name }) => name !== username))
+            .notifyByUsers(chan.users, username)
             .formatted()
 	}
 
@@ -1162,7 +1158,7 @@ export class ChansService {
         if (body.title && await this.getChan({ title: body.title }, {}))
             return contractErrors.ChanAlreadyExist(body.title)
         await this.prisma.chan.update({ where: { id: chanId }, data: body })
-        const toNotify = chan.users.map(({ name }) => name).filter(name => name !== username)
+        const toNotify = this.usersToNames(chan.users, username)
         const { password, ...bodyRest } = (body.type === 'PUBLIC')
             ? body
             : { ...body, password: chan.password }

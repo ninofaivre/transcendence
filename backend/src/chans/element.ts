@@ -16,11 +16,13 @@ abstract class ChanElement {
     protected readonly abstract chanId: string
     protected readonly abstract element: ChanDiscussionElementPayload
 
-    public notifyByUsers = (users: { name: string }[]) =>
-        this.notifyByNames(users.map(user => user.name))
+    // TODO add ommit user
+    public notifyByUsers = (users: { name: string }[], omit?: string) =>
+        this.notifyByNames(users.map(user => user.name), omit)
 
-    public notifyByNames(users: string[]) {
-        users.forEach(name => this.chansService.sse.pushEvent(name, this.getSseEvent(name)))
+    public notifyByNames(users: string[], omit?: string) {
+        users.filter(user => user !== omit)
+            .forEach(name => this.chansService.sse.pushEvent(name, this.getSseEvent(name)))
         return this
     }
 

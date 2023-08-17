@@ -7,7 +7,7 @@
         "@gabrola/zod-prisma": "^0.11.0",
         "prisma": "^5.1.1",
         "tsup": "^7.2.0",
-        "zod": "^3.22.0"
+        "zod": "^3.22.1"
     },
     "dependencies": {
         "@prisma/client": "^5.1.1"

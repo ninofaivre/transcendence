@@ -4,5 +4,6 @@ do
     printf "\n$(tput bold)Building $package...⛏️\n$(tput sgr0)" &&
     cd $package &&
     pnpm run --if-present build &&
-    cd ..
+    cd .. ||
+    break
 done

@@ -126,7 +126,8 @@ export class ChanInvitationsService {
         const { users } = chan
 		if (users.some(({ name }) => name === invitedUserName))
 			throw new ForbiddenException(`${invitedUserName} already in chan ${chanId}`)
-        const timedStatusUser = chan.timedStatusUsers.find(({ timedUserName }) => timedUserName === invitedUserName)
+        const timedStatusUser = chan.timedStatusUsers.find(({ timedUserName, type }) =>
+            timedUserName === invitedUserName && type === 'BAN')
         if (timedStatusUser)
             return contractErrors.UserBannedFromChan(invitedUserName, chanId, timedStatusUser.untilDate)
         const chanInv = this.formatChanInvitation(

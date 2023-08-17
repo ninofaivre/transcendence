@@ -19,7 +19,7 @@ import { zSelfPermissionList } from "contract"
 import { ChanElementUnion, RetypeChanElement } from "src/types"
 import { zPermissionOverList } from "contract"
 import { CallbackService } from "src/callback/callback.service"
-import { ChanElementFactory } from "./element"
+import { ChanElementFactory, UpdateChanElementFactory } from "./element"
 
 type RequestShapes = NestRequestShapes<typeof contract.chans>
 
@@ -648,40 +648,6 @@ export class ChansService {
 		return this.formatChanDiscussionElementArrayForUser(username, chan.elements.reverse())
 	}
 
-    async updateChanMessage(
-        chanId: string,
-        elementId: string,
-        oldAts: { roles: { name: string }[], users: { name: string }[] },
-        newAts: { roles: { name: string }[], users: { name: string }[] },
-        content: string
-    ) {
-        return (await this.prisma.chanDiscussionElement.update({
-            where: { id: elementId, message: { isNot: null } },
-            data: {
-                message: {
-                    update: {
-                        content: content,
-                        relatedUsers: {
-                            connect: newAts.users
-                                .filter(el => oldAts.users.every(user => user.name !== el.name)),
-                            disconnect: oldAts.users
-                                .filter(user => newAts.users.every(el => el.name !== user.name))
-                        },
-                        relatedRoles: {
-                            connect: newAts.roles
-                                .filter(el => oldAts.roles.every(role => role.name !== el.name))
-                                .map(el => ({ chanId_name: { chanId, ...el } })),
-                            disconnect: oldAts.roles
-                                .filter(role => newAts.roles.every(el => el.name !== role.name))
-                                .map(el => ({ chanId_name: { chanId, ...el } }))
-                        }
-                    }
-                }
-            },
-            select: this.chanDiscussionElementsSelect
-        })) as ChanDiscussionElementMessagePayload
-    }
-
     async updateChanMessageIfRightTo(username: string,
         { chanId, elementId }: RequestShapes['updateChanMessage']['params'],
         content: string
@@ -713,19 +679,12 @@ export class ChansService {
         if (chan.elements[0].authorName !== username)
             return contractErrors.NotOwnedChanMessage(username, 'update', elementId, chanId)
         const newAts = this.getAtsFromChanMessageContent(chan, content)
-        const updatedElement = await this.updateChanMessage(chanId, elementId,
-            { users: oldMessage.relatedUsers, roles: oldMessage.relatedRoles },
-            newAts, content)
-        chan.users.forEach(({ name }) => {
-            this.sse.pushEvent(name, {
-                type: 'UPDATED_CHAN_MESSAGE',
-                data: {
-                    chanId,
-                    message: this.formatChanDiscussionMessageForUser(name, updatedElement)
-                }
-            })
-        })
-        return this.formatChanDiscussionMessageForUser(username, updatedElement)
+        const updatedElement = (await (new UpdateChanElementFactory(chanId, elementId, this)
+            .updateMessage(content,
+                { users: oldMessage.relatedUsers, roles: oldMessage.relatedRoles },
+                newAts)))
+        updatedElement.notifyByUsers(chan.users.filter(({ name }) => name !== username))
+        return updatedElement.formatted(username)
     }
 
     private async deleteChanMessage(elementId: string, deletingUserName: string) {

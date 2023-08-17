@@ -4,8 +4,11 @@ import { ChanDiscussionElementEventWithoutDeletedPayload,
     ChanDiscussionElementPayload, ChansService } from "./chans.service"
 import { ClassicChanEventType, Prisma } from "@prisma/client"
 import { Inject, forwardRef } from "@nestjs/common"
+import { SseEvent } from "contract"
 
 // TODO after BH, remove unnecessary Inject, refact update too
+
+type ChanMessageType = 'CREATED' | 'UPDATED'
 
 abstract class ChanElement {
 
@@ -17,14 +20,21 @@ abstract class ChanElement {
         this.notifyByNames(users.map(user => user.name))
 
     public notifyByNames = async (users: string[]) =>
-    (Promise.all(users.map(name => this.element && this.chansService.sse.pushEvent(name, {
-        type: 'CREATED_CHAN_ELEMENT',
+    (Promise.all(
+            users.map(name => 
+                this.chansService.sse.pushEvent(name, this.getSSEvent(name))
+            )
+        )
+    )
+
+    protected getSSEvent = (name: string): SseEvent => ({
+        type: `CREATED_CHAN_ELEMENT`,
         data: {
             chanId: this.chanId,
             element: this.chansService.
                 formatChanDiscussionElementForUser(name, this.element)
         }
-    }))))
+    } as const)
 
 }
 
@@ -37,6 +47,7 @@ class ChanElementEvent extends ChanElement {
         protected readonly chanId: string,
         @Inject(forwardRef(() => ChansService))
         protected readonly chansService: ChansService
+
     ) {
         super()
         this.element = element as ChanDiscussionElementEventWithoutDeletedPayload
@@ -52,7 +63,8 @@ class ChanElementMessage extends ChanElement {
         element: ChanDiscussionElementPayload,
         protected readonly chanId: string,
         @Inject(forwardRef(() => ChansService))
-        protected readonly chansService: ChansService
+        protected readonly chansService: ChansService,
+        private chanMessageType: ChanMessageType
     ) {
         super()
         this.element = element as ChanDiscussionElementMessageWithDeletedPayload
@@ -63,6 +75,14 @@ class ChanElementMessage extends ChanElement {
         username || this.element.authorName,
         this.element
     ))
+
+    protected getSSEvent = (name: string): SseEvent => ({
+        type: `UPDATED_CHAN_MESSAGE`,
+        data: {
+            chanId: this.chanId,
+            message: this.formatted(name)
+        }
+    } as const)
 
 }
 
@@ -155,7 +175,58 @@ export class ChanElementFactory {
                     }
                 }
             }
-        })), this.chanId, this.chansService)
+        })), this.chanId, this.chansService, 'CREATED')
+    }
+
+}
+
+export class UpdateChanElementFactory {
+    
+    private readonly prisma: PrismaService;
+
+    constructor(
+        private chanId: string,
+        private elementId: string,
+        @Inject(forwardRef(() => ChansService))
+        private readonly chansService: ChansService
+    ) {
+        this.prisma = this.chansService.prisma
+    }
+
+    private updateChanElement = async (
+        data: Prisma.ChanDiscussionElementUpdateArgs['data']
+    ) => (this.prisma.chanDiscussionElement.update({
+            where: { id: this.elementId },
+            data,
+            select: this.chansService.chanDiscussionElementsSelect
+        }) as Promise<ChanDiscussionElementPayload>)
+
+    public updateMessage = async (
+        content: string,
+        oldAts: { users: { name: string }[], roles: { name: string }[] },
+        newAts: { users: { name: string }[], roles: { name: string }[] }
+    ) => {
+        return new ChanElementMessage((await this.updateChanElement({
+            message: {
+                update: {
+                    content: content,
+                    relatedUsers: {
+                        connect: newAts.users
+                            .filter(el => oldAts.users.every(user => user.name !== el.name)),
+                        disconnect: oldAts.users
+                            .filter(user => newAts.users.every(el => el.name !== user.name))
+                    },
+                    relatedRoles: {
+                        connect: newAts.roles
+                            .filter(el => oldAts.roles.every(role => role.name !== el.name))
+                            .map(el => ({ chanId_name: { chanId: this.chanId, ...el } })),
+                        disconnect: oldAts.roles
+                            .filter(role => newAts.roles.every(el => el.name !== role.name))
+                            .map(el => ({ chanId_name: { chanId: this.chanId, ...el } }))
+                    }
+                }
+            }
+        })), this.chanId, this.chansService, 'UPDATED')
     }
 
 }

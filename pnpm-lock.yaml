@@ -3869,8 +3869,8 @@ packages:
       supports-color: 8.1.1
     dev: false
 
-  /jiti@1.19.1:
-    resolution: {integrity: sha512-oVhqoRDaBXf7sjkll95LHVS6Myyyb1zaunVwk4Z0+WPSW4gjS0pl01zYKHScTuyEhQsFxV5L4DR5r+YqSyqyyg==}
+  /jiti@1.19.2:
+    resolution: {integrity: sha512-UgPQy6IN/a/5DRAVkNRgoyVQBC4BqjN/ALFKnTlCR6mJIBtEj0/X52QCMckszSNbY7RbSNa1PzhhxQzROiGHcA==}
     hasBin: true
     dev: true
 
@@ -5788,7 +5788,7 @@ packages:
       fast-glob: 3.3.1
       glob-parent: 6.0.2
       is-glob: 4.0.3
-      jiti: 1.19.1
+      jiti: 1.19.2
       lilconfig: 2.1.0
       micromatch: 4.0.5
       normalize-path: 3.0.0

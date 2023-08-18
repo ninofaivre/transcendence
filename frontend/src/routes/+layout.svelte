@@ -27,7 +27,8 @@
 
 	$: {
 		if ($logged_in == true) {
-			goto(`/users/${get(my_name)}`)
+			// goto(`/users/${get(my_name)}`)
+			goto("/myprofile")
 		} else if ($logged_in == false) {
 			goto("/auth")
 		}

@@ -16,7 +16,6 @@
   "type": "module",
   "dependencies": {
     "contract": "workspace:*",
-    "cropperjs": "^1.5.13",
     "socket.io-client": "^4.7.2",
     "svelte-easy-crop": "^2.0.1"
   },

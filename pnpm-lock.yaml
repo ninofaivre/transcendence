@@ -177,9 +177,6 @@ importers:
       contract:
         specifier: workspace:*
         version: link:../contract
-      cropperjs:
-        specifier: ^1.5.13
-        version: 1.5.13
       socket.io-client:
         specifier: ^4.7.2
         version: 4.7.2
@@ -2903,10 +2900,6 @@ packages:
       parse-json: 5.2.0
       path-type: 4.0.0
       yaml: 1.10.2
-    dev: false
-
-  /cropperjs@1.5.13:
-    resolution: {integrity: sha512-by7jKAo73y5/Do0K6sxdTKHgndY0NMjG2bEdgeJxycbcmHuCiMXqw8sxy5C5Y5WTOTcDGmbT7Sr5CgKOXR06OA==}
     dev: false
 
   /cross-spawn@5.1.0:

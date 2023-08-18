@@ -1,57 +1,37 @@
 <script lang="ts">
+	import type { StepperState } from "@skeletonlabs/skeleton/dist/components/Stepper/types"
+
+	import { FileDropzone } from "@skeletonlabs/skeleton"
+	import { client } from "$clients"
+	import { makeToast } from "$lib/global"
+	import { Stepper, Step } from "@skeletonlabs/skeleton"
+	import Toggle from "$lib/Toggle.svelte"
+	import { listenOutsideClick } from "$lib/global"
 	import Cropper from "svelte-easy-crop"
 	import { getCroppedImg } from "$lib/canvas_utils"
 
+	let files: FileList
 	let image: string | null
-	let pixelCrop: {
-		x: number
-		y: number
-		width: number
-		height: number
-	}
-	let croppedImage: string | null
-
-	const defaultSrc =
-		"https://t4.ftcdn.net/jpg/03/03/62/45/240_F_303624505_u0bFT1Rnoj8CMUSs8wMCwoKlnWlh5Jiq.jpg"
+	let img_src =
+		"https://media.istockphoto.com/id/1188445864/photo/closeup-portrait-of-funny-ginger-cat-wearing-sunglasses-isolated-on-light-cyan-copyspace.jpg?s=612x612&w=0&k=20&c=LHy_WCxNUEdejVx2sKK3Hq_dAQ_yyNRxspDxiDLUymg="
 
 	function onFileSelected() {
 		if (files && files[0]) {
 			const imageFile = files[0]
 			const reader = new FileReader()
 			reader.addEventListener("load", ({ target }) => {
-				if (target?.result && typeof target.result === "string") image = target.result
+				if (target?.result && typeof target.result === "string") img_src = target.result
 			})
 			reader.readAsDataURL(imageFile)
+			picker_lock = false
 		}
 	}
 
-	let profilePicture: HTMLImageElement
-	let style: string
+	function onStepHandler(e: {
+		detail: { state: { current: number; total: number }; step: number }
+	}) {}
 
-	function previewCrop(e: CustomEvent<{ pixels: typeof pixelCrop }>) {
-		pixelCrop = e.detail.pixels
-		const { x, y, width } = e.detail.pixels
-		const scale = 200 / width
-		profilePicture.style.margin = `margin: ${-y * scale}px 0 0 ${-x * scale}px;`
-		profilePicture.style.width = `width: ${profilePicture.naturalWidth * scale}px;`
-	}
-
-	async function cropImage(image: string | null, pixel_crop_info: typeof pixelCrop) {
-		if (image) croppedImage = await getCroppedImg(image, pixel_crop_info)
-	}
-
-	function reset() {
-		croppedImage = null
-		image = null
-	}
-
-	import { client } from "$clients"
-	import { FileDropzone } from "@skeletonlabs/skeleton"
-	import { makeToast } from "$lib/global"
-
-	let files: FileList
-
-	async function handleSubmit(_e: SubmitEvent) {
+	async function handleSubmit(e: CustomEvent<{ step: number; state: StepperState }>) {
 		const { status } = await client.users.setMyProfilePicture({
 			body: {
 				profilePicture: files[0],
@@ -63,70 +43,61 @@
 			makeToast(`Upload failed with status ${status}`)
 		}
 	}
+	function onBackHandler() {}
+	function onNextHandler(e: {
+		detail: { state: { current: number; total: number }; step: number }
+	}) {
+		console.log(e.detail)
+	}
+
+	function previewCrop() {
+		cropper_lock = false
+	}
+
+	let picker_lock = true
+	let cropper_lock = true
 </script>
 
-{#if !image}
-	<h2>Upload a picture for cropping?</h2>
-	<form on:submit|preventDefault={handleSubmit}>
-		<FileDropzone
-			bind:files
-			name="pp"
-			accept=".jpg, .jpeg, .png"
-			on:change={onFileSelected}
-		>
-			<div slot="lead" class="text-3xl">📁</div>
-			<svelte:fragment slot="message">Upload your profile picture</svelte:fragment>
-			<svelte:fragment slot="meta">PNG and JPEG files only</svelte:fragment>
-		</FileDropzone>
-		<button type="submit" class="btn variant-ringed block"> Upload </button>
-	</form>
-	<h2>Or... use this cute cat image</h2>
-	<button
-		type="button"
-		class="btn variant-ringed"
-		on:click={() => {
-			image = defaultSrc
-		}}>Click me!</button
-	>
-{:else}
-	<div style:position="relative" style:width="100%" style:height="50%">
-		<Cropper {image} aspect={1} zoom={1} crop={{ x: 0, y: 0 }} on:cropcomplete={previewCrop} />
-	</div>
-	<h3>Preview</h3>
-	<div class="prof-pic-wrapper">
-		<img
-			bind:this={profilePicture}
-			class="prof-pic"
-			src={image}
-			alt="Profile example"
-			{style}
-		/>
-	</div>
-	{#if croppedImage}
-		<h2>Cropped Output</h2>
-		<img src={croppedImage} alt="Cropped profile" /><br />
-	{:else}
-		<br /><button
-			type="button"
-			class="btn variant-ringed"
-			on:click={async () => {
-				cropImage(image, pixelCrop)
-			}}>Crop!</button
-		>
-	{/if}
-	<button type="button" class="btn variant-ringed" on:click={reset}>Start over?</button>
-{/if}
-
-<style>
-	.prof-pic-wrapper {
-		height: 200px;
-		width: 200px;
-		position: relative;
-		border: solid;
-		overflow: hidden;
-	}
-
-	.prof-pic {
-		position: absolute;
-	}
-</style>
+<Toggle let:toggle>
+	<svelte:fragment let:toggle slot="active">
+		<div use:listenOutsideClick on:outsideclick={toggle}>
+			<Stepper
+				on:next={onNextHandler}
+				on:step={onStepHandler}
+				on:back={onBackHandler}
+				on:complete={handleSubmit}
+			>
+				<Step locked={picker_lock}>
+					<svelte:fragment slot="header">Choose a new profile picture</svelte:fragment>
+					<FileDropzone
+						bind:files
+						name="pp"
+						accept=".jpg, .jpeg, .png"
+						on:change={onFileSelected}
+					>
+						<div slot="lead" class="text-3xl">📁</div>
+						<svelte:fragment slot="message">Upload your profile picture</svelte:fragment
+						>
+						<svelte:fragment slot="meta">PNG and JPEG files only</svelte:fragment>
+					</FileDropzone>
+					<img src={img_src} alt="preview" />
+				</Step>
+				<Step locked={cropper_lock}>
+					<svelte:fragment slot="header">Square it</svelte:fragment>
+					<Cropper
+						image={img_src}
+						aspect={1}
+						zoom={1}
+						crop={{ x: 0, y: 0 }}
+						on:cropcomplete={previewCrop}
+					/>
+				</Step>
+				<Step>
+					<svelte:fragment slot="header">Do you like it ?</svelte:fragment>
+					<img src={img_src} alt="preview" />
+				</Step>
+			</Stepper>
+		</div>
+	</svelte:fragment>
+	<button class="btn btn-sm variant-filled" on:click={toggle}>Change profile picture</button>
+</Toggle>

@@ -23,6 +23,7 @@
 	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
 	import Toggle from "$lib/Toggle.svelte"
 	import { isContractError } from "contract"
+	import { invalidate } from "$app/navigation"
 
 	console.log($page.route.id, " init")
 
@@ -196,6 +197,9 @@
 					shallowCopyPartialToNotPartial(user, chan.users[index])
 					chan = chan
 				}
+			}),
+			addListenerToEventSource($sse_store!, "KICKED_FROM_CHAN", () => {
+				invalidate(":chans")
 			}),
 			// Add event listener to listen to mute event
 		)

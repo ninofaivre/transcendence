@@ -23,7 +23,7 @@
 	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
 	import Toggle from "$lib/Toggle.svelte"
 	import { isContractError } from "contract"
-	import { invalidate } from "$app/navigation"
+	import { invalidate, invalidateAll } from "$app/navigation"
 
 	console.log($page.route.id, " init")
 
@@ -199,9 +199,11 @@
 				}
 			}),
 			addListenerToEventSource($sse_store!, "KICKED_FROM_CHAN", () => {
-				invalidate(":chans")
+				invalidateAll()
 			}),
-			// Add event listener to listen to mute event
+			addListenerToEventSource($sse_store!, "BANNED_FROM_CHAN", () => {
+				invalidateAll()
+			}),
 		)
 		return () => {
 			destroyer.forEach((func) => void func())

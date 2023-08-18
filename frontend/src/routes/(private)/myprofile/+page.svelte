@@ -9,11 +9,26 @@
 	import { listenOutsideClick } from "$lib/global"
 	import Cropper from "svelte-easy-crop"
 	import { getCroppedImg } from "$lib/canvas_utils"
+	import { isContractError } from "contract"
 
 	let files: FileList
-	let image: string | null
-	let img_src =
-		"https://media.istockphoto.com/id/1188445864/photo/closeup-portrait-of-funny-ginger-cat-wearing-sunglasses-isolated-on-light-cyan-copyspace.jpg?s=612x612&w=0&k=20&c=LHy_WCxNUEdejVx2sKK3Hq_dAQ_yyNRxspDxiDLUymg="
+	$: files, console.log(files)
+	let cropped_image_src: string | null = null
+	let cropped_image_file: File
+	let img_src: string | "" = ""
+	let buttonBackLabel = "← Back"
+	let buttonNextLabel = "Next →"
+	let crop: {
+		x: number
+		y: number
+		width: number
+		height: number
+	} = {
+		x: 0,
+		y: 0,
+		width: 0,
+		height: 0,
+	}
 
 	function onFileSelected() {
 		if (files && files[0]) {
@@ -27,31 +42,56 @@
 		}
 	}
 
+	function reportCrop(e: CustomEvent<{ pixels: typeof crop }>) {
+		crop = e.detail.pixels
+	}
+
 	function onStepHandler(e: {
 		detail: { state: { current: number; total: number }; step: number }
-	}) {}
-
-	async function handleSubmit(e: CustomEvent<{ step: number; state: StepperState }>) {
-		const { status } = await client.users.setMyProfilePicture({
-			body: {
-				profilePicture: files[0],
-			},
-		})
-		if (status === 204) {
-			makeToast("Upload successful")
-		} else {
-			makeToast(`Upload failed with status ${status}`)
+	}) {
+		// Doesn't work
+		if (e.detail.state.current == 0) {
+			buttonNextLabel = "Edit →"
+		}
+		if (e.detail.state.current == 1) {
+			buttonNextLabel = "Crop"
 		}
 	}
+
 	function onBackHandler() {}
-	function onNextHandler(e: {
+
+	async function onNextHandler(e: {
 		detail: { state: { current: number; total: number }; step: number }
 	}) {
-		console.log(e.detail)
+		console.log(e.detail.step)
+		console.log(e.detail.state.current)
+		// File picking
+		if (e.detail.state.current == 0) {
+		}
+		// Just cropped
+		if (e.detail.state.current == 2) {
+			const cropped_image_blob = await getCroppedImg(img_src, crop)
+			cropped_image_src = URL.createObjectURL(cropped_image_blob)
+			cropped_image_file = new File([cropped_image_blob], cropped_image_src, {
+				type: files[0].type,
+			})
+		}
 	}
 
-	function previewCrop() {
-		cropper_lock = false
+	async function onComplete(e: CustomEvent<{ step: number; state: StepperState }>) {
+		const ret = await client.users.setMyProfilePicture({
+			body: {
+				profilePicture: cropped_image_file,
+			},
+		})
+		if (ret.status === 204) {
+			makeToast("Upload successful")
+		} else if (isContractError(ret)) {
+			makeToast(`Upload failed: ${ret.body.message}`)
+		} else
+			throw new Error(
+				`Coulnd't upload profile picture. Unexpected return from the server: ${ret.status}`,
+			)
 	}
 
 	let picker_lock = true
@@ -65,7 +105,10 @@
 				on:next={onNextHandler}
 				on:step={onStepHandler}
 				on:back={onBackHandler}
-				on:complete={handleSubmit}
+				on:complete={onComplete}
+				buttonCompleteLabel="Upload"
+				{buttonBackLabel}
+				{buttonNextLabel}
 			>
 				<Step locked={picker_lock}>
 					<svelte:fragment slot="header">Choose a new profile picture</svelte:fragment>
@@ -82,19 +125,14 @@
 					</FileDropzone>
 					<img src={img_src} alt="preview" />
 				</Step>
-				<Step locked={cropper_lock}>
+				<!-- <Step locked={cropper_lock}> -->
+				<Step>
 					<svelte:fragment slot="header">Square it</svelte:fragment>
-					<Cropper
-						image={img_src}
-						aspect={1}
-						zoom={1}
-						crop={{ x: 0, y: 0 }}
-						on:cropcomplete={previewCrop}
-					/>
+					<Cropper image={img_src} aspect={1} zoom={1} on:cropcomplete={reportCrop} />
 				</Step>
 				<Step>
 					<svelte:fragment slot="header">Do you like it ?</svelte:fragment>
-					<img src={img_src} alt="preview" />
+					<img src={cropped_image_src} alt="cropped preview" />
 				</Step>
 			</Stepper>
 		</div>

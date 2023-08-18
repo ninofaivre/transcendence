@@ -3,6 +3,9 @@ dist
 client
 node_modules
 
+#assets
+backend/pictures
+
 # Logs
 logs
 *.log

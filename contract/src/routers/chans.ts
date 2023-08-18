@@ -419,7 +419,11 @@ export const chansContract = c.router(
                 timeoutInMs: zTimeOut
             }),
             responses: {
-                204: c.type<null>()
+                204: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [403, "ChanPermissionTooLowOverUser"],
+                    [404, "NotFoundChan", "NotFoundChanEntity"],
+                )
             }
         },
         unbanUserFromChan: {
@@ -431,7 +435,11 @@ export const chansContract = c.router(
             }),
             body: c.type<null>(),
             responses: {
-                204: c.type<null>()
+                204: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [403, "ChanPermissionTooLowOverUser"],
+                    [404, "NotFoundChan", "NotFoundChanEntity"],
+                )
             }
         }
 	},
@@ -472,6 +480,9 @@ export type ChanEvent =
 			}
 	  }
 	| {
+            // on BANNED_CHAN_USER add remove chanUser from array and add name to
+            // banUsers array if perm 'BAN' over him. On UNBANNED_CHAN_USER just
+            // remove user from bannedUsers array if he was in.
 			type: "DELETED_CHAN_USER" | "BANNED_CHAN_USER" | "UNBANNED_CHAN_USER"
 			data: {
 				chanId: string

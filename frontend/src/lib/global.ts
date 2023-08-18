@@ -2,6 +2,14 @@ import { PUBLIC_BACKEND_URL } from "$env/static/public"
 import { logged_in } from "$lib/stores"
 import { client } from "$clients"
 import type { SseEvent } from "contract"
+import { isContractError } from "contract"
+
+export function checkError(ret: { status: number; body: any }, what: string) {
+	if (isContractError(ret)) {
+		makeToast("Could not " + what + " :" + ret.body.message)
+		console.log(ret.body.code)
+	} else throw new Error("Server return unexpected status: " + ret.status)
+}
 
 export function getCookie(cname: string) {
 	const name = cname + "="

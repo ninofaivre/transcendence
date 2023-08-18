@@ -4,7 +4,7 @@
 	import { Avatar } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { isContractError } from "contract"
-	import { makeToast } from "$lib/global"
+	import { checkError, makeToast } from "$lib/global"
 
 	export let data: PageData
 
@@ -14,10 +14,8 @@
 		const ret = await client.invitations.friend.createFriendInvitation({
 			body: { invitedUserName: data.username },
 		})
-		if (isContractError(ret)) {
-			makeToast("Could not send Friend Request :" + ret.body.message)
-			console.log(ret.body.code)
-		} else throw new Error("Unexpected return from server:" + ret.status)
+		if (ret.status != 201) checkError(ret, "send friend request")
+		else makeToast("Sent friend request to " + data.username)
 	}
 </script>
 

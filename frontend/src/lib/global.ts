@@ -8,7 +8,11 @@ export function checkError(ret: { status: number; body: any }, what: string) {
 	if (isContractError(ret)) {
 		makeToast("Could not " + what + " :" + ret.body.message)
 		console.log(ret.body.code)
-	} else throw new Error("Server return unexpected status: " + ret.status)
+	} else {
+		// throw new Error("Server return unexpected status: " + ret.status)
+		makeToast("Server return unexpected status: " + ret.status)
+		console.error("Server return unexpected status: " + ret.status)
+	}
 }
 
 export function getCookie(cname: string) {

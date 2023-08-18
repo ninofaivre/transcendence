@@ -5,7 +5,7 @@ import { zChanType, zAccessPolicyLevel } from "../generated-zod"
 import { zChanTitle } from "./chans"
 import { zUserName, zUserStatus, zUserPassword } from "../zod/user.zod"
 import { z } from "zod"
-import { getErrorForContract, getErrorsForContract } from "../errors"
+import { getErrorsForContract } from "../errors"
 import { StreamableFile } from "@nestjs/common"
 
 export type UserEvent = {

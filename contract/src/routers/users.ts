@@ -45,6 +45,8 @@ const zSearchUsersQueryBase = z.strictObject({
 	nResult: z.number().positive().int().max(30).default(10),
 })
 
+export const acceptedProfilePictureMimeTypes = ['image/png', 'image/jpeg'] as const
+
 export const usersContract = c.router(
 	{
 		searchUsers: {
@@ -105,11 +107,9 @@ export const usersContract = c.router(
 			}),
 			responses: {
 				200: c.type<StreamableFile>(),
-				...getErrorsForContract(c, [
-					404,
-					"NotFoundProfilePicture",
-					"NotFoundUserForValidToken",
-				]),
+				...getErrorsForContract(c,
+                    [404, "NotFoundProfilePicture", "NotFoundUserForValidToken"]
+				),
 			},
 		},
 		updateMe: {
@@ -129,6 +129,10 @@ export const usersContract = c.router(
 			body: c.type<{ profilePicture: File }>(),
 			responses: {
 				204: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [404, "NotFoundProfilePicture", "NotFoundUserForValidToken"],
+                    [409, "ServerUnableToWriteProfilePicture"]
+                )
 			},
 		},
 		signUp: {

@@ -61,7 +61,7 @@ export class UserController {
 
 	@UseGuards(JwtAuthGuard)
 	@TsRestHandler(c)
-	async handler(@Request() { user: { username } }: EnrichedRequest, @Res({ passthrough: true }) response: Response) {
+	async handler(@Request() { user: { username } }: EnrichedRequest) {
 		return tsRestHandler<Omit<typeof c, "signUp" | "setMyProfilePicture">>(c, {
 			getMe: async () => {
 				const res = await this.userService.getMe(username)
@@ -84,17 +84,8 @@ export class UserController {
 			},
 
             getUserProfilePicture: async ({ params: { userName: otherUserName } }) => {
-                // TODO get correct mime type instead of hard coded png
-                const res = await this.userService.getUserProfilePicture(username, otherUserName)
-                if (isContractError(res))
-                    return res
-                response.set({
-                    'Content-Type': 'image/png',
-                    // TODO check if that line is needed
-                    'Content-Disposition': `attachment; filename="profilePicture_${otherUserName}.png"`,
-                });
-                // TODO remove that ugly ass `as any`
-                return { status: 200, body: res as any }
+                const res = await this.userService.getUserProfilePicture(otherUserName)
+                return isContractError(res) ? res : { status: 200, body: res }
             }
 		})
 	}

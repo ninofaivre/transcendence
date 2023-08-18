@@ -4,7 +4,7 @@ import { NotFoundException, ConflictException } from "@nestjs/common"
 import { hash } from "bcrypt"
 import { PrismaService } from "src/prisma/prisma.service"
 import { NestRequestShapes } from "@ts-rest/nest"
-import { contract, contractErrors } from "contract"
+import { acceptedProfilePictureMimeTypes, contract, contractErrors, isContractError } from "contract"
 import { z } from "zod"
 import { zUserProfileReturn, zMyProfileReturn, zUserProfilePreviewReturn, zUserStatus } from "contract"
 import { SseService } from "src/sse/sse.service"
@@ -15,9 +15,10 @@ import { EnrichedRequest } from "src/auth/auth.service"
 import { AccessPolicyLevel, ProximityLevel } from "src/types"
 import { fileTypeFromBuffer } from "../disgustingImports"
 import { join } from "path"
-import Jimp from "jimp";
 import { EnvService } from "src/env/env.service"
-import { createReadStream } from "fs"
+import { createReadStream, createWriteStream } from "fs"
+
+const sharp = require('sharp')
 
 type RequestShapes = NestRequestShapes<typeof contract.users>
 
@@ -447,36 +448,68 @@ export class UserService {
 		})
 	}
 
+    // return contractError if invalid profile picture provided, else return null
+    public async isInvalidProfilePicture(buffer: Buffer) {
+        const fileType = await fileTypeFromBuffer(buffer)
+        if (!fileType
+            || !(acceptedProfilePictureMimeTypes as readonly string[])
+                    .includes(fileType.mime)
+        )
+            return contractErrors.InvalidProfilePicture('unsupported mimetype')
+        const { width, height } = await sharp(buffer).metadata()
+        if (width !== height)
+            return contractErrors.InvalidProfilePicture('not square')
+        if (width < 50)
+            return contractErrors.InvalidProfilePicture('too small')
+        return null
+    }
+
     public async setMyProfilePicture(username: string, profilePicture: Express.Multer.File) {
         if (!profilePicture)
-            return { status: 400, body: { message: "no file" } } as const
-        const ext = (await fileTypeFromBuffer(profilePicture.buffer))?.ext
-        if (!ext || !['png', 'jpeg', 'jpg'].includes(ext))
-            return { status: 400, body: { message: "wrong ext" } } as const
-        const image = await Jimp.read(profilePicture.buffer)
-        if (image.getWidth() !== image.getHeight())
-            return { status: 400, body: { message: "not square" } } as const
-        if (image.getWidth() < 50)
-            return { status: 400, body: { message: "too small" } } as const
+            return contractErrors.InvalidProfilePicture('no file')
+        let buffer = profilePicture.buffer
+        const contractError = await this.isInvalidProfilePicture(buffer)
+        if (isContractError(contractError))
+            return contractError 
         const user = await this.getUser(username, { profilePicture: true })
         if (!user)
             return contractErrors.NotFoundUserForValidToken(username)
         const { profilePicture: profilePictureFileName } = user
         if (username === 'tom')
-            image.posterize(5)
-        image.write(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
+            buffer = await sharp(profilePicture.buffer).negate().toBuffer()
+        try {
+            const writeStream = createWriteStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
+            await new Promise<void>((resolve, reject) => {
+                writeStream.on('error', () => {})
+                writeStream.write(buffer, (error) => {
+                    if (error)
+                        reject()
+                    resolve()
+                })
+            })
+            return null
+        } catch {}
+        return contractErrors.ServerUnableToWriteProfilePicture()
     }
 
-    public async getUserProfilePicture(username: string, otherUserName: string) {
+    public async getUserProfilePicture(otherUserName: string) {
         const user = await this.getUser(otherUserName, { profilePicture: true })
         if (!user)
             return contractErrors.NotFoundUserForValidToken(otherUserName)
         const { profilePicture: profilePictureFileName } = user
 
         try {
-            const file = createReadStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName));
-            return new StreamableFile(file);
-        } catch {}
+            const readStream = createReadStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
+            const buffer = await new Promise<Buffer>((resolve, reject) => {
+                const chunks: Buffer[] = []
+                readStream.on('data', (chunk: Buffer) => chunks.push(chunk))
+                readStream.on('error', (error) => reject(error))
+                readStream.on('end', () => resolve(Buffer.concat(chunks)))
+            })
+            if (isContractError(await this.isInvalidProfilePicture(buffer)))
+                return contractErrors.NotFoundProfilePicture(otherUserName)
+            return new StreamableFile(buffer)
+        } catch (e) {}
         return contractErrors.NotFoundProfilePicture(otherUserName)
     }
 

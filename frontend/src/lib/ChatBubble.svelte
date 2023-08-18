@@ -296,7 +296,6 @@
 	{/if}
 	<div
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}
-		on:click={() => alert(message.author)}
 	>
 		<!-- {#if !from_me} -->
 		<div class="from-field font-medium">{message.author}</div>

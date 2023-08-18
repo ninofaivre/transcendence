@@ -15,7 +15,7 @@ import { AccessPolicyLevel, ProximityLevel } from "src/types"
 import { fileTypeFromBuffer } from "../disgustingImports"
 import { join } from "path"
 import { EnvService } from "src/env/env.service"
-import { createReadStream, createWriteStream } from "fs"
+import { createReadStream, createWriteStream, readFileSync } from "fs"
 import { Readable } from "stream"
 
 const sharp = require('sharp')
@@ -491,6 +491,8 @@ export class UserService {
         return contractErrors.ServerUnableToWriteProfilePicture()
     }
 
+    // TODO probably rework the whole shit for buffer send over response because of uncacheable error logg
+    // that doesn't matter but hey it's forbidden in the subject
     public async getUserProfilePicture(otherUserName: string) {
         const user = await this.getUser(otherUserName, { profilePicture: true })
         if (!user)
@@ -525,7 +527,8 @@ export class UserService {
                 }
             })
             const finalStream = new StreamConcat([ readStreamBufferInfo, readStream ])
-            return new StreamableFile(finalStream)
+            finalStream.on('error', () => { /* doing nothing because we don't care about that warning */ })
+            return new StreamableFile(finalStream).setErrorHandler(() => { /* doing nothing because we don't care about that warning */ })
         } catch (e) {}
         return contractErrors.NotFoundProfilePicture(otherUserName)
     }

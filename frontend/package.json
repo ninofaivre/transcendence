@@ -15,9 +15,12 @@
   },
   "type": "module",
   "dependencies": {
+    "@threlte/core": "^6.0.6",
+    "@types/three": "^0.155.0",
     "contract": "workspace:*",
     "socket.io-client": "^4.7.2",
-    "svelte-easy-crop": "^2.0.1"
+    "svelte-easy-crop": "^2.0.1",
+    "three": "^0.155.0"
   },
   "devDependencies": {
     "@floating-ui/dom": "^1.5.1",

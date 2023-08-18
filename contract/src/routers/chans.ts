@@ -435,7 +435,11 @@ export const chansContract = c.router(
             }),
             body: c.type<null>(),
             responses: {
-                204: c.type<null>()
+                204: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [403, "ChanPermissionTooLowOverUser"],
+                    [404, "NotFoundChan", "NotFoundChanEntity"],
+                )
             }
         }
 	},

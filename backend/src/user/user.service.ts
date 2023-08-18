@@ -11,14 +11,15 @@ import { SseService } from "src/sse/sse.service"
 import { ChansService } from "src/chans/chans.service"
 import { FriendsService } from "src/friends/friends.service"
 import { DmsService } from "src/dms/dms.service"
-import { EnrichedRequest } from "src/auth/auth.service"
 import { AccessPolicyLevel, ProximityLevel } from "src/types"
 import { fileTypeFromBuffer } from "../disgustingImports"
 import { join } from "path"
 import { EnvService } from "src/env/env.service"
 import { createReadStream, createWriteStream } from "fs"
+import { Readable } from "stream"
 
 const sharp = require('sharp')
+const StreamConcat = require('stream-concat')
 
 type RequestShapes = NestRequestShapes<typeof contract.users>
 
@@ -479,13 +480,11 @@ export class UserService {
             buffer = await sharp(profilePicture.buffer).negate().toBuffer()
         try {
             const writeStream = createWriteStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
+            writeStream.on('error', () => writeStream.close())
+            writeStream.write(buffer, () => writeStream.end())
             await new Promise<void>((resolve, reject) => {
-                writeStream.on('error', () => {})
-                writeStream.write(buffer, (error) => {
-                    if (error)
-                        reject()
-                    resolve()
-                })
+                writeStream.on('open', resolve)
+                writeStream.on('error', reject)
             })
             return null
         } catch {}
@@ -500,15 +499,33 @@ export class UserService {
 
         try {
             const readStream = createReadStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
-            const buffer = await new Promise<Buffer>((resolve, reject) => {
+            const bufferInfo = await new Promise<Buffer>((resolve, reject) => {
                 const chunks: Buffer[] = []
-                readStream.on('data', (chunk: Buffer) => chunks.push(chunk))
+                let bytesRead = 0
+                const bytesToRead = 1000
+                readStream.on('data', (chunk: Buffer) => {
+                    if (bytesRead >= bytesToRead)
+                        return
+                    chunks.push(chunk)
+                    bytesRead += chunk.length
+                    if (bytesRead >= bytesToRead) {
+                        readStream.pause()
+                        resolve(Buffer.concat(chunks))
+                    }
+                })
                 readStream.on('error', (error) => reject(error))
                 readStream.on('end', () => resolve(Buffer.concat(chunks)))
             })
-            if (isContractError(await this.isInvalidProfilePicture(buffer)))
+            if (isContractError(await this.isInvalidProfilePicture(bufferInfo)))
                 return contractErrors.NotFoundProfilePicture(otherUserName)
-            return new StreamableFile(buffer)
+            const readStreamBufferInfo = new Readable({
+                read() {
+                    this.push(bufferInfo)
+                    this.push(null)
+                }
+            })
+            const finalStream = new StreamConcat([ readStreamBufferInfo, readStream ])
+            return new StreamableFile(finalStream)
         } catch (e) {}
         return contractErrors.NotFoundProfilePicture(otherUserName)
     }

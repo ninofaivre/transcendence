@@ -116,6 +116,9 @@ importers:
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21
+      stream-concat:
+        specifier: ^1.0.0
+        version: 1.0.0
       swagger-themes:
         specifier: ^1.2.30
         version: 1.2.30
@@ -5471,6 +5474,11 @@ packages:
   /statuses@2.0.1:
     resolution: {integrity: sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==}
     engines: {node: '>= 0.8'}
+    dev: false
+
+  /stream-concat@1.0.0:
+    resolution: {integrity: sha512-LkFfEVoFZLOUWc5y55QHubSXYYeH3JtDp86nmVF/ib40k/FsBY5O/Nko4oaV+FDV52DxnTDmKY/zsR2VfFYsBA==}
+    engines: {node: '>=12'}
     dev: false
 
   /streamsearch@1.1.0:

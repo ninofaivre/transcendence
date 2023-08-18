@@ -15,6 +15,7 @@
 	import { client } from "$clients"
 	import {
 		addListenerToEventSource,
+		checkError,
 		makeToast,
 		shallowCopyPartialToNotPartial,
 	} from "$lib/global"
@@ -76,7 +77,7 @@
 				isDeleted: false,
 			},
 		]
-		const { status, body } = await client.chans.createChanMessage({
+		const ret = await client.chans.createChanMessage({
 			params: {
 				chanId: $page.params.chanId,
 			},
@@ -85,13 +86,8 @@
 			},
 		})
 		const last_elt_index = messages.length > 0 ? messages.length - 1 : 0
-		if (status == 201 && body) {
-			messages[last_elt_index] = body
-		} else
-			console.error(
-				"The message sent was received by the server but has not been created. Server responder with:",
-				status,
-			)
+		if (ret.status !== 201) checkError(ret, "send message")
+		else messages[last_elt_index] = ret.body
 	}
 
 	async function deletionHandler({ detail: { id: elementId } }: CustomEvent<{ id: string }>) {

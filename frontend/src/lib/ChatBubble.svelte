@@ -4,7 +4,7 @@
 	import type { Chan, DirectConversation, Message } from "$types"
 	import { my_name } from "$stores"
 	import ChatBox from "$lib/ChatBox.svelte"
-	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
+	import { checkError, listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
 	import { makeToast } from "$lib/global"
 	import { isContractError } from "contract"
@@ -73,15 +73,8 @@
 			},
 			body: null,
 		})
-		if (ret.status == 202) {
-			makeToast("Kicked " + message.author)
-		} else if (isContractError(ret)) {
-			makeToast(`Failed to kick ${message.author} from chan: ${ret.body.message}`)
-			console.warn(ret.body.code)
-		} else
-			throw new Error(
-				`Unexpected return from server when trying to toggle ${message.author} ADMIN status`,
-			)
+		if (ret.status != 204) checkError(ret, `kick ${message.author}`)
+		else makeToast("Kicked " + message.author)
 	}
 
 	async function mute() {
@@ -96,7 +89,6 @@
 			}
 			modalStore.trigger(modal)
 		})
-		console.log(r)
 		if (r) {
 			const ret = await client.chans.muteUserFromChan({
 				params: {
@@ -107,15 +99,8 @@
 					timeoutInMs: Number(r),
 				},
 			})
-			if (ret.status == 204) {
-				makeToast("Muted " + message.author)
-			} else if (isContractError(ret)) {
-				makeToast(`Failed to mute ${message.author}: ${ret.body.message}`)
-				console.warn(ret.body.code)
-			} else
-				throw new Error(
-					`Unexpected return from server when trying to mute ${message.author}: Server returned ${ret.status}`,
-				)
+			if (ret.status != 204) checkError(ret, `mute ${message.author}`)
+			else makeToast("Muted " + message.author)
 		}
 	}
 
@@ -127,15 +112,8 @@
 			},
 			body: null,
 		})
-		if (ret.status == 204) {
-			makeToast("Unmuted " + message.author)
-		} else if (isContractError(ret)) {
-			makeToast(`Failed to unmute ${message.author}: ${ret.body.message}`)
-			console.warn(ret.body.code)
-		} else
-			throw new Error(
-				`Unexpected return from server when trying to unmute ${message.author}: Server returned ${ret.status}`,
-			)
+		if (ret.status != 204) checkError(ret, `unmute ${message.author}`)
+		else makeToast("Unmuted " + message.author)
 	}
 
 	async function ban() {
@@ -148,13 +126,10 @@
 				timeoutInMs: "infinity",
 			},
 		})
-		if (ret.status == 204) {
-			makeToast("Banned " + message.author)
-		} else if (isContractError(ret)) {
-			makeToast(`Failed to ban ${message.author}: ${ret.body.message}`)
-			console.warn(ret.body.code)
-		} else throw new Error(`Unexpected return from server when trying to ban ${message.author}`)
+		if (ret.status != 204) checkError(ret, `ban ${message.author}`)
+		else makeToast("Banned " + message.author)
 	}
+
 	async function unban() {
 		const ret = await client.chans.unbanUserFromChan({
 			params: {
@@ -163,13 +138,8 @@
 			},
 			body: null,
 		})
-		if (ret.status == 204) {
-			makeToast("Unbanned " + message.author)
-		} else if (isContractError(ret)) {
-			makeToast(`Failed to unban ${message.author}: ${ret.body.message}`)
-			console.warn(ret.body.code)
-		} else
-			throw new Error(`Unexpected return from server when trying to unban ${message.author}`)
+		if (ret.status != 204) checkError(ret, `unban ${message.author}`)
+		else makeToast("Unbanned " + message.author)
 	}
 
 	async function toggleAdmin() {
@@ -183,33 +153,14 @@
 				state,
 			},
 		})
-		if (ret.status === 204) {
+		if (ret.status != 204) checkError(ret, `unban ${message.author}`)
+		else if (ret.status === 204) {
 			if (state) {
 				makeToast(message.author + " was granted Admin status")
 			} else {
 				makeToast(message.author + " lost Admin status")
 			}
-		} else if (isContractError(ret)) {
-			if (state) {
-				makeToast(
-					"Couldn't grant Admin status to user" +
-						message.author +
-						": " +
-						ret.body.message,
-				)
-			} else {
-				makeToast(
-					"Couldn't remove Admin status from user" +
-						message.author +
-						": " +
-						ret.body.message,
-				)
-			}
-			console.warn(ret.body.code)
-		} else
-			throw new Error(
-				`Unexpected return from server when trying to toggle ${message.author} ADMIN status`,
-			)
+		}
 	}
 
 	function isChan(arg: DirectConversation | Chan): arg is Chan {

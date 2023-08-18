@@ -26,8 +26,9 @@
 
 	$: {
 		if ($logged_in == true) {
-			goto(`/users/damien`)
+			// goto(`/users/damien`)
 			// goto("/myprofile")
+			goto("/chans")
 		} else if ($logged_in == false) {
 			goto("/auth")
 		}

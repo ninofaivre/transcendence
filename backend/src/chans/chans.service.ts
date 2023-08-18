@@ -303,6 +303,7 @@ export class ChansService {
             selfPerms: this.getSelfPerm(username, chan),
             bannedUsers: timedStatusUsers
                 .filter(({ type }) => type === 'BAN')
+                .filter(({ timedUserName }) => this.doesUserHasPermOverUserInChan(username, timedUserName, chan, 'BAN'))
                 .map(({ timedUserName }) => timedUserName),
             users: users.map(user =>
                 this.formatChanUserForUser(username, user, chan),
@@ -713,10 +714,13 @@ export class ChansService {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 id: true,
+                users: { where: { name: otherUserName }, select: { name: true } },
                 ...this.getPermSelect(username, otherUserName)
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
+        if (!chan.users.some(({ name }) => name === otherUserName))
+            return contractErrors.NotFoundChanEntity(chanId, 'user', otherUserName)
         if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, 'BAN'))
             return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'BAN')
 

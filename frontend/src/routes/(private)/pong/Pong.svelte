@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { T, useFrame } from "@threlte/core"
+	import { T, extend, useFrame, useThrelte } from "@threlte/core"
 	import type { MeshBasicMaterialParameters } from "three"
 	import * as GameObjects from "./GameObjects"
 	import { writable } from "svelte/store"
@@ -8,6 +8,7 @@
 	import { onMount } from "svelte"
 	import Paddle from "./Paddle.svelte"
 	import Ball from "./Ball.svelte"
+	import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
 	// const game_socket = io(PUBLIC_BACKEND_URL)
 	// const game_socket_store = writable(game_socket)
@@ -24,11 +25,10 @@
 	// 	return $game_socket_store.close
 	// })
 
-	useFrame((state, delta) => {
-		// console.log(delta)
-		// console.log(state)
-	})
+	extend({ OrbitControls })
+	const { renderer, invalidate } = useThrelte()
 
+	useFrame((state, delta) => {})
 	// General parameters
 	export const interval = 1
 
@@ -53,35 +53,35 @@
 	// Initial object positioning
 	const ball_startx = width / 2
 	const ball_starty = height / 2
-	// const ball_size = border_width * 1.5
-	const ball_size = 20
-	// const lpaddle_startx = width / 30
-	// const lpaddle_startx = width / 30
-	const lpaddle_startx = 10
-	alert(lpaddle_startx)
+	const ball_size = border_width * 1.5
+
+	const lpaddle_startx = -width / 30
+	const rpaddle_startx = width / 30
+
 	const lpaddle_starty = height / 2 - paddle_height / 2
-	const rpaddle_startx = 500
 	const rpaddle_starty = height / 2 - paddle_height / 2
 
 	// Game variables
 	let playing = true
 	let left_score = 0
 	let right_score = 0
-	GameObjects.Paddle.speed = 1000
+	GameObjects.Paddle.speed = 100
 
 	let lpaddle = new GameObjects.Paddle(
 		lpaddle_startx,
 		lpaddle_starty,
 		paddle_width,
 		paddle_height,
-		paddle_color,
+		// paddle_color,
+		"blue",
 	)
 	let rpaddle = new GameObjects.Paddle(
 		rpaddle_startx,
 		rpaddle_starty,
 		paddle_width,
 		paddle_height,
-		paddle_color,
+		// paddle_color,
+		"green",
 	)
 	let ball = new GameObjects.Ball(ball_startx, ball_starty, ball_size, ball_color)
 
@@ -90,24 +90,24 @@
 			console.log(`You entered ${e.key}`)
 			switch (e.code) {
 				case "KeyW":
-					if (lpaddle.y > 0) lpaddle.y -= GameObjects.Paddle.speed
+					lpaddle.y -= GameObjects.Paddle.speed
 					lpaddle = lpaddle
 					return
 				case "KeyS":
-					if (lpaddle.y + lpaddle.height < height) lpaddle.y += GameObjects.Paddle.speed
+					lpaddle.y += GameObjects.Paddle.speed
 					lpaddle = lpaddle
 					return
 				case "ArrowUp":
-					if (rpaddle.y > 0) rpaddle.y -= GameObjects.Paddle.speed
+					rpaddle.y -= GameObjects.Paddle.speed
 					rpaddle = rpaddle
 					return
 				case "ArrowDown":
-					if (rpaddle.y + rpaddle.height < height) rpaddle.y += GameObjects.Paddle.speed
+					rpaddle.y += GameObjects.Paddle.speed
 					rpaddle = rpaddle
 					return
 				default:
-					alert("Key not handled!")
 			}
+			invalidate("moved")
 		}
 	}
 </script>
@@ -115,13 +115,10 @@
 <svelte:window on:keydown={handleKeydown} />
 
 <!-- Camera -->
-<T.PerspectiveCamera
-	makeDefault
-	position={[0, 0, 1000]}
-	on:create={({ ref }) => {
-		ref.lookAt(0, 0, 1)
-	}}
-/>
+<T.PerspectiveCamera makeDefault position={[0, 0, 100]} let:ref>
+	<T.OrbitControls args={[ref, renderer.domElement]} on:change={invalidate} />
+</T.PerspectiveCamera>
+
 <!-- Ball -->
 <Ball {ball} />
 <!-- Left paddle  -->

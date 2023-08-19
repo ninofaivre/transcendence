@@ -5,6 +5,7 @@
 
 	// Sizing
 	export let ball: Ball
+    console.log(`ball position: {x: ${ball.x}, y: ${ball.y}`)
 </script>
 
 <!-- Ball  -->

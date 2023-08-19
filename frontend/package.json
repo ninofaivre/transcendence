@@ -16,6 +16,7 @@
   "type": "module",
   "dependencies": {
     "@threlte/core": "^6.0.6",
+    "@threlte/extras": "^5.2.0",
     "@types/three": "^0.155.0",
     "contract": "workspace:*",
     "socket.io-client": "^4.7.2",

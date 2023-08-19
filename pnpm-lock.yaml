@@ -177,6 +177,9 @@ importers:
       '@threlte/core':
         specifier: ^6.0.6
         version: 6.0.6(svelte@4.2.0)(three@0.155.0)
+      '@threlte/extras':
+        specifier: ^5.2.0
+        version: 5.2.0(svelte@4.2.0)(three@0.155.0)
       '@types/three':
         specifier: ^0.155.0
         version: 0.155.0
@@ -1395,6 +1398,18 @@ packages:
       three: 0.155.0
     dev: false
 
+  /@threlte/extras@5.2.0(svelte@4.2.0)(three@0.155.0):
+    resolution: {integrity: sha512-hAijgQBK37gTpp2wGiSUQEb5y1+9x/V2S9kOCUiSb3A2O9+VlbDsjY4kYV1yck2nnewtlJf26mtRAyexrgjKoQ==}
+    peerDependencies:
+      svelte: '>=4'
+      three: '>=0.133'
+    dependencies:
+      lodash-es: 4.17.21
+      svelte: 4.2.0
+      three: 0.155.0
+      troika-three-text: 0.47.2(three@0.155.0)
+    dev: false
+
   /@tokenizer/token@0.3.0:
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
@@ -2140,6 +2155,12 @@ packages:
     transitivePeerDependencies:
       - encoding
       - supports-color
+    dev: false
+
+  /bidi-js@1.0.3:
+    resolution: {integrity: sha512-RKshQI1R3YQ+n9YJz2QQ147P66ELpa1FQEg20Dk8oW9t2KgLbpDLLp9aGZ7y8WHSshDknG0bknqGw5/tyCs5tw==}
+    dependencies:
+      require-from-string: 2.0.2
     dev: false
 
   /big-integer@1.6.51:
@@ -4056,6 +4077,10 @@ packages:
     dependencies:
       p-locate: 5.0.0
     dev: true
+
+  /lodash-es@4.17.21:
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
+    dev: false
 
   /lodash.castarray@4.4.0:
     resolution: {integrity: sha512-aVx8ztPv7/2ULbArGJ2Y42bG1mEQ5mGjpdvrbJcJFU3TbYybe+QlLS4pst9zV52ymy2in1KpFPiZnAOATxD4+Q==}
@@ -6007,6 +6032,30 @@ packages:
     dependencies:
       escape-string-regexp: 5.0.0
 
+  /troika-three-text@0.47.2(three@0.155.0):
+    resolution: {integrity: sha512-qylT0F+U7xGs+/PEf3ujBdJMYWbn0Qci0kLqI5BJG2kW1wdg4T1XSxneypnF05DxFqJhEzuaOR9S2SjiyknMng==}
+    peerDependencies:
+      three: '>=0.125.0'
+    dependencies:
+      bidi-js: 1.0.3
+      three: 0.155.0
+      troika-three-utils: 0.47.2(three@0.155.0)
+      troika-worker-utils: 0.47.2
+      webgl-sdf-generator: 1.1.1
+    dev: false
+
+  /troika-three-utils@0.47.2(three@0.155.0):
+    resolution: {integrity: sha512-/28plhCxfKtH7MSxEGx8e3b/OXU5A0xlwl+Sbdp0H8FXUHKZDoksduEKmjQayXYtxAyuUiCRunYIv/8Vi7aiyg==}
+    peerDependencies:
+      three: '>=0.125.0'
+    dependencies:
+      three: 0.155.0
+    dev: false
+
+  /troika-worker-utils@0.47.2:
+    resolution: {integrity: sha512-mzss4MeyzUkYBppn4x5cdAqrhBHFEuVmMMgLMTyFV23x6GvQMyo+/R5E5Lsbrt7WSt5RfvewjcwD1DChRTA9lA==}
+    dev: false
+
   /ts-api-utils@1.0.2(typescript@5.1.6):
     resolution: {integrity: sha512-Cbu4nIqnEdd+THNEsBdkolnOXhg0I8XteoHaEKgvsxpsbWda4IsUut2c187HxywQCvveojow0Dgw/amxtSKVkQ==}
     engines: {node: '>=16.13.0'}
@@ -6250,6 +6299,10 @@ packages:
     resolution: {integrity: sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==}
     dependencies:
       defaults: 1.0.4
+    dev: false
+
+  /webgl-sdf-generator@1.1.1:
+    resolution: {integrity: sha512-9Z0JcMTFxeE+b2x1LJTdnaT8rT8aEp7MVxkNwoycNmJWwPdzoXzMh0BjJSh/AEFP+KPYZUli814h8bJZFIZ2jA==}
     dev: false
 
   /webidl-conversions@3.0.1:

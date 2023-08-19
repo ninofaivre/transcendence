@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { T } from "@threlte/core"
+	import { T, useFrame } from "@threlte/core"
 	import type { MeshBasicMaterialParameters } from "three"
 	import * as GameObjects from "./GameObjects"
 	import { writable } from "svelte/store"
@@ -23,6 +23,11 @@
 
 	// 	return $game_socket_store.close
 	// })
+
+	useFrame((state, delta) => {
+		// console.log(delta)
+		// console.log(state)
+	})
 
 	// General parameters
 	export const interval = 1
@@ -59,11 +64,55 @@
 	const rpaddle_starty = height / 2 - paddle_height / 2
 
 	// Game variables
-	let playing = false
+	let playing = true
 	let left_score = 0
 	let right_score = 0
-	// Paddle.speed = 10
+	GameObjects.Paddle.speed = 1000
+
+	let lpaddle = new GameObjects.Paddle(
+		lpaddle_startx,
+		lpaddle_starty,
+		paddle_width,
+		paddle_height,
+		paddle_color,
+	)
+	let rpaddle = new GameObjects.Paddle(
+		rpaddle_startx,
+		rpaddle_starty,
+		paddle_width,
+		paddle_height,
+		paddle_color,
+	)
+	let ball = new GameObjects.Ball(ball_startx, ball_starty, ball_size, ball_color)
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (playing) {
+			console.log(`You entered ${e.key}`)
+			switch (e.code) {
+				case "KeyW":
+					if (lpaddle.y > 0) lpaddle.y -= GameObjects.Paddle.speed
+					lpaddle = lpaddle
+					return
+				case "KeyS":
+					if (lpaddle.y + lpaddle.height < height) lpaddle.y += GameObjects.Paddle.speed
+					lpaddle = lpaddle
+					return
+				case "ArrowUp":
+					if (rpaddle.y > 0) rpaddle.y -= GameObjects.Paddle.speed
+					rpaddle = rpaddle
+					return
+				case "ArrowDown":
+					if (rpaddle.y + rpaddle.height < height) rpaddle.y += GameObjects.Paddle.speed
+					rpaddle = rpaddle
+					return
+				default:
+					alert("Key not handled!")
+			}
+		}
+	}
 </script>
+
+<svelte:window on:keydown={handleKeydown} />
 
 <!-- Camera -->
 <T.PerspectiveCamera
@@ -74,24 +123,8 @@
 	}}
 />
 <!-- Ball -->
-<Ball ball={new GameObjects.Ball(ball_startx, ball_starty, ball_size, ball_color)} />
+<Ball {ball} />
 <!-- Left paddle  -->
-<Paddle
-	paddle={new GameObjects.Paddle(
-		lpaddle_startx,
-		lpaddle_starty,
-		paddle_width,
-		paddle_height,
-		paddle_color,
-	)}
-/>
+<Paddle paddle={lpaddle} />
 <!-- Right paddle  -->
-<Paddle
-	paddle={new GameObjects.Paddle(
-		rpaddle_startx,
-		rpaddle_starty,
-		paddle_width,
-		paddle_height,
-		paddle_color,
-	)}
-/>
+<Paddle paddle={rpaddle} />

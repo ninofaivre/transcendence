@@ -1,8 +1,8 @@
 import { Controller, Res, Request, Get, Post, UseGuards } from "@nestjs/common"
-import { LocalAuthGuard } from "./local-auth.guard"
 import { AuthService } from "./auth.service"
 import { NestControllerInterface, TsRest, nestControllerContract } from "@ts-rest/nest"
 import { contract } from "contract"
+import { AuthGuard } from "@nestjs/passport"
 
 const c = nestControllerContract(contract.auth)
 
@@ -10,7 +10,7 @@ const c = nestControllerContract(contract.auth)
 export class AuthController implements NestControllerInterface<typeof c> {
 	constructor(private authService: AuthService) {}
 
-	@UseGuards(LocalAuthGuard)
+	@UseGuards(AuthGuard("local"))
 	@TsRest(c.login)
 	async login(@Res({ passthrough: true }) res: any, @Request() req: any) {
 		res.cookie("access_token", await this.authService.login(req.user), {

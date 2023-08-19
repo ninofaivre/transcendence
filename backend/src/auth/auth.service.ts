@@ -10,7 +10,7 @@ export type EnrichedRequest = Request & { user: { username: string } }
 export class AuthService {
 	constructor(private usersService: UserService, private jwtService: JwtService) {}
 
-	async validateUser(username: string, pass: string) {
+	async validateUser(code: string) {
 		const dbUser = await this.usersService.getUserByName(username, {
 			name: true,
 			password: true,

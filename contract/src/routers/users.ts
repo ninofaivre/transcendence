@@ -139,12 +139,13 @@ export const usersContract = c.router(
 			method: "POST",
 			path: "/",
 			body: z.strictObject({
-				name: zUserName,
-				password: zUserPassword,
+				username: zUserName,
+				code: z.string(),
 			}),
 			responses: {
 				201: z.object({
-					name: zUserName,
+					username: zUserName,
+                    intraUserName: z.string()
 				}),
 				...getErrorsForContract(c, [409, "UserAlreadyExist"]),
 			},

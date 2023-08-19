@@ -15,11 +15,9 @@ import { AccessPolicyLevel, ProximityLevel } from "src/types"
 import { fileTypeFromBuffer } from "../disgustingImports"
 import { join } from "path"
 import { EnvService } from "src/env/env.service"
-import { createReadStream, createWriteStream } from "fs"
-import { Readable } from "stream"
+import { readFileSync, writeFileSync } from "fs"
 
 const sharp = require('sharp')
-const StreamConcat = require('stream-concat')
 
 type RequestShapes = NestRequestShapes<typeof contract.users>
 
@@ -470,7 +468,7 @@ export class UserService {
             return contractErrors.InvalidProfilePicture('no file')
         let buffer = profilePicture.buffer
         const contractError = await this.isInvalidProfilePicture(buffer)
-        if (isContractError(contractError))
+        if (contractError)
             return contractError 
         const user = await this.getUser(username, { profilePicture: true })
         if (!user)
@@ -479,13 +477,7 @@ export class UserService {
         if (username === 'tom')
             buffer = await sharp(profilePicture.buffer).negate().toBuffer()
         try {
-            const writeStream = createWriteStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
-            writeStream.on('error', () => writeStream.close())
-            writeStream.write(buffer, () => writeStream.end())
-            await new Promise<void>((resolve, reject) => {
-                writeStream.on('open', resolve)
-                writeStream.on('error', reject)
-            })
+            writeFileSync(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName), buffer)
             return null
         } catch {}
         return contractErrors.ServerUnableToWriteProfilePicture()
@@ -498,35 +490,11 @@ export class UserService {
         const { profilePicture: profilePictureFileName } = user
 
         try {
-            const readStream = createReadStream(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
-            const bufferInfo = await new Promise<Buffer>((resolve, reject) => {
-                const chunks: Buffer[] = []
-                let bytesRead = 0
-                const bytesToRead = 1000
-                readStream.on('data', (chunk: Buffer) => {
-                    if (bytesRead >= bytesToRead)
-                        return
-                    chunks.push(chunk)
-                    bytesRead += chunk.length
-                    if (bytesRead >= bytesToRead) {
-                        readStream.pause()
-                        resolve(Buffer.concat(chunks))
-                    }
-                })
-                readStream.on('error', (error) => reject(error))
-                readStream.on('end', () => resolve(Buffer.concat(chunks)))
-            })
-            if (isContractError(await this.isInvalidProfilePicture(bufferInfo)))
+            const buffer = readFileSync(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName))
+            if (await this.isInvalidProfilePicture(buffer))
                 return contractErrors.NotFoundProfilePicture(otherUserName)
-            const readStreamBufferInfo = new Readable({
-                read() {
-                    this.push(bufferInfo)
-                    this.push(null)
-                }
-            })
-            const finalStream = new StreamConcat([ readStreamBufferInfo, readStream ])
-            return new StreamableFile(finalStream)
-        } catch (e) {}
+            return new StreamableFile(buffer)
+        } catch {}
         return contractErrors.NotFoundProfilePicture(otherUserName)
     }
 

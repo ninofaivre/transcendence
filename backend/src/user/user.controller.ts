@@ -1,6 +1,5 @@
-import { Res, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common"
+import { UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common"
 import { Controller, Request } from "@nestjs/common"
-import { Response } from "express"
 import { JwtAuthGuard } from "../auth/jwt-auth.guard"
 import { UserService } from "./user.service"
 import { TsRest, TsRestHandler, tsRestHandler } from "@ts-rest/nest"

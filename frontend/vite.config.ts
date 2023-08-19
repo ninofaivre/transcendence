@@ -4,6 +4,9 @@ import { defineConfig, loadEnv } from "vite"
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, "..")
 	return {
+		ssr: {
+			noExternal: ["three"],
+		},
 		plugins: [sveltekit()],
 		build: {
 			minify: false,

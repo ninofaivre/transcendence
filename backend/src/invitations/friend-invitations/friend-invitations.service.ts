@@ -102,7 +102,7 @@ export class FriendInvitationsService {
 			)
 		if (friend.length || friendOf.length)
 			throw new ForbiddenException(
-				`${invitingUserName} friend with ${invitedUserName} (${
+				`${invitingUserName} already friend with ${invitedUserName} (${
 					friend[0]?.id || friendOf[0]?.id
 				})`,
 			)

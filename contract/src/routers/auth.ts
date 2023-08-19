@@ -17,11 +17,16 @@ export const authContract = c.router(
 			method: "POST",
 			path: "/login",
 			body: z.strictObject({
-				username: zUserName,
-				password: zUserPassword,
+                code: z.string()
 			}),
 			responses: {
-				202: c.type<null>(),
+				200: z.object({
+                    username: zUserName,
+                    intraUserName: z.string()
+                }),
+                401: z.object({
+                    code: "Unauthorized",
+                })
 			},
 		},
 	},

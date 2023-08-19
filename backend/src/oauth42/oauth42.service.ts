@@ -12,7 +12,7 @@ export class Oauth42Service {
 
     }
 
-    private async getToken(code: string) {
+    private async getToken(code: string): Promise<string | undefined> {
         return (await firstValueFrom(
             this.httpService.post('https://api.intra.42.fr/oauth/token', {
                 grant_type: 'authorization_code',
@@ -24,11 +24,16 @@ export class Oauth42Service {
         ).data.access_token
     }
 
-    public async getIntraUserName(code: string) {
+    public async getIntraUserName(code: string): Promise<string | undefined> {
+        // TODO tmp for testing purposes
+        return "nfaivre"
+        const token = await this.getToken(code)
+        if (!token)
+            return
         return (await firstValueFrom(
             this.httpService.get('https://api.intra.42.fr/v2/me', {
                 headers: {
-                    'Authorization': `Bearer ${await this.getToken(code)}`
+                    'Authorization': `Bearer ${token}`
                 }
             })
         )).data.login

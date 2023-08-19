@@ -16,7 +16,9 @@ const envSchema = z.object({
 
     PUBLIC_API42_CLIENT_ID: z.string(),
     PUBLIC_API42_REDIRECT_URI: z.string(),
-    API42_CLIENT_SECRET: z.string()
+    API42_CLIENT_SECRET: z.string(),
+
+    MODE: z.union([z.literal("DEV"), z.literal("PROD")])
 })
 
 @Injectable()

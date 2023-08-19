@@ -1,29 +1,40 @@
 import { Injectable } from "@nestjs/common"
 import { UserService } from "../user/user.service"
-import { compare } from "bcrypt"
 import { JwtService } from "@nestjs/jwt"
 import { Request } from "express"
+import { Oauth42Service } from "src/oauth42/oauth42.service"
+import { PrismaService } from "src/prisma/prisma.service"
 
-export type EnrichedRequest = Request & { user: { username: string } }
+export type EnrichedRequest = Request
+    & {
+        user: {
+            username: string,
+            intraUserName: string
+        }
+    }
 
 @Injectable()
 export class AuthService {
-	constructor(private usersService: UserService, private jwtService: JwtService) {}
+	constructor(
+        private readonly prisma: PrismaService,
+        private readonly usersService: UserService,
+        private readonly jwtService: JwtService,
+        private readonly oAuth: Oauth42Service
+    ) {}
 
 	async validateUser(code: string) {
-		const dbUser = await this.usersService.getUserByName(username, {
-			name: true,
-			password: true,
-		})
-		if (dbUser && dbUser.password && dbUser.name && (await compare(pass, dbUser.password))) {
-			const { password, ...result } = dbUser
-			return { ...result, id: username }
-		}
-		return null
+        const intraUserName = await this.oAuth.getIntraUserName(code)
+        if (!intraUserName)
+            return null
+        const user = await this.prisma.user.findUnique({ where: { intraUserName },
+            select: { name: true }}) 
+        if (!user)
+            return null
+        return { username: user.name, intraUserName }
 	}
 
-	async login(user: any) {
-		const payload = { username: user.name, sub: user.id }
+	async login(user: EnrichedRequest['user']) {
+		const payload = { ...user, sub: user.username }
 		return this.jwtService.sign(payload)
 	}
 }

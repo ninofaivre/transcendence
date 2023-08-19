@@ -67,26 +67,27 @@
 
 <T.PerspectiveCamera
 	makeDefault
-	position={[10, 10, 10]}
+	position={[0, 0, 1000]}
 	on:create={({ ref }) => {
-		ref.lookAt(1, 1, 0)
+		ref.lookAt(0, 1, 1)
 	}}
 />
 
 <!-- Left paddle -->
 <T.Mesh x={lpaddle.x} y={lpaddle.y}>
-	<T.BoxGeometry args={[lpaddle.width, lpaddle.height, 0]} />
+	<!-- paddle dimensions -->
+	<T.BoxGeometry args={[lpaddle.width, lpaddle.height, 1]} />
 	<T.MeshBasicMaterial args={[{ color: paddle_color }]} />
 </T.Mesh>
 
 <!-- Right paddle -->
 <T.Mesh x={rpaddle.x} y={rpaddle.y}>
-	<T.BoxGeometry args={[rpaddle.width, rpaddle.height, 0]} />
+	<T.BoxGeometry args={[rpaddle.width, rpaddle.height, 1]} />
 	<T.MeshBasicMaterial args={[{ color: paddle_color }]} />
 </T.Mesh>
 
 <!-- Ball  -->
 <T.Mesh x={ball.x} y={ball.y}>
-	<T.BoxGeometry args={[ball.r, ball.r, 0]} />
+	<T.BoxGeometry args={[ball.r, ball.r, 1]} />
 	<T.MeshBasicMaterial args={[{ color: ball_color }]} />
 </T.Mesh>

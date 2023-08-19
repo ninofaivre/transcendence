@@ -14,14 +14,16 @@ class Rectangle {
 
 export class Paddle extends Rectangle {
 	static speed = 1
+	public color: string
 
 	y0: number
 	dy: number
 
-	constructor(x: number, y: number, w: number, h: number, dy = 1) {
+	constructor(x: number, y: number, w: number, h: number, color: string, dy = 1) {
 		super(x, y, w, h)
 		this.y0 = y
 		this.dy = dy
+		this.color = color
 	}
 
 	update() {
@@ -53,13 +55,15 @@ export class Ball extends Circle {
 	dy: number
 	speed: number
 	initialSpeed: number
+	public color: string
 
-	constructor(x: number, y: number, r: number, speed = 1) {
+	constructor(x: number, y: number, r: number, color: string, speed = 1) {
 		super(x, y, r)
 		this.x0 = x
 		this.y0 = y
 		this.initialSpeed = speed
 		this.speed = speed
+		this.color = color
 		;[this.dx, this.dy] = this.start()
 	}
 

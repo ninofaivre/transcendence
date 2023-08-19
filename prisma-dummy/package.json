@@ -1,7 +1,7 @@
 {
     "name": "prisma-dummy",
     "scripts": {
-        "build": "pnpm exec prisma generate && pnpm exec prisma db push && ./customSql/applyCustomSql.sh"
+        "build": "dotenv -e ../.env -- pnpm exec prisma generate &&  dotenv -e ../.env -- pnpm exec prisma db push && dotenv -e ../.env -- psql --file=CUSTOM.sql"
     },
     "devDependencies": {
         "@gabrola/zod-prisma": "^0.11.0",

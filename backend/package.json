@@ -3,7 +3,7 @@
 		"build": "pnpm exec nest build",
 		"build:back": "pnpm exec nest build",
 		"start": "pnpm exec nest start",
-		"start:prod": "node ./dist",
+		"start:prod": "node ./dist/main",
 		"dev": "pnpm exec nest start --watch"
 	},
 	"dependencies": {

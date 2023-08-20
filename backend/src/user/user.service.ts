@@ -16,6 +16,7 @@ import { fileTypeFromBuffer } from "../disgustingImports"
 import { join } from "path"
 import { EnvService } from "src/env/env.service"
 import { readFileSync, writeFileSync } from "fs"
+import { Oauth42Service } from "src/oauth42/oauth42.service"
 
 const sharp = require('sharp')
 
@@ -33,6 +34,7 @@ export class UserService {
 		private readonly friendsService: FriendsService,
 		@Inject(forwardRef(() => DmsService))
 		private readonly dmsService: DmsService,
+        private readonly oauth: Oauth42Service
 	) {}
 
 	private getUserProfilePreviewSelectForUser(username: string) {
@@ -332,12 +334,33 @@ export class UserService {
 		return user
 	}
 
-	async createUser(user: RequestShapes["signUp"]["body"]) {
-		if (await this.getUserByName(user.name, { name: true }))
-			return contractErrors.UserAlreadyExist(user.name)
-		user.password = await hash(user.password, 10)
-		const { password, ...result } = await this.prisma.user.create({ data: user })
-		return result
+	async createUser({ code, username }: RequestShapes["signUp"]["body"]) {
+        const intraUserName = await this.oauth.getIntraUserName(code)
+        // TODO change this error for invalid intra 42 code or smth like this
+        if (!intraUserName)
+            return contractErrors.UserAlreadyExist(username)
+        const user = await this.prisma.user.findMany({
+            where: {
+                OR: [
+                    { intraUserName },
+                    { name: username }
+                ]
+            },
+            select: {
+                name: true,
+                intraUserName: true
+            },
+            take: 1
+        })
+        if (user.length)
+            return contractErrors.UserAlreadyExist(`${intraUserName} || ${username}`)
+        await this.prisma.user.create({
+            data: {
+                name: username,
+                intraUserName
+            }
+        })
+		return { username, intraUserName }
 	}
 
 	private async getNotifyStatusData(username: string) {

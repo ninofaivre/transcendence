@@ -4,7 +4,7 @@ import { CompleteRoleInput, CompleteRoleOutput, RelatedRoleModel, CompleteDirect
 
 export const UserModel = z.object({
   name: z.string(),
-  password: z.string(),
+  intraUserName: z.string(),
   profilePicture: z.string(),
   dmPolicyLevel: z.nativeEnum(AccessPolicyLevel),
   statusVisibilityLevel: z.nativeEnum(AccessPolicyLevel),

@@ -5,9 +5,10 @@ import { SseModule } from "src/sse/sse.module"
 import { ChansModule } from "src/chans/chans.module"
 import { FriendsModule } from "src/friends/friends.module"
 import { DmsModule } from "src/dms/dms.module"
+import { Oauth42Module } from "src/oauth42/oauth42.module"
 
 @Module({
-	imports: [forwardRef(() => SseModule), ChansModule, forwardRef(() => FriendsModule), DmsModule],
+	imports: [forwardRef(() => SseModule), ChansModule, forwardRef(() => FriendsModule), DmsModule, Oauth42Module],
 	providers: [UserService],
 	controllers: [UserController],
 	exports: [UserService],

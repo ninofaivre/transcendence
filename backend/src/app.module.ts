@@ -14,6 +14,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { EnvModule } from './env/env.module';
 import { CallbackModule } from './callback/callback.module';
 import { Reflector } from "@nestjs/core"
+import { Oauth42Module } from './oauth42/oauth42.module';
 
 @Module({
 	imports: [
@@ -31,7 +32,8 @@ import { Reflector } from "@nestjs/core"
 		PrismaModule,
 		EnvModule,
 		CallbackModule,
-        Reflector
+        Reflector,
+        Oauth42Module
 	],
 	controllers: [AppController],
 	providers: [AppService],

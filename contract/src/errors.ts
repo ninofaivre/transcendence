@@ -296,13 +296,15 @@ export function getErrorsForContract<
 	)
 }
 
-export function isContractError(toTest: any): toTest is ContractError {
+export function isContractError(toTest: unknown): toTest is ContractError {
 	return !!(
-		toTest &&
-		toTest["status"] &&
-		typeof toTest["status"] === "number" &&
-		toTest["body"] &&
-		toTest["body"]["code"] &&
-		typeof toTest["body"]["code"] === "string"
+		typeof toTest === "object" && toTest &&
+		"status" in toTest && typeof toTest["status"] === "number" &&
+		"body" in toTest && typeof toTest["body"] === "object" && toTest["body"] &&
+		"code" in toTest["body"] && typeof toTest["body"]["code"] === "string" &&
+        (!("message" in toTest["body"]) || !toTest["body"]["message"] || typeof toTest["body"]["message"] === "string")
 	)
 }
+
+export const isErrorCode = (ret: { status: HTTPStatusCode, body: unknown }, code: Codes) =>
+    (isContractError(ret) && ret.body.code === code)

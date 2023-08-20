@@ -7,22 +7,52 @@
 	import "../app.postcss"
 
 	import { computePosition, autoUpdate, offset, shift, flip, arrow } from "@floating-ui/dom"
-	import { storePopup } from "@skeletonlabs/skeleton"
 
 	import { AppShell, AppBar, LightSwitch, Toast, Avatar } from "@skeletonlabs/skeleton"
-	import { logout } from "$lib/global"
+	import { checkError, logout, makeToast } from "$lib/global"
 	import { logged_in, my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
 	import { Modal, type ModalComponent } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import MuteSlider from "$lib/MuteSlider.svelte"
+	import { page } from "$app/stores"
+	import { client } from "$clients"
 
-	storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow })
+	let long_random_phrase = "idontunderstandhowyouaresupposedtochoosearandomphrasebutialsodontcare"
+	const username = $page.url.searchParams.get("username")
+	const code = $page.url.searchParams.get("code")
 
-	function setup_logout(node: HTMLButtonElement) {
-		node.addEventListener("click", () => logout())
-	}
+	;(async () => {
+		if ($page.url.searchParams.get("state") === long_random_phrase) {
+			if (code) {
+				if (username) {
+					const ret = await client.users.signUp({
+						body: {
+							username: $page.url.searchParams.get("username")!,
+							code: $page.url.searchParams.get("code")!,
+						},
+					})
+					if (ret.status !== 201) checkError(ret, "sign up")
+					else {
+						makeToast("Succesfully signed up " + username)
+						logged_in.set(true)
+					}
+				} else {
+					const ret = await client.auth.login({
+						body: {
+							code: $page.url.searchParams.get("code")!,
+						},
+					})
+					if (ret.status !== 202) checkError(ret, "log in")
+					else {
+						makeToast("Logged in successfully")
+						logged_in.set(true)
+					}
+				}
+			}
+		}
+	})()
 
 	$: {
 		if ($logged_in == true) {
@@ -30,9 +60,9 @@
 		} else if ($logged_in == false) {
 			goto("/auth")
 		}
-		if ($logged_in == false) {
-			goto("/auth")
-		}
+		// if ($logged_in == false) {
+		// 	goto("/auth")
+		// }
 	}
 
 	const modalComponentRegistry: Record<string, ModalComponent> = {
@@ -49,6 +79,10 @@
 		{ inner: "✉️", href: "/dms" },
 		{ inner: "🤝", href: "/friends" },
 	]
+
+	function setup_logout(node: HTMLButtonElement) {
+		node.addEventListener("click", () => logout())
+	}
 </script>
 
 <!-- App Shell -->

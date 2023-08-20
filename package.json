@@ -27,9 +27,9 @@
     "@ts-rest/nest": "^3.28.0",
     "@ts-rest/open-api": "^3.28.0",
     "zod": "^3.22.0",
-    "@anatine/zod-openapi": "^2.1.0"
+    "@anatine/zod-openapi": "^2.1.0",
+    "dotenv-cli": "^7.2.1"
   },
   "devDependencies": {
-    "dotenv-cli": "^7.2.1"
   }
 }

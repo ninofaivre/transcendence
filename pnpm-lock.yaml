@@ -28,13 +28,12 @@ importers:
       '@ts-rest/open-api':
         specifier: ^3.28.0
         version: 3.28.0(@ts-rest/core@3.28.0)(zod@3.22.0)
-      zod:
-        specifier: ^3.22.0
-        version: 3.22.0
-    devDependencies:
       dotenv-cli:
         specifier: ^7.2.1
         version: 7.2.1
+      zod:
+        specifier: ^3.22.0
+        version: 3.22.0
 
   backend:
     dependencies:
@@ -2828,11 +2827,12 @@ packages:
       dotenv: 16.3.1
       dotenv-expand: 10.0.0
       minimist: 1.2.8
-    dev: true
+    dev: false
 
   /dotenv-expand@10.0.0:
     resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
     engines: {node: '>=12'}
+    dev: false
 
   /dotenv@16.1.4:
     resolution: {integrity: sha512-m55RtE8AsPeJBpOIFKihEmqUcoVncQIwo7x9U8ZwLEZw9ZpXboz2c+rvog+jUaJvVrZ5kBOeYQBX5+8Aa/OZQw==}
@@ -2842,6 +2842,7 @@ packages:
   /dotenv@16.3.1:
     resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
     engines: {node: '>=12'}
+    dev: false
 
   /ecdsa-sig-formatter@1.0.11:
     resolution: {integrity: sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==}

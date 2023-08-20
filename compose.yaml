@@ -2,7 +2,7 @@ services:
   postgres:
     container_name: postgres
     image: postgres
-    restart: always
+    restart: no
     ports:
       - "5432:5432"
     env_file:
@@ -15,7 +15,7 @@ services:
     container_name: backend
     build:
       context: ./
-    restart: always
+    restart: no
     depends_on:
       - postgres
     ports:

@@ -6,6 +6,9 @@ import { Observable } from "rxjs";
 export class JwtAuthGuard extends AuthGuard("jwt") {}
 
 @Injectable()
+export class RefreshTokenGuard extends AuthGuard("jwt-refresh") {}
+
+@Injectable()
 export class WsJwtAuthGuard implements CanActivate {
 
   async canActivate(

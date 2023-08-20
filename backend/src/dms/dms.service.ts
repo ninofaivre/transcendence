@@ -469,7 +469,7 @@ export class DmsService {
 	}
 
     async createDmIfRightTo(username: string, otherUserName: string) {
-        const res = await this.usersService.getUser(otherUserName, {
+        const res = await this.usersService.getUserByName(otherUserName, {
             dmPolicyLevel: true,
             directMessage: { where: { requestedUserName: username }, select: { id: true } },
             directMessageOf: { where: { requestingUserName: username }, select: { id: true } },

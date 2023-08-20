@@ -1,6 +1,7 @@
 import { initContract } from "@ts-rest/core"
 import { zUserName, zUserPassword } from "../zod/user.zod"
 import { z } from "zod"
+import { getErrorsForContract } from "../errors"
 
 const c = initContract()
 
@@ -24,9 +25,7 @@ export const authContract = c.router(
                     username: zUserName,
                     intraUserName: z.string()
                 }),
-                401: z.object({
-                    code: z.literal("Unauthorized"),
-                })
+                ...getErrorsForContract(c, [401, "Unauthorized"])
 			},
 		},
         loginDev: {
@@ -42,9 +41,19 @@ export const authContract = c.router(
                 }),
                 404: z.object({
                     code: z.literal("NotFound")
-                })
+                }),
+                ...getErrorsForContract(c, [403, "OnlyAvailableInDevMode"])
             },
             description: "login route for dev purposes (disabled in prod)"
+        },
+        refreshTokens: {
+            method: "POST",
+            path: "/refreshTokens",
+            body: c.type<null>(),
+            responses: {
+                200: c.type<null>(),
+                ...getErrorsForContract(c, [401, "Unauthorized"])
+            }
         }
 	},
 	{

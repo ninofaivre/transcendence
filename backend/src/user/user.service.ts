@@ -136,7 +136,7 @@ export class UserService {
 	}
 
 	async getUserProfile(username: string, toGetUserName: string) {
-		const profile = await this.getUser(
+		const profile = await this.getUserByName(
 			toGetUserName,
 			this.getUserProfileSelectForUser(username),
 		)
@@ -253,7 +253,7 @@ export class UserService {
 	}
 
 	async getMe(username: string) {
-		const me = await this.getUser(username, this.myProfileSelect)
+		const me = await this.getUserByName(username, this.myProfileSelect)
 		if (!me) return contractErrors.NotFoundUser(username)
 		return this.formatMe(me)
 	}
@@ -307,10 +307,6 @@ export class UserService {
 		return this.formatMe(updatedMe)
 	}
 
-	async getUserByName(name: string, select: Prisma.UserSelect) {
-		return this.prisma.user.findUnique({ where: { name: name }, select: select })
-	}
-
 	public async getUserByNameOrThrow<T extends Prisma.UserSelect>(
 		username: string,
 		select: Prisma.SelectSubset<T, Prisma.UserSelect>,
@@ -323,7 +319,7 @@ export class UserService {
 		return user
 	}
 
-	public async getUser<T extends Prisma.UserSelect>(
+	public async getUserByName<T extends Prisma.UserSelect>(
 		name: string,
 		select: Prisma.SelectSubset<T, Prisma.UserSelect>,
 	) {
@@ -338,7 +334,7 @@ export class UserService {
         const intraUserName = await this.oauth.getIntraUserName(code)
         // TODO change this error for invalid intra 42 code or smth like this
         if (!intraUserName)
-            return contractErrors.UserAlreadyExist(username)
+            return contractErrors.Unauthorized()
         const user = await this.prisma.user.findMany({
             where: {
                 OR: [
@@ -364,7 +360,7 @@ export class UserService {
 	}
 
 	private async getNotifyStatusData(username: string) {
-		return this.getUser(username, {
+		return this.getUserByName(username, {
             blockedUser: {
                 select: { blockedUserName: true }
             },
@@ -493,7 +489,7 @@ export class UserService {
         const contractError = await this.isInvalidProfilePicture(buffer)
         if (contractError)
             return contractError 
-        const user = await this.getUser(username, { profilePicture: true })
+        const user = await this.getUserByName(username, { profilePicture: true })
         if (!user)
             return contractErrors.NotFoundUserForValidToken(username)
         const { profilePicture: profilePictureFileName } = user
@@ -507,7 +503,7 @@ export class UserService {
     }
 
     public async getUserProfilePicture(otherUserName: string) {
-        const user = await this.getUser(otherUserName, { profilePicture: true })
+        const user = await this.getUserByName(otherUserName, { profilePicture: true })
         if (!user)
             return contractErrors.NotFoundUserForValidToken(otherUserName)
         const { profilePicture: profilePictureFileName } = user

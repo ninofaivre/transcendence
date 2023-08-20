@@ -7,7 +7,7 @@ WORKDIR /app
 
 FROM base AS prod-deps
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm dotenv -e ../.env -- pnpm run generate
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm run generate
 
 FROM base AS build
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile

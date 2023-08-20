@@ -328,5 +328,12 @@ export function isContractError(toTest: unknown): toTest is ContractError {
 }
 
 
-export const isErrorCode = <T extends Codes>(ret: { status: HTTPStatusCode, body: unknown }, code: T): ret is GetError<T> =>
-    (isContractError(ret) && ret.body.code === code)
+export function isErrorCode<
+    Code extends Codes,
+    Status extends number
+>(
+    ret: { status: Status, body: unknown },
+    code: Code
+): ret is GetError<Code, Status> {
+    return (isContractError(ret) && ret.body.code === code)
+}

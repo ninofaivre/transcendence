@@ -4,7 +4,7 @@ import { zPermissionList } from "./generated-zod/"
 import { zSelfPermissionList } from "./routers/chans"
 
 type Codes =
-    | "OnlyAvailableInDevMode"
+    | "ForbiddenByEnv"
     | "NotRegisteredUser"
     | "Invalid42ApiCode"
 	| "NotFoundUser"
@@ -34,12 +34,12 @@ type Codes =
 // as const is only useful for precise type of message
 export const contractErrors = {
 
-    OnlyAvailableInDevMode: (feature: 'loginDev') =>
+    ForbiddenByEnv: (envKey: string, envValue: string | number) =>
     ({
         status: 403,
         body: {
-            code: "OnlyAvailableInDevMode",
-            message: `Forbidden, feature ${feature} is only available in devMode !`
+            code: "ForbiddenByEnv",
+            message: `this route is forbidden because envVar ${envKey} is not set to ${envValue}`
         }
     } as const),
 
@@ -295,6 +295,8 @@ type ContractError<Code = Codes> = {
 		message?: string
 	}
 }
+
+export type ContractErrorUnion = ReturnType<typeof contractErrors[Codes]>
 
 type GetError<Code extends Codes = Codes, Status = number> = Extract<
 	ReturnType<(typeof contractErrors)[Code]>,

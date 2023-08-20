@@ -45,7 +45,7 @@ export const authContract = c.router(
                 404: z.object({
                     code: z.literal("NotFound")
                 }),
-                ...getErrorsForContract(c, [403, "OnlyAvailableInDevMode"])
+                ...getErrorsForContract(c, [403, "ForbiddenByEnv"])
             },
             description: "login route for dev purposes (disabled in prod)"
         },

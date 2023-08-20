@@ -5,7 +5,6 @@ import { UserModule } from "../user/user.module"
 import { PassportModule } from "@nestjs/passport"
 import { JwtModule } from "@nestjs/jwt"
 import { AccessTokenStrategy, RefreshTokenStrategy } from "./jwt.strategy"
-import { EnvService } from "src/env/env.service"
 import { Oauth42Module } from "src/oauth42/oauth42.module"
 
 @Module({

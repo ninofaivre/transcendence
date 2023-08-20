@@ -4,6 +4,7 @@ export type { SseEvent, GetData } from "./contract"
 
 export { zChanInvitationStatus } from "./generated-zod"
 export { contractErrors, isContractError, isErrorCode } from "./errors"
+export type { ContractErrorUnion } from "./errors"
 export { contract } from "./contract"
 export {
 	zDmReturn,

@@ -6,6 +6,7 @@ import { Response } from "express"
 import { EnvService } from "src/env/env.service"
 import { JwtAuthGuard, RefreshTokenGuard } from "./jwt-auth.guard"
 import { isContractError } from "contract"
+import { DevGuard } from "src/env.guards"
 
 const c = contract.auth
 
@@ -40,11 +41,10 @@ export class AuthController{
         })
 	}
 
+    @UseGuards(DevGuard)
     @TsRestHandler(c.loginDev)
     async loginDev(@Res({ passthrough: true }) res: Response) {
         return tsRestHandler(c.loginDev, async ({ body: { username } }) => {
-            if (EnvService.env.MODE === "PROD")
-                return contractErrors.OnlyAvailableInDevMode('loginDev')
             const user = await this.authService.validateUserDev(username)
             if (!user)
                 return { status: 404, body: { code: "NotFound" } }

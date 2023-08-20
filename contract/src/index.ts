@@ -3,7 +3,7 @@ export type { ChanEvent } from "./routers/chans"
 export type { SseEvent, GetData } from "./contract"
 
 export { zChanInvitationStatus } from "./generated-zod"
-export { contractErrors, isContractError } from "./errors"
+export { contractErrors, isContractError, isErrorCode } from "./errors"
 export { contract } from "./contract"
 export {
 	zDmReturn,

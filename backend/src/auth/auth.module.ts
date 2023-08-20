@@ -4,7 +4,7 @@ import { AuthService } from "./auth.service"
 import { UserModule } from "../user/user.module"
 import { PassportModule } from "@nestjs/passport"
 import { JwtModule } from "@nestjs/jwt"
-import { JwtStrategy } from "./jwt.strategy"
+import { AccessTokenStrategy, RefreshTokenStrategy } from "./jwt.strategy"
 import { EnvService } from "src/env/env.service"
 import { Oauth42Module } from "src/oauth42/oauth42.module"
 
@@ -18,7 +18,7 @@ import { Oauth42Module } from "src/oauth42/oauth42.module"
 		UserModule,
         Oauth42Module
 	],
-	providers: [AuthService, JwtStrategy],
+	providers: [AuthService, AccessTokenStrategy, RefreshTokenStrategy],
 	controllers: [AuthController],
 })
 export class AuthModule {}

@@ -33,6 +33,14 @@ export class AuthService {
         return { username: user.name, intraUserName }
 	}
 
+    async validateUserDev(username: string) {
+        const user = await this.prisma.user.findUnique({ where: { name: username },
+            select: { name: true, intraUserName: true } })
+        if (!user)
+            return null
+        return { username, intraUserName: user.intraUserName }
+    }
+
 	async login(user: EnrichedRequest['user']) {
 		const payload = { ...user, sub: user.username }
 		return this.jwtService.sign(payload)

@@ -25,10 +25,27 @@ export const authContract = c.router(
                     intraUserName: z.string()
                 }),
                 401: z.object({
-                    code: "Unauthorized",
+                    code: z.literal("Unauthorized"),
                 })
 			},
 		},
+        loginDev: {
+            method: "POST",
+            path: "/loginDev",
+            body: z.object({
+                username: zUserName
+            }),
+            responses: {
+                200: z.object({
+                    username: zUserName,
+                    intraUserName: z.string()
+                }),
+                404: z.object({
+                    code: z.literal("NotFound")
+                })
+            },
+            description: "login route for dev purposes (disabled in prod)"
+        }
 	},
 	{
 		pathPrefix: "/auth",

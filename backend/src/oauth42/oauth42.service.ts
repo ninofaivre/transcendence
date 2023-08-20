@@ -25,8 +25,6 @@ export class Oauth42Service {
     }
 
     public async getIntraUserName(code: string): Promise<string | undefined> {
-        // TODO tmp for testing purposes
-        return "nfaivre"
         const token = await this.getToken(code)
         if (!token)
             return

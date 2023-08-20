@@ -23,9 +23,26 @@ export class AuthController{
                 sameSite: true,
                 HttpOnly: true,
             })
-            return { status: 202, body: user }
+            return { status: 200, body: user }
         })
 	}
+
+    @TsRestHandler(c.loginDev)
+    async loginDev(@Res({ passthrough: true }) res: any) {
+        return tsRestHandler(c.loginDev, async ({ body: { username } }) => {
+            const user = await this.authService.validateUserDev(username)
+            if (!user)
+                return { status: 404, body: { code: "NotFound" } }
+            res.cookie("access_token", await this.authService.login(user), {
+                secure: true,
+                sameSite: true,
+                HttpOnly: true
+            })
+            return { status: 200, body: user }
+        })
+    }
+    
+    // TODO Dev login
 
 	@TsRestHandler(c.logout)
 	async logout(@Res({ passthrough: true }) res: Response) {

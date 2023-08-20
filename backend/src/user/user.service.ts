@@ -332,9 +332,8 @@ export class UserService {
 
 	async createUser({ code, username }: RequestShapes["signUp"]["body"]) {
         const intraUserName = await this.oauth.getIntraUserName(code)
-        // TODO change this error for invalid intra 42 code or smth like this
         if (!intraUserName)
-            return contractErrors.Unauthorized()
+            return contractErrors.Invalid42ApiCode(code)
         const user = await this.prisma.user.findMany({
             where: {
                 OR: [

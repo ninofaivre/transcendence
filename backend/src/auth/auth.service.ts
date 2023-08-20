@@ -6,6 +6,7 @@ import { Oauth42Service } from "src/oauth42/oauth42.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { EnvService } from "src/env/env.service"
 import * as bcrypt from "bcrypt"
+import { contractErrors } from "contract"
 
 export type EnrichedRequest = Request
     & {
@@ -43,11 +44,11 @@ export class AuthService {
 	public async validateUser(code: string) {
         const intraUserName = await this.oAuth.getIntraUserName(code)
         if (!intraUserName)
-            return null
+            return contractErrors.Invalid42ApiCode(code)
         const user = await this.prisma.user.findUnique({ where: { intraUserName },
             select: { name: true }}) 
         if (!user)
-            return null
+            return contractErrors.NotRegisteredUser(intraUserName)
         return { username: user.name, intraUserName }
 	}
 

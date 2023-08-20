@@ -5,6 +5,7 @@ import { contract, contractErrors } from "contract"
 import { Response } from "express"
 import { EnvService } from "src/env/env.service"
 import { JwtAuthGuard, RefreshTokenGuard } from "./jwt-auth.guard"
+import { isContractError } from "contract"
 
 const c = contract.auth
 
@@ -32,8 +33,8 @@ export class AuthController{
 	async login(@Res({ passthrough: true }) res: Response) {
         return tsRestHandler(c.login, async ({ body: { code } }) => {
             const user = await this.authService.validateUser(code)
-            if (!user)
-                return contractErrors.Unauthorized()
+            if (isContractError(user))
+                return user
             await this.setNewTokensAsCookies(res, user)
             return { status: 200, body: user }
         })

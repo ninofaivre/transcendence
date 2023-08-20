@@ -5,6 +5,8 @@ import { zSelfPermissionList } from "./routers/chans"
 
 type Codes =
     | "OnlyAvailableInDevMode"
+    | "NotRegisteredUser"
+    | "Invalid42ApiCode"
 	| "NotFoundUser"
     | "InvalidProfilePicture"
     | "ServerUnableToWriteProfilePicture"
@@ -38,6 +40,24 @@ export const contractErrors = {
         body: {
             code: "OnlyAvailableInDevMode",
             message: `Forbidden, feature ${feature} is only available in devMode !`
+        }
+    } as const),
+
+    Invalid42ApiCode: (code: string) =>
+    ({
+        status: 403,
+        body: {
+            code: "Invalid42ApiCode",
+            message: `api code ${code} is not valid`
+        }
+    } as const),
+
+    NotRegisteredUser: (intraUserName: string) =>
+    ({
+        status: 404,
+        body: {
+            code: "NotRegisteredUser",
+            message: `intra42 user ${intraUserName} is not registered`
         }
     } as const),
 

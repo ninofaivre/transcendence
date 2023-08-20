@@ -25,7 +25,10 @@ export const authContract = c.router(
                     username: zUserName,
                     intraUserName: z.string()
                 }),
-                ...getErrorsForContract(c, [401, "Unauthorized"])
+                ...getErrorsForContract(c,
+                    [403, "InvalidApiCode"],
+                    [404, "UnregisteredUser"]
+                )
 			},
 		},
         loginDev: {

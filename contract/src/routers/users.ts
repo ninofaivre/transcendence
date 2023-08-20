@@ -149,7 +149,7 @@ export const usersContract = c.router(
 				}),
 				...getErrorsForContract(c,
                     [409, "UserAlreadyExist"],
-                    [401, "Unauthorized"] // means than fortwy-two api returned unauthorized
+                    [403, "Invalid42ApiCode"]
                 ),
 			},
 		},

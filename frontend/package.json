@@ -5,13 +5,12 @@
   "scripts": {
     "dev": "pnpm vite",
     "preview": "pnpm vite preview",
-    "build": "pnpm exec vite build",
-    "build:watch": "pnpm vite build --watch ",
+    "build": "pnpm svelte-kit sync && pnpm exec vite build",
+    "build:watch": "pnpm svelte-kit sync && pnpm vite build --watch ",
     "check": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --compiler-warnings \"a11y-click-events-have-key-events:ignore,\"",
     "check:watch": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "pnpm prettier --plugin-search-dir . --check . && eslint .",
-    "format": "pnpm prettier --plugin-search-dir . --write .",
-    "prepare": "pnpm svelte-kit sync"
+    "format": "pnpm prettier --plugin-search-dir . --write ."
   },
   "type": "module",
   "dependencies": {

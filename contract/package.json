@@ -12,6 +12,7 @@
 	},
 	"scripts": {
 		"build": "tsup src/index.ts --format cjs,esm --dts --clean",
+		"build:back": "tsup src/index.ts --format cjs,esm --dts --clean",
 		"build:watch": "npm run build -- --watch src",
 		"format": "pnpm exec prettier --write .",
 		"prepublishOnly": "npm run build"

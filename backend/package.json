@@ -1,6 +1,7 @@
 {
 	"scripts": {
 		"build": "pnpm exec nest build",
+		"build:back": "pnpm exec nest build",
 		"start": "pnpm exec nest start",
 		"dev": "pnpm exec nest start --watch"
 	},

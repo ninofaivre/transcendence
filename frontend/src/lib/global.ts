@@ -92,16 +92,17 @@ export async function logout() {
 	return client.auth
 		.logout()
 		.catch(({ status, message }) => {
-			console.warn(
+			makeToast(
 				`Can't log out. Server returned ${status} ${
 					message ? "without a message" : `${message}`
 				}`,
 			)
 		})
-		.then((result) => {
-			console.log("Logging out...")
+		.then(() => {
+			makeToast("Logging out...")
+		})
+		.finally(() => {
 			logged_in.set(false)
-			return result
 		})
 }
 

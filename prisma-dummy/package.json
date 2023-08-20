@@ -1,4 +1,4 @@
-{´
+{
     "name": "prisma-dummy",
     "scripts": {
         "build": "dotenv -e ../.env -- pnpm exec prisma generate",

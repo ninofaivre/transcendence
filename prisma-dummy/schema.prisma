@@ -163,6 +163,8 @@ model User {
 
   intraUserName String @unique
 
+  refreshToken String?
+
   roles Role[]
 
   profilePicture   String @default(uuid()) 

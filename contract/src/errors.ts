@@ -4,6 +4,7 @@ import { zPermissionList } from "./generated-zod/"
 import { zSelfPermissionList } from "./routers/chans"
 
 type Codes =
+    | "OnlyAvailableInDevMode"
 	| "NotFoundUser"
     | "InvalidProfilePicture"
     | "ServerUnableToWriteProfilePicture"
@@ -26,9 +27,29 @@ type Codes =
 	| "NotFoundChanEntity"
 	| "NotOwnedChanMessage"
     | "UserBannedFromChan"
+    | "Unauthorized"
 
 // as const is only useful for precise type of message
 export const contractErrors = {
+
+    OnlyAvailableInDevMode: (feature: 'loginDev') =>
+    ({
+        status: 403,
+        body: {
+            code: "OnlyAvailableInDevMode",
+            message: `Forbidden, feature ${feature} is only available in devMode !`
+        }
+    } as const),
+
+    Unauthorized: () =>
+    ({
+        status: 401,
+        body: {
+            code: "Unauthorized",
+            message: "unauthorized, should authenticate to go further"
+        }
+    } as const),
+
 	/**
 	 * @remarks error that should theoretically never happens, it exists mostly for type safety
 	 * please trigger logout and refresh page on this error

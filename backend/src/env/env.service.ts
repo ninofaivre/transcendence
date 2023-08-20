@@ -18,11 +18,16 @@ const envSchema = z.object({
     PUBLIC_API42_REDIRECT_URI: z.string(),
     API42_CLIENT_SECRET: z.string(),
 
-    MODE: z.union([z.literal("DEV"), z.literal("PROD")])
+    MODE: z.union([z.literal("DEV"), z.literal("PROD")]).default("PROD")
 })
 
 @Injectable()
 export class EnvService
 {
     public static env = envSchema.parse(process.env)
+
+    constructor() {
+        if (EnvService.env.MODE === 'DEV')
+            console.warn('WARNING : DEV MODE, REMEMBER TO SWITCH IT TO PROD IN PRODUCTION')
+    }
 }

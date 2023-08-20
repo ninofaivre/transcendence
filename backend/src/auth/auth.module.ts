@@ -11,10 +11,7 @@ import { Oauth42Module } from "src/oauth42/oauth42.module"
 @Module({
 	imports: [
 		PassportModule,
-        JwtModule.register({
-            secret: EnvService.env.JWT_SECRET,
-            signOptions: { expiresIn: "2d" }
-        }),
+        JwtModule,
 		UserModule,
         Oauth42Module
 	],

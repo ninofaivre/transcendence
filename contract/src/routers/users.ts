@@ -147,7 +147,10 @@ export const usersContract = c.router(
 					username: zUserName,
                     intraUserName: z.string()
 				}),
-				...getErrorsForContract(c, [409, "UserAlreadyExist"]),
+				...getErrorsForContract(c,
+                    [409, "UserAlreadyExist"],
+                    [401, "Unauthorized"] // means than fortwy-two api returned unauthorized
+                ),
 			},
 		},
 	},

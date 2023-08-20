@@ -5,14 +5,12 @@ RUN corepack enable
 COPY . /app
 WORKDIR /app
 
-RUN apt update && apt install -y zsh && apt clean
-
 FROM base AS prod-deps
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm dotenv -e ../.env -- pnpm run generate
 
 FROM base AS build
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-# RUN pnpm run build
 RUN pnpm run build
 
 FROM base
@@ -25,4 +23,4 @@ COPY --from=build /app/frontend/build /app/frontend/build
 EXPOSE 3000
 
 
-CMD [ "pnpm", "start" ]
+CMD [ "pnpm", "start:prod" ]

@@ -3,15 +3,14 @@
     "scripts": {
         "build": "dotenv -e ../.env -- pnpm exec prisma generate",
         "build:back": "dotenv -e ../.env-- pnpm exec prisma generate",
-        "start": "dotenv -e ../.env -- pnpm exec prisma db push --skip-generate && dotenv -e ../.env -- prisma db execute --file=CUSTOM.sql"
+        "start": "dotenv -e ../.env -- pnpm exec prisma db push --skip-generate && dotenv -e ../.env -- prisma db execute --file=CUSTOM.sql",
+        "start:prod": "dotenv -e ../.env -- pnpm exec prisma db push --skip-generate && dotenv -e ../.env -- prisma db execute --file=CUSTOM.sql"
     },
     "devDependencies": {
-        "@gabrola/zod-prisma": "^0.11.0",
-        "prisma": "^5.1.1",
-        "tsup": "^7.2.0",
-        "zod": "^3.22.1"
+        "prisma": "^5.1.1"
     },
     "dependencies": {
+        "@gabrola/zod-prisma": "^0.11.0",
         "@prisma/client": "^5.1.1"
     }
 }

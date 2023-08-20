@@ -94,7 +94,7 @@ debug_postgres:
 
 debug_backend:
 	${DOCKER_COMPOSE_COMMAND} build
-	${DOCKER_COMPOSE_COMMAND} run --rm -it --entrypoint "" backend /bin/bash
+	${DOCKER_COMPOSE_COMMAND} run --rm -it --entrypoint "" backend /bin/zsh
 	
 debug_frontend:
 	${DOCKER_COMPOSE_COMMAND} build

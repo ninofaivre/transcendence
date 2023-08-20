@@ -11,7 +11,8 @@
 	const state = $page.url.searchParams.get("state")
 	if (!code || state !== PUBLIC_RANDOM_PHRASE) {
 		alert("Sorry. Something went wrong in the signup process")
-		goto("/")
+		// goto("/")
+		// alert(document.location)
 	}
 
 	async function signUp() {

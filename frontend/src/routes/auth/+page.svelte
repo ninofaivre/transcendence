@@ -25,7 +25,8 @@
 				})
 				if (ret.status !== 200) {
 					if (ret.status === 404) {
-						goto("/auth/signup")
+						alert("/auth/signup?" + $page.url.searchParams.toString())
+						goto("/auth/signup?" + $page.url.searchParams.toString())
 					}
 					checkError(ret, "log in")
 				} else {

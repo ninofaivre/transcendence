@@ -14,15 +14,17 @@
 	import { Modal, type ModalComponent } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import MuteSlider from "$lib/MuteSlider.svelte"
+	import { page } from "$app/stores"
 
 	$: {
 		if ($logged_in == true) {
 			goto("/pong")
-		} else if ($logged_in == false) {
-			goto("/auth")
 		}
+		//       else if ($logged_in == false) {
+		// 	goto("/auth" + $page.url.searchParams.toString())
+		// }
 		// if ($logged_in == false) {
-		// 	goto("/auth")
+		// 	goto("/auth" + $page.url.searchParams.toString())
 		// }
 	}
 

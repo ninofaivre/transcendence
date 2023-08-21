@@ -17,15 +17,14 @@
 	import { page } from "$app/stores"
 
 	$: {
-		if ($logged_in == true) {
-			goto("/pong")
+        const pathname = $page.url.pathname
+		if ( ! (pathname.endsWith("/auth") || pathname.endsWith('/signup') || pathname.endsWith("/login"))) {
+			if ($logged_in == true) {
+				goto("/pong")
+			} else if ($logged_in == false) {
+				goto("/auth" + $page.url.searchParams.toString())
+			}
 		}
-		//       else if ($logged_in == false) {
-		// 	goto("/auth" + $page.url.searchParams.toString())
-		// }
-		// if ($logged_in == false) {
-		// 	goto("/auth" + $page.url.searchParams.toString())
-		// }
 	}
 
 	const modalComponentRegistry: Record<string, ModalComponent> = {

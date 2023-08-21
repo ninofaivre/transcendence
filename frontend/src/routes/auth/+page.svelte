@@ -7,6 +7,7 @@
 		PUBLIC_API42_REDIRECT_URI,
 		PUBLIC_MODE,
 		PUBLIC_RANDOM_PHRASE,
+		PUBLIC_API42_OAUTH_URI,
 	} from "$env/static/public"
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
@@ -15,7 +16,18 @@
 	const isProd = PUBLIC_MODE.toLowerCase() === "prod"
 	const code = $page.url.searchParams.get("code")
 
+	const signup = $page.url.searchParams.get("signup")
+	let login_uri = new URL(PUBLIC_API42_OAUTH_URI)
+	login_uri.searchParams.append("redirect_uri", (PUBLIC_API42_REDIRECT_URI))
+	login_uri.searchParams.append("client_id", PUBLIC_API42_CLIENT_ID)
+	login_uri.searchParams.append("response_type", "code")
+	login_uri.searchParams.append("scope", "public")
+	login_uri.searchParams.append("state", PUBLIC_RANDOM_PHRASE)
 	;(async () => {
+		if (signup) {
+			alert("---> " + "/auth/signup" + $page.url.search)
+			goto("/auth/signup" + $page.url.search)
+		}
 		if (code) {
 			if ($page.url.searchParams.get("state") === PUBLIC_RANDOM_PHRASE) {
 				const ret = await client.auth.login({
@@ -25,8 +37,8 @@
 				})
 				if (ret.status !== 200) {
 					if (ret.status === 404) {
-						alert("/auth/signup?" + $page.url.searchParams.toString())
-						goto("/auth/signup?" + $page.url.searchParams.toString())
+                        login_uri.searchParams.set("redirect_uri", (PUBLIC_API42_REDIRECT_URI + "/signup"))
+						window.location.assign(login_uri)
 					}
 					checkError(ret, "log in")
 				} else {
@@ -58,12 +70,7 @@
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
 	<div class="rounded-lg bg-gray-50 p-8 sm:px-10">
 		<div class="flex justify-around">
-			<a
-				href={`https://api.intra.42.fr/oauth/authorize?client_id=${PUBLIC_API42_CLIENT_ID}&redirect_uri=${encodeURIComponent(
-					PUBLIC_API42_REDIRECT_URI,
-				)}&response_type=code&scope=public&state=${PUBLIC_RANDOM_PHRASE}`}
-				class="btn variant-filled-success flex-auto"
-			>
+			<a href={login_uri.toString()} class="btn variant-filled-success flex-auto">
 				Sign in with 42
 			</a>
 		</div>

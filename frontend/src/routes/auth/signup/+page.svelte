@@ -9,8 +9,13 @@
 	let username = ""
 	const code = $page.url.searchParams.get("code") ?? ""
 	const state = $page.url.searchParams.get("state")
-	if (!code || state !== PUBLIC_RANDOM_PHRASE) {
-		alert("Sorry. Something went wrong in the signup process")
+	if (!code) {
+		alert("Sorry. Something went wrong in the signup process: Auth code is missing for the query string")
+		// goto("/")
+		// alert(document.location)
+	}
+	if (state !== PUBLIC_RANDOM_PHRASE) {
+		alert("You are under attack. Leave and never come back.")
 		// goto("/")
 		// alert(document.location)
 	}

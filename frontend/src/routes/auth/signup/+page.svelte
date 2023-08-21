@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { checkError, logout, makeToast } from "$lib/global"
+	import { checkError, makeToast } from "$lib/global"
 	import { logged_in } from "$stores"
 	import { client } from "$clients"
 	import { PUBLIC_RANDOM_PHRASE, PUBLIC_FRONTEND_URL } from "$env/static/public"
@@ -11,15 +11,13 @@
 	const state = $page.url.searchParams.get("state")
 	if (!code) {
 		alert(
-			"Sorry. Something went wrong in the signup process: Auth code is missing for the query string",
+			"Sorry. Something went wrong in the signup process: Auth code is missing from the query string",
 		)
-		// goto("/")
-		// alert(document.location)
+		goto("/")
 	}
 	if (state !== PUBLIC_RANDOM_PHRASE) {
 		alert("You are under attack. Leave and never come back.")
-		// goto("/")
-		// alert(document.location)
+		goto("/")
 	}
 
 	async function signUp() {
@@ -34,11 +32,18 @@
 			checkError(ret, "sign up")
 		} else {
 			makeToast("Successfully signed up")
+			alert("1")
 			logged_in.set(true)
+			alert("2")
 			const ret = await client.users.getMe()
 			if (ret.status === 200) {
 				goto("/users/" + ret.body.userName)
-			} else goto("/")
+				alert("3.1")
+			} else {
+				console.log(ret)
+				alert("3.2")
+				goto("/")
+			}
 		}
 	}
 </script>

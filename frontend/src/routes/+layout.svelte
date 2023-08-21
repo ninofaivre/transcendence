@@ -28,9 +28,7 @@
 				pathname.endsWith("/login")
 			)
 		) {
-			if ($logged_in == true) {
-				goto("/pong")
-			} else if ($logged_in == false) {
+			if ($logged_in == false) {
 				goto("/auth" + $page.url.searchParams.toString())
 			}
 		}

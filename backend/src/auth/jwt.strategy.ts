@@ -12,11 +12,15 @@ type JwtPayload = {
 }
 
 function extractJwtFromCookie(tokenType: "access_token" | "refresh_token") {
-    return (req: Request): string | null => req.cookies?.[tokenType]
+    return (req: Request): string | null => req.cookies?.[tokenType] || null
 }
 
-function extractJwtFromCookieWS(tokenType: "access_token" | "refresh_token") {
-    return (req: any): string | null => cookie.parse(req.handshake?.headers?.cookie || "")?.[tokenType]
+function extractJwtFromCookieWS(req: any): string | null {
+    return cookie.parse(req.handshake?.headers?.cookie || "")?.access_token || null
+}
+
+function extractJwtFromAuthHeaderAsBearerTokenWS(req: any): string | null {
+    return ((req.handshake?.headers?.authorization && ExtractJwt.fromAuthHeaderAsBearerToken()(req)) || null)
 }
 
 @Injectable()
@@ -26,8 +30,8 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, "jwt") {
 		super({
 			jwtFromRequest: ExtractJwt.fromExtractors([
 				extractJwtFromCookie("access_token"),
-				extractJwtFromCookieWS("access_token"),
-				ExtractJwt.fromAuthHeaderAsBearerToken(),
+				extractJwtFromCookieWS,
+				extractJwtFromAuthHeaderAsBearerTokenWS,
 			]),
 			ignoreExpiration: false,
 			secretOrKey: EnvService.env.JWT_SECRET,

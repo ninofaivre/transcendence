@@ -7,8 +7,8 @@ export class TestWebsocketGateway {
 
     @UseGuards(WsJwtAuthGuard)
 	@SubscribeMessage("message")
-	handleMessage(@Request() req: any, client: any, payload: any): string {
-		console.log("req :", req.user.username)
+	handleMessage(@Request() req: any): string {
+		console.log("req.user :", req.user)
 		// console.log(client, payload)
 		return "Hello world!"
 	}

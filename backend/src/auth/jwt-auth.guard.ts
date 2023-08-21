@@ -13,7 +13,6 @@ export class RefreshTokenGuard extends AuthGuard("jwt-refresh") {}
 export class WsJwtAuthGuard implements CanActivate {
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
-        // const request = context.switchToHttp().getRequest();
         try {
             await new JwtAuthGuard().canActivate(context)
         } catch {

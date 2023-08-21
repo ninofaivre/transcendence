@@ -23,4 +23,4 @@ export class EnvGuard<
     }
 }
 
-export const DevGuard = new EnvGuard('MODE', 'DEV')
+export const DevGuard = new EnvGuard('PUBLIC_MODE', 'DEV')

@@ -33,6 +33,7 @@
 		"passport-local": "^1.0.0",
 		"rxjs": "^7.8.1",
 		"sharp": "^0.32.5",
+		"socket.io": "^4.7.2",
 		"source-map-support": "^0.5.21",
 		"swagger-themes": "^1.2.30"
 	},

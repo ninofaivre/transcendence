@@ -49,9 +49,7 @@
 					makeToast("Logged in successfully")
 					logged_in.set(true)
 					const ret = await client.users.getMe()
-					if (ret.status === 200) {
-						goto("/users/" + ret.body.userName)
-					} else goto("/")
+					goto("/")
 				}
 			} else {
 				alert("You are under attack. Close this application as soon as you can")

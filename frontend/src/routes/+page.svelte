@@ -1,7 +1,6 @@
 <script lang="ts">
-	// import { logged_in } from "$lib/stores"
-	// import { goto } from "$app/navigation"
+	import { PUBLIC_FRONT_PAGE } from "$env/static/public"
+	import { goto } from "$app/navigation"
 
-	// if ($logged_in) goto("/chat")
-	// else goto("/chat")
+	goto(PUBLIC_FRONT_PAGE)
 </script>

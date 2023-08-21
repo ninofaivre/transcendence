@@ -32,16 +32,12 @@
 			checkError(ret, "sign up")
 		} else {
 			makeToast("Successfully signed up")
-			alert("1")
 			logged_in.set(true)
-			alert("2")
 			const ret = await client.users.getMe()
 			if (ret.status === 200) {
 				goto("/users/" + ret.body.userName)
-				alert("3.1")
 			} else {
 				console.log(ret)
-				alert("3.2")
 				goto("/")
 			}
 		}

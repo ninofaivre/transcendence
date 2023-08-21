@@ -17,8 +17,17 @@
 	import { page } from "$app/stores"
 
 	$: {
-        const pathname = $page.url.pathname
-		if ( ! (pathname.endsWith("/auth") || pathname.endsWith('/signup') || pathname.endsWith("/login"))) {
+		const pathname =
+			$page.url.pathname.slice(-1) === "/"
+				? $page.url.pathname.slice(0, -1)
+				: $page.url.pathname
+		if (
+			!(
+				pathname.endsWith("/auth") ||
+				pathname.endsWith("/signup") ||
+				pathname.endsWith("/login")
+			)
+		) {
 			if ($logged_in == true) {
 				goto("/pong")
 			} else if ($logged_in == false) {

@@ -37,7 +37,7 @@
 				})
 				if (ret.status !== 200) {
 					if (ret.status === 404) {
-                        ft_uri.searchParams.set("redirect_uri", (PUBLIC_API42_REDIRECT_URI + "/signup"))
+                        ft_uri.searchParams.set("redirect_uri", (new URL('signup', PUBLIC_API42_REDIRECT_URI).toString()))
 						window.location.assign(ft_uri)
 					}
 					checkError(ret, "log in")

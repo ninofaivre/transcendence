@@ -12,22 +12,24 @@ export class Oauth42Service {
 
     }
 
-    private async getToken(code: string): Promise<string | undefined> {
+    private async getToken(code: string, redirect_uri_suffix: string): Promise<string | undefined> {
         try {
+            const redirect_uri = new URL(redirect_uri_suffix, EnvService.env.PUBLIC_API42_REDIRECT_URI)
+                .toString()
             return (await firstValueFrom(
                 this.httpService.post('https://api.intra.42.fr/oauth/token', {
                     grant_type: 'authorization_code',
                     client_id: EnvService.env.PUBLIC_API42_CLIENT_ID,
                     client_secret: EnvService.env.API42_CLIENT_SECRET,
                     code,
-                    redirect_uri: EnvService.env.PUBLIC_API42_REDIRECT_URI
+                    redirect_uri
                 }))
             )?.data?.access_token
         } catch {}
     }
 
-    public async getIntraUserName(code: string): Promise<string | undefined> {
-        const token = await this.getToken(code)
+    public async getIntraUserName(code: string, redirect_uri_suffix: string): Promise<string | undefined> {
+        const token = await this.getToken(code, redirect_uri_suffix)
         if (!token)
             return
         try {

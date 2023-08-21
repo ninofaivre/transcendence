@@ -331,7 +331,7 @@ export class UserService {
 	}
 
 	async createUser({ code, username }: RequestShapes["signUp"]["body"]) {
-        const intraUserName = await this.oauth.getIntraUserName(code)
+        const intraUserName = await this.oauth.getIntraUserName(code, 'signup')
         if (!intraUserName)
             return contractErrors.Invalid42ApiCode(code)
         const user = await this.prisma.user.findMany({

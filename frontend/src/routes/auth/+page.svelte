@@ -18,7 +18,7 @@
 
 	const signup = $page.url.searchParams.get("signup")
 	let ft_uri = new URL(PUBLIC_API42_OAUTH_URI)
-	ft_uri.searchParams.append("redirect_uri", (PUBLIC_API42_REDIRECT_URI))
+	ft_uri.searchParams.append("redirect_uri", PUBLIC_API42_REDIRECT_URI)
 	ft_uri.searchParams.append("client_id", PUBLIC_API42_CLIENT_ID)
 	ft_uri.searchParams.append("response_type", "code")
 	ft_uri.searchParams.append("scope", "public")
@@ -37,7 +37,11 @@
 				})
 				if (ret.status !== 200) {
 					if (ret.status === 404) {
-                        ft_uri.searchParams.set("redirect_uri", (new URL('signup', PUBLIC_API42_REDIRECT_URI).toString()))
+						const base =
+							PUBLIC_API42_REDIRECT_URI.slice(-1) === "/"
+								? PUBLIC_API42_REDIRECT_URI
+								: PUBLIC_API42_REDIRECT_URI + "/"
+						ft_uri.searchParams.set("redirect_uri", base + "signup")
 						window.location.assign(ft_uri)
 					}
 					checkError(ret, "log in")

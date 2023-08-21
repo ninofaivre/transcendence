@@ -26,7 +26,7 @@
 		const ret = await client.users.signUp({
 			body: {
 				username,
-				redirect_uri: new URL("signup", PUBLIC_FRONTEND_URL),
+				redirect_uri: new URL("/auth/signup", PUBLIC_FRONTEND_URL),
 				code,
 			},
 		})

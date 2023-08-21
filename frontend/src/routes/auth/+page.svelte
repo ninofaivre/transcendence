@@ -32,7 +32,7 @@
 			if ($page.url.searchParams.get("state") === PUBLIC_RANDOM_PHRASE) {
 				const ret = await client.auth.login({
 					body: {
-						redirect_uri: new URL("auth", PUBLIC_FRONTEND_URL),
+						redirect_uri: new URL("auth", PUBLIC_FRONTEND_URL).toString(),
 						code: $page.url.searchParams.get("code")!,
 					},
 				})

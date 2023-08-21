@@ -26,11 +26,11 @@
 		const ret = await client.users.signUp({
 			body: {
 				username,
-				redirect_uri: new URL("/auth/signup", PUBLIC_FRONTEND_URL),
+				redirect_uri: new URL("/auth/signup", PUBLIC_FRONTEND_URL).toString(),
 				code,
 			},
 		})
-		if (ret.status !== 200) {
+		if (ret.status !== 201) {
 			checkError(ret, "sign up")
 		} else {
 			makeToast("Successfully signed up")

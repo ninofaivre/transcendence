@@ -35,6 +35,10 @@
 		} else {
 			makeToast("Successfully signed up")
 			logged_in.set(true)
+			const ret = await client.users.getMe()
+			if (ret.status === 200) {
+				goto("/users/" + ret.body.userName)
+			} else goto("/")
 		}
 	}
 </script>

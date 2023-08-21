@@ -8,6 +8,7 @@
 		PUBLIC_MODE,
 		PUBLIC_RANDOM_PHRASE,
 		PUBLIC_API42_OAUTH_URI,
+		PUBLIC_FRONTEND_URL,
 	} from "$env/static/public"
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
@@ -37,11 +38,10 @@
 				})
 				if (ret.status !== 200) {
 					if (ret.status === 404) {
-						const base =
-							PUBLIC_API42_REDIRECT_URI.slice(-1) === "/"
-								? PUBLIC_API42_REDIRECT_URI
-								: PUBLIC_API42_REDIRECT_URI + "/"
-						ft_uri.searchParams.set("redirect_uri", base + "signup")
+						ft_uri.searchParams.set(
+							"redirect_uri",
+							new URL("/auth/signup", PUBLIC_FRONTEND_URL).toString(),
+						)
 						window.location.assign(ft_uri)
 					}
 					checkError(ret, "log in")

@@ -12,10 +12,8 @@ export class Oauth42Service {
 
     }
 
-    private async getToken(code: string, redirect_uri_suffix: string): Promise<string | undefined> {
+    private async getToken(code: string, redirect_uri: string): Promise<string | undefined> {
         try {
-            const redirect_uri = new URL(redirect_uri_suffix, EnvService.env.PUBLIC_API42_REDIRECT_URI)
-                .toString()
             return (await firstValueFrom(
                 this.httpService.post('https://api.intra.42.fr/oauth/token', {
                     grant_type: 'authorization_code',

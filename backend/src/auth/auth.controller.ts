@@ -32,8 +32,8 @@ export class AuthController{
 
 	@TsRestHandler(c.login)
 	async login(@Res({ passthrough: true }) res: Response) {
-        return tsRestHandler(c.login, async ({ body: { code } }) => {
-            const user = await this.authService.validateUser(code)
+        return tsRestHandler(c.login, async ({ body: { code, redirect_uri } }) => {
+            const user = await this.authService.validateUser(code, redirect_uri)
             if (isContractError(user))
                 return user
             await this.setNewTokensAsCookies(res, user)

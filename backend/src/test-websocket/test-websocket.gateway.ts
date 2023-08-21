@@ -1,4 +1,4 @@
-import { SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets"
+import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets"
 import { UseGuards, Request } from "@nestjs/common"
 import { JwtAuthGuard, WsJwtAuthGuard } from "../auth/jwt-auth.guard"
 import { Server } from "socket.io"
@@ -10,10 +10,10 @@ export class TestWebsocketGateway {
     io: Server = new Server();
 
     // @UseGuards(WsJwtAuthGuard)
-	@SubscribeMessage("message")
-	handleMessage(@Request() req: any): string {
+	@SubscribeMessage("newMessage")
+	handleMessage(@Request() req: any, @MessageBody()body: any) {
 		console.log("req.user :", req.user)
-		// console.log(client, payload)
-		return "Hello world!"
+        console.log(body)
+        this.io.emit('onMessage', body.msg)
 	}
 }

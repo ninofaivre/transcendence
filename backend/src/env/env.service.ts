@@ -15,7 +15,6 @@ const envSchema = z.object({
     PUBLIC_BACKEND_PORT: z.coerce.number().min(1024).max(49151),
 
     PUBLIC_API42_CLIENT_ID: z.string(),
-    PUBLIC_API42_REDIRECT_URI: z.string().url(),
 })
 
 @Injectable()

@@ -41,8 +41,8 @@ export class AuthService {
         return { accessToken, refreshToken }
     }
 
-	public async validateUser(code: string) {
-        const intraUserName = await this.oAuth.getIntraUserName(code, '')
+	public async validateUser(code: string, redirect_uri: string) {
+        const intraUserName = await this.oAuth.getIntraUserName(code, redirect_uri)
         if (!intraUserName)
             return contractErrors.Invalid42ApiCode(code)
         const user = await this.prisma.user.findUnique({ where: { intraUserName },

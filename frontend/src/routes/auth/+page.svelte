@@ -17,12 +17,12 @@
 	const code = $page.url.searchParams.get("code")
 
 	const signup = $page.url.searchParams.get("signup")
-	let login_uri = new URL(PUBLIC_API42_OAUTH_URI)
-	login_uri.searchParams.append("redirect_uri", (PUBLIC_API42_REDIRECT_URI))
-	login_uri.searchParams.append("client_id", PUBLIC_API42_CLIENT_ID)
-	login_uri.searchParams.append("response_type", "code")
-	login_uri.searchParams.append("scope", "public")
-	login_uri.searchParams.append("state", PUBLIC_RANDOM_PHRASE)
+	let ft_uri = new URL(PUBLIC_API42_OAUTH_URI)
+	ft_uri.searchParams.append("redirect_uri", (PUBLIC_API42_REDIRECT_URI))
+	ft_uri.searchParams.append("client_id", PUBLIC_API42_CLIENT_ID)
+	ft_uri.searchParams.append("response_type", "code")
+	ft_uri.searchParams.append("scope", "public")
+	ft_uri.searchParams.append("state", PUBLIC_RANDOM_PHRASE)
 	;(async () => {
 		if (signup) {
 			alert("---> " + "/auth/signup" + $page.url.search)
@@ -37,8 +37,8 @@
 				})
 				if (ret.status !== 200) {
 					if (ret.status === 404) {
-                        login_uri.searchParams.set("redirect_uri", (PUBLIC_API42_REDIRECT_URI + "/signup"))
-						window.location.assign(login_uri)
+                        ft_uri.searchParams.set("redirect_uri", (PUBLIC_API42_REDIRECT_URI + "/signup"))
+						window.location.assign(ft_uri)
 					}
 					checkError(ret, "log in")
 				} else {
@@ -70,7 +70,7 @@
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
 	<div class="rounded-lg bg-gray-50 p-8 sm:px-10">
 		<div class="flex justify-around">
-			<a href={login_uri.toString()} class="btn variant-filled-success flex-auto">
+			<a href={ft_uri.toString()} class="btn variant-filled-success flex-auto">
 				Sign in with 42
 			</a>
 		</div>

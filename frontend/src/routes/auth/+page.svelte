@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { checkError, logout, makeToast } from "$lib/global"
+	import { checkError, makeToast } from "$lib/global"
 	import { logged_in } from "$stores"
 	import { client } from "$clients"
 	import {
@@ -59,7 +59,6 @@
 	})()
 
 	async function devLogin() {
-		await logout()
 		const ret = await client.auth.loginDev({
 			body: {
 				username,

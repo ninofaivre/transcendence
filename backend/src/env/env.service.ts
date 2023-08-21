@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 
 require("dotenv").config()
@@ -24,6 +24,6 @@ export class EnvService
 
     constructor() {
         if (EnvService.env.PUBLIC_MODE === 'DEV')
-            console.warn('WARNING : DEV MODE, REMEMBER TO SWITCH IT TO PROD IN PRODUCTION')
+            Logger.warn('DEV MODE')
     }
 }

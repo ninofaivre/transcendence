@@ -1,12 +1,13 @@
-import { UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common"
+import { Res, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common"
 import { Controller, Request } from "@nestjs/common"
 import { JwtAuthGuard } from "../auth/jwt-auth.guard"
 import { UserService } from "./user.service"
 import { TsRest, TsRestHandler, tsRestHandler } from "@ts-rest/nest"
 import { contract, isContractError } from "contract"
-import { EnrichedRequest } from "src/auth/auth.service"
+import { AuthService, EnrichedRequest } from "src/auth/auth.service"
 import { FileInterceptor } from "@nestjs/platform-express"
 import { EnvService } from "src/env/env.service"
+import { Response } from "express"
 
 const c = contract.users
 
@@ -31,14 +32,18 @@ passed to the *TsRestHandler* decorator too.
 @Controller()
 export class UserController {
 	constructor(
-        private userService: UserService
+        private readonly userService: UserService,
+        private readonly authService: AuthService
     ) {}
 
 	@TsRestHandler(c.signUp)
-	async signUp() {
+	async signUp(@Res({ passthrough: true })res: Response) {
 		return tsRestHandler(c.signUp, async ({ body }) => {
-			const res = await this.userService.createUser(body)
-			return isContractError(res) ? res : { status: 201, body: res }
+			const user = await this.userService.createUser(body)
+			if(isContractError(user))
+                return user
+            await this.authService.setNewTokensAsCookies(res, user)
+            return { status: 201, body: user }
 		})
 	}
 

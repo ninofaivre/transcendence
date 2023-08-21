@@ -14,21 +14,7 @@ const c = contract.auth
 @Controller()
 export class AuthController{
 
-    private static readonly cookieOptions = {
-        secure: true,
-        sameSite: true,
-        HttpOnly: true,
-    } as const
-
 	constructor(private authService: AuthService) {}
-
-    private async setNewTokensAsCookies(res: Response, user: EnrichedRequest['user']) {
-        const tokens = await this.authService.getTokens(user)
-        // TODO maybe add life time to cookie ?
-        res.cookie("access_token", tokens.accessToken, AuthController.cookieOptions)
-        res.cookie("refresh_token", tokens.refreshToken, AuthController.cookieOptions)
-        this.authService.updateRefreshToken(user.username, tokens.refreshToken)
-    }
 
 	@TsRestHandler(c.login)
 	async login(@Res({ passthrough: true }) res: Response) {
@@ -36,7 +22,7 @@ export class AuthController{
             const user = await this.authService.validateUser(code, redirect_uri)
             if (isContractError(user))
                 return user
-            await this.setNewTokensAsCookies(res, user)
+            await this.authService.setNewTokensAsCookies(res, user)
             return { status: 200, body: user }
         })
 	}
@@ -48,7 +34,7 @@ export class AuthController{
             const user = await this.authService.validateUserDev(username)
             if (!user)
                 return { status: 404, body: { code: "NotFound" } }
-            await this.setNewTokensAsCookies(res, user)
+            await this.authService.setNewTokensAsCookies(res, user)
             return { status: 200, body: user }
         })
     }
@@ -73,7 +59,7 @@ export class AuthController{
         const user = await this.authService.doesRefreshTokenMatch(username, refreshToken)
         if (!user)
             return contractErrors.Unauthorized()
-        await this.setNewTokensAsCookies(res, user)
+        await this.authService.setNewTokensAsCookies(res, user)
         return tsRestHandler(c.refreshTokens, async () => {
             return { status: 200, body: null }       
         })

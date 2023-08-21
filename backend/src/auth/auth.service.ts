@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { UserService } from "../user/user.service"
 import { JwtService } from "@nestjs/jwt"
-import { Request } from "express"
+import { Request, Response } from "express"
 import { Oauth42Service } from "src/oauth42/oauth42.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { EnvService } from "src/env/env.service"
@@ -24,6 +24,20 @@ export class AuthService {
         private readonly jwtService: JwtService,
         private readonly oAuth: Oauth42Service
     ) {}
+
+    private static readonly cookieOptions = {
+        secure: true,
+        sameSite: true,
+        HttpOnly: true,
+    } as const
+
+    public async setNewTokensAsCookies(res: Response, user: EnrichedRequest['user']) {
+        const tokens = await this.getTokens(user)
+        // TODO maybe add life time to cookie ?
+        res.cookie("access_token", tokens.accessToken, AuthService.cookieOptions)
+        res.cookie("refresh_token", tokens.refreshToken, AuthService.cookieOptions)
+        this.updateRefreshToken(user.username, tokens.refreshToken)
+    }
 
     public async getTokens(user: EnrichedRequest['user']) {
         const payload = { ...user, sub: user.username }

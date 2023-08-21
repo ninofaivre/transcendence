@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common"
+import { Module, forwardRef } from "@nestjs/common"
 import { AuthController } from "./auth.controller"
 import { AuthService } from "./auth.service"
 import { UserModule } from "../user/user.module"
@@ -11,10 +11,11 @@ import { Oauth42Module } from "src/oauth42/oauth42.module"
 	imports: [
 		PassportModule,
         JwtModule,
-		UserModule,
+		forwardRef(() => UserModule),
         Oauth42Module
 	],
 	providers: [AuthService, AccessTokenStrategy, RefreshTokenStrategy],
 	controllers: [AuthController],
+    exports: [AuthService]
 })
 export class AuthModule {}

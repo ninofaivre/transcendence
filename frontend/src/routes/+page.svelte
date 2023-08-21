@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { PUBLIC_FRONT_PAGE } from "$env/static/public"
 	import { goto } from "$app/navigation"
+	import { logged_in } from "$lib/stores"
+	import { get } from "svelte/store"
 
-	goto(PUBLIC_FRONT_PAGE)
+	if (get(logged_in)) goto(PUBLIC_FRONT_PAGE)
 </script>

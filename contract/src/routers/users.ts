@@ -141,6 +141,7 @@ export const usersContract = c.router(
 			body: z.strictObject({
 				username: zUserName,
 				code: z.string(),
+                redirect_uri: z.string().url()
 			}),
 			responses: {
 				201: z.object({

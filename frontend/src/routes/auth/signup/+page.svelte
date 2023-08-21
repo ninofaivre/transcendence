@@ -2,7 +2,7 @@
 	import { checkError, logout, makeToast } from "$lib/global"
 	import { logged_in } from "$stores"
 	import { client } from "$clients"
-	import { PUBLIC_RANDOM_PHRASE } from "$env/static/public"
+	import { PUBLIC_RANDOM_PHRASE, PUBLIC_FRONTEND_URL } from "$env/static/public"
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
 
@@ -10,7 +10,9 @@
 	const code = $page.url.searchParams.get("code") ?? ""
 	const state = $page.url.searchParams.get("state")
 	if (!code) {
-		alert("Sorry. Something went wrong in the signup process: Auth code is missing for the query string")
+		alert(
+			"Sorry. Something went wrong in the signup process: Auth code is missing for the query string",
+		)
 		// goto("/")
 		// alert(document.location)
 	}
@@ -24,6 +26,7 @@
 		const ret = await client.users.signUp({
 			body: {
 				username,
+				redirect_uri: new URL("signup", PUBLIC_FRONTEND_URL),
 				code,
 			},
 		})

@@ -4,7 +4,6 @@
 	import { client } from "$clients"
 	import {
 		PUBLIC_API42_CLIENT_ID,
-		PUBLIC_API42_REDIRECT_URI,
 		PUBLIC_MODE,
 		PUBLIC_RANDOM_PHRASE,
 		PUBLIC_API42_OAUTH_URI,
@@ -19,7 +18,7 @@
 
 	const signup = $page.url.searchParams.get("signup")
 	let ft_uri = new URL(PUBLIC_API42_OAUTH_URI)
-	ft_uri.searchParams.append("redirect_uri", PUBLIC_API42_REDIRECT_URI)
+	ft_uri.searchParams.append("redirect_uri", new URL("auth", PUBLIC_FRONTEND_URL).toString())
 	ft_uri.searchParams.append("client_id", PUBLIC_API42_CLIENT_ID)
 	ft_uri.searchParams.append("response_type", "code")
 	ft_uri.searchParams.append("scope", "public")
@@ -33,6 +32,7 @@
 			if ($page.url.searchParams.get("state") === PUBLIC_RANDOM_PHRASE) {
 				const ret = await client.auth.login({
 					body: {
+						redirect_uri: new URL("auth", PUBLIC_FRONTEND_URL),
 						code: $page.url.searchParams.get("code")!,
 					},
 				})

@@ -29,20 +29,21 @@
 	const { renderer, invalidate } = useThrelte()
 
 	useFrame((state, delta) => {})
+
 	// General parameters
-	export const interval = 1
+
+	let innerWidth: number
 
 	// Sizing
-	export const margin = 100
-	export const height = window.innerHeight - margin
-	export const aspect_ratio = 16 / 9
+	export let width = window.innerWidth
+	$: width = innerWidth
+	export let aspect_ratio = 9 / 16
 
-	let width = height * aspect_ratio
-	$: width = height * aspect_ratio
+	let height = width * aspect_ratio
+	$: height = width * aspect_ratio
 
-	let border_width = 5
 	let paddle_height = height / 4
-	let paddle_width = border_width * 2
+	let paddle_width = width / 20
 
 	// Colors
 	let court_color = "black"
@@ -53,7 +54,7 @@
 	// Initial object positioning
 	const ball_startx = width / 2
 	const ball_starty = height / 2
-	const ball_size = border_width * 1.5
+	const ball_size = paddle_width / 2
 
 	const lpaddle_startx = -width / 30
 	const rpaddle_startx = width / 30
@@ -65,7 +66,7 @@
 	let playing = true
 	let left_score = 0
 	let right_score = 0
-	GameObjects.Paddle.speed = 100
+	GameObjects.Paddle.speed = 10
 
 	let lpaddle = new GameObjects.Paddle(
 		lpaddle_startx,
@@ -107,12 +108,11 @@
 					return
 				default:
 			}
-			invalidate("moved")
 		}
 	}
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window bind:innerWidth on:keydown={handleKeydown} />
 
 <!-- Camera -->
 <T.PerspectiveCamera makeDefault position={[0, 0, 100]} let:ref>

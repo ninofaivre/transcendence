@@ -6,6 +6,7 @@ import { type FriendEvent, friendsContract } from "./routers/friends"
 import { UserEvent, usersContract } from "./routers/users"
 import type { MessageEvent } from "@nestjs/common"
 import { authContract } from "./routers/auth"
+import { gameContract } from "./routers/game"
 
 // Dummy function to raise error at contract compilation instead
 // of raising it in backend. There is probably a cleaner way...
@@ -32,6 +33,7 @@ export const contract = c.router(
 		friends: friendsContract,
 		users: usersContract,
 		auth: authContract,
+		game: gameContract,
 	},
 	{
 		pathPrefix: "/api",

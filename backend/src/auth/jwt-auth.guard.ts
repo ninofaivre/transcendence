@@ -3,7 +3,7 @@ import { AuthGuard } from "@nestjs/passport"
 import { Socket } from "socket.io";
 import { AuthService } from "./auth.service";
 import { WsException } from "@nestjs/websockets";
-import { EnrichedSocket } from "src/test-websocket/test-websocket.gateway";
+import { EnrichedSocket } from "src/websocket/game.websocket.gateway";
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard("jwt") {}

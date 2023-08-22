@@ -4,7 +4,7 @@ import { AppService } from "./app.service"
 import { ServeStaticModule } from "@nestjs/serve-static"
 import { AuthModule } from "./auth/auth.module"
 import { join } from "path"
-import { TestWebsocketModule } from "./test-websocket/test-websocket.module"
+import { GameWebsocketModule } from "./websocket/game.websocket.module"
 import { ChansModule } from "./chans/chans.module"
 import { InvitationsModule } from "./invitations/invitations.module"
 import { DmsModule } from "./dms/dms.module"
@@ -15,6 +15,7 @@ import { EnvModule } from './env/env.module';
 import { CallbackModule } from './callback/callback.module';
 import { Reflector } from "@nestjs/core"
 import { Oauth42Module } from './oauth42/oauth42.module';
+import { GameModule } from './game/game.module';
 
 @Module({
 	imports: [
@@ -23,7 +24,7 @@ import { Oauth42Module } from './oauth42/oauth42.module';
 			exclude: ["/api*"],
 		}),
 		AuthModule,
-		TestWebsocketModule,
+		GameWebsocketModule,
 		ChansModule,
 		InvitationsModule,
 		DmsModule,
@@ -33,7 +34,8 @@ import { Oauth42Module } from './oauth42/oauth42.module';
 		EnvModule,
 		CallbackModule,
         Reflector,
-        Oauth42Module
+        Oauth42Module,
+        GameModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

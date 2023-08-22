@@ -37,13 +37,9 @@ export class AuthService {
         const access_token = cookie
             .parse(client.handshake?.headers?.cookie || '')
             .access_token
-        console.log("access_token :", access_token)
-        console.log("authorized websocket A")
-        const jwtPayload = this.jwtService.verify<JwtPayload>(access_token, {
+        return this.jwtService.verify<JwtPayload>(access_token, {
             secret: EnvService.env.JWT_SECRET
         })
-        console.log(jwtPayload)
-        return jwtPayload
     }
 
     public async setNewTokensAsCookies(res: Response, user: EnrichedRequest['user']) {

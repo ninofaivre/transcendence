@@ -6,15 +6,17 @@ import { Oauth42Service } from "src/oauth42/oauth42.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { EnvService } from "src/env/env.service"
 import * as bcrypt from "bcrypt"
+import * as cookie from "cookie"
 import { contractErrors } from "contract"
+import { Socket } from "socket.io"
+import { JwtPayload } from "./jwt.strategy"
 
-export type EnrichedRequest = Request
-    & {
-        user: {
-            username: string,
-            intraUserName: string
-        }
+export interface EnrichedRequest extends Request {
+    user: {
+        username: string,
+        intraUserName: string
     }
+}
 
 @Injectable()
 export class AuthService {
@@ -28,13 +30,27 @@ export class AuthService {
     private static readonly cookieOptions = {
         secure: true,
         sameSite: true,
-        HttpOnly: true,
+        httpOnly: true,
     } as const
+
+    public isValidAccessTokenFromCookie(client: Socket) {
+        const access_token = cookie
+            .parse(client.handshake?.headers?.cookie || '')
+            .access_token
+        console.log("access_token :", access_token)
+        console.log("authorized websocket A")
+        const jwtPayload = this.jwtService.verify<JwtPayload>(access_token, {
+            secret: EnvService.env.JWT_SECRET
+        })
+        console.log(jwtPayload)
+        return jwtPayload
+    }
 
     public async setNewTokensAsCookies(res: Response, user: EnrichedRequest['user']) {
         const tokens = await this.getTokens(user)
         // TODO maybe add life time to cookie ?
         res.cookie("access_token", tokens.accessToken, AuthService.cookieOptions)
+        // TODO make sure this token is send only to refresh endpoint
         res.cookie("refresh_token", tokens.refreshToken, AuthService.cookieOptions)
         this.updateRefreshToken(user.username, tokens.refreshToken)
     }
@@ -44,7 +60,7 @@ export class AuthService {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
                 secret: EnvService.env.JWT_SECRET,
-                expiresIn: '15m'
+                expiresIn: EnvService.env.PUBLIC_MODE === 'DEV' ? '1h' : '15m'
             }),
             this.jwtService.signAsync(payload, {
                 // TODO mb use a different password for refresh and access tokens ?

@@ -8,6 +8,7 @@ import { contract } from "contract"
 // import { HttpStatus } from "@nestjs/common"
 import { join } from "path"
 import { EnvService } from "./env/env.service"
+import { PrismaClientExceptionFilter } from "./prisma/exception-filter"
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
@@ -38,12 +39,13 @@ async function bootstrap() {
 		generateOpenApi(contract, config, { setOperationId: true, jsonQuery: true }),
 	)
 	SwaggerModule.setup("api", app, document, options)
+	const { httpAdapter } = app.get(HttpAdapterHost)
+    app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter))
 	// const prismaService: PrismaService = app.get(PrismaService)
 	// prismaService.$on("query", (event) => {
 	// 	console.log(event)
 	// })
 
-	// const { httpAdapter } = app.get(HttpAdapterHost)
 	// app.useGlobalFilters(
 	// 	new PrismaClientExceptionFilter(httpAdapter, {
 	// 		P2003: HttpStatus.NOT_FOUND,

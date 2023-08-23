@@ -156,14 +156,16 @@ class Game {
     private update(newStatus?: typeof this.status) {
         if (newStatus)
             this.status = newStatus
-        if (newStatus !== 'PLAY')
+        if (this.status !== 'PLAY') {
+            this.lastUpdateTime = null
             return
+        }
         const currentTime = Date.now()
         if (this.lastUpdateTime)
             this.moove(currentTime - this.lastUpdateTime)
         this.lastUpdateTime = currentTime
         this.emitGamePositions()
-        this.update()
+        setTimeout(this.update.bind(this), 0)
     }
 
 }

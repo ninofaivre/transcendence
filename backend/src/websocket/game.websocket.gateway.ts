@@ -80,7 +80,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     ) {}
 
     @WebSocketServer()
-    private server = new Server<ClientToServerEvents, ServerToClientEvents, {}, SocketData>();
+    public server = new Server<ClientToServerEvents, ServerToClientEvents, {}, SocketData>();
 
     afterInit(server: Socket) {
         server.use(WebSocketAuthMiddleware(this.authService,
@@ -151,7 +151,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             return
         console.log("queue :", client.data.intraUserName)
         client.data.status = 'QUEUE'
-        this.gameService.queueUser(client.data.intraUserName)
+        this.gameService.queueUser(client.data)
     }
 
     @SubscribeMessage("deQueue")
@@ -187,6 +187,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     ) {
         if (client.data.status !== 'GAME')
             return
+        this.gameService.moovement(client.data.intraUserName, payload)
     }
 
     // @UseGuards(WsJwtAuthGuard)

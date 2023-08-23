@@ -1,20 +1,44 @@
-import { MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from "@nestjs/websockets"
-import { UseGuards, Request, Injectable, Req } from "@nestjs/common"
+import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from "@nestjs/websockets"
+import { UseGuards, Request, Injectable, Req, PipeTransform, UsePipes, Logger } from "@nestjs/common"
 import { JwtAuthGuard, WsJwtAuthGuard } from "../auth/jwt-auth.guard"
-import { Server, Socket } from "socket.io"
+import { Server, Socket, Event } from "socket.io"
 import { AuthService, EnrichedRequest } from "src/auth/auth.service";
 import { WebSocketAuthMiddleware } from "src/auth/ws.mw";
 import * as cookie from "cookie"
 import { GameService } from "src/game/game.service";
+import { Schema, z } from "zod";
+import { EnvService } from "src/env/env.service";
+import { ClientToServerEvents, ServerToClientEvents } from "contract";
+import { InGameMessageSchema } from "contract";
+import { InGameMessage } from "contract";
 
 export type IntraUserName = string
 type Status = 'IDLE' | 'QUEUE' | 'GAME'
 
-export interface EnrichedSocket extends Socket {
-    user: EnrichedRequest['user']
-}
+export type SocketData = {
+    status: Status
+} & EnrichedRequest['user']
+
+export type EnrichedSocket = Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>
 
 type GameEvents = string
+
+@Injectable()
+export class ZodValidationPipe implements PipeTransform {
+    constructor(private schema: Schema) {}
+
+    transform(value: unknown) {
+        const res = this.schema.safeParse(value)
+        if (!res.success) {
+            if (EnvService.env.PUBLIC_MODE === 'DEV')
+                Logger.error(res.error)
+            throw new WsException(res.error)
+        }
+        return res.data 
+    }
+}
+
+const EmptyValidation = new ZodValidationPipe(z.literal(""))
 
 @WebSocketGateway({})
 @Injectable()
@@ -26,49 +50,83 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     ) {}
 
     @WebSocketServer()
-    private server = new Server<{}, { game: (e: GameEvents) => void }>();
+    private server = new Server<ClientToServerEvents, ServerToClientEvents, {}, SocketData>();
 
     afterInit(server: Socket) {
-        server.use(WebSocketAuthMiddleware(this.authService, this.clients) as any)
+        server.use(WebSocketAuthMiddleware(this.authService, this.intraNameToClientId) as any)
     }
 
-    clients = new Map<IntraUserName, { socket: Socket, status: Status }>()
+    intraNameToClientId = new Map<IntraUserName, string>()
 
     handleConnection(client: EnrichedSocket, ...args: any[]) {
-        this.clients.set(client.user.intraUserName, { socket: client, status: 'IDLE' })
-        this.gameService.connectUser(client.user.intraUserName)
+        console.log(`${client.data.intraUserName} logged in with id ${client.id}`)
+        this.intraNameToClientId.set(client.data.intraUserName, client.id)
+        this.gameService.connectUser(client.data.intraUserName)
     }
 
-    @UseGuards(WsJwtAuthGuard)
     handleDisconnect(client: EnrichedSocket) {
-        this.gameService.disconnectUser(client.user.intraUserName)
-        this.clients.delete(client.user.intraUserName)
+        console.log(`${client.data.intraUserName} logged out with id ${client.id}`)
+        this.intraNameToClientId.delete(client.data.intraUserName)
+        this.gameService.disconnectUser(client.data.intraUserName)
     }
 
-    private setClientStatus(clientName: IntraUserName, status: Status): void {
-        const client = this.clients.get(clientName)
-        if (!client) return
-        client.status = status 
+    private findClientSocketByName(clientName: IntraUserName) {
+        const clientId = this.intraNameToClientId.get(clientName)
+        if (!clientId)
+            return
+        return this.server.sockets.sockets.get(clientId)
     }
 
     public emitEventToGame(gameId: string, event: GameEvents) {
         console.log("emitEventToGame")
-        this.server.to(gameId).emit('game', event)
+        // this.server.to(gameId).emit('game', event)
     }
 
     public clientInGame(clientName: IntraUserName, gameId: string) {
-        console.log("clientInGame")
-        this.setClientStatus(clientName, 'GAME')
-        const client = this.clients.get(clientName)?.socket
-        client?.join(gameId)
+        console.log("clientInGame :", clientName)
+        const client = this.findClientSocketByName(clientName)
+        if (!client)
+            return
+        client.data.status = 'GAME'
+        client.join(gameId)
     }
 
-    @UseGuards(WsJwtAuthGuard)
     @SubscribeMessage("queue")
-    queue(@Req(){ user: { intraUserName } }: EnrichedRequest) {
-        console.log("queue")
-        this.gameService.queueUser(intraUserName)
-        this.setClientStatus(intraUserName, 'QUEUE')
+    queue(
+        @ConnectedSocket()client: EnrichedSocket,
+        @MessageBody(EmptyValidation)payload: never
+    ) {
+        if (client.data.status !== 'IDLE')
+            return
+        console.log("queue :", client.data.intraUserName)
+        client.data.status = 'QUEUE'
+        this.gameService.queueUser(client.data.intraUserName)
+    }
+
+    @SubscribeMessage("deQueue")
+    deQueue(
+        @ConnectedSocket()client: EnrichedSocket,
+        @MessageBody(EmptyValidation)payload: never
+    ) {
+        if (client.data.status !== 'QUEUE')
+            return
+        console.log("deQueue :", client.data.intraUserName)
+        client.data.status = 'IDLE'
+        this.gameService.deQueueUser(client.data.intraUserName)
+    }
+
+    @SubscribeMessage("newInGameMessage")
+    newInGameMessage(
+        @ConnectedSocket()client: EnrichedSocket,
+        @MessageBody(new ZodValidationPipe(InGameMessageSchema))payload: InGameMessage
+    ) {
+        const gameId = this.gameService.getGameIdForUser(client.data.intraUserName)
+        if (!gameId)
+            return
+        this.server.to(gameId).emit("newInGameMessage", {
+            player: client.data.username,
+            message: payload
+        })
     }
 
     // @UseGuards(WsJwtAuthGuard)

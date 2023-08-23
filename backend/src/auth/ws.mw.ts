@@ -6,11 +6,10 @@ export function WebSocketAuthMiddleware(
     authService: AuthService,
     clients: Map<IntraUserName, unknown>
 ) {
-    return ((client: Socket, next: (err?: unknown) => void) => {
+    return ((client: EnrichedSocket, next: (err?: unknown) => void) => {
         try {
-            const enrichedClient = client as EnrichedSocket
-            enrichedClient.user = authService.isValidAccessTokenFromCookie(client)
-            if (clients.has(enrichedClient.user.intraUserName))
+            client.data = { ...authService.isValidAccessTokenFromCookie(client), status: 'IDLE' }
+            if (clients.has(client.data.intraUserName))
                 throw new Error("User already has an opened websocket")
             next()
         } catch (error) {

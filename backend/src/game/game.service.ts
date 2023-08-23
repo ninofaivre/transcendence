@@ -26,6 +26,10 @@ export class GameService {
         // reconnect user to game after lost connection
     }
 
+    public getGameIdForUser(username: IntraUserName) {
+        return this.usersToGames.get(username)?.id
+    }
+
     private async createGame(userOne: IntraUserName, userTwo: IntraUserName) {
         console.log("createGame")
         const newGame = { id: `${userOne}${userTwo}` }

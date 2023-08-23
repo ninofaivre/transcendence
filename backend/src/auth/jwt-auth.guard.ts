@@ -22,7 +22,7 @@ export class WsJwtAuthGuard implements CanActivate {
         const client = context.switchToWs().getClient<EnrichedSocket>()
         const req = context.switchToHttp().getRequest()
         // BH //
-        req.user = client.user
+        req.user = client.data
         // try {
         //     req.user = this.authService.isValidAccessTokenFromCookie(client)
         // } catch {}

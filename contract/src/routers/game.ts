@@ -3,7 +3,7 @@ import { z } from "zod"
 
 const c = initContract()
 
-export const GameDimm = {
+export const GameDim = {
     court: { width: 1600, height: 900 },
     paddle: { width: 25, height: 225 },
     ballRadius: 25 

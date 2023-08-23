@@ -1,6 +1,8 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import { GameMoovement } from 'contract';
+import { GameDim, GameMoovement } from 'contract';
 import { GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
+
+const tickRate = 128;
 
 interface Position {
     x: number
@@ -35,8 +37,14 @@ class Game {
         playerBname: IntraUserName
     ) {
         this.id = `${playerAname}${playerBname}`
-        this.playerA = new Player(playerAname, this, { x: 0, y: 400 })
-        this.playerB = new Player(playerBname, this, { x: 1000, y: 400 })
+        this.playerA = new Player(playerAname, this, {
+            x: 0,
+            y: (GameDim.court.height / 2 - GameDim.paddle.height / 2)
+        })
+        this.playerB = new Player(playerBname, this, {
+            x: (GameDim.court.width - GameDim.paddle.width),
+            y: (GameDim.court.height / 2 - GameDim.paddle.height / 2)
+        })
     }
 
 }

@@ -27,6 +27,9 @@ export {
 	zChanUser,
 } from "./routers/chans"
 
+export * from "./routers/game.ws"
+export * from "./routers/game"
+
 export { zUserStatus } from "./zod/user.zod"
 
 // const contract_module = {

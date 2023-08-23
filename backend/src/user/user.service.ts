@@ -17,6 +17,7 @@ import { join } from "path"
 import { EnvService } from "src/env/env.service"
 import { readFileSync, writeFileSync } from "fs"
 import { Oauth42Service } from "src/oauth42/oauth42.service"
+import { GameWebsocketGateway } from "src/websocket/game.websocket.gateway"
 
 const sharp = require('sharp')
 
@@ -34,7 +35,9 @@ export class UserService {
 		private readonly friendsService: FriendsService,
 		@Inject(forwardRef(() => DmsService))
 		private readonly dmsService: DmsService,
-        private readonly oauth: Oauth42Service
+        private readonly oauth: Oauth42Service,
+        @Inject(forwardRef(() => GameWebsocketGateway))
+        private readonly gameWs: GameWebsocketGateway
 	) {}
 
 	private getUserProfilePreviewSelectForUser(username: string) {
@@ -443,9 +446,13 @@ export class UserService {
 		})
 	}
 
-    public getUserStatus = (username: string) => this.sse.isUserOnline(username)
-        ? "ONLINE"
-        : "OFFLINE"
+    public getUserStatus(username: string) {
+        const wsStatus = this.gameWs.getStatusByUserName(username)
+        const sseStatus = this.sse.isUserOnline(username) ? "ONLINE" : "OFFLINE"
+        if (wsStatus === "OFFLINE")
+            return sseStatus
+        return wsStatus
+    }
 
 	public getUserStatusByProximity = (
         username: string,

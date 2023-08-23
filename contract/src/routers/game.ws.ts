@@ -10,13 +10,14 @@ export type GameMoovement = z.infer<typeof GameMoovementSchema>
 // use timeout only to show a cooldown to the user
 export const GameStatusSchema = z.discriminatedUnion("status", [
     z.strictObject({
-        // INIT = pause non induite par un joueur (décompte au début de la partie ou entre les manches)
+        // INIT = décompte au début de la partie
         status: z.literal("INIT"),
         timeout: z.number().positive().int(),
         paddleLeftUserName: zUserName,
         paddleRightUserName: zUserName
     }),
     z.strictObject({
+        // BREAK = décompte entre les manches
         status: z.literal("BREAK"),
         timeout: z.number().positive().int()
     }),
@@ -26,6 +27,7 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
         username: zUserName
     }),
     z.strictObject({
+        // PLAY is called only when a PAUSE is canceled
         status: z.literal("PLAY")
     })
 ])

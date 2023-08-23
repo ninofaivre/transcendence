@@ -151,7 +151,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             return
         console.log("queue :", client.data.intraUserName)
         client.data.status = 'QUEUE'
-        this.gameService.queueUser(client.data.intraUserName)
+        this.gameService.queueUser(client.data)
     }
 
     @SubscribeMessage("deQueue")

@@ -1,8 +1,44 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { GameMoovement } from 'contract';
 import { GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
 
-interface Game {
-    id: string
+interface Position {
+    x: number
+    y: number
+}
+
+class Player {
+
+    private moovement: GameMoovement = "NONE";
+
+    constructor(
+        private readonly intraName: IntraUserName,
+        private readonly game: Game,
+        private position: Position
+    ) {}
+
+}
+
+class Game {
+
+    public readonly id: string;
+
+    private readonly score: number = 0;
+
+    private status: 'PAUSE' | 'PLAY' = 'PAUSE'
+
+    private readonly playerA: Player;
+    private readonly playerB: Player;
+
+    constructor(
+        playerAname: IntraUserName,
+        playerBname: IntraUserName
+    ) {
+        this.id = `${playerAname}${playerBname}`
+        this.playerA = new Player(playerAname, this, { x: 0, y: 400 })
+        this.playerB = new Player(playerBname, this, { x: 1000, y: 400 })
+    }
+
 }
 
 @Injectable()
@@ -10,7 +46,7 @@ export class GameService {
 
     private queue: IntraUserName | null = null;
     private games = new Map<string, Game>();
-    private usersToGames = new Map<string, Game>();
+    private usersToGame = new Map<string, Game>();
 
     constructor(
         @Inject(forwardRef(() => GameWebsocketGateway))
@@ -27,15 +63,15 @@ export class GameService {
     }
 
     public getGameIdForUser(username: IntraUserName) {
-        return this.usersToGames.get(username)?.id
+        return this.usersToGame.get(username)?.id
     }
 
     private async createGame(userOne: IntraUserName, userTwo: IntraUserName) {
         console.log("createGame")
-        const newGame = { id: `${userOne}${userTwo}` }
+        const newGame = new Game(userOne, userTwo)
         this.games.set(newGame.id, newGame)
-        this.usersToGames.set(userOne, newGame)
-        this.usersToGames.set(userTwo, newGame)
+        this.usersToGame.set(userOne, newGame)
+        this.usersToGame.set(userTwo, newGame)
         this.webSocket.clientInGame(userOne, newGame.id)
         this.webSocket.clientInGame(userTwo, newGame.id)
         this.webSocket.emitEventToGame(newGame.id, 'found game')

@@ -3,6 +3,12 @@ import { z } from "zod"
 
 const c = initContract()
 
+export const GameDimm = {
+    court: { width: 1600, height: 900 },
+    paddle: { width: 25, height: 225 },
+    ballRadius: 25 
+}
+
 export const zGameParameters = z.strictObject({
 	court: z.strictObject({
 		start: z.strictObject({

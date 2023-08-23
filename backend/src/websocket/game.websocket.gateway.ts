@@ -8,7 +8,7 @@ import * as cookie from "cookie"
 import { GameService } from "src/game/game.service";
 import { Schema, z } from "zod";
 import { EnvService } from "src/env/env.service";
-import { ClientToServerEvents, ServerToClientEvents } from "contract";
+import { ClientToServerEvents, GameMoovement, GameMoovementSchema, ServerToClientEvents } from "contract";
 import { InGameMessageSchema } from "contract";
 import { InGameMessage } from "contract";
 import { UserService } from "src/user/user.service";
@@ -109,6 +109,8 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         const client = this.findClientSocketByUserName(username)
         if (!client)
             return "OFFLINE"
+        if (client.data.status === "IDLE")
+            return "ONLINE"
         return client.data.status
     }
 
@@ -176,6 +178,15 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             player: client.data.username,
             message: payload
         })
+    }
+
+    @SubscribeMessage("gameMoovement")
+    gameMoovement(
+        @ConnectedSocket()client: EnrichedSocket,
+        @MessageBody(new ZodValidationPipe(GameMoovementSchema))payload: GameMoovement
+    ) {
+        if (client.data.status !== 'GAME')
+            return
     }
 
     // @UseGuards(WsJwtAuthGuard)

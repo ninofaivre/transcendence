@@ -80,7 +80,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     ) {}
 
     @WebSocketServer()
-    private server = new Server<ClientToServerEvents, ServerToClientEvents, {}, SocketData>();
+    public server = new Server<ClientToServerEvents, ServerToClientEvents, {}, SocketData>();
 
     afterInit(server: Socket) {
         server.use(WebSocketAuthMiddleware(this.authService,

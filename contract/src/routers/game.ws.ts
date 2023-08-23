@@ -27,7 +27,6 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
         username: zUserName
     }),
     z.strictObject({
-        // PLAY is called only when a PAUSE is canceled
         status: z.literal("PLAY")
     })
 ])

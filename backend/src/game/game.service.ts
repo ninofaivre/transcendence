@@ -1,5 +1,5 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import { GameDim, GameMoovement } from 'contract';
+import { GameDim, GameMoovement, GameStatus } from 'contract';
 import { EnrichedRequest } from 'src/auth/auth.service';
 import { GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
 
@@ -44,7 +44,50 @@ class Game {
 
     private readonly score: number = 0;
     // private updateTime = 
-    private status: 'INIT' | 'PAUSE' | 'PLAY' = 'PAUSE'
+    private _status: GameStatus['status'] = 'INIT'
+
+    static readonly breakTimeout = 3000
+    static readonly initTimeout = 5000
+
+    get status() {
+        return this._status
+    }
+
+    set status(newStatus: typeof this._status) {
+        switch(newStatus) {
+            case 'INIT': {
+                this.webSocket.server.to(this.id).emit('updatedGameStatus', {
+                    status: 'INIT',
+                    timeout: Game.initTimeout,
+                    paddleLeftUserName: this.playerA.user.username,
+                    paddleRightUserName: this.playerB.user.username
+                })
+                setTimeout(this.update.bind(this), 3000, 'PLAY')
+                break ;
+            }
+            case 'PLAY': {
+                this.webSocket.server.to(this.id).emit('updatedGameStatus', {
+                    status: 'PLAY'
+                })
+                break ;
+            }
+            case 'PAUSE': {
+                this.webSocket.server.to(this.id).emit('updatedGameStatus', {
+                    status: 'PAUSE',
+                    timeout: 99999,
+                    username: "notImplementedYet"
+                })
+                break ;
+            }
+            case 'BREAK': {
+                this.webSocket.server.to(this.id).emit("updatedGameStatus", {
+                    status: 'BREAK',
+                    timeout: Game.breakTimeout
+                })
+            }
+        }
+        this._status = newStatus
+    }
 
     private readonly playerA: Player;
     private readonly playerB: Player;
@@ -77,32 +120,11 @@ class Game {
         })
     }
 
-    private update() {
+    private update(newStatus?: typeof this.status) {
+        if (newStatus)
+            this.status = newStatus
         this.emitGamePositions()
         this.update()
-    }
-
-    public init() {
-        this.webSocket.server.to(this.id).emit('updatedGameStatus', {
-            status: 'INIT',
-            timeout: 3000,
-            paddleLeftUserName: this.playerA.user.username,
-            paddleRightUserName: this.playerB.user.username
-        })
-        setTimeout(this.update.bind(this), 3000)
-    }
-
-    public pause() {
-        if (this.status = 'INIT')
-            // do something
-        this.status = 'PAUSE'
-    }
-
-    public unpause() {
-        // if (this.initCoolDown)
-        //     this.status = 'INIT'
-        // else
-            this.status = 'PLAY'
     }
 
 }
@@ -125,7 +147,7 @@ export class GameService {
         const game = this.usersToGame.get(intraUserName)
         if (!game)
             return
-        game.pause()
+        // game.pause()
     }
 
     public connectUser(username: IntraUserName) {
@@ -133,7 +155,7 @@ export class GameService {
         if (!game)
             return
         this.webSocket.clientInGame(username, game.id)
-        game.unpause()
+        // game.unpause()
     }
 
     public getGameIdForUser(username: IntraUserName) {
@@ -148,7 +170,7 @@ export class GameService {
         this.webSocket.clientInGame(userTwo.intraUserName, newGame.id)
         this.usersToGame.set(userOne.intraUserName, newGame)
         this.usersToGame.set(userTwo.intraUserName, newGame)
-        newGame.init()
+        newGame.status = 'INIT'
     }
 
     public queueUser(user: EnrichedRequest['user']) {

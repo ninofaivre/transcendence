@@ -1,5 +1,5 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import { GameDim, GameMoovement, GameStatus } from 'contract';
+import { GameDim, GameMoovement, GameSpeed, GameStatus, GameTimings } from 'contract';
 import { EnrichedRequest } from 'src/auth/auth.service';
 import { GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
 
@@ -12,8 +12,11 @@ interface Position {
 
 class Player {
 
-    private pauseAmount = 60000
-    private moovement: GameMoovement = "NONE";
+    private _moovement: GameMoovement = "NONE";
+
+    public set moovement(newMoovement: GameMoovement) {
+        this._moovement = newMoovement
+    }
 
     constructor(
         public readonly user: EnrichedRequest['user'],
@@ -23,6 +26,27 @@ class Player {
 
     get position() {
         return this._position
+    }
+
+    set position(newPosition: Position) {
+        if (newPosition.y < 0)
+            newPosition.y = 0
+        else if (newPosition.y + GameDim.paddle.height > GameDim.court.height)
+            newPosition.y = GameDim.court.height - GameDim.paddle.height
+        else if (newPosition.x !== this.position.x)
+            newPosition.x = this.position.x
+        this._position = newPosition
+    }
+
+    public moove(deltaTime: number) {
+        if (this._moovement === 'NONE')
+            return
+        const ySign = this._moovement === 'UP' ? 1 : -1
+        const newPosition: Position = {
+            x: this.position.x,
+            y: this.position.y + ySign * GameSpeed.paddle / 1000 * deltaTime
+        }
+        this.position = newPosition
     }
 
 }
@@ -43,11 +67,8 @@ class Game {
     public readonly id: string;
 
     private readonly score: number = 0;
-    // private updateTime = 
+    private lastUpdateTime: number | null = null
     private _status: GameStatus['status'] = 'INIT'
-
-    static readonly breakTimeout = 3000
-    static readonly initTimeout = 5000
 
     get status() {
         return this._status
@@ -58,7 +79,7 @@ class Game {
             case 'INIT': {
                 this.webSocket.server.to(this.id).emit('updatedGameStatus', {
                     status: 'INIT',
-                    timeout: Game.initTimeout,
+                    timeout: GameTimings.initTimeout,
                     paddleLeftUserName: this.playerA.user.username,
                     paddleRightUserName: this.playerB.user.username
                 })
@@ -82,7 +103,7 @@ class Game {
             case 'BREAK': {
                 this.webSocket.server.to(this.id).emit("updatedGameStatus", {
                     status: 'BREAK',
-                    timeout: Game.breakTimeout
+                    timeout: GameTimings.breakTimeout
                 })
             }
         }
@@ -120,9 +141,27 @@ class Game {
         })
     }
 
+    public updateMoovement(intraUserName: IntraUserName, moove: GameMoovement) {
+        const player = (this.playerA.user.intraUserName === intraUserName)
+            ? this.playerA
+            : this.playerB
+        player.moovement = moove
+    }
+
+    private moove(deltaTime: number) {
+        this.playerA.moove(deltaTime)
+        this.playerB.moove(deltaTime)
+    }
+
     private update(newStatus?: typeof this.status) {
         if (newStatus)
             this.status = newStatus
+        if (newStatus !== 'PLAY')
+            return
+        const currentTime = Date.now()
+        if (this.lastUpdateTime)
+            this.moove(currentTime - this.lastUpdateTime)
+        this.lastUpdateTime = currentTime
         this.emitGamePositions()
         this.update()
     }
@@ -188,6 +227,13 @@ export class GameService {
     public deQueueUser(intraUserName: IntraUserName) {
         if (this.queue?.intraUserName === intraUserName)
             this.queue = null
+    }
+
+    public moovement(intraUserName: IntraUserName, moove: GameMoovement) {
+        const game = this.usersToGame.get(intraUserName)
+        if (!game)
+            return
+        game.updateMoovement(intraUserName, moove)
     }
 
 }

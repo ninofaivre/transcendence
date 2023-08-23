@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { T, extend, useFrame, useThrelte } from "@threlte/core"
-	import type { MeshBasicMaterialParameters } from "three"
+	import { Vector3, type MeshBasicMaterialParameters } from "three"
 	import * as GameObjects from "./GameObjects"
 	import { writable } from "svelte/store"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
@@ -26,7 +26,8 @@
 	// })
 
 	extend({ OrbitControls })
-	const { renderer, invalidate } = useThrelte()
+	const { size, renderer, invalidate } = useThrelte()
+	$: zoom = $size.width / 256
 
 	useFrame((state, delta) => {})
 
@@ -52,9 +53,28 @@
 	let ball_color = "red"
 
 	// Initial object positioning
-	const ball_startx = width / 2
-	const ball_starty = height / 2
-	const ball_size = paddle_width / 2
+	const court_init = {
+		width: 100,
+		height: (100 * 9) / 16,
+	}
+	const ball_init = {
+		x: 0,
+		y: 0,
+		r: 1,
+		color: "red",
+	}
+	const paddle_init = {
+		x: 0,
+		y: 0,
+		width: 1,
+		height: court_init.height / 4,
+		color: "orange",
+	}
+	const ball_speed = 10
+
+	const ball_startx = 0
+	const ball_starty = 0
+	const ball_size = 1
 
 	const lpaddle_startx = -width / 30
 	const rpaddle_startx = width / 30
@@ -66,47 +86,65 @@
 	let playing = true
 	let left_score = 0
 	let right_score = 0
-	GameObjects.Paddle.speed = 10
 
-	let lpaddle = new GameObjects.Paddle(
-		lpaddle_startx,
-		lpaddle_starty,
-		paddle_width,
-		paddle_height,
-		// paddle_color,
-		"blue",
-	)
-	let rpaddle = new GameObjects.Paddle(
-		rpaddle_startx,
-		rpaddle_starty,
-		paddle_width,
-		paddle_height,
-		// paddle_color,
-		"green",
-	)
-	let ball = new GameObjects.Ball(ball_startx, ball_starty, ball_size, ball_color)
+	let d_from_walls = 10
+	let court = {
+		w: 100,
+		h: (100 * 9) / 16,
+	}
+
+	let lpaddle = {
+		x: 0 + d_from_walls,
+		z: court.h / 2,
+		w: court.w / 64,
+		h: court.h / 4,
+	}
+
+	let rpaddle = {
+		x: 0 + court.w - d_from_walls,
+		z: court.h / 2,
+		w: court.w / 64,
+		h: court.h / 4,
+	}
+
+	let ball = {
+		x: court.w / 2,
+		z: court.h / 2,
+		r: 1,
+	}
+
+	let top_wall = {
+		x: court.w / 2,
+		z: 0,
+		w: court.w,
+		h: 1,
+	}
+	let left_wall = {
+		x: 0,
+		z: court.h / 2,
+		w: 1,
+		h: court.h,
+	}
+	let right_wall = {
+		x: court.w,
+		z: court.h / 2,
+		w: 1,
+		h: court.h,
+	}
+	let bottom_wall = {
+		x: court.w / 2,
+		z: court.h,
+		w: court.w,
+		h: 1,
+	}
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (playing) {
-			console.log(`You entered ${e.key}`)
 			switch (e.code) {
-				case "KeyW":
-					lpaddle.y -= GameObjects.Paddle.speed
-					lpaddle = lpaddle
-					return
-				case "KeyS":
-					lpaddle.y += GameObjects.Paddle.speed
-					lpaddle = lpaddle
-					return
 				case "ArrowUp":
-					rpaddle.y -= GameObjects.Paddle.speed
-					rpaddle = rpaddle
-					return
+				// send "move-up"
 				case "ArrowDown":
-					rpaddle.y += GameObjects.Paddle.speed
-					rpaddle = rpaddle
-					return
-				default:
+				// send "move-down"
 			}
 		}
 	}
@@ -115,9 +153,26 @@
 <svelte:window bind:innerWidth on:keydown={handleKeydown} />
 
 <!-- Camera -->
-<T.PerspectiveCamera makeDefault position={[0, 0, 100]} let:ref>
-	<T.OrbitControls args={[ref, renderer.domElement]} on:change={invalidate} />
-</T.PerspectiveCamera>
+<!-- <T.PerspectiveCamera makeDefault {zoom} position={[court_init.width, - court_init.height / 2, 100]} let:ref> -->
+<!-- <T.PerspectiveCamera makeDefault {zoom} position={[0, 0, 100]} let:ref> -->
+<!-- 	<T.OrbitControls -->
+<!-- 		args={[ref, renderer.domElement]} -->
+<!-- 		on:change={invalidate} -->
+<!-- 		on:create={({ ref }) => { -->
+<!-- 			ref.lookAt(new Vector3(0, 0, -1)) -->
+<!-- 		}} -->
+<!-- 	/> -->
+<!-- </T.PerspectiveCamera> -->
+
+<!-- above camera -->
+<T.OrthographicCamera
+	makeDefault
+	{zoom}
+	position={[court.w / 2, 100, court.h / 2]}
+	on:create={({ ref }) => {
+		ref.lookAt(new Vector3(court.w/2, -1, court.h/2))
+	}}
+></T.OrthographicCamera>
 
 <!-- Ball -->
 <Ball {ball} />
@@ -125,3 +180,9 @@
 <Paddle paddle={lpaddle} />
 <!-- Right paddle  -->
 <Paddle paddle={rpaddle} />
+
+<!-- Court Walls -->
+<Paddle paddle={top_wall} />
+<Paddle paddle={right_wall} />
+<Paddle paddle={left_wall} />
+<Paddle paddle={bottom_wall} />

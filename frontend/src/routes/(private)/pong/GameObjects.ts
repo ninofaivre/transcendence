@@ -14,16 +14,21 @@ class Rectangle {
 
 export class Paddle extends Rectangle {
 	static speed = 1
-	public color: string
+	public color: string = "green"
 
 	y0: number
-	dy: number
+	dy: number = 1
 
-	constructor(x: number, y: number, w: number, h: number, color: string, dy = 1) {
+	constructor(x: number, y: number, w: number, h: number, color?: string, dy?: number) {
 		super(x, y, w, h)
 		this.y0 = y
-		this.dy = dy
-		this.color = color
+		dy ? (this.dy = dy) : dy
+		color ? (this.color = color) : color
+	}
+
+	static fromObject(obj: { x: number; y: number; w: number; h: number; color?: string }): Paddle {
+		const newPaddle = new Paddle(obj.x, obj.x, obj.w, obj.h, obj.color)
+		return newPaddle
 	}
 
 	update() {
@@ -53,18 +58,31 @@ export class Ball extends Circle {
 	readonly y0: number
 	dx: number
 	dy: number
-	speed: number
-	initialSpeed: number
-	public color: string
+	speed: number = 1
+	initialSpeed: number = this.speed
+	public color: string = "red"
 
-	constructor(x: number, y: number, r: number, color: string, speed = 1) {
+	constructor(x: number, y: number, r: number, color?: string, speed?: number) {
 		super(x, y, r)
 		this.x0 = x
 		this.y0 = y
-		this.initialSpeed = speed
-		this.speed = speed
-		this.color = color
+		if (speed) {
+			this.initialSpeed = speed
+			this.speed = speed
+		}
+		this.color = color ?? this.color
 		;[this.dx, this.dy] = this.start()
+	}
+
+	static fromObject(obj: {
+		x: number
+		y: number
+		r: number
+		color?: string
+		speed?: number
+	}): Ball {
+		const newPaddle = new Ball(obj.x, obj.x, obj.r, obj.color, obj.speed)
+		return newPaddle
 	}
 
 	private start(): [number, number] {

@@ -16,6 +16,7 @@ import { CallbackModule } from './callback/callback.module';
 import { Reflector } from "@nestjs/core"
 import { Oauth42Module } from './oauth42/oauth42.module';
 import { GameModule } from './game/game.module';
+import { EventEmitterModule } from "@nestjs/event-emitter"
 
 @Module({
 	imports: [
@@ -23,6 +24,7 @@ import { GameModule } from './game/game.module';
 			rootPath: join(__dirname, "../../frontend/build"),
 			exclude: ["/api*"],
 		}),
+        EventEmitterModule.forRoot({}),
 		AuthModule,
 		GameWebsocketModule,
 		ChansModule,

@@ -29,20 +29,25 @@
 	let lpaddle_pos: Position = { x: 0, y: court.height / 2 }
 	let rpaddle_pos: Position = { x: court.width, y: court.height / 2 }
 
+    // Utils
+    let button_disabled = false
+
 	onMount(() => {
 		game_socket = io(PUBLIC_BACKEND_URL, {
             withCredentials: true,
         })
-
 		//Receive data
 		game_socket.on("updatedGamePositions", (data) => {
+            console.log(data)
 			;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
 		})
 		game_socket.on("newInGameMessage", (data) => {})
 		game_socket.on("updatedGameStatus", (data) => {
+            console.log(data)
 			state = data.status
 		})
-		game_socket.on("disconnect", () => {
+		game_socket.on("disconnect", (data) => {
+            console.log(data)
 			state = "IDLE"
 		})
 
@@ -50,17 +55,22 @@
 	})
 
 	function createGame() {
+        console.log("Clicked to create")
 		game_socket.emit("queue", "")
+        button_disabled = true
 	}
 
 	function cancelGame() {
+        console.log("Cancelled game")
 		game_socket.emit("deQueue", "")
 	}
 
     function onUP() {
+        console.log("UP")
 		game_socket.emit("gameMovement", "UP")
     }
     function onDOWN() {
+        console.log("DOWN")
 		game_socket.emit("gameMovement", "DOWN")
     }
 </script>
@@ -79,14 +89,15 @@
 	{:else if state === "IDLE"}
 		<button
 			class="menu-buttons btn variant-ringed-primary rounded"
-			on:click|stopPropagation={createGame}
+			on:click={createGame}
+            disabled={button_disabled}
 		>
 			PLAY
 		</button>
 	{:else if state === "INIT"}
 		<button
 			class="menu-buttons rounde btn variant-ringed-error"
-			on:click|stopPropagation={cancelGame}
+			on:click={cancelGame}
 		>
 			CANCEL
 		</button>

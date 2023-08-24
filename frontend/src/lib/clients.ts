@@ -31,7 +31,7 @@ export const client = initClient(contract, {
 		) {
 			const { status } = await client.auth.refreshTokens({ body: null })
 			if (status === 200) return tsRestFetchApi(args)
-			else logout()
+			else logged_in.set(false)
 		}
 
 		// perform checks for ret as contractError so we can have even more

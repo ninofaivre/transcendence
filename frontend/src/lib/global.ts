@@ -121,8 +121,28 @@ export function addListenerToEventSource<EventType extends SseEvent["type"]>(
 	return () => void es.removeEventListener(eventType, call_callback_on_event_data)
 }
 
+import type { ServerToClientEvents } from "contract"
+import type { ClientToServerEvents } from "contract"
+
+export function addListenerToWebSocket<
+	EventType extends Socket<ServerToClientEvents, ClientToServerEvents>,
+>(
+	es: Socket,
+	eventType: EventType,
+	callback: (data: GetDataFromEventType<EventType>, event: MessageEvent) => void,
+) {
+	const call_callback_on_event_data = (ev: MessageEvent) => {
+		callback(JSON.parse(ev.data), ev)
+	}
+	console.log("Adding event listener to websocket for ", eventType)
+	es.on(eventType, call_callback_on_event_data)
+	return () => void es.removeEventListener(eventType, call_callback_on_event_data)
+}
+
 import type { ActionReturn } from "svelte/action"
 import { toastStore } from "@skeletonlabs/skeleton"
+import type { Socket } from "socket.io-client"
+
 // use: function
 export function listenOutsideClick(
 	node: HTMLElement,

@@ -149,6 +149,7 @@
 	.menu-container > div, button {
         align-self: center;
         justify-self: center;
+        font-family: 'VT323', serif;
 	}
 
 </style>

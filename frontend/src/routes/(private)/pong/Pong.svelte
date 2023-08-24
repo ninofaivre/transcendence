@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { GameDim } from "contract"
+	import type { Position } from "contract"
 
 	import { T, extend, useFrame, useThrelte } from "@threlte/core"
 	import { Vector3 } from "three"
@@ -14,45 +15,46 @@
 	extend({ OrbitControls })
 	const dispatch = createEventDispatcher()
 
-	type Size = { w: number; h: number }
-	type Position = { x: number; y: number }
+	type Size = (typeof GameDim)["paddle"]
 
 	// General parameters
+
+	export let court: Size
 	export let ball_sz: Size
 	export let lpaddle_sz: Size
 	export let rpaddle_sz: Size
 	export let ball_pos: Position
 	export let lpaddle_pos: Position
 	export let rpaddle_pos: Position
-	export let court: Size
-	export let ball = {
+
+	$: ball = {
 		x: ball_pos.x,
 		z: ball_pos.y,
-		w: ball_sz.w,
-		h: ball_sz.h,
+		w: ball_sz.width,
+		h: ball_sz.height,
 	}
-	export let lpaddle = {
+	$: lpaddle = {
 		x: lpaddle_pos.x,
 		z: lpaddle_pos.y,
-		w: lpaddle_sz.w,
-		h: lpaddle_sz.h,
+		w: lpaddle_sz.width,
+		h: lpaddle_sz.height,
 	}
-	export let rpaddle = {
+	$: rpaddle = {
 		x: rpaddle_pos.x,
 		z: rpaddle_pos.y,
-		w: rpaddle_sz.w,
-		h: rpaddle_sz.h,
+		w: rpaddle_sz.width,
+		h: rpaddle_sz.height,
 	}
 	let top_wall = {
-		x: court.w / 2,
+		x: court.width / 2,
 		z: 0,
-		w: court.w,
+		w: court.width,
 		h: 1,
 	}
 	let bottom_wall = {
-		x: court.w / 2,
-		z: court.h,
-		w: court.w,
+		x: court.width / 2,
+		z: court.height,
+		w: court.width,
 		h: 1,
 	}
 	// let left_wall = {
@@ -96,9 +98,9 @@
 <T.OrthographicCamera
 	makeDefault
 	{zoom}
-	position={[court.w / 2, 100, court.h / 2]}
+	position={[court.width / 2, 100, court.height / 2]}
 	on:create={({ ref }) => {
-		ref.lookAt(new Vector3(court.w / 2, -1, court.h / 2))
+		ref.lookAt(new Vector3(court.width / 2, -1, court.height / 2))
 	}}
 ></T.OrthographicCamera>
 

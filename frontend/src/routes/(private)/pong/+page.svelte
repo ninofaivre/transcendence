@@ -13,13 +13,21 @@
 	let my_paddle_is_left: boolean = false
 	let my_score = 0
 	let other_score = 0
-	let state = "IDLE"
+	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" = "IDLE"
+
+	// Fixed sizings
+	let court: (typeof GameDim)["court"]
+	let ball_sz: (typeof GameDim)["paddle"] = {
+		width: GameDim.ballSideLength,
+		height: GameDim.ballSideLength,
+	}
+	let lpaddle_sz: (typeof GameDim)["paddle"] = GameDim.paddle
+	let rpaddle_sz: (typeof GameDim)["paddle"] = GameDim.paddle
+
+	// Positions
 	let ball_pos: Position
 	let lpaddle_pos: Position
 	let rpaddle_pos: Position
-	let ball_sz: (typeof GameDim)["ballRadius"] = GameDim.paddle
-	let lpaddle_sz: (typeof GameDim)["paddle"] = GameDim.paddle
-	let rpaddle_sz: (typeof GameDim)["paddle"] = GameDim.paddle
 
 	onMount(() => {
 		game_socket = io(PUBLIC_BACKEND_URL)
@@ -32,18 +40,19 @@
 		game_socket.on("updatedGameStatus", (data) => {
 			state = data.status
 		})
+		game_socket.on("disconnect", () => {
+			state = "IDLE"
+		})
 
 		return game_socket.close
 	})
 
 	function createGame() {
 		game_socket.emit("queue", "")
-		state = "waiting"
 	}
 
 	function cancelGame() {
 		game_socket.emit("deQueue", "")
-		state = "idle"
 	}
 </script>
 
@@ -58,14 +67,14 @@
 		<div class="menu-buttons">Waiting for user (spinner here)</div>
 	{:else if state === "BREAK"}
 		<div class="menu-buttons">READY ?</div>
-	{:else if state === "PAUSE"}
+	{:else if state === "IDLE"}
 		<button class="menu-buttons" on:click|stopPropagation={createGame}> PLAY </button>
 	{:else if state === "INIT"}
 		<button class="menu-buttons" on:click|stopPropagation={cancelGame}> CANCEL </button>
 	{/if}
 </div>
 <Canvas frameloop="demand" debugFrameloop={false}>
-	<Pong {ball_sz} {ball_pos} {lpaddle_sz} {lpaddle_pos} {rpaddle_sz} {rpaddle_pos} />
+	<Pong {court} {ball_sz} {ball_pos} {lpaddle_sz} {lpaddle_pos} {rpaddle_sz} {rpaddle_pos} />
 </Canvas>
 
 <style>

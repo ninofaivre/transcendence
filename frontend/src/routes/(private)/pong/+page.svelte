@@ -30,30 +30,30 @@
 	let lpaddle_pos: Position = { x: 0, y: court.height / 2 }
 	let rpaddle_pos: Position = { x: court.width, y: court.height / 2 }
 
-    // Utils
-    let button_disabled = false
+	// Utils
+	let button_disabled = false
 
 	onMount(() => {
 		game_socket = io(PUBLIC_BACKEND_URL, {
-            withCredentials: true,
-        })
+			withCredentials: true,
+		})
 		//Receive data
 		game_socket.on("updatedGamePositions", (data) => {
-            // console.log(data)
+			// console.log(data)
 			;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
 		})
 		game_socket.on("newInGameMessage", (data) => {})
 
 		game_socket.on("updatedGameStatus", (data) => {
-            console.log(data)
+			console.log(data)
 			state = data.status
-            if (data.status === "INIT") {
-                my_paddle_is_left = data.paddleLeftUserName === $my_name
-            }
+			if (data.status === "INIT") {
+				my_paddle_is_left = data.paddleLeftUserName === $my_name
+			}
 		})
 
 		game_socket.on("disconnect", (data) => {
-            console.log(data)
+			console.log(data)
 			state = "IDLE"
 		})
 
@@ -61,26 +61,26 @@
 	})
 
 	function createGame() {
-        console.log("Clicked to create")
+		console.log("Clicked to create")
 		game_socket.emit("queue", "")
-        button_disabled = true
-        state = "WAITING"
+		button_disabled = true
+		state = "WAITING"
 	}
 
 	function cancelGame() {
-        console.log("Cancelled game")
+		console.log("Cancelled game")
 		game_socket.emit("deQueue", "")
-        state = "IDLE"
+		state = "IDLE"
 	}
 
-    function onUP() {
-        console.log("UP")
+	function onUP() {
+		console.log("UP")
 		game_socket.emit("gameMovement", "UP")
-    }
-    function onDOWN() {
-        console.log("DOWN")
+	}
+	function onDOWN() {
+		console.log("DOWN")
 		game_socket.emit("gameMovement", "DOWN")
-    }
+	}
 </script>
 
 <div id="left-score" style:--score-color={my_paddle_is_left ? "red" : "green"}>
@@ -91,35 +91,39 @@
 </div>
 <div class="menu-container grid grid-cols-1">
 	{#if state === "PAUSE"}
-		<div class=" self-center justify-self">Waiting for user (spinner here)</div>
+		<div class="justify-self self-center">Waiting for user (spinner here)</div>
 	{:else if state === "BREAK"}
 		<div class="">READY ?</div>
 	{:else if state === "IDLE"}
 		<button
-			class=" btn variant-ringed-primary rounded "
+			class="btn variant-ringed-primary rounded"
 			on:click={createGame}
-            disabled={button_disabled}
+			disabled={button_disabled}
 		>
 			PLAY
 		</button>
 	{:else if state === "WAITING"}
-		<button
-			class=" rounde btn variant-ringed-error"
-			on:click={cancelGame}
-		>
+		<button class="rounde btn variant-ringed-error" on:click={cancelGame}>
 			CANCEL (spinner here)
 		</button>
 	{:else if state === "INIT"}
-		<button
-			class=" rounde btn variant-ringed-error"
-			on:click={cancelGame}
-		>
-            FOUND A GAME !
+		<button class="rounde btn variant-ringed-error" on:click={cancelGame}>
+			FOUND A GAME !
 		</button>
 	{/if}
 </div>
 <Canvas frameloop="demand" debugFrameloop={false}>
-	<Pong {court} {ball_sz} {ball_pos} {lpaddle_sz} {lpaddle_pos} {rpaddle_sz} {rpaddle_pos} on:UP={onUP} on:DOWN={onDOWN}/>
+	<Pong
+		{court}
+		{ball_sz}
+		{ball_pos}
+		{lpaddle_sz}
+		{lpaddle_pos}
+		{rpaddle_sz}
+		{rpaddle_pos}
+		on:UP={onUP}
+		on:DOWN={onDOWN}
+	/>
 </Canvas>
 
 <style>
@@ -127,8 +131,8 @@
 	#right-score {
 		position: absolute;
 		top: 30%;
-        font-family: 'VT323', serif;
-        font-size: 3rem;
+		font-family: "ArcadeClassic", "VT323", serif;
+		font-size: 3rem;
 	}
 	#left-score {
 		--score-color: white;
@@ -142,18 +146,17 @@
 	}
 
 	.menu-container {
-        display: grid;
-        position: absolute;
-        grid-template-rows: 100vh;
-        grid-template-columns: 100vw;
+		display: grid;
+		position: absolute;
+		grid-template-rows: 100vh;
+		grid-template-columns: 100vw;
 	}
 
-	.menu-container > div, button {
-        align-self: center;
-        justify-self: center;
-        font-family: 'VT323', serif;
-        font-size: 3rem;
+	.menu-container > div,
+	button {
+		align-self: center;
+		justify-self: center;
+		font-family: "ArcadeClassic", "VT323", serif;
+		font-size: 3rem;
 	}
-
 </style>
-

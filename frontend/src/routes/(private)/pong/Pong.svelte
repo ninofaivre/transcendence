@@ -70,8 +70,10 @@
 		switch (e.code) {
 			case "ArrowUp":
 				dispatch("UP")
+                break;
 			case "ArrowDown":
 				dispatch("DOWN")
+                break;
 		}
 	}
 </script>

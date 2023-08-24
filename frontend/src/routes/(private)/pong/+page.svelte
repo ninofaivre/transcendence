@@ -39,7 +39,7 @@
         })
 		//Receive data
 		game_socket.on("updatedGamePositions", (data) => {
-            console.log(data)
+            // console.log(data)
 			;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
 		})
 		game_socket.on("newInGameMessage", (data) => {})

@@ -66,7 +66,12 @@ export class ZodValidationPipe implements PipeTransform {
 
 const EmptyValidation = new ZodValidationPipe(z.literal(""))
 
-@WebSocketGateway({})
+@WebSocketGateway({
+    cors: {
+		origin: /https?:\/\/localhost(?::\d{1,6})?$/,
+        credentials: true,
+    }
+})
 @Injectable()
 export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
 

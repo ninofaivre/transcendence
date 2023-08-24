@@ -30,7 +30,9 @@
 	let rpaddle_pos: Position = { x: court.width, y: court.height / 2 }
 
 	onMount(() => {
-		game_socket = io(PUBLIC_BACKEND_URL)
+		game_socket = io(PUBLIC_BACKEND_URL, {
+            withCredentials: true,
+        })
 
 		//Receive data
 		game_socket.on("updatedGamePositions", (data) => {

@@ -9,16 +9,6 @@
 	import Ball from "./Ball.svelte"
 	import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
-	const { size, renderer, invalidate } = useThrelte()
-	$: zoom = $size.width / 128
-
-	extend({ OrbitControls })
-	const dispatch = createEventDispatcher()
-
-	type Size = (typeof GameDim)["paddle"]
-
-	// General parameters
-
 	export let court: Size = {
 		width: 1600,
 		height: 900,
@@ -29,6 +19,18 @@
 	export let ball_pos: Position
 	export let lpaddle_pos: Position
 	export let rpaddle_pos: Position
+
+	const { size, renderer, invalidate } = useThrelte()
+
+	$: zoom = $size.width / court.width
+
+	extend({ OrbitControls })
+	const dispatch = createEventDispatcher()
+
+	type Size = (typeof GameDim)["paddle"]
+
+	// General parameters
+
 
 	let top_wall = {
 		position: {

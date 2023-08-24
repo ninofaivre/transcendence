@@ -1,41 +1,50 @@
 <script lang="ts">
 	import { type Socket, io } from "socket.io-client"
-	import type { ServerToClientEvents, ClientToServerEvents } from "contract"
+	import type { ServerToClientEvents, ClientToServerEvents, Position } from "contract"
 
 	import { Canvas } from "@threlte/core"
 	import Pong from "./Pong.svelte"
 
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { onMount } from "svelte"
+	import { GameDim } from "contract"
 
 	let game_socket: Socket<ServerToClientEvents, ClientToServerEvents>
 	let my_paddle_is_left: boolean = false
 	let my_score = 0
 	let other_score = 0
+	let state = "IDLE"
+	let ball_pos: Position
+	let lpaddle_pos: Position
+	let rpaddle_pos: Position
+	let ball_sz: (typeof GameDim)["ballRadius"] = GameDim.paddle
+	let lpaddle_sz: (typeof GameDim)["paddle"] = GameDim.paddle
+	let rpaddle_sz: (typeof GameDim)["paddle"] = GameDim.paddle
 
 	onMount(() => {
 		game_socket = io(PUBLIC_BACKEND_URL)
 
 		//Receive data
-		game_socket.on("updatedGamePositions", (message) => {
-			console.log(message)
+		game_socket.on("updatedGamePositions", (data) => {
+			;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
 		})
-		game_socket.on("newInGameMessage", (message) => {
-			console.log(message)
+		game_socket.on("newInGameMessage", (data) => {})
+		game_socket.on("updatedGameStatus", (data) => {
+			state = data.status
 		})
-		game_socket.on("updatedGameStatus", (message) => {
-			console.log(message)
-		})
-
-		// Emit data
-		game_socket.emit("queue", "")
-		game_socket.emit("deQueue", "")
-
-		game_socket.emit("newInGameMessage", "UP")
-		game_socket.emit("gameMoovement", "UP")
 
 		return game_socket.close
 	})
+
+	function createGame() {
+		game_socket.emit("queue", "")
+		state = "waiting"
+	}
+
+	function cancelGame() {
+		game_socket.emit("deQueue", "")
+		state = "idle"
+	}
 </script>
 
 <div id="left-score" style:--score-color={my_paddle_is_left ? "red" : "green"}>
@@ -44,8 +53,19 @@
 <div id="right-score" style:--score-color={my_paddle_is_left ? "green" : "red"}>
 	{my_paddle_is_left ? other_score : my_score}
 </div>
+<div class="menu-container">
+	{#if state === "PAUSE"}
+		<div class="menu-buttons">Waiting for user (spinner here)</div>
+	{:else if state === "BREAK"}
+		<div class="menu-buttons">READY ?</div>
+	{:else if state === "PAUSE"}
+		<button class="menu-buttons" on:click|stopPropagation={createGame}> PLAY </button>
+	{:else if state === "INIT"}
+		<button class="menu-buttons" on:click|stopPropagation={cancelGame}> CANCEL </button>
+	{/if}
+</div>
 <Canvas frameloop="demand" debugFrameloop={false}>
-	<Pong />
+	<Pong {ball_sz} {ball_pos} {lpaddle_sz} {lpaddle_pos} {rpaddle_sz} {rpaddle_pos} />
 </Canvas>
 
 <style>
@@ -63,5 +83,10 @@
 		--score-color: white;
 		left: 25%;
 		color: var(--score-color);
+	}
+
+	.menu-container {
+		position: absolute;
+		top: 50%;
 	}
 </style>

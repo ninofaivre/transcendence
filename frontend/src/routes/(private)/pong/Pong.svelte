@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { GameDim } from "contract"
+
 	import { T, extend, useFrame, useThrelte } from "@threlte/core"
 	import { Vector3 } from "three"
 	import { createEventDispatcher } from "svelte"
@@ -9,46 +11,45 @@
 	const { size, renderer, invalidate } = useThrelte()
 	$: zoom = $size.width / 128
 
-	// useFrame((state, delta) => {})
 	extend({ OrbitControls })
-
-	// General parameters
-
 	const dispatch = createEventDispatcher()
 
-	export let d_from_walls = 0
-	export let court = {
-		w: 100,
-		h: (100 * 9) / 16,
-	}
+	type Size = { w: number; h: number }
+	type Position = { x: number; y: number }
 
-	export let lpaddle = {
-		x: 0 + d_from_walls,
-		z: court.h / 2,
-		w: court.w / 32,
-		h: court.h / 4,
-	}
-
-	export let rpaddle = {
-		x: 0 + court.w - d_from_walls,
-		z: court.h / 2,
-		w: court.w / 32,
-		h: court.h / 4,
-	}
-
+	// General parameters
+	export let ball_sz: Size
+	export let lpaddle_sz: Size
+	export let rpaddle_sz: Size
+	export let ball_pos: Position
+	export let lpaddle_pos: Position
+	export let rpaddle_pos: Position
+	export let court: Size
 	export let ball = {
-		x: court.w / 2,
-		z: court.h / 2,
-		r: 1,
+		x: ball_pos.x,
+		z: ball_pos.y,
+		w: ball_sz.w,
+		h: ball_sz.h,
 	}
-
-	export let top_wall = {
+	export let lpaddle = {
+		x: lpaddle_pos.x,
+		z: lpaddle_pos.y,
+		w: lpaddle_sz.w,
+		h: lpaddle_sz.h,
+	}
+	export let rpaddle = {
+		x: rpaddle_pos.x,
+		z: rpaddle_pos.y,
+		w: rpaddle_sz.w,
+		h: rpaddle_sz.h,
+	}
+	let top_wall = {
 		x: court.w / 2,
 		z: 0,
 		w: court.w,
 		h: 1,
 	}
-	export let bottom_wall = {
+	let bottom_wall = {
 		x: court.w / 2,
 		z: court.h,
 		w: court.w,
@@ -102,7 +103,8 @@
 ></T.OrthographicCamera>
 
 <!-- Ball -->
-<Ball {ball} />
+<!-- <Ball {ball} /> -->
+<Paddle paddle={ball} />
 <!-- Left paddle  -->
 <Paddle paddle={lpaddle} />
 <!-- Right paddle  -->

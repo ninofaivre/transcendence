@@ -7,7 +7,7 @@
 	import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
 	const { size, renderer, invalidate } = useThrelte()
-	$: zoom = $size.width / 256
+	$: zoom = $size.width / 128
 
 	// useFrame((state, delta) => {})
 	extend({ OrbitControls })

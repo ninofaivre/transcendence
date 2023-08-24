@@ -38,17 +38,30 @@
 	})
 </script>
 
-<div>
-	<span>{my_paddle_is_left ? my_score : other_score}</span>
-	<span>{my_paddle_is_left ? other_score : my_score}</span>
+<div id="left-score" style:--score-color={my_paddle_is_left ? "red" : "green"}>
+	{my_paddle_is_left ? my_score : other_score}
+</div>
+<div id="right-score" style:--score-color={my_paddle_is_left ? "green" : "red"}>
+	{my_paddle_is_left ? other_score : my_score}
 </div>
 <Canvas frameloop="demand" debugFrameloop={false}>
 	<Pong />
 </Canvas>
 
 <style>
-	span {
+	#left-score,
+	#right-score {
 		position: absolute;
-		top: 20%;
+		top: 30%;
+	}
+	#left-score {
+		--score-color: white;
+		right: 25%;
+		color: var(--score-color);
+	}
+	#right-score {
+		--score-color: white;
+		left: 25%;
+		color: var(--score-color);
 	}
 </style>

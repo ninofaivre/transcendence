@@ -68,6 +68,7 @@
 		else {
 			makeToast("Logged in successfully")
 			logged_in.set(true)
+            goto("/")
 		}
 	}
 </script>

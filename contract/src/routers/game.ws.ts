@@ -4,8 +4,8 @@ import { zUserName } from "../zod/user.zod"
 export const InGameMessageSchema = z.string().nonempty().max(150)
 export type InGameMessage = z.infer<typeof InGameMessageSchema>
 
-export const GameMoovementSchema = z.enum(["UP", "DOWN", "NONE"])
-export type GameMoovement = z.infer<typeof GameMoovementSchema>
+export const GameMovementSchema = z.enum(["UP", "DOWN", "NONE"])
+export type GameMovement = z.infer<typeof GameMovementSchema>
 
 // use timeout only to show a cooldown to the user
 export const GameStatusSchema = z.discriminatedUnion("status", [
@@ -49,7 +49,7 @@ export interface ClientToServerEvents {
     queue: (e: "") => void
     deQueue: (e: "") => void
     newInGameMessage: (e: InGameMessage) => void
-    gameMoovement: (e: GameMoovement) => void
+    gameMovement: (e: GameMovement) => void
 }
 
 export interface ServerToClientEvents {

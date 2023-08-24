@@ -22,7 +22,8 @@
 
 	const { size, renderer, invalidate } = useThrelte()
 
-	$: zoom = $size.width / court.width
+    let margin = 300
+	$: zoom = $size.width / (court.width + margin )
 
 	extend({ OrbitControls })
 	const dispatch = createEventDispatcher()

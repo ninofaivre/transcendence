@@ -3,14 +3,18 @@ import { GameDim, GameMoovement, GameSpeed, GameStatus, GameTimings } from 'cont
 import { EnrichedRequest } from 'src/auth/auth.service';
 import { GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
 
-const tickRate = 128;
-
 interface Position {
     x: number
     y: number
 }
 
-class Player {
+class Paddle {
+
+    private _position: Position = { ...this._startingPosition };
+
+    public resetPosition() {
+        this._position = { ...this._startingPosition }
+    }
 
     private _moovement: GameMoovement = "NONE";
 
@@ -19,9 +23,7 @@ class Player {
     }
 
     constructor(
-        public readonly user: EnrichedRequest['user'],
-        private readonly game: Game,
-        private _position: Position
+        private readonly _startingPosition: Position
     ) {}
 
     get position() {
@@ -39,15 +41,28 @@ class Player {
     }
 
     public moove(deltaTime: number) {
-        if (this._moovement === 'NONE')
+        if (this._moovement === 'NONE' || deltaTime < 1)
             return
         const ySign = this._moovement === 'UP' ? 1 : -1
         const newPosition: Position = {
             x: this.position.x,
-            y: this.position.y + ySign * GameSpeed.paddle / 1000 * deltaTime
+            y: this.position.y + ySign * (GameSpeed.paddle / 1000) * deltaTime
         }
         this.position = newPosition
     }
+
+}
+
+class Player {
+
+    private pauseAmount = GameTimings.userPauseAmount
+    private score = 0
+
+    constructor(
+        public readonly user: EnrichedRequest['user'],
+        private readonly game: Game,
+        public readonly paddle: Paddle
+    ) {}
 
 }
 
@@ -77,6 +92,7 @@ class Game {
     set status(newStatus: typeof this._status) {
         switch(newStatus) {
             case 'INIT': {
+                this.emitGamePositions()
                 this.webSocket.server.to(this.id).emit('updatedGameStatus', {
                     status: 'INIT',
                     timeout: GameTimings.initTimeout,
@@ -123,20 +139,20 @@ class Game {
         private readonly webSocket: GameWebsocketGateway
     ) {
         this.id = `${playerA.intraUserName}${playerB.intraUserName}`
-        this.playerA = new Player(playerA, this, {
+        this.playerA = new Player(playerA, this, new Paddle({
             x: 0,
             y: (GameDim.court.height / 2 - GameDim.paddle.height / 2)
-        })
-        this.playerB = new Player(playerB, this, {
+        }))
+        this.playerB = new Player(playerB, this, new Paddle({
             x: (GameDim.court.width - GameDim.paddle.width),
             y: (GameDim.court.height / 2 - GameDim.paddle.height / 2)
-        })
+        }))
     }
 
     private emitGamePositions() {
         this.webSocket.server.to(this.id).emit('updatedGamePositions', {
-            paddleLeft: this.playerA.position,
-            paddleRight: this.playerB.position,
+            paddleLeft: this.playerA.paddle.position,
+            paddleRight: this.playerB.paddle.position,
             ball: this.ball.position 
         })
     }
@@ -145,12 +161,12 @@ class Game {
         const player = (this.playerA.user.intraUserName === intraUserName)
             ? this.playerA
             : this.playerB
-        player.moovement = moove
+        player.paddle.moovement = moove
     }
 
     private moove(deltaTime: number) {
-        this.playerA.moove(deltaTime)
-        this.playerB.moove(deltaTime)
+        this.playerA.paddle.moove(deltaTime)
+        this.playerB.paddle.moove(deltaTime)
     }
 
     private update(newStatus?: typeof this.status) {

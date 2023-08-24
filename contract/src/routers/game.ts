@@ -8,7 +8,7 @@ const c = initContract()
 export const GameDim = {
 	court: { width: 1600, height: 900 },
 	paddle: { width: 25, height: 225 },
-	ballRadius: 25,
+	ballSideLength: 25, // ball is a square
 }
 
 export const GameTimings = {

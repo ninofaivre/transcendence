@@ -127,6 +127,8 @@
 	#right-score {
 		position: absolute;
 		top: 30%;
+        font-family: 'VT323', serif;
+        font-size: 3rem;
 	}
 	#left-score {
 		--score-color: white;
@@ -150,6 +152,7 @@
         align-self: center;
         justify-self: center;
         font-family: 'VT323', serif;
+        font-size: 3rem;
 	}
 
 </style>

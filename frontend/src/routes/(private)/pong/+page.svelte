@@ -70,6 +70,7 @@
 	function cancelGame() {
 		console.log("Cancelled game")
 		game_socket.emit("deQueue", "")
+		button_disabled = false
 		state = "IDLE"
 	}
 
@@ -91,7 +92,12 @@
 </div>
 <div class="menu-container grid grid-cols-1">
 	{#if state === "PAUSE"}
-		<div class="justify-self self-center">Waiting for user (spinner here)</div>
+		<div class="justify-self self-center">
+           <div>
+                Waiting for user
+            </div> 
+           <div class="spinner"/>
+        </div>
 	{:else if state === "BREAK"}
 		<div class="">READY ?</div>
 	{:else if state === "IDLE"}
@@ -104,7 +110,10 @@
 		</button>
 	{:else if state === "WAITING"}
 		<button class="rounde btn variant-ringed-error" on:click={cancelGame}>
-			CANCEL (spinner here)
+            <div>
+                CANCEL
+            </div> 
+        <div class="spinner"/>
 		</button>
 	{:else if state === "INIT"}
 		<button class="rounde btn variant-ringed-error" on:click={cancelGame}>
@@ -159,4 +168,21 @@
 		font-family: "ArcadeClassic", "VT323", serif;
 		font-size: 3rem;
 	}
+
+	.spinner {
+		height: 0.6em;
+		width: 0.6em;
+		border: 1px solid;
+		border-radius: 50%;
+		border-top-color: transparent;
+		border-bottom-color: transparent;
+		align-self: center;
+		animation: spin 0.8s linear infinite;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
 </style>

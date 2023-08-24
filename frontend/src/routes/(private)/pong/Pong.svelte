@@ -20,8 +20,8 @@
 	// General parameters
 
 	export let court: Size = {
-		width: 100,
-		height: (100 * 16) / 9,
+		width: 1600,
+		height: 900,
 	}
 	export let ball_sz: Size
 	export let lpaddle_sz: Size

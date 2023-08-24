@@ -20,6 +20,11 @@ export default defineConfig(({ mode }) => {
 			proxy: {
 				// string shorthand: http://localhost:5173/api -> http://localhost:3000/api
 				"/api": env.PUBLIC_BACKEND_URL,
+				// Proxying websockets or socket.io: ws://localhost:5173/socket.io -> ws://localhost:3000/socket.io
+				// "/": {
+				// 	target: "ws://localhost:3000",
+				// 	ws: true,
+				// },
 			},
 		},
 	}

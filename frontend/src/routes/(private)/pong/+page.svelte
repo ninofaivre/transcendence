@@ -13,7 +13,7 @@
 	let my_paddle_is_left: boolean = false
 	let my_score = 0
 	let other_score = 0
-	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" = "IDLE"
+	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "WAITING" = "IDLE"
 
 	// Fixed sizings
 	let court: (typeof GameDim)["court"] = GameDim.court
@@ -42,10 +42,12 @@
 			;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
 		})
 		game_socket.on("newInGameMessage", (data) => {})
+
 		game_socket.on("updatedGameStatus", (data) => {
             console.log(data)
 			state = data.status
 		})
+
 		game_socket.on("disconnect", (data) => {
             console.log(data)
 			state = "IDLE"
@@ -58,11 +60,13 @@
         console.log("Clicked to create")
 		game_socket.emit("queue", "")
         button_disabled = true
+        state = "WAITING"
 	}
 
 	function cancelGame() {
         console.log("Cancelled game")
 		game_socket.emit("deQueue", "")
+        state = "IDLE"
 	}
 
     function onUP() {
@@ -94,12 +98,19 @@
 		>
 			PLAY
 		</button>
+	{:else if state === "WAITING"}
+		<button
+			class="menu-buttons rounde btn variant-ringed-error"
+			on:click={cancelGame}
+		>
+			CANCEL (spinner here)
+		</button>
 	{:else if state === "INIT"}
 		<button
 			class="menu-buttons rounde btn variant-ringed-error"
 			on:click={cancelGame}
 		>
-			CANCEL
+            FOUND A GAME !
 		</button>
 	{/if}
 </div>

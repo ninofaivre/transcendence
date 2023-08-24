@@ -30,7 +30,7 @@ class Paddle {
         return this._position
     }
 
-    set position(newPosition: Position) {
+    private set position(newPosition: Position) {
         if (newPosition.y < 0)
             newPosition.y = 0
         else if (newPosition.y + GameDim.paddle.height > GameDim.court.height)
@@ -68,8 +68,10 @@ class Player {
 
 class Ball {
 
+    private _position: Position = { ...this._startingPosition }
+
     constructor(
-        private _position: Position
+        private readonly _startingPosition: Position
     ) {}
 
     get position() {
@@ -129,8 +131,8 @@ class Game {
     private readonly playerA: Player;
     private readonly playerB: Player;
     private readonly ball: Ball = new Ball({
-        x: GameDim.court.width / 2 - GameDim.ballRadius,
-        y: GameDim.court.height / 2 - GameDim.ballRadius
+        x: GameDim.court.width / 2 - GameDim.ballSideLength,
+        y: GameDim.court.height / 2 - GameDim.ballSideLength
     })
 
     constructor(

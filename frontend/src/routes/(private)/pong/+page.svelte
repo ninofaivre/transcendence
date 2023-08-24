@@ -89,14 +89,14 @@
 <div id="right-score" style:--score-color={my_paddle_is_left ? "green" : "red"}>
 	{my_paddle_is_left ? other_score : my_score}
 </div>
-<div class="menu-container">
+<div class="menu-container grid grid-cols-1">
 	{#if state === "PAUSE"}
-		<div class="menu-buttons">Waiting for user (spinner here)</div>
+		<div class=" self-center justify-self">Waiting for user (spinner here)</div>
 	{:else if state === "BREAK"}
-		<div class="menu-buttons">READY ?</div>
+		<div class="">READY ?</div>
 	{:else if state === "IDLE"}
 		<button
-			class="menu-buttons btn variant-ringed-primary rounded"
+			class=" btn variant-ringed-primary rounded "
 			on:click={createGame}
             disabled={button_disabled}
 		>
@@ -104,14 +104,14 @@
 		</button>
 	{:else if state === "WAITING"}
 		<button
-			class="menu-buttons rounde btn variant-ringed-error"
+			class=" rounde btn variant-ringed-error"
 			on:click={cancelGame}
 		>
 			CANCEL (spinner here)
 		</button>
 	{:else if state === "INIT"}
 		<button
-			class="menu-buttons rounde btn variant-ringed-error"
+			class=" rounde btn variant-ringed-error"
 			on:click={cancelGame}
 		>
             FOUND A GAME !
@@ -140,8 +140,16 @@
 	}
 
 	.menu-container {
-		position: absolute;
-		top: 50%;
-		left: 50%;
+        display: grid;
+        position: absolute;
+        grid-template-rows: 100vh;
+        grid-template-columns: 100vw;
 	}
+
+	.menu-container > div, button {
+        align-self: center;
+        justify-self: center;
+	}
+
 </style>
+

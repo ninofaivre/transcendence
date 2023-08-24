@@ -117,6 +117,7 @@ class Ball extends GameObject {
         (ball.y <= 0 || (ball.y + GameDim.ballSideLength) >= GameDim.court.height)
 
     public update(deltaTime: number) {
+        return;
         const dist = (GameSpeed.ball / 1000) * deltaTime
         const nextPosition: Position = this.getNextPosition(dist)
         if (this.doesBallCollideWithTopBotWalls(nextPosition)) {

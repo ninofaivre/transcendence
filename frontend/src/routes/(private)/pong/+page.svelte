@@ -56,6 +56,12 @@
 	function cancelGame() {
 		game_socket.emit("deQueue", "")
 	}
+
+    function onUP() {
+    }
+    function onDOWN() {
+
+    }
 </script>
 
 <div id="left-score" style:--score-color={my_paddle_is_left ? "red" : "green"}>
@@ -86,7 +92,7 @@
 	{/if}
 </div>
 <Canvas frameloop="demand" debugFrameloop={false}>
-	<Pong {court} {ball_sz} {ball_pos} {lpaddle_sz} {lpaddle_pos} {rpaddle_sz} {rpaddle_pos} />
+	<Pong {court} {ball_sz} {ball_pos} {lpaddle_sz} {lpaddle_pos} {rpaddle_sz} {rpaddle_pos} on:UP={onUP} on:DOWN={onDOWN}/>
 </Canvas>
 
 <style>

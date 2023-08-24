@@ -1,5 +1,5 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import { GameDim, GameMoovement, GameSpeed, GameStatus, GameTimings } from 'contract';
+import { GameDim, GameMovement, GameSpeed, GameStatus, GameTimings } from 'contract';
 import { EnrichedRequest } from 'src/auth/auth.service';
 import { GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
 
@@ -16,10 +16,10 @@ class Paddle {
         this._position = { ...this._startingPosition }
     }
 
-    private _moovement: GameMoovement = "NONE";
+    private _moovement: GameMovement = "NONE";
 
-    public set moovement(newMoovement: GameMoovement) {
-        this._moovement = newMoovement
+    public set moovement(newMovement: GameMovement) {
+        this._moovement = newMovement
     }
 
     constructor(
@@ -159,7 +159,7 @@ class Game {
         })
     }
 
-    public updateMoovement(intraUserName: IntraUserName, moove: GameMoovement) {
+    public updateMovement(intraUserName: IntraUserName, moove: GameMovement) {
         const player = (this.playerA.user.intraUserName === intraUserName)
             ? this.playerA
             : this.playerB
@@ -249,11 +249,11 @@ export class GameService {
             this.queue = null
     }
 
-    public moovement(intraUserName: IntraUserName, moove: GameMoovement) {
+    public moovement(intraUserName: IntraUserName, moove: GameMovement) {
         const game = this.usersToGame.get(intraUserName)
         if (!game)
             return
-        game.updateMoovement(intraUserName, moove)
+        game.updateMovement(intraUserName, moove)
     }
 
 }

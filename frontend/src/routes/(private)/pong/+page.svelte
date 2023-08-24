@@ -8,6 +8,7 @@
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { onMount } from "svelte"
 	import { GameDim } from "contract"
+	import { my_name } from "$stores"
 
 	let game_socket: Socket<ServerToClientEvents, ClientToServerEvents>
 	let my_paddle_is_left: boolean = false
@@ -46,6 +47,9 @@
 		game_socket.on("updatedGameStatus", (data) => {
             console.log(data)
 			state = data.status
+            if (data.status === "INIT") {
+                my_paddle_is_left = data.paddleLeftUserName === $my_name
+            }
 		})
 
 		game_socket.on("disconnect", (data) => {

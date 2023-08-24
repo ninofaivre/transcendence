@@ -16,7 +16,7 @@
 	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" = "IDLE"
 
 	// Fixed sizings
-	let court: (typeof GameDim)["court"]
+	let court: (typeof GameDim)["court"] = GameDim.court
 	let ball_sz: (typeof GameDim)["paddle"] = {
 		width: GameDim.ballSideLength,
 		height: GameDim.ballSideLength,
@@ -25,9 +25,9 @@
 	let rpaddle_sz: (typeof GameDim)["paddle"] = GameDim.paddle
 
 	// Positions
-	let ball_pos: Position
-	let lpaddle_pos: Position
-	let rpaddle_pos: Position
+	let ball_pos: Position = { x: court.width / 2, y: court.height / 2 }
+	let lpaddle_pos: Position = { x: 0, y: court.height / 2 }
+	let rpaddle_pos: Position = { x: court.width, y: court.height / 2 }
 
 	onMount(() => {
 		game_socket = io(PUBLIC_BACKEND_URL)
@@ -68,9 +68,19 @@
 	{:else if state === "BREAK"}
 		<div class="menu-buttons">READY ?</div>
 	{:else if state === "IDLE"}
-		<button class="menu-buttons" on:click|stopPropagation={createGame}> PLAY </button>
+		<button
+			class="menu-buttons btn variant-ringed-primary rounded"
+			on:click|stopPropagation={createGame}
+		>
+			PLAY
+		</button>
 	{:else if state === "INIT"}
-		<button class="menu-buttons" on:click|stopPropagation={cancelGame}> CANCEL </button>
+		<button
+			class="menu-buttons rounde btn variant-ringed-error"
+			on:click|stopPropagation={cancelGame}
+		>
+			CANCEL
+		</button>
 	{/if}
 </div>
 <Canvas frameloop="demand" debugFrameloop={false}>
@@ -97,5 +107,6 @@
 	.menu-container {
 		position: absolute;
 		top: 50%;
+		left: 50%;
 	}
 </style>

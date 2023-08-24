@@ -1,18 +1,21 @@
 <script lang="ts">
 	import { T } from "@threlte/core"
 
-	// Sizing
-	export let paddle: {
+	export let position: {
 		x: number
-		z: number
-		w: number
-		h: number
-		color?: string
+		y: number
 	}
+
+	export let size: {
+		width: number
+		height: number
+	}
+
+	export let color = "green"
 </script>
 
 <!-- Paddle  -->
-<T.Mesh position.x={paddle.x} position.z={paddle.z}>
-	<T.BoxGeometry args={[paddle.w, 1, paddle.h]} />
-	<T.MeshBasicMaterial args={[{ color: paddle.color }]} />
+<T.Mesh position.x={position.x} position.z={position.y}>
+	<T.BoxGeometry args={[size.width, 1, size.height]} />
+	<T.MeshBasicMaterial args={[{ color }]} />
 </T.Mesh>

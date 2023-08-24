@@ -19,7 +19,10 @@
 
 	// General parameters
 
-	export let court: Size
+	export let court: Size = {
+		width: 100,
+		height: (100 * 16) / 9,
+	}
 	export let ball_sz: Size
 	export let lpaddle_sz: Size
 	export let rpaddle_sz: Size
@@ -27,35 +30,25 @@
 	export let lpaddle_pos: Position
 	export let rpaddle_pos: Position
 
-	$: ball = {
-		x: ball_pos.x,
-		z: ball_pos.y,
-		w: ball_sz.width,
-		h: ball_sz.height,
-	}
-	$: lpaddle = {
-		x: lpaddle_pos.x,
-		z: lpaddle_pos.y,
-		w: lpaddle_sz.width,
-		h: lpaddle_sz.height,
-	}
-	$: rpaddle = {
-		x: rpaddle_pos.x,
-		z: rpaddle_pos.y,
-		w: rpaddle_sz.width,
-		h: rpaddle_sz.height,
-	}
 	let top_wall = {
-		x: court.width / 2,
-		z: 0,
-		w: court.width,
-		h: 1,
+		position: {
+			x: court.width / 2,
+			y: 0,
+		},
+		size: {
+			width: court.width,
+			height: 1,
+		},
 	}
 	let bottom_wall = {
-		x: court.width / 2,
-		z: court.height,
-		w: court.width,
-		h: 1,
+		position: {
+			x: court.width / 2,
+			y: court.height,
+		},
+		size: {
+			width: court.width,
+			height: 1,
+		},
 	}
 	// let left_wall = {
 	// 	x: 0,
@@ -106,14 +99,14 @@
 
 <!-- Ball -->
 <!-- <Ball {ball} /> -->
-<Paddle paddle={ball} />
+<Paddle position={ball_pos} size={ball_sz} color="red" />
 <!-- Left paddle  -->
-<Paddle paddle={lpaddle} />
+<Paddle position={lpaddle_pos} size={lpaddle_sz} color="orange" />
 <!-- Right paddle  -->
-<Paddle paddle={rpaddle} />
+<Paddle position={rpaddle_pos} size={rpaddle_sz} color="orange" />
 
 <!-- Court Walls -->
-<Paddle paddle={top_wall} />
-<Paddle paddle={bottom_wall} />
+<Paddle position={top_wall.position} size={top_wall.size} color="white" />
+<Paddle position={bottom_wall.position} size={bottom_wall.size} color="white" />
 <!-- <Paddle paddle={right_wall} /> -->
 <!-- <Paddle paddle={left_wall} /> -->

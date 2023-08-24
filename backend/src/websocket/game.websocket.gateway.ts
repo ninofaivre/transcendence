@@ -192,7 +192,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     ) {
         if (client.data.status !== 'GAME')
             return
-        this.gameService.moovement(client.data.intraUserName, payload)
+        this.gameService.movement(client.data.intraUserName, payload)
     }
 
     // @UseGuards(WsJwtAuthGuard)

@@ -12,7 +12,7 @@ import { Response } from "express"
 const c = contract.users
 
 /*
-TODO: Update this comment later (and probably moove it to another place)
+TODO: Update this comment later (and probably move it to another place)
 
 Below is a *signUp* method in the nest controller
 That method is in the *contract.users* contract but *not* in the multi-handler,

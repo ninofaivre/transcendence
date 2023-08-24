@@ -30,10 +30,10 @@ class Paddle extends GameObject {
 
     protected _position: Position = { ...this._startingPosition };
 
-    private _moovement: GameMovement = "NONE";
+    private _movement: GameMovement = "NONE";
 
-    public set moovement(newMovement: GameMovement) {
-        this._moovement = newMovement
+    public set movement(newMovement: GameMovement) {
+        this._movement = newMovement
     }
 
     constructor(
@@ -53,9 +53,9 @@ class Paddle extends GameObject {
     }
 
     public update(deltaTime: number) {
-        if (this._moovement === 'NONE')
+        if (this._movement === 'NONE')
             return
-        const ySign = this._moovement === 'UP' ? -1 : 1
+        const ySign = this._movement === 'UP' ? -1 : 1
         this.position = {
             x: this.position.x,
             y: this.position.y + ySign * (GameSpeed.paddle / 1000) * deltaTime
@@ -212,11 +212,11 @@ class Game {
         })
     }
 
-    public updateMovement(intraUserName: IntraUserName, moove: GameMovement) {
+    public updateMovement(intraUserName: IntraUserName, move: GameMovement) {
         const player = (this.playerA.user.intraUserName === intraUserName)
             ? this.playerA
             : this.playerB
-        player.paddle.moovement = moove
+        player.paddle.movement = move
     }
 
     private callOnAllGameObjects<
@@ -241,7 +241,7 @@ class Game {
         })
     }
 
-    // private moove = (deltaTime: number) => this.callOnAllGameObjects("moove", deltaTime)
+    // private move = (deltaTime: number) => this.callOnAllGameObjects("move", deltaTime)
     // private reset = () => this.GameObjectsCaller("reset")
 
     private update(newStatus?: typeof this.status) {
@@ -328,11 +328,11 @@ export class GameService {
             this.queue = null
     }
 
-    public moovement(intraUserName: IntraUserName, moove: GameMovement) {
+    public movement(intraUserName: IntraUserName, move: GameMovement) {
         const game = this.usersToGame.get(intraUserName)
         if (!game)
             return
-        game.updateMovement(intraUserName, moove)
+        game.updateMovement(intraUserName, move)
     }
 
 }

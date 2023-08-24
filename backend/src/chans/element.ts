@@ -179,7 +179,7 @@ export class ChanElementFactory {
 
 }
 
-// TODO moove at gestion here
+// TODO move at gestion here
 export class UpdateChanElementFactory {
     
     private readonly prisma: PrismaService;

@@ -19,6 +19,7 @@ export const GameTimings = {
 
 // in unit by second
 export const GameSpeed = {
+    // ball speed needs to be greater than paddle speed to mitigate an edge case
 	paddle: 450,
 	ball: 600, // will be a base speed (speed of ball will change over time) random value for now
 }

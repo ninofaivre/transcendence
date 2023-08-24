@@ -1,5 +1,5 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import { GameDim, GameMovement, GameSpeed, GameStatus, GameTimings } from 'contract';
+import { GameDim, GameMoovement, GameSpeed, GameStatus, GameTimings } from 'contract';
 import { EnrichedRequest } from 'src/auth/auth.service';
 import { GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
 
@@ -8,29 +8,41 @@ interface Position {
     y: number
 }
 
-class Paddle {
+abstract class GameObject {
 
-    private _position: Position = { ...this._startingPosition };
+    protected abstract readonly _startingPosition: Position;
 
-    public resetPosition() {
+    protected abstract _position: Position;
+
+    public abstract update(deltaTime: number): void;
+
+    public reset() {
         this._position = { ...this._startingPosition }
     }
 
-    private _moovement: GameMovement = "NONE";
-
-    public set moovement(newMovement: GameMovement) {
-        this._moovement = newMovement
-    }
-
-    constructor(
-        private readonly _startingPosition: Position
-    ) {}
-
-    get position() {
+    public get position() {
         return this._position
     }
 
-    private set position(newPosition: Position) {
+}
+
+class Paddle extends GameObject {
+
+    protected _position: Position = { ...this._startingPosition };
+
+    private _moovement: GameMoovement = "NONE";
+
+    public set moovement(newMoovement: GameMoovement) {
+        this._moovement = newMoovement
+    }
+
+    constructor(
+        protected readonly _startingPosition: Position
+    ) { super() }
+
+    // public only to not be forced to redefine getter
+    // do not use setter outside of paddle class
+    public set position(newPosition: Position) {
         if (newPosition.y < 0)
             newPosition.y = 0
         else if (newPosition.y + GameDim.paddle.height > GameDim.court.height)
@@ -40,15 +52,14 @@ class Paddle {
         this._position = newPosition
     }
 
-    public moove(deltaTime: number) {
-        if (this._moovement === 'NONE' || deltaTime < 1)
+    public update(deltaTime: number) {
+        if (this._moovement === 'NONE')
             return
-        const ySign = this._moovement === 'UP' ? 1 : -1
-        const newPosition: Position = {
+        const ySign = this._moovement === 'UP' ? -1 : 1
+        this.position = {
             x: this.position.x,
             y: this.position.y + ySign * (GameSpeed.paddle / 1000) * deltaTime
         }
-        this.position = newPosition
     }
 
 }
@@ -66,16 +77,58 @@ class Player {
 
 }
 
-class Ball {
+class Ball extends GameObject {
 
-    private _position: Position = { ...this._startingPosition }
+    protected _position: Position = { ...this._startingPosition }
+    private direction: { x: number, y: number };
+
+    private getRandomDirection() {
+        let direction: typeof this.direction;
+        do {
+            const heading = Math.random() * 2 * Math.PI
+            direction = { x: Math.cos(heading), y: Math.sin(heading) }
+        } while (Math.abs(direction.x) <= 0.2 || Math.abs(direction.x) >= 0.9)
+        return direction
+    }
 
     constructor(
-        private readonly _startingPosition: Position
-    ) {}
+        protected readonly _startingPosition: Position,
+        private readonly game: Game,
+        private speed = GameSpeed.ball / 1000
+    ) {
+        super()
+        this.direction = this.getRandomDirection()
+    }
 
-    get position() {
-        return this._position
+    private getNextPosition(dist: number) {
+        return {
+            x: this.position.x + this.direction.x * dist,
+            y: this.position.y + this.direction.y * dist
+        }
+    }
+
+    private doesBallCollideWithPaddle = (ball: Position, paddle: Position) =>
+        (ball.x <= (paddle.x + GameDim.paddle.width) &&
+        (ball.x + GameDim.ballSideLength) >= paddle.x &&
+        (ball.y - GameDim.ballSideLength) >= paddle.y &&
+        ball.y <= (paddle.y + GameDim.paddle.height))
+
+    private doesBallCollideWithTopBotWalls = (ball: Position) =>
+        (ball.y <= 0 || (ball.y + GameDim.ballSideLength) >= GameDim.court.height)
+
+    public update(deltaTime: number) {
+        const dist = (GameSpeed.ball / 1000) * deltaTime
+        const nextPosition: Position = this.getNextPosition(dist)
+        if (this.doesBallCollideWithTopBotWalls(nextPosition)) {
+            this.direction.y *= -1
+            nextPosition.y = this.position.y + this.direction.y * dist
+        }
+        if (this.doesBallCollideWithPaddle(nextPosition,
+            this.game.playerA.paddle.position)
+        ) {
+            this.direction.x *= -1
+            nextPosition.x = this.position.x + this.direction.x * dist
+        }
     }
 }
 
@@ -128,12 +181,12 @@ class Game {
         this._status = newStatus
     }
 
-    private readonly playerA: Player;
-    private readonly playerB: Player;
+    public readonly playerA: Player;
+    public readonly playerB: Player;
     private readonly ball: Ball = new Ball({
-        x: GameDim.court.width / 2 - GameDim.ballSideLength,
-        y: GameDim.court.height / 2 - GameDim.ballSideLength
-    })
+        x: GameDim.court.width / 2 - GameDim.ballSideLength / 2,
+        y: GameDim.court.height / 2 - GameDim.ballSideLength / 2
+    }, this)
 
     constructor(
         playerA: EnrichedRequest['user'],
@@ -159,17 +212,37 @@ class Game {
         })
     }
 
-    public updateMovement(intraUserName: IntraUserName, moove: GameMovement) {
+    public updateMoovement(intraUserName: IntraUserName, moove: GameMoovement) {
         const player = (this.playerA.user.intraUserName === intraUserName)
             ? this.playerA
             : this.playerB
         player.paddle.moovement = moove
     }
 
-    private moove(deltaTime: number) {
-        this.playerA.paddle.moove(deltaTime)
-        this.playerB.paddle.moove(deltaTime)
+    private callOnAllGameObjects<
+        Key extends {
+            [K in keyof GameObject]: GameObject[K] extends ((...args: any[]) => void)
+                ? K
+                : never
+        }[keyof GameObject],
+    >(
+        key: Key,
+        ...args: Parameters<GameObject[Key]>
+    ) {
+        const gameObjects: GameObject[] = [
+            this.playerA.paddle,
+            this.playerB.paddle,
+            this.ball
+        ]
+        gameObjects.forEach(gameObject => {
+            // TODO maybe see why types are broken here ?
+            // (bonus, it's perfectly safe (should be))
+            Function.prototype.apply.call(gameObject[key], gameObject, args)
+        })
     }
+
+    // private moove = (deltaTime: number) => this.callOnAllGameObjects("moove", deltaTime)
+    // private reset = () => this.GameObjectsCaller("reset")
 
     private update(newStatus?: typeof this.status) {
         if (newStatus)
@@ -179,10 +252,16 @@ class Game {
             return
         }
         const currentTime = Date.now()
-        if (this.lastUpdateTime)
-            this.moove(currentTime - this.lastUpdateTime)
+        if (this.lastUpdateTime) {
+            const deltaTime = currentTime - this.lastUpdateTime
+            if (deltaTime >= 1) {
+                this.callOnAllGameObjects("update", deltaTime)
+                this.emitGamePositions()
+            }
+        }
+        else
+            this.emitGamePositions()
         this.lastUpdateTime = currentTime
-        this.emitGamePositions()
         setTimeout(this.update.bind(this), 0)
     }
 
@@ -249,11 +328,11 @@ export class GameService {
             this.queue = null
     }
 
-    public moovement(intraUserName: IntraUserName, moove: GameMovement) {
+    public moovement(intraUserName: IntraUserName, moove: GameMoovement) {
         const game = this.usersToGame.get(intraUserName)
         if (!game)
             return
-        game.updateMovement(intraUserName, moove)
+        game.updateMoovement(intraUserName, moove)
     }
 
 }

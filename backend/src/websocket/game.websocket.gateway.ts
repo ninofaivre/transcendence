@@ -8,7 +8,7 @@ import * as cookie from "cookie"
 import { GameService } from "src/game/game.service";
 import { Schema, z } from "zod";
 import { EnvService } from "src/env/env.service";
-import { ClientToServerEvents, GameMovement, GameMovementSchema, ServerToClientEvents } from "contract";
+import { ClientToServerEvents, GameMoovement, GameMoovementSchema, ServerToClientEvents } from "contract";
 import { InGameMessageSchema } from "contract";
 import { InGameMessage } from "contract";
 import { UserService } from "src/user/user.service";
@@ -185,10 +185,10 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         })
     }
 
-    @SubscribeMessage("gameMovement")
+    @SubscribeMessage("gameMoovement")
     gameMovement(
         @ConnectedSocket()client: EnrichedSocket,
-        @MessageBody(new ZodValidationPipe(GameMovementSchema))payload: GameMovement
+        @MessageBody(new ZodValidationPipe(GameMoovementSchema))payload: GameMoovement
     ) {
         if (client.data.status !== 'GAME')
             return

@@ -58,9 +58,10 @@
 	}
 
     function onUP() {
+		game_socket.emit("gameMovement", "UP")
     }
     function onDOWN() {
-
+		game_socket.emit("gameMovement", "DOWN")
     }
 </script>
 

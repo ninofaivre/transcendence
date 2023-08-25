@@ -76,22 +76,12 @@
 			</svelte:fragment>
 			{#if $logged_in}
 				{#each menuItems as menuItem}
-					{#if $page.url.pathname.endsWith("/pong")}
-						<a
-							data-sveltekit-reload
-							class="btn btn-sm variant-filled-success mx-4 mb-1 text-2xl font-semibold"
-							href={menuItem.href}
-						>
-							{menuItem.inner}
-						</a>
-					{:else}
-						<a
-							class="btn btn-sm variant-filled-success mx-4 mb-1 text-2xl font-semibold"
-							href={menuItem.href}
-						>
-							{menuItem.inner}
-						</a>
-					{/if}
+					<a
+						class="btn btn-sm variant-filled-success mx-4 mb-1 text-2xl font-semibold"
+						href={menuItem.href}
+					>
+						{menuItem.inner}
+					</a>
 				{/each}
 			{/if}
 			<svelte:fragment slot="trail">

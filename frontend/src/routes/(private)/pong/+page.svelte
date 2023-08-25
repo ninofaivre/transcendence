@@ -57,7 +57,7 @@
 			state = "IDLE"
 		})
 
-		return game_socket.close
+		return () => game_socket.close()
 	})
 
 	function createGame() {
@@ -93,11 +93,9 @@
 <div class="menu-container grid grid-cols-1">
 	{#if state === "PAUSE"}
 		<div class="justify-self self-center">
-           <div>
-                Waiting for user
-            </div> 
-           <div class="spinner"/>
-        </div>
+			<div>Waiting for user</div>
+			<div class="spinner" />
+		</div>
 	{:else if state === "BREAK"}
 		<div class="">READY ?</div>
 	{:else if state === "IDLE"}
@@ -110,10 +108,8 @@
 		</button>
 	{:else if state === "WAITING"}
 		<button class="rounde btn variant-ringed-error" on:click={cancelGame}>
-            <div>
-                CANCEL
-            </div> 
-        <div class="spinner"/>
+			<div>CANCEL</div>
+			<div class="spinner" />
 		</button>
 	{:else if state === "INIT"}
 		<button class="rounde btn variant-ringed-error" on:click={cancelGame}>
@@ -121,6 +117,7 @@
 		</button>
 	{/if}
 </div>
+
 <Canvas frameloop="demand" debugFrameloop={false}>
 	<Pong
 		{court}
@@ -184,5 +181,4 @@
 			transform: rotate(360deg);
 		}
 	}
-
 </style>

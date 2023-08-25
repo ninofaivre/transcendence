@@ -84,7 +84,7 @@
 		const r = await new Promise<string | undefined>((resolve) => {
 			const modal: ModalSettings = {
 				type: "component",
-				component: "MuteSlider",
+				component: "TimeChooser",
 				response: (r) => {
 					modalStore.close()
 					resolve(r)

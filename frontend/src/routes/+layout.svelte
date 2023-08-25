@@ -13,7 +13,7 @@
 	import { goto } from "$app/navigation"
 	import { Modal, type ModalComponent } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
-	import MuteSlider from "$lib/MuteSlider.svelte"
+	import TimeChooser from "$lib/TimeChooser.svelte"
 	import { page } from "$app/stores"
 
 	$: {
@@ -36,8 +36,8 @@
 	}
 
 	const modalComponentRegistry: Record<string, ModalComponent> = {
-		MuteSlider: {
-			ref: MuteSlider,
+		TimeChooser: {
+			ref: TimeChooser,
 		},
 	}
 

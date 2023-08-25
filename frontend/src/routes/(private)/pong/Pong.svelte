@@ -19,11 +19,12 @@
 	export let ball_pos: Position
 	export let lpaddle_pos: Position
 	export let rpaddle_pos: Position
+	export let wall_width = lpaddle_sz.width
 
 	const { size, renderer, invalidate } = useThrelte()
 
-    let margin = 300
-	$: zoom = $size.width / (court.width + margin )
+	let margin = 300
+	$: zoom = $size.width / (court.width + margin)
 
 	extend({ OrbitControls })
 	const dispatch = createEventDispatcher()
@@ -31,26 +32,25 @@
 	type Size = (typeof GameDim)["paddle"]
 
 	// General parameters
-
-
+	let bite = 0
 	let top_wall = {
 		position: {
 			x: court.width / 2,
-			y: 0,
+			y: 0 - wall_width / 2 + bite,
 		},
 		size: {
 			width: court.width,
-			height: 1,
+			height: wall_width,
 		},
 	}
 	let bottom_wall = {
 		position: {
 			x: court.width / 2,
-			y: court.height,
+			y: court.height + wall_width / 2 - bite,
 		},
 		size: {
 			width: court.width,
-			height: 1,
+			height: wall_width,
 		},
 	}
 	// let left_wall = {
@@ -70,10 +70,10 @@
 		switch (e.code) {
 			case "ArrowUp":
 				dispatch("UP")
-                break;
+				break
 			case "ArrowDown":
 				dispatch("DOWN")
-                break;
+				break
 		}
 	}
 </script>

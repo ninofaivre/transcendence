@@ -17,6 +17,7 @@ const envSchema = z.object({
     PUBLIC_FRONTEND_SCHEME: zScheme,
     PUBLIC_BACKEND_HOST: z.string(),
     PUBLIC_FRONTEND_HOST: z.string(),
+    PUBLIC_FRONTEND_URL: z.string().url(),
 
     PRIVATE_BACKEND_PORT: z.coerce.number().min(1024).max(65535),
 

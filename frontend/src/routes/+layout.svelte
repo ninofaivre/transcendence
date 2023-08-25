@@ -17,6 +17,7 @@
 	import { page } from "$app/stores"
 
 	$: {
+		// Prevents redir coming back from 42, or losing the query string for /auth
 		const pathname =
 			$page.url.pathname.slice(-1) === "/"
 				? $page.url.pathname.slice(0, -1)

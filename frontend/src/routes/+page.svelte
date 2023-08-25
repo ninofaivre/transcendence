@@ -4,5 +4,5 @@
 	import { logged_in } from "$lib/stores"
 	import { get } from "svelte/store"
 
-	if (get(logged_in)) goto(PUBLIC_FRONT_PAGE)
+	if ($logged_in) goto(PUBLIC_FRONT_PAGE)
 </script>

@@ -36,6 +36,7 @@
 	let filterType: "#Noir" | "" = ""
 	let menu_admin: { label: string; handler: () => void }[] = [
 		{ label: "Show profile", handler: () => goto(`/users/${message.author}`) },
+		{ label: "Invite to a game", handler: inviteToGame },
 	]
 
 	$: {
@@ -64,6 +65,8 @@
 			}
 		}
 	}
+
+	async function inviteToGame() {}
 
 	async function kickHandler() {
 		const ret = await client.chans.kickUserFromChan({

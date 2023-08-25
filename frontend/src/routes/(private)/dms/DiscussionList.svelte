@@ -21,12 +21,17 @@
 						`span.online-dot[data-relatedto=${data.userName}]`,
 					) as HTMLElement
 					if (dot_to_update) {
-						console.log(`${data.userName} is now ${data.status} !`)
-						if (data.status !== "ONLINE") {
-							// Only works if the element has a style tag onto itself
+						if (data.status === "OFFLINE") {
+							// Only works if the element has a style tag onto itself !
 							dot_to_update.style.visibility = "hidden"
 						} else {
 							dot_to_update.style.visibility = "visible"
+							if (data.status === "GAME") {
+								dot_to_update.innerText = "&#127918" // 🎮
+								// dot_to_update.innerText = "&#127955" // 🏓
+							} else if (data.status === "ONLINE" || data.status === "QUEUE") {
+								dot_to_update.innerText = "&#8226"
+							}
 						}
 					} else console.log("IT WAS NULL !")
 				}),

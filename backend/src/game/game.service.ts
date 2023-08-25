@@ -135,8 +135,7 @@ class Ball extends GameObject {
 
     private i: number = 0
 
-    // checker après si pas collision avec paddle en même temps
-    private test(target_y: number): Position {
+    private getIntersectionY(target_y: number): Position {
         const slope = this.direction.x / this.direction.y
         const delta_x = (target_y - this.position.y) * slope
         const intersection_x = this.position.x + delta_x
@@ -147,13 +146,29 @@ class Ball extends GameObject {
         }
     }
 
+    private getIntersectionX(target_x: number): Position {
+        const slope = this.direction.y / this.direction.x
+        const delta_y = (target_x - this.position.x) * slope
+        const intersection_x = target_x
+        const intersection_y = this.position.y + delta_y
+        return {
+            x: intersection_x,
+            y: intersection_y
+        }
+    }
+
+    // TODO penser à deux collisions de suite (recursif)
+    // très peu probable entre deux bord de la map (à moins d'un énorma lagg)
+    // beaucoup plus probable entre un bord de la map et un paddle
     public update(deltaTime: number) {
-        // tmp
+        // tmp logg
         if (this.i >= 10) {
             console.log(this.position)
             this.i = 0
         }
         this.i++
+
+        // reset
         if (this.doesBallCollideWithLeftRightWalls(this.position)) {
             console.log(this.position)
             console.log("point marqué ?")
@@ -164,12 +179,13 @@ class Ball extends GameObject {
         const dist = (GameSpeed.ball / 1000) * deltaTime
         const nextPosWithoutColl: Position = this.getNextPositionWithoutCollision(dist)
         let remainingDist: number;
+
         if (this.doesBallCollideWithTopBotWalls(nextPosWithoutColl)) {
             const y_horizontal = (this.direction.y > 0)
                 ? GameDim.court.height - GameDim.ballSideLength
                 : 0
 
-            const intersectionPos = this.test(y_horizontal)
+            const intersectionPos = this.getIntersectionY(y_horizontal)
 
             remainingDist = this.distanceBetweenPositions(intersectionPos, this.position)
             this.direction.y *= -1
@@ -177,13 +193,24 @@ class Ball extends GameObject {
             this.update(deltaTime * (dist / remainingDist))
             return
         }
+        if (this.doesBallCollideWithPaddle(nextPosWithoutColl,
+                this.game.playerA.paddle.position) ||
+            this.doesBallCollideWithPaddle(nextPosWithoutColl,
+                this.game.playerB.paddle.position)
+        ) {
+            const x_horizontal = (this.direction.x > 0)
+                ? GameDim.court.width - GameDim.ballSideLength - GameDim.paddle.width
+                : 0 + GameDim.paddle.width 
+
+            const intersectionPos = this.getIntersectionX(x_horizontal)
+            
+            remainingDist = this.distanceBetweenPositions(intersectionPos, this.position)
+            this.direction.x *= -1
+            this._position = intersectionPos
+            this.update(deltaTime * (dist / remainingDist))
+            return
+        }
         this._position = nextPosWithoutColl
-        // if (this.doesBallCollideWithPaddle(nextPosition,
-        //     this.game.playerA.paddle.position)
-        // ) {
-        //     this.direction.x *= -1
-        //     nextPosition.x = this.position.x + this.direction.x * dist
-        // }
     }
 }
 

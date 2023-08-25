@@ -32,6 +32,8 @@
 
 	// Utils
 	let button_disabled = false
+	let paddleLeftUserName = ""
+	let paddleRightUserName = ""
 
 	onMount(() => {
 		game_socket = io(PUBLIC_BACKEND_URL, {
@@ -49,6 +51,9 @@
 			state = data.status
 			if (data.status === "INIT") {
 				my_paddle_is_left = data.paddleLeftUserName === $my_name
+				;({ paddleLeftUserName, paddleRightUserName } = data)
+			} else if (data.status === "BREAK") {
+			} else if (data.status === "PAUSE") {
 			}
 		})
 
@@ -84,11 +89,29 @@
 	}
 </script>
 
-<div id="left-score" style:--score-color={my_paddle_is_left ? "red" : "green"}>
-	{my_paddle_is_left ? my_score : other_score}
+<div
+	id="left-score"
+	class="grid grid-rows-2 gap-2"
+	style:--score-color={my_paddle_is_left ? "red" : "green"}
+>
+	<div>
+		{paddleLeftUserName}
+	</div>
+	<div class="justify-self-center">
+		{my_paddle_is_left ? my_score : other_score}
+	</div>
 </div>
-<div id="right-score" style:--score-color={my_paddle_is_left ? "green" : "red"}>
-	{my_paddle_is_left ? other_score : my_score}
+<div
+	id="right-score"
+	class="grid grid-rows-2 gap-2"
+	style:--score-color={my_paddle_is_left ? "green" : "red"}
+>
+	<div>
+		{paddleRightUserName}
+	</div>
+	<div class="justify-self-center">
+		{my_paddle_is_left ? other_score : my_score}
+	</div>
 </div>
 <div class="menu-container grid grid-cols-1">
 	{#if state === "PAUSE"}
@@ -107,12 +130,12 @@
 			PLAY
 		</button>
 	{:else if state === "WAITING"}
-		<button class="rounde btn variant-ringed-error" on:click={cancelGame}>
+		<button class="btn variant-ringed-error rounded" on:click={cancelGame}>
 			<div>CANCEL</div>
 			<div class="spinner" />
 		</button>
 	{:else if state === "INIT"}
-		<button class="rounde btn variant-ringed-error" on:click={cancelGame}>
+		<button class="btn variant-ringed-error rounded" on:click={cancelGame}>
 			FOUND A GAME !
 		</button>
 	{/if}

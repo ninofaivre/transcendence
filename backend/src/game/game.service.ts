@@ -10,11 +10,14 @@ interface Position {
 
 abstract class GameObject {
 
-    protected abstract readonly _startingPosition: Position;
 
-    protected abstract _position: Position;
+    protected _position: Position;
 
     public abstract update(deltaTime: number): void;
+
+    constructor(protected _startingPosition: Position) {
+        this._position = { ...this._startingPosition }
+    }
 
     public reset() {
         this._position = { ...this._startingPosition }
@@ -28,8 +31,6 @@ abstract class GameObject {
 
 class Paddle extends GameObject {
 
-    protected _position: Position = { ...this._startingPosition };
-
     private _movement: GameMovement = "NONE";
 
     public set movement(newMovement: GameMovement) {
@@ -37,12 +38,16 @@ class Paddle extends GameObject {
     }
 
     constructor(
-        protected readonly _startingPosition: Position
-    ) { super() }
+        _startingPosition: Position
+    ) {
+        super(_startingPosition);
+    }
 
-    // public only to not be forced to redefine getter
-    // do not use setter outside of paddle class
-    public set position(newPosition: Position) {
+    public get position() { 
+        return super.position
+    }
+
+    private set position(newPosition: Position) {
         if (newPosition.y < 0)
             newPosition.y = 0
         else if (newPosition.y + GameDim.paddle.height > GameDim.court.height)
@@ -92,15 +97,15 @@ class Ball extends GameObject {
     }
 
     constructor(
-        protected readonly _startingPosition: Position,
+        _startingPosition: Position,
         private readonly game: Game,
         private speed = GameSpeed.ball / 1000
     ) {
-        super()
+        super(_startingPosition)
         this.direction = this.getRandomDirection()
     }
 
-    private getNextPosition(dist: number) {
+    private getNextPositionWithoutCollision(dist: number) {
         return {
             x: this.position.x + this.direction.x * dist,
             y: this.position.y + this.direction.y * dist
@@ -116,20 +121,44 @@ class Ball extends GameObject {
     private doesBallCollideWithTopBotWalls = (ball: Position) =>
         (ball.y <= 0 || (ball.y + GameDim.ballSideLength) >= GameDim.court.height)
 
+    private doesBallCollideWithLeftRightWalls = (ball: Position) =>
+        (ball.x <= 0 || (ball.x + GameDim.ballSideLength) >= GameDim.court.width)
+
+    private distanceBetweenPositions(a: Position, b: Position) {
+        return Math.sqrt(Math.pow((b.x - a.x), 2) + Math.pow((b.y - a.y), 2))
+    }
+
+    // checker après si pas collision avec paddle en même temps
     public update(deltaTime: number) {
-        return;
+        // tmp
+        if (this.doesBallCollideWithTopBotWalls(this.position)) {
+            this.reset()
+            return
+        }
+
         const dist = (GameSpeed.ball / 1000) * deltaTime
-        const nextPosition: Position = this.getNextPosition(dist)
-        if (this.doesBallCollideWithTopBotWalls(nextPosition)) {
+        const nextPosWithoutColl: Position = this.getNextPositionWithoutCollision(dist)
+        let remainingDist: number;
+        if (this.doesBallCollideWithTopBotWalls(nextPosWithoutColl)) {
+            const x_intersection = (this.direction.x / this.direction.y) * (0.5 - this.direction.y)
+            const y_intersection = (this.direction.y > 0)
+                ? this._position.y = GameDim.court.height - GameDim.ballSideLength
+                : 0
+            const intersectionPos: Position = { x: x_intersection, y: y_intersection }
+
+            remainingDist = this.distanceBetweenPositions(intersectionPos, this.position)
             this.direction.y *= -1
-            nextPosition.y = this.position.y + this.direction.y * dist
+            this._position = intersectionPos
+            this.update(deltaTime * (dist / remainingDist))
+            return
         }
-        if (this.doesBallCollideWithPaddle(nextPosition,
-            this.game.playerA.paddle.position)
-        ) {
-            this.direction.x *= -1
-            nextPosition.x = this.position.x + this.direction.x * dist
-        }
+        this._position = nextPosWithoutColl
+        // if (this.doesBallCollideWithPaddle(nextPosition,
+        //     this.game.playerA.paddle.position)
+        // ) {
+        //     this.direction.x *= -1
+        //     nextPosition.x = this.position.x + this.direction.x * dist
+        // }
     }
 }
 

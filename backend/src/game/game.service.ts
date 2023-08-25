@@ -19,7 +19,7 @@ abstract class GameObject {
         this._position = { ...this._startingPosition }
     }
 
-    public reset() {
+    protected reset() {
         this._position = { ...this._startingPosition }
     }
 
@@ -105,6 +105,11 @@ class Ball extends GameObject {
         this.direction = this.getRandomDirection()
     }
 
+    protected reset() {
+        super.reset()
+        this.direction = this.getRandomDirection()
+    }
+
     private getNextPositionWithoutCollision(dist: number) {
         return {
             x: this.position.x + this.direction.x * dist,
@@ -128,10 +133,30 @@ class Ball extends GameObject {
         return Math.sqrt(Math.pow((b.x - a.x), 2) + Math.pow((b.y - a.y), 2))
     }
 
+    private i: number = 0
+
     // checker après si pas collision avec paddle en même temps
+    private test(target_y: number): Position {
+        const slope = this.direction.x / this.direction.y
+        const delta_x = (target_y - this.position.y) * slope
+        const intersection_x = this.position.x + delta_x
+        const intersection_y = target_y
+        return {
+            x: intersection_x,
+            y: intersection_y
+        }
+    }
+
     public update(deltaTime: number) {
         // tmp
-        if (this.doesBallCollideWithTopBotWalls(this.position)) {
+        if (this.i >= 10) {
+            console.log(this.position)
+            this.i = 0
+        }
+        this.i++
+        if (this.doesBallCollideWithLeftRightWalls(this.position)) {
+            console.log(this.position)
+            console.log("point marqué ?")
             this.reset()
             return
         }
@@ -140,11 +165,11 @@ class Ball extends GameObject {
         const nextPosWithoutColl: Position = this.getNextPositionWithoutCollision(dist)
         let remainingDist: number;
         if (this.doesBallCollideWithTopBotWalls(nextPosWithoutColl)) {
-            const x_intersection = (this.direction.x / this.direction.y) * (0.5 - this.direction.y)
-            const y_intersection = (this.direction.y > 0)
-                ? this._position.y = GameDim.court.height - GameDim.ballSideLength
+            const y_horizontal = (this.direction.y > 0)
+                ? GameDim.court.height - GameDim.ballSideLength
                 : 0
-            const intersectionPos: Position = { x: x_intersection, y: y_intersection }
+
+            const intersectionPos = this.test(y_horizontal)
 
             remainingDist = this.distanceBetweenPositions(intersectionPos, this.position)
             this.direction.y *= -1

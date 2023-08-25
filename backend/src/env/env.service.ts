@@ -4,6 +4,7 @@ import { z } from 'zod';
 require("dotenv").config()
 
 const zPassword = z.string().min(8)
+const zScheme = z.enum(["http", "https"])
 
 const envSchema = z.object({
     PUBLIC_MODE: z.union([z.literal("DEV"), z.literal("PROD")]).default("PROD"),
@@ -12,7 +13,12 @@ const envSchema = z.object({
     PROFILE_PICTURE_MAX_SIZE_MB: z.coerce.number().min(0.5).max(50).default(8),
     API42_CLIENT_SECRET: z.string(),
 
-    PUBLIC_BACKEND_PORT: z.coerce.number().min(1024).max(49151),
+    PUBLIC_BACKEND_SCHEME: zScheme,
+    PUBLIC_FRONTEND_SCHEME: zScheme,
+    PUBLIC_BACKEND_HOST: z.string(),
+    PUBLIC_FRONTEND_HOST: z.string(),
+
+    PRIVATE_BACKEND_PORT: z.coerce.number().min(1024).max(65535),
 
     PUBLIC_API42_CLIENT_ID: z.string(),
 })

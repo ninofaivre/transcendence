@@ -1,13 +1,13 @@
 import { Injectable } from "@nestjs/common"
 import { UserService } from "../user/user.service"
 import { JwtService } from "@nestjs/jwt"
-import { Request, Response } from "express"
+import { CookieOptions, Request, Response } from "express"
 import { Oauth42Service } from "src/oauth42/oauth42.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { EnvService } from "src/env/env.service"
 import * as bcrypt from "bcrypt"
 import * as cookie from "cookie"
-import { contractErrors } from "contract"
+import { contract, contractErrors } from "contract"
 import { Socket } from "socket.io"
 import { JwtPayload } from "./jwt.strategy"
 
@@ -18,6 +18,8 @@ export interface EnrichedRequest extends Request {
     }
 }
 
+const c = contract.auth
+
 @Injectable()
 export class AuthService {
 	constructor(
@@ -27,10 +29,18 @@ export class AuthService {
         private readonly oAuth: Oauth42Service
     ) {}
 
-    private static readonly cookieOptions = {
-        secure: true,
-        sameSite: true,
+    private static readonly cookieOptions: CookieOptions = {
         httpOnly: true,
+        sameSite: 'strict',
+        secure: (
+                EnvService.env.PUBLIC_BACKEND_SCHEME === 'https' &&
+                EnvService.env.PUBLIC_FRONTEND_SCHEME === 'https'
+            ) ||
+            (
+                EnvService.env.PUBLIC_BACKEND_HOST === 'localhost' &&
+                EnvService.env.PUBLIC_FRONTEND_HOST === 'localhost'
+            ),
+        domain: EnvService.env.PUBLIC_BACKEND_HOST 
     } as const
 
     public isValidAccessTokenFromCookie(client: Socket) {
@@ -44,10 +54,15 @@ export class AuthService {
 
     public async setNewTokensAsCookies(res: Response, user: EnrichedRequest['user']) {
         const tokens = await this.getTokens(user)
-        // TODO maybe add life time to cookie ?
-        res.cookie("access_token", tokens.accessToken, AuthService.cookieOptions)
-        // TODO make sure this token is send only to refresh endpoint
-        res.cookie("refresh_token", tokens.refreshToken, AuthService.cookieOptions)
+        res.cookie("access_token", tokens.accessToken, {
+            ...AuthService.cookieOptions,
+            maxAge: (EnvService.env.PUBLIC_MODE === 'DEV' ? 3600 : 900) * 1000,
+        })
+        res.cookie("refresh_token", tokens.refreshToken, {
+            ...AuthService.cookieOptions,
+            maxAge: 604800 * 1000,
+            path: c.refreshTokens.path
+        })
         this.updateRefreshToken(user.username, tokens.refreshToken)
     }
 

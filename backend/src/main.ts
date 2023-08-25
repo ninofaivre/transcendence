@@ -22,7 +22,7 @@ async function bootstrap() {
 			// Mandatory for any protected route to work (must be set on the client's fetch and EventSource constructor too)
 			credentials: true,
 			//Matches all localhost whether http/https or there's a port
-			origin: /https?:\/\/localhost(?::\d{1,6})?$/,
+			origin: [/https?:\/\/localhost(?::\d{1,6})?$/, 'http://88.172.94.204:49153'],
 			methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
 		},
 		// Just this won't work because Access-Control-Allow-Origin can't be * when credentials are included
@@ -52,7 +52,7 @@ async function bootstrap() {
 	// 	}),
 	// )
 
-	await app.listen(EnvService.env.PUBLIC_BACKEND_PORT)
+	await app.listen(EnvService.env.PRIVATE_BACKEND_PORT)
 }
 
 // TODO: make this function a bit cleaner and put it somewhere else

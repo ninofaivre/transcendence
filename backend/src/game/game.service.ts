@@ -8,6 +8,13 @@ interface Position {
     y: number
 }
 
+interface Rectangle {
+    topY: number,
+    botY: number,
+    leftX: number,
+    rightX: number
+}
+
 abstract class GameObject {
 
 
@@ -27,6 +34,8 @@ abstract class GameObject {
         return this._position
     }
 
+    public abstract getRect(): Rectangle;
+
 }
 
 class Paddle extends GameObject {
@@ -43,15 +52,24 @@ class Paddle extends GameObject {
         super(_startingPosition);
     }
 
+    public getRect(): Rectangle {
+        return {
+            topY: this.position.y - GameDim.paddle.height / 2,
+            botY: this.position.y + GameDim.paddle.height / 2,
+            leftX: this.position.x  - GameDim.paddle.width / 2,
+            rightX: this.position.x + GameDim.paddle.width / 2
+        }
+    }
+
     public get position() { 
         return super.position
     }
 
     private set position(newPosition: Position) {
-        if (newPosition.y < 0)
-            newPosition.y = 0
-        else if (newPosition.y + GameDim.paddle.height > GameDim.court.height)
-            newPosition.y = GameDim.court.height - GameDim.paddle.height
+        if (this.getRect().topY < 0)
+            newPosition.y = GameDim.paddle.height / 2
+        else if (this.getRect().botY > GameDim.court.height)
+            newPosition.y = GameDim.court.height - GameDim.paddle.height / 2
         else if (newPosition.x !== this.position.x)
             newPosition.x = this.position.x
         this._position = newPosition
@@ -96,6 +114,15 @@ class Ball extends GameObject {
         return direction
     }
 
+    public getRect(): Rectangle {
+        return {
+            topY: this.position.y - GameDim.ballSideLength / 2,
+            botY: this.position.y + GameDim.ballSideLength / 2,
+            leftX: this.position.x - GameDim.ballSideLength / 2,
+            rightX: this.position.x + GameDim.ballSideLength / 2
+        }
+    }
+
     constructor(
         _startingPosition: Position,
         private readonly game: Game,
@@ -117,17 +144,15 @@ class Ball extends GameObject {
         }
     }
 
-    private doesBallCollideWithPaddle = (ball: Position, paddle: Position) =>
-        (ball.x <= (paddle.x + GameDim.paddle.width) &&
-        (ball.x + GameDim.ballSideLength) >= paddle.x &&
-        (ball.y - GameDim.ballSideLength) >= paddle.y &&
-        ball.y <= (paddle.y + GameDim.paddle.height))
+    private doesBallCollideWithPaddle = (ball: Rectangle, paddle: Rectangle) =>
+        (ball.leftX <= paddle.rightX && ball.rightX >= paddle.leftX &&
+        ball.topY <= paddle.botY && ball.botY >= paddle.topY)
 
-    private doesBallCollideWithTopBotWalls = (ball: Position) =>
-        (ball.y <= 0 || (ball.y + GameDim.ballSideLength) >= GameDim.court.height)
+    private doesBallCollideWithTopBotWalls = (ball: Rectangle) =>
+        (ball.topY <= 0 || ball.botY >= GameDim.court.height)
 
-    private doesBallCollideWithLeftRightWalls = (ball: Position) =>
-        (ball.x <= 0 || (ball.x + GameDim.ballSideLength) >= GameDim.court.width)
+    private doesBallCollideWithLeftRightWalls = (ball: Rectangle) =>
+        (ball.leftX <= 0 || ball.rightX >= GameDim.court.width)
 
     private distanceBetweenPositions(a: Position, b: Position) {
         return Math.sqrt(Math.pow((b.x - a.x), 2) + Math.pow((b.y - a.y), 2))
@@ -163,13 +188,13 @@ class Ball extends GameObject {
     public update(deltaTime: number) {
         // tmp logg
         if (this.i >= 10) {
-            console.log(this.position)
+            // console.log(this.position)
             this.i = 0
         }
         this.i++
 
         // reset
-        if (this.doesBallCollideWithLeftRightWalls(this.position)) {
+        if (this.doesBallCollideWithLeftRightWalls(this.getRect())) {
             console.log(this.position)
             console.log("point marqué ?")
             this.reset()
@@ -178,12 +203,18 @@ class Ball extends GameObject {
 
         const dist = (GameSpeed.ball / 1000) * deltaTime
         const nextPosWithoutColl: Position = this.getNextPositionWithoutCollision(dist)
+        const nextPosRect: Rectangle = {
+            topY: nextPosWithoutColl.y - GameDim.ballSideLength / 2,
+            botY:  nextPosWithoutColl.y + GameDim.ballSideLength / 2,
+            leftX:  nextPosWithoutColl.x - GameDim.ballSideLength / 2,
+            rightX:  nextPosWithoutColl.x + GameDim.ballSideLength / 2,
+        }
         let remainingDist: number;
 
-        if (this.doesBallCollideWithTopBotWalls(nextPosWithoutColl)) {
+        if (this.doesBallCollideWithTopBotWalls(nextPosRect)) {
             const y_horizontal = (this.direction.y > 0)
-                ? GameDim.court.height - GameDim.ballSideLength
-                : 0
+                ? GameDim.court.height - GameDim.ballSideLength / 2
+                : GameDim.ballSideLength / 2
 
             const intersectionPos = this.getIntersectionY(y_horizontal)
 
@@ -193,14 +224,14 @@ class Ball extends GameObject {
             this.update(deltaTime * (dist / remainingDist))
             return
         }
-        if (this.doesBallCollideWithPaddle(nextPosWithoutColl,
-                this.game.playerA.paddle.position) ||
-            this.doesBallCollideWithPaddle(nextPosWithoutColl,
-                this.game.playerB.paddle.position)
+        if (this.doesBallCollideWithPaddle(nextPosRect,
+                this.game.playerA.paddle.getRect()) ||
+            this.doesBallCollideWithPaddle(nextPosRect,
+                this.game.playerB.paddle.getRect())
         ) {
             const x_horizontal = (this.direction.x > 0)
-                ? GameDim.court.width - GameDim.ballSideLength - GameDim.paddle.width
-                : 0 + GameDim.paddle.width 
+                ? GameDim.court.width - (GameDim.ballSideLength / 2) - GameDim.paddle.width
+                : GameDim.paddle.width + (GameDim.ballSideLength / 2)
 
             const intersectionPos = this.getIntersectionX(x_horizontal)
             
@@ -278,11 +309,11 @@ class Game {
         this.id = `${playerA.intraUserName}${playerB.intraUserName}`
         this.playerA = new Player(playerA, this, new Paddle({
             x: 0,
-            y: (GameDim.court.height / 2 - GameDim.paddle.height / 2)
+            y: GameDim.court.height / 2
         }))
         this.playerB = new Player(playerB, this, new Paddle({
-            x: (GameDim.court.width - GameDim.paddle.width),
-            y: (GameDim.court.height / 2 - GameDim.paddle.height / 2)
+            x: (GameDim.court.width - GameDim.paddle.width / 2),
+            y: GameDim.court.height / 2
         }))
     }
 

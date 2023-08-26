@@ -87,6 +87,10 @@
 		console.log("DOWN")
 		game_socket.emit("gameMovement", "DOWN")
 	}
+	function onNONE() {
+		console.log("NONE")
+		game_socket.emit("gameMovement", "NONE")
+	}
 </script>
 
 <div
@@ -152,6 +156,7 @@
 		{rpaddle_pos}
 		on:UP={onUP}
 		on:DOWN={onDOWN}
+		on:NONE={onNONE}
 	/>
 </Canvas>
 

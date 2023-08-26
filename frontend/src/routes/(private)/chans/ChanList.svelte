@@ -26,15 +26,18 @@
 </script>
 
 {#each discussions as d}
-	<a
-		href={`/chans/${d.id}`}
-		class={d.id != currentDiscussionId
-			? "p-4 font-medium rounded-container-token hover:variant-soft-secondary hover:font-semibold"
-			: "variant-ghost-secondary p-4 font-semibold rounded-container-token"}
+	<div
+		class={`grid grid-cols-2 rounded p-4 ${
+			d.id != currentDiscussionId
+				? "font-medium hover:variant-soft-secondary hover:font-semibold"
+				: "variant-ghost-secondary font-semibold"
+		}`}
 	>
-		{d.title}
-		<span data-relatedto={d.id} class="online-dot text-2xl text-blue-700" /></a
-	>
+		<a href={`/chans/${d.id}`}>
+			{d.title}
+		</a>
+		<button class="btn variant-ghost-secondary justify-self-end">👥+</button>
+	</div>
 {/each}
 
 <style>
@@ -43,5 +46,18 @@
 	}
 	a::first-letter {
 		text-transform: capitalize;
+	}
+
+	button {
+		visibility: hidden;
+	}
+
+	div:hover > button {
+		visibility: visible;
+	}
+
+	button:hover {
+		font-weight: 700;
+		cursor: pointer;
 	}
 </style>

@@ -1,17 +1,13 @@
 <script lang="ts">
 	import { modalStore } from "@skeletonlabs/skeleton"
 
-	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
-
-	import { Autocomplete, InputChip } from "@skeletonlabs/skeleton"
-	import { createEventDispatcher } from "svelte"
-
-	async function handleDiscussionCreation() {
+	async function onDiscussionCreation() {
 		let formdata = new FormData(form) // `form` is bound to the form node
 		const title: string = formdata.get("title") as string
 		const type = priv ? "PRIVATE" : "PUBLIC"
+		const password: string | undefined = (formdata.get("title") as string | null) ?? undefined
 		if ($modalStore[0].response) {
-			$modalStore[0].response({ type, title })
+			$modalStore[0].response({ type, title, password })
 		}
 	}
 
@@ -30,7 +26,7 @@
 
 <form
 	bind:this={form}
-	on:submit|preventDefault={handleDiscussionCreation}
+	on:submit|preventDefault={onDiscussionCreation}
 	class="card w-full space-y-4 p-6"
 >
 	<label for="title" class="label">

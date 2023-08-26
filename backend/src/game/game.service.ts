@@ -105,9 +105,6 @@ class Paddle extends GameObject {
             ((isUp && newRect.topY < topPaddleLimit) ||
                 (!isUp && newRect.botY > botPaddleLimit))
         ) {
-            // this._position.y = (isUp)
-            //     ? topPaddleLimit
-            //     : botPaddleLimit
             return
         }
         const paddleCollideWithBall = this.doesBallCollideWithPaddle(
@@ -254,15 +251,16 @@ class Ball extends GameObject {
         const collideWithTopBotWalls = this.doesBallCollideWithTopBotWalls(nextPosRect)
 
         if (!collideWithPaddles && dist > GameDim.paddle.width &&
-            this.doesBallCollideWithLeftRightWalls(nextPosRect)
+            this.doesBallCollideWithLeftRightWalls(nextPosRect) &&
+            !this.passedPaddleLine
         ) {
             console.log("ball collide with left right walls")
             const xPaddle = (this.direction.x > 0)
                 ? GameDim.court.width - GameDim.paddle.width - Ball.offset
                 : GameDim.paddle.width + Ball.offset
             const intersecY = this.getIntersectionX(xPaddle)
-            if (intersecY >= facingPaddle.getRect().topY &&
-                intersecY <= facingPaddle.getRect().botY
+            if (intersecY + Ball.offset >= facingPaddle.getRect().topY &&
+                intersecY - Ball.offset <= facingPaddle.getRect().botY
             ) {
                 collideWithPaddles = true
             }
@@ -455,7 +453,7 @@ class Game {
         else
             this.emitGamePositions()
         this.lastUpdateTime = currentTime
-        setTimeout(this.update.bind(this), 100)
+        setTimeout(this.update.bind(this), 300)
     }
 
 }

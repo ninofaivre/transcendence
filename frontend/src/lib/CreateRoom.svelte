@@ -28,7 +28,11 @@
 	let form: HTMLFormElement
 </script>
 
-<form bind:this={form} on:submit|preventDefault={handleDiscussionCreation} class="space-y-4">
+<form
+	bind:this={form}
+	on:submit|preventDefault={handleDiscussionCreation}
+	class="card w-full space-y-4 p-6"
+>
 	<label for="title" class="label">
 		Choose a name for the room {priv ? "if you care" : ""}
 	</label>
@@ -41,13 +45,15 @@
 		class="input"
 		required={!priv}
 	/>
-	<label for="priv" class="label">Make private</label>
-	<input id="priv" type="checkbox" bind:checked={priv} />
+	<div>
+		<label for="priv" class="label">Make private</label>
+		<input id="priv" type="checkbox" bind:checked={priv} class="checkbox" />
+	</div>
 	<div class="mt-3"></div>
 
 	<footer class="modal-footer">
-		<button type="button" class="btn variant-ghost-surface" on:click={onClose}>Cancel</button>
-		<button type="submit" class="btn variant-filled">Create Room</button>
+		<button type="button" class="btn variant-ghost-error" on:click={onClose}>Cancel</button>
+		<button type="submit" class="btn variant-ghost">Create Room</button>
 	</footer>
 </form>
 

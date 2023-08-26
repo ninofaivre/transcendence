@@ -31,7 +31,7 @@
 	const columns = dev_mode ? "grid-cols-4" : "grid-cols-3"
 </script>
 
-<form class="space-y-4" on:submit={onPromptSubmit}>
+<form class="card space-y-4" on:submit={onPromptSubmit}>
 	<div class="grid {columns} gap-2">
 		<div>
 			<label for="days" class="label">Days</label>

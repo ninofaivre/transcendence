@@ -64,7 +64,7 @@
 	$: tw_rows = input_focused ? "grid-rows-2" : "grid-rows-1"
 </script>
 
-<div class="grid grid-rows-2 gap-1">
+<div class="card grid grid-rows-2 gap-1 p-6">
 	<!-- row 1  -->
 	<div class="grid min-w-[50vw] {tw_rows} gap-1">
 		<!-- row 1 -->

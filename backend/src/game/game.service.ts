@@ -171,6 +171,11 @@ class Ball extends GameObject {
 
     private set position(newPosition: Position) {
         this._position = newPosition
+        if (this.doesBallCollideWithLeftRightWalls(this.getRect())) {
+            console.log("point marqué")
+            this.reset()
+            return
+        }
         if (!this.passedPaddleLine && (
                 this.getRect().rightX > GameDim.court.width - GameDim.paddle.width ||
                 this.getRect().leftX < GameDim.paddle.width
@@ -228,14 +233,6 @@ class Ball extends GameObject {
         // this.i++
         // console.log("position :", this.position)
         // console.log("direction :", this.direction)
-
-        // reset
-        if (this.doesBallCollideWithLeftRightWalls(this.getRect())) {
-            console.log(this.position)
-            console.log("point marqué ?")
-            this.reset()
-            return
-        }
 
         const nextPosWithoutColl: Position = this.getNextPositionWithoutCollision(dist)
         const nextPosRect: Rectangle = super.getRectFromOffsetAndPos(nextPosWithoutColl,
@@ -453,7 +450,7 @@ class Game {
         else
             this.emitGamePositions()
         this.lastUpdateTime = currentTime
-        setTimeout(this.update.bind(this), 300)
+        setTimeout(this.update.bind(this), 0)
     }
 
 }

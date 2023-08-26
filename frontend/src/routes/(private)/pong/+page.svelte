@@ -165,7 +165,7 @@
 	#right-score {
 		position: absolute;
 		top: 30%;
-		font-family: "ArcadeClassic", "VT323", serif;
+		font-family: "Press Start 2P", "ArcadeClassic", serif;
 		font-size: 3rem;
 	}
 	#left-score {

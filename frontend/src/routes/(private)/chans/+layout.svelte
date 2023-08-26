@@ -52,7 +52,10 @@
 	})
 
 	async function onCreateChan() {
-		const r = await new Promise<string | undefined>((resolve) => {
+		type ModalReturnType =
+			| { type: "PRIVATE" | "PUBLIC"; title: string; password: string | undefined }
+			| undefined
+		const r = await new Promise<ModalReturnType>((resolve) => {
 			const modal: ModalSettings = {
 				type: "component",
 				component: "CreateRoom",
@@ -64,17 +67,19 @@
 			modalStore.trigger(modal)
 		})
 		if (r) {
-			// 	const ret = await client.invitations.chan.createChanInvitation({
-			// 		body: {
-			// 			chanId: $page.params.chanId,
-			// 			invitedUserName: r,
-			// 		},
-			// 	})
-			// 	if (ret.status != 201) checkError(ret, `invite ${r} to this channel`)
-			// 	else {
-			// 		makeToast(`Invited ${r} to this channel`)
-			// 		invalidate(":chans:invitations")
-			// 	}
+			const { type, title, password } = r
+			const ret = await client.chans.createChan({
+				body: {
+					type,
+					title,
+					password,
+				},
+			})
+			if (ret.status != 201) checkError(ret, "create a new room")
+			else {
+				makeToast(`Created a new ${type.toLowerCase()} room: ${r}`)
+				invalidate(":chans")
+			}
 		}
 	}
 

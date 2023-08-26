@@ -24,7 +24,7 @@ import { EventEmitterModule } from "@nestjs/event-emitter"
 			rootPath: join(__dirname, "../../frontend/build"),
 			exclude: ["/api*"],
 		}),
-        EventEmitterModule.forRoot({}),
+        EventEmitterModule.forRoot(),
 		AuthModule,
 		GameWebsocketModule,
 		ChansModule,

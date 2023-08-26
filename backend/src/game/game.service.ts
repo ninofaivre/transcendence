@@ -1,8 +1,10 @@
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { GameDim, GameMovement, GameSpeed, GameStatus, GameTimings } from 'contract';
 import { exit } from 'process';
 import { EnrichedRequest } from 'src/auth/auth.service';
-import { GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
+import { InternalEvents, emitInternalEvent } from 'src/internalEvents';
+import { EnrichedSocket, GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
 
 interface Position {
     x: number
@@ -328,7 +330,7 @@ class Game {
 
     private lastUpdateTime: number | null = null
     private _status: GameStatus['status'] = 'INIT'
-    private readonly maxScore: number = 10
+    private readonly maxScore: number = 1
 
     get status() {
         return this._status
@@ -395,19 +397,21 @@ class Game {
     }, this)
 
     constructor(
-        playerA: EnrichedRequest['user'],
-        playerB: EnrichedRequest['user'],
-        private readonly webSocket: GameWebsocketGateway
+        playerA: EnrichedSocket,
+        playerB: EnrichedSocket,
+        private readonly webSocket: GameWebsocketGateway,
+        private eventEmitter: EventEmitter2
     ) {
-        this.id = `${playerA.intraUserName}${playerB.intraUserName}`
-        this.playerA = new Player(playerA, this, new Paddle({
+        this.id = `${playerA.data.intraUserName}${playerB.data.intraUserName}`
+        this.playerA = new Player(playerA.data, this, new Paddle({
             x: Paddle.xOffset,
             y: GameDim.court.height / 2
         }, this))
-        this.playerB = new Player(playerB, this, new Paddle({
+        this.playerB = new Player(playerB.data, this, new Paddle({
             x: (GameDim.court.width - Paddle.xOffset),
             y: GameDim.court.height / 2
         }, this))
+        // TODO listener for crash and all this kind of shit I guess
     }
 
     private emitGamePositions() {
@@ -453,11 +457,17 @@ class Game {
 
     public score(player: Player) {
         player.score++
-        if (player.score >= this.maxScore)
-            this.status = 'END'
-        else
-            this.status = 'BREAK'
         this.callOnAllGameObjects("reset")
+        if (player.score >= this.maxScore) {
+            this.status = 'END'
+            emitInternalEvent(this.eventEmitter, "game.end", {
+                id: this.id,
+                playerA: this.playerA.user,
+                playerB: this.playerB.user
+            })
+            return
+        }
+        this.status = 'BREAK'
     }
 
     // private move = (deltaTime: number) => this.callOnAllGameObjects("move", deltaTime)
@@ -489,17 +499,21 @@ class Game {
 @Injectable()
 export class GameService {
 
-    private queue: EnrichedRequest['user'] | null = null;
+    private queue: EnrichedSocket | null = null;
     private games = new Map<string, Game>();
     private usersToGame = new Map<string, Game>();
 
     constructor(
         @Inject(forwardRef(() => GameWebsocketGateway))
-        private readonly webSocket: GameWebsocketGateway
-    ) {}
+        private readonly webSocket: GameWebsocketGateway,
+        private eventEmitter: EventEmitter2
+    ) {
+        // wtf is that shit
+        setTimeout((() => { this.webSocket.server.on('connect', this.connectUser.bind(this) )}).bind(this), 0)
+    }
 
-    public disconnectUser(intraUserName: IntraUserName) {
-        if (this.queue?.intraUserName === intraUserName)
+    public disconnectUser({ intraUserName }: EnrichedSocket['data']) {
+        if (this.queue?.data.intraUserName === intraUserName)
             this.queue = null
         const game = this.usersToGame.get(intraUserName)
         if (!game)
@@ -507,43 +521,57 @@ export class GameService {
         // game.pause()
     }
 
-    public connectUser(username: IntraUserName) {
-        const game = this.usersToGame.get(username)
+    public connectUser(client: EnrichedSocket) {
+        const game = this.usersToGame.get(client.data.intraUserName)
+        client.on('disconnect', (a) => this.disconnectUser(client.data))
         if (!game)
             return
-        this.webSocket.clientInGame(username, game.id)
-        // game.unpause()
+        client.data.status = 'GAME'
+        client.join(game.id)
+        // play
     }
 
     public getGameIdForUser(username: IntraUserName) {
         return this.usersToGame.get(username)?.id
     }
 
-    private async createGame(userOne: EnrichedRequest['user'], userTwo: EnrichedRequest['user']) {
+    private async createGame(userOne: EnrichedSocket, userTwo: EnrichedSocket) {
         console.log("createGame")
-        const newGame = new Game(userOne, userTwo, this.webSocket)
+        const newGame = new Game(userOne, userTwo, this.webSocket, this.eventEmitter)
         this.games.set(newGame.id, newGame)
-        this.webSocket.clientInGame(userOne.intraUserName, newGame.id)
-        this.webSocket.clientInGame(userTwo.intraUserName, newGame.id)
-        this.usersToGame.set(userOne.intraUserName, newGame)
-        this.usersToGame.set(userTwo.intraUserName, newGame)
+        this.usersToGame.set(userOne.data.intraUserName, newGame)
+        this.usersToGame.set(userTwo.data.intraUserName, newGame)
+
+        userOne.data.status = 'GAME'
+        userTwo.data.status = 'GAME'
+
+        userOne.join(newGame.id)
+        userTwo.join(newGame.id)
+
         newGame.status = 'INIT'
     }
 
-    public queueUser(user: EnrichedRequest['user']) {
-        if (this.queue?.intraUserName === user.intraUserName)
+    @OnEvent('game.end')
+    private async destroyGame(payload: InternalEvents['game.end']) {
+        this.usersToGame.delete(payload.playerA.intraUserName)
+        this.usersToGame.delete(payload.playerB.intraUserName)
+        this.games.delete(payload.id)
+    }
+
+    public queueUser(client: EnrichedSocket) {
+        if (this.queue?.data.intraUserName === client.data.intraUserName)
             return
         if (!this.queue) {
-            this.queue = user
+            this.queue = client
             return
         }
         const opponent = this.queue
         this.queue = null
-        this.createGame(opponent, user)
+        this.createGame(opponent, client)
     }
 
     public deQueueUser(intraUserName: IntraUserName) {
-        if (this.queue?.intraUserName === intraUserName)
+        if (this.queue?.data.intraUserName === intraUserName)
             this.queue = null
     }
 

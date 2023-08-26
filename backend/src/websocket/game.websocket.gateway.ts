@@ -12,7 +12,8 @@ import { ClientToServerEvents, GameMovement, GameMovementSchema, ServerToClientE
 import { InGameMessageSchema } from "contract";
 import { InGameMessage } from "contract";
 import { UserService } from "src/user/user.service";
-import { EventEmitter2 } from "@nestjs/event-emitter";
+import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
+import { InternalEvents } from "src/internalEvents";
 
 export type IntraUserName = string
 
@@ -92,6 +93,14 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             this.userService, this.intraNameToClientId) as any)
     }
 
+    // TODO do a typed decorator ?
+    @OnEvent('game.end')
+    endedGame(payload: InternalEvents['game.end']) {
+        this.server.in(payload.id).disconnectSockets()
+        this.findClientSocketByIntraName(payload.playerA.intraUserName)?.disconnect()
+        this.findClientSocketByIntraName(payload.playerB.intraUserName)?.disconnect()
+    }
+
     intraNameToClientId = new Map<IntraUserName, string>()
     userNameToClientId = new Map<string, string>()
 
@@ -99,14 +108,12 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         console.log(`${client.data.intraUserName} logged in with id ${client.id}`)
         this.intraNameToClientId.set(client.data.intraUserName, client.id)
         this.userNameToClientId.set(client.data.username, client.id)
-        this.gameService.connectUser(client.data.intraUserName)
     }
 
     handleDisconnect(client: EnrichedSocket) {
         console.log(`${client.data.intraUserName} logged out with id ${client.id}`)
         this.intraNameToClientId.delete(client.data.intraUserName)
         this.userNameToClientId.delete(client.data.username)
-        this.gameService.disconnectUser(client.data.intraUserName)
         client.data.status = "OFFLINE"
     }
 
@@ -126,25 +133,11 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         return this.server.sockets.sockets.get(clientId)
     }
 
-    private findClientSocketByName(clientName: IntraUserName) {
+    private findClientSocketByIntraName(clientName: IntraUserName) {
         const clientId = this.intraNameToClientId.get(clientName)
         if (!clientId)
             return
         return this.server.sockets.sockets.get(clientId)
-    }
-
-    public emitEventToGame(gameId: string, event: GameEvents) {
-        console.log("emitEventToGame")
-        // this.server.to(gameId).emit('game', event)
-    }
-
-    public clientInGame(clientName: IntraUserName, gameId: string) {
-        console.log("clientInGame :", clientName)
-        const client = this.findClientSocketByName(clientName)
-        if (!client)
-            return
-        client.data.status = 'GAME'
-        client.join(gameId)
     }
 
     @SubscribeMessage("queue")
@@ -156,7 +149,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             return
         console.log("queue :", client.data.intraUserName)
         client.data.status = 'QUEUE'
-        this.gameService.queueUser(client.data)
+        this.gameService.queueUser(client)
     }
 
     @SubscribeMessage("deQueue")

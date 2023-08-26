@@ -9,9 +9,10 @@ export function checkError(ret: { status: number; body: any }, what: string) {
 		makeToast("Could not " + what + " : " + ret.body.message)
 		console.log(ret.body.code)
 	} else {
-		// throw new Error("Server return unexpected status: " + ret.status)
-		makeToast("Server return unexpected status: " + ret.status)
-		console.error("Server return unexpected status: " + ret.status)
+		let msg = "Server return unexpected status " + ret.status
+		if ("message" in ret.body) msg += " with message "  + ret.body.message
+		makeToast(msg)
+		console.error(msg)
 	}
 }
 

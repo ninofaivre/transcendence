@@ -30,7 +30,7 @@
 		})
 		if (status == 201) {
 			console.log("Server returned:", status, body)
-			invalidate(":channels") // Seems reasonnable and simpler to reload all the whole channel list
+			invalidate(":chans") // Seems reasonnable and simpler to reload all the whole channel list
 			dispatch("submit")
 		} else {
 			toastStore.trigger({

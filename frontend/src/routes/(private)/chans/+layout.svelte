@@ -7,8 +7,6 @@
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
-	import { listenOutsideClick } from "$lib/global"
-	import CreateDiscussion from "$lib/CreateDiscussion.svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store } from "$stores"
 	import { invalidate } from "$app/navigation"
@@ -53,7 +51,32 @@
 		}
 	})
 
-	let creating_channel = false
+	async function onCreateChan() {
+		const r = await new Promise<string | undefined>((resolve) => {
+			const modal: ModalSettings = {
+				type: "component",
+				component: "CreateRoom",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+			}
+			modalStore.trigger(modal)
+		})
+		if (r) {
+			// 	const ret = await client.invitations.chan.createChanInvitation({
+			// 		body: {
+			// 			chanId: $page.params.chanId,
+			// 			invitedUserName: r,
+			// 		},
+			// 	})
+			// 	if (ret.status != 201) checkError(ret, `invite ${r} to this channel`)
+			// 	else {
+			// 		makeToast(`Invited ${r} to this channel`)
+			// 		invalidate(":chans:invitations")
+			// 	}
+		}
+	}
 
 	async function onInviteToChan() {
 		const r = await new Promise<string | undefined>((resolve) => {
@@ -96,27 +119,13 @@
 			id="col1"
 			style="height: calc(100vh - {header_height}px);"
 		>
-			<section
-				class="mt-2"
-				use:listenOutsideClick
-				on:outsideclick={() => (creating_channel = false)}
-			>
-				{#if creating_channel}
-					<CreateDiscussion
-						friendList={$page.data.friendList}
-						on:submit={() => (creating_channel = false)}
-					/>
-				{:else}
-					<button
-						class="btn btn-sm variant-filled-tertiary mt-1 rounded-md text-xs"
-						on:click={() => (creating_channel = true)}
-					>
-						+
-					</button>
-				{/if}
-				<button class="btn btn-sm variant-filled" on:click={onInviteToChan}
-					>Invite friends to this channel</button
-				>
+			<section class="mt-2">
+				<button class="btn btn-sm variant-filled" on:click={onCreateChan}>
+					Create new Room
+				</button>
+				<button class="btn btn-sm variant-filled" on:click={onInviteToChan}>
+					Invite friends to this channel
+				</button>
 			</section>
 			<section id="discussions" class="overflow-y-auto">
 				<ChanList
@@ -137,8 +146,9 @@
 		<div class="mx-auto my-10">
 			<h2 class="my-2">Invite a friend:</h2>
 			<SendFriendRequest />
-			<h2 class="my-2">Create a new Discussion:</h2>
-			<CreateDiscussion friendList={$page.data.friendList} />
+			<button class="btn btn-sm variant-filled" on:click={onCreateChan}>
+				Create new Room
+			</button>
 		</div>
 	</div>
 {/if}

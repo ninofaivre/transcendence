@@ -7,6 +7,9 @@ export type InGameMessage = z.infer<typeof InGameMessageSchema>
 export const GameMovementSchema = z.enum(["UP", "DOWN", "NONE"])
 export type GameMovement = z.infer<typeof GameMovementSchema>
 
+export const ScoreSchema = z.number().positive().int()
+export type Score = z.infer<typeof ScoreSchema>
+
 // use timeout only to show a cooldown to the user
 export const GameStatusSchema = z.discriminatedUnion("status", [
     z.strictObject({
@@ -19,7 +22,9 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
     z.strictObject({
         // BREAK = décompte entre les manches
         status: z.literal("BREAK"),
-        timeout: z.number().positive().int()
+        timeout: z.number().positive().int(),
+        paddleLeftScore: ScoreSchema,
+        paddleRightScore: ScoreSchema
     }),
     z.strictObject({
         status: z.literal("PAUSE"),
@@ -27,7 +32,15 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
         username: zUserName
     }),
     z.strictObject({
-        status: z.literal("PLAY")
+        status: z.literal("PLAY"),
+        paddleLeftScore: ScoreSchema,
+        paddleRightScore: ScoreSchema
+    }),
+    z.strictObject({
+        status: z.literal("END"),
+        winner: zUserName,
+        paddleLeftScore: ScoreSchema,
+        paddleRightScore: ScoreSchema
     })
 ])
 export type GameStatus = z.infer<typeof GameStatusSchema>

@@ -23,7 +23,7 @@
 
 	const { size, renderer, invalidate } = useThrelte()
 
-	let margin = 0
+	let margin = 300
 	$: zoom = $size.width / (court.width + margin)
 
 	extend({ OrbitControls })

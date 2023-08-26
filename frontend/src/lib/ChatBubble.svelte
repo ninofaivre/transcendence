@@ -219,6 +219,8 @@
 >
 	<div class="message-spacer" />
 	{#if !from_me}
+		<!-- Need online status for that -->
+		<!-- <span class="relative left-1 text-xl text-green-600">&#8226</span> -->
 		<Avatar
 			src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture"
 			fallback="https://i.pravatar.cc/?u={message.author}"

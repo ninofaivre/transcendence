@@ -84,6 +84,7 @@ class Paddle extends GameObject {
     }
 
     private set position(newPosition: Position) {
+        console.log("paddle is mooving")
         if (this.getRect().topY < 0)
             newPosition.y = Paddle.yOffset
         else if (this.getRect().botY > GameDim.court.height)
@@ -255,6 +256,7 @@ class Ball extends GameObject {
         if (!collideWithPaddles && dist > GameDim.paddle.width &&
             this.doesBallCollideWithLeftRightWalls(nextPosRect)
         ) {
+            console.log("ball collide with left right walls")
             const xPaddle = (this.direction.x > 0)
                 ? GameDim.court.width - GameDim.paddle.width - Ball.offset
                 : GameDim.paddle.width + Ball.offset
@@ -284,6 +286,7 @@ class Ball extends GameObject {
             this.direction.y *= -1
         }
         if (collideWithPaddles) {
+            console.log("ball collide with paddles")
             if (this.passedPaddleLine) {
                 const yPaddle = (facingPaddle.getRect().topY >= this.getRect().botY)
                     ? facingPaddle.getRect().topY - Ball.offset
@@ -319,7 +322,6 @@ class Game {
 
     public readonly id: string;
 
-    private readonly score: number = 0;
     private lastUpdateTime: number | null = null
     private _status: GameStatus['status'] = 'INIT'
 
@@ -395,11 +397,15 @@ class Game {
         })
     }
 
-    public updateMovement(intraUserName: IntraUserName, move: GameMovement) {
-        const player = (this.playerA.user.intraUserName === intraUserName)
+    private getPlayerByIntraUserName(intraUserName: IntraUserName) {
+        return (this.playerA.user.intraUserName === intraUserName)
             ? this.playerA
             : this.playerB
-        player.paddle.movement = move
+    }
+
+    public updateMovement(intraUserName: IntraUserName, move: GameMovement) {
+        this.getPlayerByIntraUserName(intraUserName)
+            .paddle.movement = move
     }
 
     private callOnAllGameObjects<
@@ -422,6 +428,10 @@ class Game {
             // (bonus, it's perfectly safe (should be))
             Function.prototype.apply.call(gameObject[key], gameObject, args)
         })
+    }
+
+    public score(intraUserName: IntraUserName) {
+        
     }
 
     // private move = (deltaTime: number) => this.callOnAllGameObjects("move", deltaTime)

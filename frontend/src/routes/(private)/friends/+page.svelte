@@ -8,7 +8,6 @@
 	import { toastStore } from "@skeletonlabs/skeleton"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { invalidate } from "$app/navigation"
-	import CreateDiscussion from "$lib/CreateDiscussion.svelte"
 
 	async function acceptFriendInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
 		const id = e.currentTarget.dataset.id

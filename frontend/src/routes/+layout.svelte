@@ -15,6 +15,7 @@
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import TimeChooser from "$lib/TimeChooser.svelte"
 	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
+	import CreateRoom from "$lib/CreateRoom.svelte"
 	import { page } from "$app/stores"
 
 	$: {
@@ -42,6 +43,9 @@
 		},
 		InviteFriendToChan: {
 			ref: InviteFriendToChan,
+		},
+		CreateRoom: {
+			ref: CreateRoom,
 		},
 	}
 

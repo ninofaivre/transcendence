@@ -20,8 +20,6 @@
 		shallowCopyPartialToNotPartial,
 	} from "$lib/global"
 	import { sse_store, my_name } from "$stores"
-	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
-	import Toggle from "$lib/Toggle.svelte"
 	import { isContractError } from "contract"
 	import { invalidate, invalidateAll } from "$app/navigation"
 	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
@@ -132,33 +130,6 @@
 		}
 	}
 
-	async function onInviteToChan() {
-		const r = await new Promise<string | undefined>((resolve) => {
-			const modal: ModalSettings = {
-				type: "component",
-				component: "InviteFriendToChan",
-				response: (r) => {
-					modalStore.close()
-					resolve(r)
-				},
-			}
-			modalStore.trigger(modal)
-		})
-		if (r) {
-			const ret = await client.invitations.chan.createChanInvitation({
-				body: {
-					chanId: $page.params.chanId,
-					invitedUserName: r,
-				},
-			})
-			if (ret.status != 201) checkError(ret, `invite ${r} to this channel`)
-			else {
-				makeToast(`Invited ${r} to this channel`)
-				invalidate(":chans:invitations")
-			}
-		}
-	}
-
 	async function loadPreviousMessages({
 		detail: { loading_greediness, cursor, canary },
 	}: CustomEvent<{ loading_greediness: number; cursor: string; canary: HTMLElement }>) {
@@ -254,9 +225,6 @@
 		on:loadprevious={loadPreviousMessages}
 	/>
 	<section id="input-row" class="p-4">
-		<button class="btn btn-sm variant-filled" on:click={onInviteToChan}
-			>Invite friends to this channel</button
-		>
 		<ChatBox
 			outline
 			on:message_sent={messageSentHandler}

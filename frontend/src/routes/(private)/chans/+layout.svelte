@@ -82,33 +82,6 @@
 			}
 		}
 	}
-
-	async function onInviteToChan() {
-		const r = await new Promise<string | undefined>((resolve) => {
-			const modal: ModalSettings = {
-				type: "component",
-				component: "InviteFriendToChan",
-				response: (r) => {
-					modalStore.close()
-					resolve(r)
-				},
-			}
-			modalStore.trigger(modal)
-		})
-		if (r) {
-			const ret = await client.invitations.chan.createChanInvitation({
-				body: {
-					chanId: $page.params.chanId,
-					invitedUserName: r,
-				},
-			})
-			if (ret.status != 201) checkError(ret, `invite ${r} to this channel`)
-			else {
-				makeToast(`Invited ${r} to this channel`)
-				invalidate(":chans:invitations")
-			}
-		}
-	}
 </script>
 
 {#if $page.data.chanList.length}
@@ -125,11 +98,11 @@
 			style="height: calc(100vh - {header_height}px);"
 		>
 			<section class="mt-2">
-				<button class="btn btn-sm variant-filled" on:click={onCreateChan}>
+				<button
+					class="btn btn-sm variant-ghost-primary w-full rounded"
+					on:click={onCreateChan}
+				>
 					Create new Room
-				</button>
-				<button class="btn btn-sm variant-filled" on:click={onInviteToChan}>
-					Invite friends to this channel
 				</button>
 			</section>
 			<section id="discussions" class="overflow-y-auto">

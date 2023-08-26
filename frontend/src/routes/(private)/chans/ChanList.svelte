@@ -4,6 +4,10 @@
 	import { onMount } from "svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { invalidate } from "$app/navigation"
+	import { makeToast } from "$lib/global"
+	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { client } from "$clients"
+	import { checkError } from "$lib/global"
 
 	export let currentDiscussionId: string
 	export let discussions: Chan[]
@@ -23,6 +27,33 @@
 			}
 		} else throw new Error("sse_store is empty ! Grrrr", $sse_store)
 	})
+
+	async function onInviteToChan(chanId: string) {
+		const r = await new Promise<string | undefined>((resolve) => {
+			const modal: ModalSettings = {
+				type: "component",
+				component: "InviteFriendToChan",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+			}
+			modalStore.trigger(modal)
+		})
+		if (r) {
+			const ret = await client.invitations.chan.createChanInvitation({
+				body: {
+					chanId,
+					invitedUserName: r,
+				},
+			})
+			if (ret.status != 201) checkError(ret, `invite ${r} to this channel`)
+			else {
+				makeToast(`Invited ${r} to this channel`)
+				invalidate(":chans:invitations")
+			}
+		}
+	}
 </script>
 
 {#each discussions as d}
@@ -36,7 +67,10 @@
 		<a href={`/chans/${d.id}`}>
 			{d.title}
 		</a>
-		<button class="btn variant-ghost-secondary justify-self-end">👥+</button>
+		<button
+			on:click={() => onInviteToChan(d.id)}
+			class="btn btn-sm variant-ghost-secondary justify-self-end">👥+</button
+		>
 	</div>
 {/each}
 

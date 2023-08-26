@@ -39,7 +39,7 @@ abstract class GameObject {
         this._position = { ...this._startingPosition }
     }
 
-    protected reset() {
+    public reset() {
         this._position = { ...this._startingPosition }
     }
 
@@ -135,7 +135,7 @@ class Paddle extends GameObject {
 class Player {
 
     private pauseAmount = GameTimings.userPauseAmount
-    private score = 0
+    public score = 0
 
     constructor(
         public readonly user: EnrichedRequest['user'],
@@ -173,7 +173,10 @@ class Ball extends GameObject {
         this._position = newPosition
         if (this.doesBallCollideWithLeftRightWalls(this.getRect())) {
             console.log("point marqué")
-            this.reset()
+            const scorer = (this.doesBallCollideWithLeftWall(this.getRect()))
+                ? this.game.playerB
+                : this.game.playerA
+            this.game.score(scorer)
             return
         }
         if (!this.passedPaddleLine && (
@@ -191,7 +194,7 @@ class Ball extends GameObject {
         private speed = GameSpeed.ball / 1000
     ) { super(_startingPosition) }
 
-    protected reset() {
+    public reset() {
         super.reset()
         this.direction = this.getRandomDirection()
         this.passedPaddleLine = false
@@ -205,7 +208,13 @@ class Ball extends GameObject {
     }
 
     private doesBallCollideWithLeftRightWalls = (ball: Rectangle) =>
-        (ball.leftX <= 0 || ball.rightX >= GameDim.court.width)
+        (this.doesBallCollideWithLeftWall(ball) || this.doesBallCollideWithRightWall(ball))
+
+    private doesBallCollideWithLeftWall = (ball: Rectangle) =>
+        (ball.leftX <= 0)
+
+    private doesBallCollideWithRightWall = (ball: Rectangle) =>
+        (ball.rightX >= GameDim.court.width)
 
     private distanceBetweenPositions = (a: Position, b: Position) =>
         Math.sqrt(Math.pow((b.x - a.x), 2) + Math.pow((b.y - a.y), 2))
@@ -319,6 +328,7 @@ class Game {
 
     private lastUpdateTime: number | null = null
     private _status: GameStatus['status'] = 'INIT'
+    private readonly maxScore: number = 10
 
     get status() {
         return this._status
@@ -334,12 +344,14 @@ class Game {
                     paddleLeftUserName: this.playerA.user.username,
                     paddleRightUserName: this.playerB.user.username
                 })
-                setTimeout(this.update.bind(this), 3000, 'PLAY')
+                setTimeout(this.update.bind(this), GameTimings.initTimeout, 'PLAY')
                 break ;
             }
             case 'PLAY': {
                 this.webSocket.server.to(this.id).emit('updatedGameStatus', {
-                    status: 'PLAY'
+                    status: 'PLAY',
+                    paddleLeftScore: this.playerA.score,
+                    paddleRightScore: this.playerB.score
                 })
                 break ;
             }
@@ -354,7 +366,21 @@ class Game {
             case 'BREAK': {
                 this.webSocket.server.to(this.id).emit("updatedGameStatus", {
                     status: 'BREAK',
-                    timeout: GameTimings.breakTimeout
+                    timeout: GameTimings.breakTimeout,
+                    paddleLeftScore: this.playerA.score,
+                    paddleRightScore: this.playerB.score
+                })
+                setTimeout(this.update.bind(this), GameTimings.breakTimeout, 'PLAY')
+                break ;
+            }
+            case 'END': {
+                this.webSocket.server.to(this.id).emit("updatedGameStatus", {
+                    status: 'END',
+                    winner: (this.playerA.score > this.playerB.score)
+                        ? this.playerA.user.username
+                        : this.playerB.user.username,
+                    paddleLeftScore: this.playerA.score,
+                    paddleRightScore: this.playerB.score
                 })
             }
         }
@@ -425,8 +451,13 @@ class Game {
         })
     }
 
-    public score(intraUserName: IntraUserName) {
-        
+    public score(player: Player) {
+        player.score++
+        if (player.score >= this.maxScore)
+            this.status = 'END'
+        else
+            this.status = 'BREAK'
+        this.callOnAllGameObjects("reset")
     }
 
     // private move = (deltaTime: number) => this.callOnAllGameObjects("move", deltaTime)

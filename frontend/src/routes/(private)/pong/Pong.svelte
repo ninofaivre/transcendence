@@ -105,12 +105,12 @@
 <!-- <Ball {ball} /> -->
 <Paddle position={ball_pos} size={ball_sz} color="red" />
 <!-- Left paddle  -->
-<Paddle position={lpaddle_pos} size={lpaddle_sz} color="orange" />
+<Paddle position={lpaddle_pos} size={lpaddle_sz} color="green" />
 <!-- Right paddle  -->
-<Paddle position={rpaddle_pos} size={rpaddle_sz} color="orange" />
+<Paddle position={rpaddle_pos} size={rpaddle_sz} color="green" />
 
 <!-- Court Walls -->
-<Paddle position={top_wall.position} size={top_wall.size} color="white" />
-<Paddle position={bottom_wall.position} size={bottom_wall.size} color="white" />
+<Paddle position={top_wall.position} size={top_wall.size} color="green" />
+<Paddle position={bottom_wall.position} size={bottom_wall.size} color="green" />
 <!-- <Paddle paddle={right_wall} /> -->
 <!-- <Paddle paddle={left_wall} /> -->

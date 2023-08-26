@@ -7,7 +7,7 @@ const c = initContract()
 
 export const GameDim = {
 	court: { width: 1600, height: 900 },
-	paddle: { width: 400, height: 400 },
+	paddle: { width: 25, height: 400 },
 	ballSideLength: 25, // ball is a square
 }
 
@@ -19,9 +19,8 @@ export const GameTimings = {
 
 // in unit by second
 export const GameSpeed = {
-    // ball speed needs to be greater than paddle speed to mitigate an edge case
 	paddle: 450,
-	ball: 120, // will be a base speed (speed of ball will change over time) random value for now
+	ball: 400, // will be a base speed (speed of ball will change over time) random value for now
 }
 
 export const zGameParameters = z.strictObject({

@@ -18,6 +18,18 @@ interface Rectangle {
 
 abstract class GameObject {
 
+    protected getRectFromOffsetAndPos(
+        position: Position,
+        xOffset: number,
+        yOffset: number
+    ): Rectangle {
+        return {
+            topY: position.y - yOffset,
+            botY: position.y + yOffset,
+            leftX: position.x - xOffset,
+            rightX: position.x + xOffset
+        }
+    }
 
     protected _position: Position;
 
@@ -36,6 +48,14 @@ abstract class GameObject {
     }
 
     public abstract getRect(): Rectangle;
+
+    protected doesBallCollideWithPaddle = (ball: Rectangle, paddle: Rectangle) =>
+        (ball.leftX <= paddle.rightX && ball.rightX >= paddle.leftX &&
+        ball.topY <= paddle.botY && ball.botY >= paddle.topY)
+
+    protected doesBallCollideWithTopBotWalls = (ball: Rectangle) =>
+        (ball.topY <= 0 || ball.botY >= GameDim.court.height)
+
 }
 
 class Paddle extends GameObject {
@@ -50,19 +70,14 @@ class Paddle extends GameObject {
     static readonly yOffset = GameDim.paddle.height / 2
 
     constructor(
-        _startingPosition: Position
+        _startingPosition: Position,
+        private readonly game: Game
     ) {
         super(_startingPosition);
     }
 
-    public getRect(): Rectangle {
-        return {
-            topY: this.position.y - Paddle.yOffset,
-            botY: this.position.y + Paddle.yOffset,
-            leftX: this.position.x  - Paddle.xOffset,
-            rightX: this.position.x + Paddle.xOffset
-        }
-    }
+    public getRect = (): Rectangle =>
+        super.getRectFromOffsetAndPos(this.position, Paddle.xOffset, Paddle.yOffset)
 
     public get position() { 
         return super.position
@@ -75,6 +90,35 @@ class Paddle extends GameObject {
             newPosition.y = GameDim.court.height - Paddle.yOffset
         else if (newPosition.x !== this.position.x)
             newPosition.x = this.position.x
+        if (!this.game.ball.passedPaddleLine) {
+            this._position = newPosition
+            return
+        }
+        const newRect = super.getRectFromOffsetAndPos(newPosition, Paddle.xOffset,
+            Paddle.yOffset)
+        const isUp = (this._movement === 'UP')
+        const isBallUpper = this.game.ball.position.y < this._position.y
+        const topPaddleLimit = GameDim.ballSideLength + 3
+        const botPaddleLimit = GameDim.court.height - GameDim.ballSideLength - 3
+        if (((isUp && isBallUpper) || (!isUp && !isBallUpper)) &&
+            ((isUp && newRect.topY < topPaddleLimit) ||
+                (!isUp && newRect.botY > botPaddleLimit))
+        ) {
+            // this._position.y = (isUp)
+            //     ? topPaddleLimit
+            //     : botPaddleLimit
+            return
+        }
+        const paddleCollideWithBall = this.doesBallCollideWithPaddle(
+            this.game.ball.getRect(), newRect)
+        if (!paddleCollideWithBall) {
+            this._position = newPosition
+            return
+        }
+        const newBallY = (isUp)
+            ? newRect.topY - Ball.offset - 1
+            : newRect.botY + Ball.offset + 1
+        this.game.ball.position.y = newBallY
         this._position = newPosition
     }
 
@@ -106,7 +150,8 @@ class Player {
 class Ball extends GameObject {
 
     protected _position: Position = { ...this._startingPosition }
-    private direction: { x: number, y: number };
+    private direction: { x: number, y: number } = this.getRandomDirection();
+    public passedPaddleLine: boolean = false;
 
     static readonly offset = GameDim.ballSideLength / 2
 
@@ -119,12 +164,21 @@ class Ball extends GameObject {
         return direction
     }
 
-    public getRect(): Rectangle {
-        return {
-            topY: this.position.y - Ball.offset,
-            botY: this.position.y + Ball.offset,
-            leftX: this.position.x - Ball.offset,
-            rightX: this.position.x + Ball.offset
+    public getRect = (): Rectangle =>
+        super.getRectFromOffsetAndPos(this.position, Ball.offset, Ball.offset)       
+
+    public get position() {
+        return super.position
+    }
+
+    private set position(newPosition: Position) {
+        this._position = newPosition
+        if (!this.passedPaddleLine && (
+                this.getRect().rightX > GameDim.court.width - GameDim.paddle.width ||
+                this.getRect().leftX < GameDim.paddle.width
+            )
+        ) {
+            this.passedPaddleLine = true
         }
     }
 
@@ -132,14 +186,12 @@ class Ball extends GameObject {
         _startingPosition: Position,
         private readonly game: Game,
         private speed = GameSpeed.ball / 1000
-    ) {
-        super(_startingPosition)
-        this.direction = this.getRandomDirection()
-    }
+    ) { super(_startingPosition) }
 
     protected reset() {
         super.reset()
         this.direction = this.getRandomDirection()
+        this.passedPaddleLine = false
     }
 
     private getNextPositionWithoutCollision(dist: number) {
@@ -148,13 +200,6 @@ class Ball extends GameObject {
             y: this.position.y + this.direction.y * dist
         }
     }
-
-    private doesBallCollideWithPaddle = (ball: Rectangle, paddle: Rectangle) =>
-        (ball.leftX <= paddle.rightX && ball.rightX >= paddle.leftX &&
-        ball.topY <= paddle.botY && ball.botY >= paddle.topY)
-
-    private doesBallCollideWithTopBotWalls = (ball: Rectangle) =>
-        (ball.topY <= 0 || ball.botY >= GameDim.court.height)
 
     private doesBallCollideWithLeftRightWalls = (ball: Rectangle) =>
         (ball.leftX <= 0 || ball.rightX >= GameDim.court.width)
@@ -183,8 +228,8 @@ class Ball extends GameObject {
         //     this.i = 0
         // }
         // this.i++
-        console.log("position :", this.position)
-        console.log("direction :", this.direction)
+        // console.log("position :", this.position)
+        // console.log("direction :", this.direction)
 
         // reset
         if (this.doesBallCollideWithLeftRightWalls(this.getRect())) {
@@ -195,13 +240,12 @@ class Ball extends GameObject {
         }
 
         const nextPosWithoutColl: Position = this.getNextPositionWithoutCollision(dist)
-        const nextPosRect: Rectangle = {
-            topY: nextPosWithoutColl.y - Ball.offset,
-            botY:  nextPosWithoutColl.y + Ball.offset,
-            leftX:  nextPosWithoutColl.x - Ball.offset,
-            rightX:  nextPosWithoutColl.x + Ball.offset,
-        }
+        const nextPosRect: Rectangle = super.getRectFromOffsetAndPos(nextPosWithoutColl,
+            Ball.offset, Ball.offset)
 
+        const facingPaddle: Paddle = (this.direction.x > 0)
+            ? this.game.playerB.paddle
+            : this.game.playerA.paddle
         let collideWithPaddles = (this.doesBallCollideWithPaddle(nextPosRect,
                 this.game.playerA.paddle.getRect()) ||
             this.doesBallCollideWithPaddle(nextPosRect,
@@ -215,17 +259,15 @@ class Ball extends GameObject {
                 ? GameDim.court.width - GameDim.paddle.width - Ball.offset
                 : GameDim.paddle.width + Ball.offset
             const intersecY = this.getIntersectionX(xPaddle)
-            if ((this.direction.x < 0 &&
-                    intersecY >= this.game.playerA.paddle.getRect().topY &&
-                    intersecY <= this.game.playerA.paddle.getRect().botY) ||
-                (this.direction.x > 0 &&
-                    intersecY >= this.game.playerB.paddle.getRect().topY &&
-                    intersecY <= this.game.playerB.paddle.getRect().botY))
-            collideWithPaddles = true
+            if (intersecY >= facingPaddle.getRect().topY &&
+                intersecY <= facingPaddle.getRect().botY
+            ) {
+                collideWithPaddles = true
+            }
         }
 
         if (!collideWithPaddles && !collideWithTopBotWalls) {
-            this._position = nextPosWithoutColl
+            this.position = nextPosWithoutColl
             return
         }
 
@@ -242,11 +284,20 @@ class Ball extends GameObject {
             this.direction.y *= -1
         }
         if (collideWithPaddles) {
-            intersectionPos.y = this.getIntersectionX(xPaddle)
-            this.direction.x *= -1
+            if (this.passedPaddleLine) {
+                const yPaddle = (facingPaddle.getRect().topY >= this.getRect().botY)
+                    ? facingPaddle.getRect().topY - Ball.offset
+                    : facingPaddle.getRect().botY + Ball.offset
+                intersectionPos.x = this.getIntersectionY(yPaddle)
+                intersectionPos.y = yPaddle
+                this.direction.y *= -1
+            } else {
+                intersectionPos.y = this.getIntersectionX(xPaddle)
+                this.direction.x *= -1
+            }
         }
         const remainingDist = this.distanceBetweenPositions(intersectionPos, this._position)
-        this._position = intersectionPos
+        this.position = intersectionPos
         // TODO remove that in PROD
         if (this.position.x > 1800) {
             console.log("----------------------------------------")
@@ -315,7 +366,7 @@ class Game {
 
     public readonly playerA: Player;
     public readonly playerB: Player;
-    private readonly ball: Ball = new Ball({
+    public readonly ball: Ball = new Ball({
         x: GameDim.court.width / 2 - Ball.offset,
         y: GameDim.court.height / 2 - Ball.offset
     }, this)
@@ -329,11 +380,11 @@ class Game {
         this.playerA = new Player(playerA, this, new Paddle({
             x: Paddle.xOffset,
             y: GameDim.court.height / 2
-        }))
+        }, this))
         this.playerB = new Player(playerB, this, new Paddle({
             x: (GameDim.court.width - Paddle.xOffset),
             y: GameDim.court.height / 2
-        }))
+        }, this))
     }
 
     private emitGamePositions() {

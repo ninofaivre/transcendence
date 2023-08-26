@@ -57,7 +57,7 @@
 		{d.otherName}
 		<span
 			data-relatedto={d.otherName}
-			class="online-dot text-2xl text-green-700"
+			class="online-dot text-2xl text-green-600"
 			style:visibility={d.otherStatus === "ONLINE" ? "visible" : "hidden"}>&#8226</span
 		>
 	</a>

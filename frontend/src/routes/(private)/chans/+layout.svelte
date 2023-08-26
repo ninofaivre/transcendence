@@ -12,6 +12,10 @@
 	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store } from "$stores"
 	import { invalidate } from "$app/navigation"
+	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { checkError } from "$lib/global"
+	import { client } from "$clients"
+	import { makeToast } from "$lib/global"
 
 	// Get our discussions
 	// export let data: LayoutData // TODO wtf
@@ -50,6 +54,33 @@
 	})
 
 	let creating_channel = false
+
+	async function onInviteToChan() {
+		const r = await new Promise<string | undefined>((resolve) => {
+			const modal: ModalSettings = {
+				type: "component",
+				component: "InviteFriendToChan",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+			}
+			modalStore.trigger(modal)
+		})
+		if (r) {
+			const ret = await client.invitations.chan.createChanInvitation({
+				body: {
+					chanId: $page.params.chanId,
+					invitedUserName: r,
+				},
+			})
+			if (ret.status != 201) checkError(ret, `invite ${r} to this channel`)
+			else {
+				makeToast(`Invited ${r} to this channel`)
+				invalidate(":chans:invitations")
+			}
+		}
+	}
 </script>
 
 {#if $page.data.chanList.length}
@@ -83,6 +114,9 @@
 						+
 					</button>
 				{/if}
+				<button class="btn btn-sm variant-filled" on:click={onInviteToChan}
+					>Invite friends to this channel</button
+				>
 			</section>
 			<section id="discussions" class="overflow-y-auto">
 				<ChanList

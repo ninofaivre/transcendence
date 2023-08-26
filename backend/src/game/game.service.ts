@@ -202,11 +202,27 @@ class Ball extends GameObject {
             rightX:  nextPosWithoutColl.x + Ball.offset,
         }
 
-        const collideWithPaddles = this.doesBallCollideWithPaddle(nextPosRect,
+        let collideWithPaddles = (this.doesBallCollideWithPaddle(nextPosRect,
                 this.game.playerA.paddle.getRect()) ||
             this.doesBallCollideWithPaddle(nextPosRect,
-                this.game.playerB.paddle.getRect())
+                this.game.playerB.paddle.getRect()))
         const collideWithTopBotWalls = this.doesBallCollideWithTopBotWalls(nextPosRect)
+
+        if (!collideWithPaddles && dist > GameDim.paddle.width &&
+            this.doesBallCollideWithLeftRightWalls(nextPosRect)
+        ) {
+            const xPaddle = (this.direction.x > 0)
+                ? GameDim.court.width - GameDim.paddle.width - Ball.offset
+                : GameDim.paddle.width + Ball.offset
+            const intersecY = this.getIntersectionX(xPaddle)
+            if ((this.direction.x < 0 &&
+                    intersecY >= this.game.playerA.paddle.getRect().topY &&
+                    intersecY <= this.game.playerA.paddle.getRect().botY) ||
+                (this.direction.x > 0 &&
+                    intersecY >= this.game.playerB.paddle.getRect().topY &&
+                    intersecY <= this.game.playerB.paddle.getRect().botY))
+            collideWithPaddles = true
+        }
 
         if (!collideWithPaddles && !collideWithTopBotWalls) {
             this._position = nextPosWithoutColl
@@ -378,7 +394,7 @@ class Game {
         else
             this.emitGamePositions()
         this.lastUpdateTime = currentTime
-        setTimeout(this.update.bind(this), 0)
+        setTimeout(this.update.bind(this), 100)
     }
 
 }

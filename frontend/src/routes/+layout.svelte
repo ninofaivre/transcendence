@@ -14,6 +14,7 @@
 	import { Modal, type ModalComponent } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import TimeChooser from "$lib/TimeChooser.svelte"
+	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
 	import { page } from "$app/stores"
 
 	$: {
@@ -38,6 +39,9 @@
 	const modalComponentRegistry: Record<string, ModalComponent> = {
 		TimeChooser: {
 			ref: TimeChooser,
+		},
+		InviteFriendToChan: {
+			ref: InviteFriendToChan,
 		},
 	}
 

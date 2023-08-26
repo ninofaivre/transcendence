@@ -1,69 +1,107 @@
 <script lang="ts">
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
 
-	import { Autocomplete, InputChip, toastStore } from "@skeletonlabs/skeleton"
-	import { invalidate } from "$app/navigation"
+	import { Autocomplete } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import { createEventDispatcher } from "svelte"
+	import { modalStore } from "@skeletonlabs/skeleton"
+	import { onMount } from "svelte"
+	import { checkError } from "./global"
 
-	export let friendList: string[]
-	export let chan_id: string
+	let search_input: string = ""
+	let users: AutocompleteOption[] = []
+	let input_element: HTMLElement
+	let send_button: HTMLButtonElement
+	let input_focused = false
 
-	let friendOptions: AutocompleteOption[]
-	$: friendOptions = friendList.map((username) => ({
-		label: username,
-		value: username,
-	}))
-
-	const dispatch = createEventDispatcher()
-
-	let priv: boolean = false
-	let form: HTMLFormElement
-	async function handleDiscussionCreation() {
-		let formdata = new FormData(form) // `form` is bound to the form node
-		const usernames: string[] = formdata.getAll("users") as string[]
-		for (let invitedUserName of usernames) {
-			client.invitations.chan.createChanInvitation({
-				body: { chanId: chan_id, invitedUserName },
-			})
+	function onModalSubmit(str: string) {
+		if ($modalStore[0].response) {
+			$modalStore[0].response(str)
 		}
-		invalidate(":channels") // Seems reasonnable and simpler to reload all the whole channel list
-		dispatch("submit")
 	}
 
-	function validation(_username: string): boolean {
-		return friendList.indexOf(_username) !== -1
+	function onClose() {
+		if ($modalStore[0].response) {
+			$modalStore[0].response(undefined)
+		}
 	}
 
-	let input: string
-	let value: string[]
-
-	function onInputChipSelect(event: CustomEvent<AutocompleteOption>) {
-		value = [...value, event.detail.value as string]
+	async function onUserSelection(event: any) {
+		search_input = event.detail.label
+		input_focused = false
+		send_button.focus()
 	}
+
+	async function getUsernames(input: string) {
+		const ret = await client.users.searchUsers({
+			query: {
+				userNameContains: input,
+				filter: {
+					type: "only",
+					friends: true,
+				},
+			},
+		})
+		if (ret.status != 200)
+			checkError(ret, `retrieve name of users whose name contains '${input}'`)
+		else users = ret.body.map((obj) => ({ label: obj.userName, value: obj.userName }))
+	}
+
+	async function onKeypress(event: KeyboardEvent) {
+		if (event.shiftKey == false) {
+			switch (event.key) {
+				case "Enter":
+					onModalSubmit(search_input)
+					event.preventDefault() // Prevent actual input of the newline that triggered sending
+			}
+		}
+	}
+
+	$: if (search_input) getUsernames(search_input)
+
+	onMount(() => void input_element.focus())
+
+	let tw_rows: string
+	$: tw_rows = input_focused ? "grid-rows-2" : "grid-rows-1"
 </script>
 
-<!-- TODO: Try width: min-content; on the form's parent or display: inline-block; on the form element to see if it fixes unwantd widening  -->
-<form bind:this={form} on:submit|preventDefault={handleDiscussionCreation} class="">
-	{#if friendList.length != 0}
-		<label for="invites" class="label">Send invites</label>
-		<InputChip bind:input bind:value name="users" id="invites" {validation} />
-		<Autocomplete
-			bind:input
-			denylist={value}
-			options={friendOptions}
-			on:selection={onInputChipSelect}
-			emptyState="No such friend found"
-			class="card overflow-y-auto p-4"
+<div class="grid grid-rows-2 gap-1">
+	<!-- row 1  -->
+	<div class="grid min-w-[50vw] {tw_rows} gap-1">
+		<!-- row 1 -->
+		<input
+			bind:this={input_element}
+			class="input min-h-fit"
+			type="search"
+			bind:value={search_input}
+			placeholder="Search user..."
+			on:focusin={() => void (input_focused = true)}
+			on:keypress={onKeypress}
 		/>
-	{/if}
-	<div class="mt-3">
-		<button type="submit" class="btn variant-filled"> Send Invites </button>
-		<button type="button" class="btn variant-filled" on:click={() => dispatch("cancel")}>
-			Cancel
-		</button>
+		<!-- row 2 -->
+		{#if input_focused}
+			<div class="card my-2 max-h-48 w-full overflow-y-auto p-2" tabindex="-1">
+				<Autocomplete
+					options={users}
+					on:selection={onUserSelection}
+					regionButton="w-full btn-md"
+				/>
+			</div>
+		{/if}
 	</div>
-</form>
+	<!-- row 2  -->
+	<footer class="modal-footer self-end">
+		<button type="button" class="btn variant-filled-error" on:click={onClose}> Cancel </button>
+		<button
+			bind:this={send_button}
+			on:click={() => {
+				onModalSubmit(search_input)
+			}}
+			class="btn variant-filled-primary hover:font-medium"
+		>
+			Send invitation
+		</button>
+	</footer>
+</div>
 
 <style>
 </style>

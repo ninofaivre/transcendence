@@ -166,7 +166,7 @@
 		position: absolute;
 		top: 30%;
 		font-family: "Press Start 2P", "ArcadeClassic", serif;
-		font-size: 3rem;
+		font-size: 1.4rem;
 	}
 	#left-score {
 		--score-color: white;

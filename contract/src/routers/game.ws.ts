@@ -61,6 +61,7 @@ export type GamePositions = z.infer<typeof GamePositionsSchema>
 export interface ClientToServerEvents {
     queue: (e: "") => void
     deQueue: (e: "") => void
+    surrend: (e: "") => void
     newInGameMessage: (e: InGameMessage) => void
     gameMovement: (e: GameMovement) => void
 }

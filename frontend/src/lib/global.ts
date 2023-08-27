@@ -1,8 +1,26 @@
+import type { Socket } from "socket.io-client"
+import type { SseEvent } from "contract"
+import type { ServerToClientEvents, ClientToServerEvents } from "contract"
+
 import { PUBLIC_BACKEND_URL } from "$env/static/public"
 import { logged_in } from "$lib/stores"
 import { client } from "$clients"
-import type { SseEvent } from "contract"
 import { isContractError } from "contract"
+import { io } from "socket.io-client"
+
+export let game_socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
+	PUBLIC_BACKEND_URL,
+	{
+		withCredentials: true,
+	},
+)
+
+game_socket.on("disconnect", (data) => {
+	console.log(data)
+	game_socket = io(PUBLIC_BACKEND_URL, {
+		withCredentials: true,
+	})
+})
 
 export function checkError(ret: { status: number; body: any }, what: string) {
 	if (isContractError(ret)) {
@@ -10,7 +28,7 @@ export function checkError(ret: { status: number; body: any }, what: string) {
 		console.log(ret.body.code)
 	} else {
 		let msg = "Server return unexpected status " + ret.status
-		if ("message" in ret.body) msg += " with message "  + ret.body.message
+		if ("message" in ret.body) msg += " with message " + ret.body.message
 		makeToast(msg)
 		console.error(msg)
 	}

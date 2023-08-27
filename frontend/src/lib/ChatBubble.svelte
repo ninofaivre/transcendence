@@ -75,6 +75,7 @@
 			response: () => {
 				modalStore.close()
 			},
+			meta: { username: message.author },
 		}
 		modalStore.trigger(modal)
 	}

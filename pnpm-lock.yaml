@@ -197,9 +197,6 @@ importers:
       socket.io-client:
         specifier: ^4.7.2
         version: 4.7.2
-      svelte-easy-crop:
-        specifier: ^2.0.1
-        version: 2.0.1
       three:
         specifier: ^0.155.0
         version: 0.155.0
@@ -261,6 +258,9 @@ importers:
       svelte-check:
         specifier: ^3.5.0
         version: 3.5.0(postcss@8.4.28)(svelte@4.2.0)
+      svelte-easy-crop:
+        specifier: ^2.0.1
+        version: 2.0.1
       svelte-inspector:
         specifier: ^0.0.3
         version: 0.0.3
@@ -5793,7 +5793,7 @@ packages:
 
   /svelte-easy-crop@2.0.1:
     resolution: {integrity: sha512-5cB5wif3DuP92u0etdxk3u0fbGwyNq5G4Dd454g3LeMdVn15oim2rlWPNcbgH5Jr1AJZI5k4Bsp70zbQ0lpNtg==}
-    dev: false
+    dev: true
 
   /svelte-eslint-parser@0.32.2(svelte@4.2.0):
     resolution: {integrity: sha512-Ok9D3A4b23iLQsONrjqtXtYDu5ZZ/826Blaw2LeFZVTg1pwofKDG4mz3/GYTax8fQ0plRGHI6j+d9VQYy5Lo/A==}

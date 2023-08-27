@@ -1,32 +1,26 @@
-<script>
+<script lang="ts">
 	import { ProgressRadial, modalStore } from "@skeletonlabs/skeleton"
-	import { client } from "$clients"
-	import { checkError } from "./global"
-	import { goto } from "$app/navigation"
+	import { timeReplyToInvitation } from "contract"
+	import { game_socket } from "./global"
 
-    let value = 100;
-    let i = 5;
+	let value = timeReplyToInvitation
+	const username = $modalStore[0].meta.username
 
-    const promise = new Promise((resolve) => {
-        const solve = () => {
-            resolve(true)
-            goto("/")
-            onClose();
-        }
-        setTimeout(solve, 6000)
-    })
-    // const promise = client.invitations.game.createGameInvitation({
-    // 	body: {
-    // 		invitedUserName: $modalStore[0].meta?.username,
-    // 	},
-    // })
+	game_socket.on("invite", { username }, (res: "accepted" | "refused" | "badRequest") => {
+		if (res === "accepted") {
+			element.innerHTML = "<p>Challenge accepted !</p>"
+		} else {
+			element.innerHTML = "<p>Invitation declined</p>"
+			button.innerText = "Close"
+		}
+	})
 
-    while (i--) {
-        setTimeout(() => {
-            value -= 20;
-        }, 1000 * i)
-    }
-
+	let i = timeReplyToInvitation // seconds
+	while (i--) {
+		setTimeout(() => {
+			value -= 1
+		}, 1000 * i)
+	}
 
 	function onClose() {
 		if ($modalStore[0].response) {
@@ -34,41 +28,31 @@
 		}
 	}
 
-	;(async function inviteToGame() {
-		// const ret = await client.invitations.game.createGameInvitation({
-		// 	body: {
-		// 		invitedUserName: "coco",
-		// 	},
-		// })
-		// if (ret.status != 201) {
-		// 	$modalStore[0].close()
-		// 	checkError(ret, "invite to a game")
-		// } else {
-		// goto(`/api/game/${ret.body.gameId}`)
-		// }
-	})()
+	$: {
+		if (value <= 0) onClose()
+	}
 
-    $: {
-        if (value <= 0 ) onClose()
-    }
+	let element: HTMLDivElement
+	let button: HTMLButtonElement
 </script>
 
-<div class="card p-8 grid grid-rows-3 ">
+<div class="card grid grid-rows-3 p-8">
 	<p class="">Waiting for challenge to be accepted</p>
-    <div class="justify-self-center self-center ">
-        {#await promise}
-            <ProgressRadial bind:value width="w-16">
-                {value / 20}
-            </ProgressRadial>
-        {:then ret} 
-                <p>Challenge accepted !</p>
-        {/await}
-    </div>
-	<button on:click={onClose} class="btn btn-sm self-center variant-ghost-error h-fit w-fit justify-self-center mt-4">Cancel</button>
+	<div bind:this={element} class="self-center justify-self-center">
+		<ProgressRadial value={(value * 100) / timeReplyToInvitation} width="w-16">
+			{value}
+		</ProgressRadial>
+	</div>
+	<button
+		bind:this={button}
+		on:click={onClose}
+		class="btn btn-sm variant-ghost-error mt-4 h-fit w-fit self-center justify-self-center"
+		>Cancel</button
+	>
 </div>
 
 <style>
-    p {
-        font-family: "Press Start 2P", "ArcadeClassic", serif;
-    }
+	p {
+		font-family: "Press Start 2P", "ArcadeClassic", serif;
+	}
 </style>

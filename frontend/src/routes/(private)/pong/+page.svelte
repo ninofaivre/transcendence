@@ -10,8 +10,8 @@
 	import { onMount } from "svelte"
 	import { GameDim } from "contract"
 	import { my_name } from "$stores"
+	import { game_socket } from "$lib/global"
 
-	let game_socket: Socket<ServerToClientEvents, ClientToServerEvents>
 	let my_paddle_is_left: boolean = false
 	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "WAITING" | "END" = "IDLE"
 
@@ -41,9 +41,6 @@
 	$: progress = (value * 100) / timeout
 
 	onMount(() => {
-		game_socket = io(PUBLIC_BACKEND_URL, {
-			withCredentials: true,
-		})
 		//Receive data
 		game_socket.on("updatedGamePositions", (data) => {
 			// console.log(data)
@@ -80,12 +77,8 @@
 			}
 		})
 
-		game_socket.on("disconnect", (data) => {
-			console.log(data)
+		game_socket.on("disconnect", () => {
 			state = "IDLE"
-			game_socket = io(PUBLIC_BACKEND_URL, {
-				withCredentials: true,
-			})
 		})
 
 		return () => game_socket.close()

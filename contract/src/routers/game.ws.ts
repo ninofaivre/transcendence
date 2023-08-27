@@ -63,6 +63,8 @@ export const InvitationSchema = z.strictObject({
 })
 export type Invitation = z.infer<typeof InvitationSchema>
 
+export const InvitationClientResponseSchema = z.enum(["accepted", "refused"])
+
 export const timeReplyToInvitation = 5
 
 export interface ClientToServerEvents {
@@ -81,5 +83,5 @@ export interface ServerToClientEvents {
     }) => void,
     updatedGameStatus: (e: GameStatus) => void,
     updatedGamePositions: (e: GamePositions) => void,
-    invited: (e: Invitation, callback: () => 'accepted' | 'refused') => void
+    invited: (e: Invitation, callback: () => z.infer<typeof InvitationClientResponseSchema>) => void
 }

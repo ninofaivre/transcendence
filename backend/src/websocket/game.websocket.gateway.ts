@@ -8,7 +8,7 @@ import * as cookie from "cookie"
 import { GameService } from "src/game/game.service";
 import { Schema, z } from "zod";
 import { EnvService } from "src/env/env.service";
-import { ClientToServerEvents, GameMovement, GameMovementSchema, ServerToClientEvents } from "contract";
+import { ClientToServerEvents, GameMovement, GameMovementSchema, Invitation, InvitationClientResponseSchema, InvitationSchema, ServerToClientEvents } from "contract";
 import { InGameMessageSchema } from "contract";
 import { InGameMessage } from "contract";
 import { UserService } from "src/user/user.service";
@@ -139,6 +139,25 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             return
         return this.server.sockets.sockets.get(clientId)
     }
+
+    @SubscribeMessage('invite')
+    async invite(
+        @ConnectedSocket()client: EnrichedSocket,
+        @MessageBody(new ZodValidationPipe(InvitationSchema))payload: Invitation,
+    ): Promise<'accepted' | 'refused' | 'badRequest'> {
+        if (payload.username === client.data.username)
+            return 'badRequest'
+        const invitedClient = this.findClientSocketByUserName(payload.username)
+        if (!invitedClient || invitedClient.data.status !== 'IDLE')
+            return (new Promise((res) => setTimeout(() => { res('refused') }, 5000)))
+        try {
+            return InvitationClientResponseSchema.parse(
+                await invitedClient.timeout(5000).emitWithAck('invited', { username: client.data.username })
+            )
+        } catch {}
+        return "refused"
+    }
+
 
     @SubscribeMessage("queue")
     queue(

@@ -58,12 +58,22 @@ export const GamePositionsSchema = z.strictObject({
 })
 export type GamePositions = z.infer<typeof GamePositionsSchema>
 
+export const InvitationSchema = z.strictObject({
+    username: zUserName
+})
+export type Invitation = z.infer<typeof InvitationSchema>
+
+export const timeReplyToInvitation = 5
+
 export interface ClientToServerEvents {
     queue: (e: "") => void
     deQueue: (e: "") => void
     surrend: (e: "") => void
     newInGameMessage: (e: InGameMessage) => void
     gameMovement: (e: GameMovement) => void
+    invite: (e: Invitation, callback: () => 'accepted' | 'refused') => void,
+    refuseInvitation: (e: Invitation) => void,
+    acceptInvitation: (e: Invitation) => void
 }
 
 export interface ServerToClientEvents {
@@ -72,5 +82,6 @@ export interface ServerToClientEvents {
         message: InGameMessage
     }) => void,
     updatedGameStatus: (e: GameStatus) => void,
-    updatedGamePositions: (e: GamePositions) => void
+    updatedGamePositions: (e: GamePositions) => void,
+    invited: (e: Invitation) => void
 }

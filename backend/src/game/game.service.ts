@@ -330,7 +330,7 @@ class Game {
 
     private lastUpdateTime: number | null = null
     private _status: GameStatus['status'] = 'INIT'
-    private readonly maxScore: number = 1
+    private readonly maxScore: number = 10
 
     get status() {
         return this._status
@@ -346,7 +346,12 @@ class Game {
                     paddleLeftUserName: this.playerA.user.username,
                     paddleRightUserName: this.playerB.user.username
                 })
-                setTimeout(this.update.bind(this), GameTimings.initTimeout, 'PLAY')
+                setTimeout(
+                    (() => {
+                        this.status = 'PLAY'
+                    }).bind(this),
+                    GameTimings.initTimeout
+                )
                 break ;
             }
             case 'PLAY': {
@@ -372,7 +377,12 @@ class Game {
                     paddleLeftScore: this.playerA.score,
                     paddleRightScore: this.playerB.score
                 })
-                setTimeout(this.update.bind(this), GameTimings.breakTimeout, 'PLAY')
+                setTimeout(
+                    (() => {
+                        this.status = 'PLAY'
+                    }).bind(this),
+                    GameTimings.breakTimeout
+                )
                 break ;
             }
             case 'END': {
@@ -386,6 +396,7 @@ class Game {
                 })
             }
         }
+        this.lastUpdateTime = null
         this._status = newStatus
     }
 
@@ -470,28 +481,14 @@ class Game {
         this.status = 'BREAK'
     }
 
-    // private move = (deltaTime: number) => this.callOnAllGameObjects("move", deltaTime)
-    // private reset = () => this.GameObjectsCaller("reset")
-
-    private update(newStatus?: typeof this.status) {
-        if (newStatus)
-            this.status = newStatus
-        if (this.status !== 'PLAY') {
-            this.lastUpdateTime = null
-            return
-        }
+    public update() {
         const currentTime = Date.now()
         if (this.lastUpdateTime) {
             const deltaTime = currentTime - this.lastUpdateTime
-            if (deltaTime >= 1) {
-                this.callOnAllGameObjects("update", deltaTime)
-                this.emitGamePositions()
-            }
+            this.callOnAllGameObjects("update", deltaTime)
         }
-        else
-            this.emitGamePositions()
+        this.emitGamePositions()
         this.lastUpdateTime = currentTime
-        setTimeout(this.update.bind(this), 0)
     }
 
 }
@@ -510,6 +507,7 @@ export class GameService {
     ) {
         // wtf is that shit
         setTimeout((() => { this.webSocket.server.on('connect', this.connectUser.bind(this) )}).bind(this), 0)
+        setTimeout((() => { this.loop() }).bind(this), 0)
     }
 
     public disconnectUser({ intraUserName }: EnrichedSocket['data']) {
@@ -529,6 +527,14 @@ export class GameService {
         client.data.status = 'GAME'
         client.join(game.id)
         // play
+    }
+
+    private loop() {
+        this.games.forEach( game => {
+            if (game.status === 'PLAY')
+                game.update()
+        })
+        setTimeout(this.loop.bind(this), 0)
     }
 
     public getGameIdForUser(username: IntraUserName) {

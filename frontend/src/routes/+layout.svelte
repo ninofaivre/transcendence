@@ -20,6 +20,7 @@
 	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
 	import CreateRoom from "$lib/CreateRoom.svelte"
 	import WaitForGame from "$lib/WaitForGame.svelte"
+	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
 
 	$: {
 		// Prevents redir coming back from 42, or losing the query string for /auth
@@ -41,18 +42,11 @@
 	}
 
 	const modalComponentRegistry: Record<string, ModalComponent> = {
-		TimeChooser: {
-			ref: TimeChooser,
-		},
-		InviteFriendToChan: {
-			ref: InviteFriendToChan,
-		},
-		CreateRoom: {
-			ref: CreateRoom,
-		},
-		WaitForGame: {
-			ref: WaitForGame,
-		},
+		TimeChooser: { ref: TimeChooser },
+		InviteFriendToChan: { ref: InviteFriendToChan },
+		CreateRoom: { ref: CreateRoom },
+		WaitForGame: { ref: WaitForGame },
+		SendFriendRequestModal: { ref: SendFriendRequestModal },
 	}
 
 	onMount(() => console.log("Layout mounted"))

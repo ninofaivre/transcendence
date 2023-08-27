@@ -7,7 +7,10 @@
 	import { onMount } from "svelte"
 	import { page } from "$app/stores"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
-	import { listenOutsideClick } from "$lib/global"
+	import { checkError, listenOutsideClick } from "$lib/global"
+	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { client } from "$clients"
+	import { invalidate } from "$app/navigation"
 
 	// Get our discussions
 	// export let data: LayoutData // TODO wtf
@@ -34,7 +37,30 @@
 		}
 	})
 
-	let sending_friend_request = false
+	async function onSendFriendRequest() {
+		const username = await new Promise<string | undefined>((resolve) => {
+			const modal: ModalSettings = {
+				type: "component",
+				component: "SendFriendRequestModal",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+			}
+			modalStore.trigger(modal)
+		})
+		if (username) {
+			const ret = await client.invitations.friend.createFriendInvitation({
+				body: { invitedUserName: username },
+			})
+			if (ret.status != 201) {
+				checkError(ret, "create friend request")
+			} else {
+				invalidate(":friendships")
+				console.log("Sent friendship request to " + username)
+			}
+		}
+	}
 </script>
 
 {#if $page.data.dmList.length}
@@ -50,21 +76,13 @@
 			id="col1"
 			style="height: calc(100vh - {header_height}px);"
 		>
-			<section
-				class="mt-2"
-				use:listenOutsideClick
-				on:outsideclick={() => (sending_friend_request = false)}
-			>
-				{#if sending_friend_request}
-					<SendFriendRequest />
-				{:else}
-					<button
-						class="btn btn-sm variant-filled-tertiary mt-1 rounded-md"
-						on:click={() => (sending_friend_request = true)}
-					>
-						Send friend request
-					</button>
-				{/if}
+			<section class="mt-2">
+				<button
+					class="btn btn-sm variant-ghost-primary mt-1 rounded"
+					on:click={onSendFriendRequest}
+				>
+					Send friend request
+				</button>
 			</section>
 			<section id="discussions" class="overflow-y-auto">
 				<DiscussionList

@@ -68,11 +68,11 @@
 	function handleKeydown(e: KeyboardEvent) {
 		switch (e.code) {
 			case "ArrowUp":
-			case "k":
+			case "KeyK":
 				dispatch("UP")
 				break
 			case "ArrowDown":
-			case "j":
+			case "KeyJ":
 				dispatch("DOWN")
 				break
 		}

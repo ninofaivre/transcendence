@@ -83,6 +83,9 @@
 		game_socket.on("disconnect", (data) => {
 			console.log(data)
 			state = "IDLE"
+			game_socket = io(PUBLIC_BACKEND_URL, {
+				withCredentials: true,
+			})
 		})
 
 		return () => game_socket.close()

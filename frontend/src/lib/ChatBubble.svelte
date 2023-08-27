@@ -39,10 +39,11 @@
 		{ label: "Invite to a game", handler: inviteToGame },
 	]
 	let menu_admin = menu_admin_init
+	const is_chan = isChan(discussion)
 
 	$: {
-		if (discussion && isChan(discussion)) {
-			const user = discussion?.users.find(({ name }) => {
+		if (is_chan) {
+			const user = (discussion as Chan).users.find(({ name }) => {
 				return message.author === name
 			})
 			if (user) {
@@ -231,17 +232,19 @@
 	{#if !from_me}
 		<!-- Need online status for that -->
 		<!-- <span class="relative left-1 text-xl text-green-600">&#8226</span> -->
-		<Avatar
-			src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture"
-			fallback="https://i.pravatar.cc/?u={message.author}"
-			class="h-8 w-8"
-			rounded="rounded-full"
-			on:click={() => {
-				menu_admin.length > 1 ? toggleAdminMenu() : menu_admin[0].handler()
-			}}
-			action={filter}
-			actionParams={filterType}
-		/>
+		{#if is_chan}
+			<Avatar
+				src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture"
+				fallback="https://i.pravatar.cc/?u={message.author}"
+				class="h-8 w-8"
+				rounded="rounded-full"
+				on:click={() => {
+					menu_admin.length > 1 ? toggleAdminMenu() : menu_admin[0].handler()
+				}}
+				action={filter}
+				actionParams={filterType}
+			/>
+		{/if}
 		{#if is_admin_menu_open}
 			<ol
 				use:listenOutsideClick

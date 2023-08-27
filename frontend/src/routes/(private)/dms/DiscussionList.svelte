@@ -3,7 +3,9 @@
 	import { sse_store } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { addListenerToEventSource } from "$lib/global"
-	import { invalidate } from "$app/navigation"
+	import { goto, invalidate } from "$app/navigation"
+	import { Avatar } from "@skeletonlabs/skeleton"
+	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 
 	export let currentDiscussionId: string
 	export let discussions: DirectConversation[]
@@ -30,7 +32,7 @@
 								dot_to_update.innerHTML = "&#127918" // 🎮
 								// dot_to_update.innerHTML = "&#127955" // 🏓
 							} else if (data.status === "ONLINE" || data.status === "QUEUE") {
-								dot_to_update.innerText = "&#8226"
+								dot_to_update.innerHTML = "&#8226"
 							}
 						}
 					} else console.log("IT WAS NULL !")
@@ -48,19 +50,35 @@
 </script>
 
 {#each discussions as d}
-	<a
-		href={`/dms/${d.id}`}
-		class={d.id != currentDiscussionId
-			? "p-4 font-medium rounded-container-token hover:variant-soft-secondary hover:font-semibold"
-			: "variant-ghost-secondary p-4 font-semibold rounded-container-token"}
+	<div
+		class={`grid grid-cols-2 rounded px-2 py-4 ${
+			d.id != currentDiscussionId
+				? "font-medium hover:variant-soft-secondary hover:font-semibold"
+				: "variant-ghost-secondary font-semibold"
+		}`}
 	>
-		{d.otherName}
-		<span
-			data-relatedto={d.otherName}
-			class="online-dot text-2xl text-green-600"
-			style:visibility={d.otherStatus === "ONLINE" ? "visible" : "hidden"}>&#8226</span
-		>
-	</a>
+		<a href={`/dms/${d.id}`}>
+			{d.otherName}
+		</a>
+		<div class="flex justify-self-end">
+			<Avatar
+				src="{PUBLIC_BACKEND_URL}/api/users/{d.otherName}/profilePicture"
+				fallback="https://i.pravatar.cc/?u={d.otherName}"
+				class="h-8 w-8"
+				rounded="rounded-full"
+				on:click={() => {
+					goto(`/users/${d.otherName}`)
+				}}
+			/>
+			<span
+				data-relatedto={d.otherName}
+				class="relative bottom-3 right-2 text-2xl text-green-600"
+				style:visibility={d.otherStatus === "ONLINE" ? "visible" : "hidden"}
+			>
+				&#8226
+			</span>
+		</div>
+	</div>
 {/each}
 
 <style>
@@ -69,8 +87,5 @@
 	}
 	a::first-letter {
 		text-transform: capitalize;
-	}
-	.online-dot {
-		padding: 5px;
 	}
 </style>

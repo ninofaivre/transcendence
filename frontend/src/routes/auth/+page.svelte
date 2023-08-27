@@ -68,7 +68,7 @@
 		else {
 			makeToast("Logged in successfully")
 			logged_in.set(true)
-            goto("/")
+			goto("/")
 		}
 	}
 </script>
@@ -76,8 +76,12 @@
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
 	<div class="rounded-lg bg-gray-50 p-8 sm:px-10">
 		<div class="flex justify-around">
-			<a href={ft_uri.toString()} class="btn variant-filled-success flex-auto">
-				Sign in with 42
+			<a href={ft_uri.toString()} class="btn variant-filled-success flex-auto text-lg">
+				Sign in with <img
+					alt="42"
+					src="https://profile.intra.42.fr/assets/42_logo_black-684989d43d629b3c0ff6fd7e1157ee04db9bb7a73fba8ec4e01543d650a1c607.png"
+					class="w-8 px-1"
+				/>
 			</a>
 		</div>
 	</div>

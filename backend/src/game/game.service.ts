@@ -188,7 +188,7 @@ class Ball extends GameObject {
         do {
             const heading = Math.random() * 2 * Math.PI
             direction = { x: Math.cos(heading), y: Math.sin(heading) }
-        } while (Math.abs(direction.x) <= 0.2 || Math.abs(direction.x) >= 0.9)
+        } while (Math.abs(direction.x) <= 0.35 || Math.abs(direction.x) >= 0.9)
         return direction
     }
 
@@ -221,14 +221,21 @@ class Ball extends GameObject {
     constructor(
         _startingPosition: Position,
         private readonly game: Game,
-        private speed = GameSpeed.ball / 1000,
-        private speedIncr = ((GameSpeed.ball / 1000) * 0.02) / 1000
-    ) { super(_startingPosition) }
+        private readonly baseSpeed = GameSpeed.ball / 1000,
+        private speed = baseSpeed,
+        percentageSpeedIncr = 2,
+        private linearSpeedIncr = (baseSpeed * (percentageSpeedIncr / 100)) / 1000,
+        private exponentialSpeedIncr = percentageSpeedIncr / 100 / 1000,
+        private speedIncrType: 'linear' | 'exponential' = 'exponential'
+    ) {
+        super(_startingPosition)
+    }
 
     public reset() {
         super.reset()
         this.direction = this.getRandomDirection()
         this.passedPaddleLine = false
+        this.speed = this.baseSpeed
     }
 
     private getNextPositionWithoutCollision(dist: number) {
@@ -350,7 +357,10 @@ class Ball extends GameObject {
 
     public update(deltaTime: number) {
         this.move(this.speed * deltaTime)
-        this.speed += this.speedIncr * deltaTime
+        if (this.speedIncrType === 'linear')
+            this.speed += this.linearSpeedIncr * deltaTime
+        else
+            this.speed *= 1 + this.exponentialSpeedIncr * deltaTime
     }
 }
 

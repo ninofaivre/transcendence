@@ -14,7 +14,7 @@
 	let my_paddle_is_left: boolean = false
 	let my_score = 0
 	let other_score = 0
-	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "WAITING" = "IDLE"
+	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "WAITING" | "END" = "IDLE"
 
 	// Fixed sizings
 	let court: (typeof GameDim)["court"] = GameDim.court
@@ -34,6 +34,8 @@
 	let button_disabled = false
 	let paddleLeftUserName = ""
 	let paddleRightUserName = ""
+    let paddleLeftScore = 0
+    let paddleRightScore = 0
 
 	onMount(() => {
 		game_socket = io(PUBLIC_BACKEND_URL, {
@@ -53,6 +55,7 @@
 				my_paddle_is_left = data.paddleLeftUserName === $my_name
 				;({ paddleLeftUserName, paddleRightUserName } = data)
 			} else if (data.status === "BREAK") {
+                ({paddleLeftScore, paddleRightScore} = data)
 			} else if (data.status === "PAUSE") {
 			}
 		})
@@ -102,7 +105,7 @@
 		{paddleLeftUserName}
 	</div>
 	<div class="justify-self-center">
-		{my_paddle_is_left ? my_score : other_score}
+		{paddleLeftScore}
 	</div>
 </div>
 <div
@@ -114,7 +117,7 @@
 		{paddleRightUserName}
 	</div>
 	<div class="justify-self-center">
-		{my_paddle_is_left ? other_score : my_score}
+		{paddleRightScore}
 	</div>
 </div>
 <div class="menu-container grid grid-cols-1">
@@ -170,12 +173,12 @@
 	}
 	#left-score {
 		--score-color: white;
-		right: 25%;
+		left: 25%;
 		color: var(--score-color);
 	}
 	#right-score {
 		--score-color: white;
-		left: 25%;
+		right: 25%;
 		color: var(--score-color);
 	}
 

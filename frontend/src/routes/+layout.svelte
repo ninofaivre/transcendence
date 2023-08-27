@@ -13,10 +13,13 @@
 	import { goto } from "$app/navigation"
 	import { Modal, type ModalComponent } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
+	import { page } from "$app/stores"
+
+	// Modals
 	import TimeChooser from "$lib/TimeChooser.svelte"
 	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
 	import CreateRoom from "$lib/CreateRoom.svelte"
-	import { page } from "$app/stores"
+	import WaitForGame from "$lib/WaitForGame.svelte"
 
 	$: {
 		// Prevents redir coming back from 42, or losing the query string for /auth
@@ -46,6 +49,9 @@
 		},
 		CreateRoom: {
 			ref: CreateRoom,
+		},
+		WaitForGame: {
+			ref: WaitForGame,
 		},
 	}
 

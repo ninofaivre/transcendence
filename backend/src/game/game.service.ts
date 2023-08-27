@@ -86,7 +86,7 @@ class Paddle extends GameObject {
     }
 
     private set position(newPosition: Position) {
-        console.log("paddle is mooving")
+        // console.log("paddle is mooving")
         if (this.getRect().topY < 0)
             newPosition.y = Paddle.yOffset
         else if (this.getRect().botY > GameDim.court.height)
@@ -139,8 +139,32 @@ class Player {
     private pauseAmount = GameTimings.userPauseAmount
     public score = 0
 
+    public _pauseData: {
+        time: number,
+        callbackId: NodeJS.Timeout
+    } | null = null
+    
+    public pause() {
+        if (this._pauseData)
+            return
+        this._pauseData = {
+            time: Date.now(),
+            callbackId: setTimeout((() => {
+                this.game.surrend(this.user.intraUserName)
+            }).bind(this), this.pauseAmount)
+        }
+    }
+
+    public unpause() {
+        if (!this._pauseData)
+            return
+        clearTimeout(this._pauseData.callbackId)
+        this.pauseAmount -= (Date.now() - this._pauseData.time)
+        this._pauseData = null
+    }
+
     constructor(
-        public readonly user: EnrichedRequest['user'],
+        public user: EnrichedRequest['user'],
         private readonly game: Game,
         public readonly paddle: Paddle
     ) {}
@@ -174,7 +198,7 @@ class Ball extends GameObject {
     private set position(newPosition: Position) {
         this._position = newPosition
         if (this.doesBallCollideWithLeftRightWalls(this.getRect())) {
-            console.log("point marqué")
+            // console.log("point marqué")
             const scorer = (this.doesBallCollideWithLeftWall(this.getRect()))
                 ? this.game.playerB
                 : this.game.playerA
@@ -262,7 +286,7 @@ class Ball extends GameObject {
             this.doesBallCollideWithLeftRightWalls(nextPosRect) &&
             !this.passedPaddleLine
         ) {
-            console.log("ball collide with left right walls")
+            // console.log("ball collide with left right walls")
             const xPaddle = (this.direction.x > 0)
                 ? GameDim.court.width - GameDim.paddle.width - Ball.offset
                 : GameDim.paddle.width + Ball.offset
@@ -292,7 +316,7 @@ class Ball extends GameObject {
             this.direction.y *= -1
         }
         if (collideWithPaddles) {
-            console.log("ball collide with paddles")
+            // console.log("ball collide with paddles")
             if (this.passedPaddleLine) {
                 const yPaddle = (facingPaddle.getRect().topY >= this.getRect().botY)
                     ? facingPaddle.getRect().topY - Ball.offset
@@ -329,7 +353,7 @@ class Game {
     public readonly id: string;
 
     private lastUpdateTime: number | null = null
-    private _status: GameStatus['status'] = 'INIT'
+    private _status: GameStatus['status'] = 'INIT';
     private readonly maxScore: number = 10
 
     get status() {
@@ -339,6 +363,8 @@ class Game {
     set status(newStatus: typeof this._status) {
         switch(newStatus) {
             case 'INIT': {
+                console.log(this.playerA.user.username, "est à gauche")
+                console.log(this.playerB.user.username, "est à droite")
                 this.emitGamePositions()
                 this.webSocket.server.to(this.id).emit('updatedGameStatus', {
                     status: 'INIT',
@@ -371,6 +397,8 @@ class Game {
                 break ;
             }
             case 'BREAK': {
+                console.log(this.playerA.user.username, "score :", this.playerA.score)
+                console.log(this.playerB.user.username, "score :", this.playerB.score)
                 this.webSocket.server.to(this.id).emit("updatedGameStatus", {
                     status: 'BREAK',
                     timeout: GameTimings.breakTimeout,
@@ -408,21 +436,66 @@ class Game {
     }, this)
 
     constructor(
-        playerA: EnrichedSocket,
-        playerB: EnrichedSocket,
+        clientA: EnrichedSocket,
+        clientB: EnrichedSocket,
         private readonly webSocket: GameWebsocketGateway,
         private eventEmitter: EventEmitter2
     ) {
-        this.id = `${playerA.data.intraUserName}${playerB.data.intraUserName}`
-        this.playerA = new Player(playerA.data, this, new Paddle({
+        this.id = `${clientA.data.intraUserName}${clientB.data.intraUserName}`
+        this.playerA = new Player(clientA.data, this, new Paddle({
             x: Paddle.xOffset,
             y: GameDim.court.height / 2
         }, this))
-        this.playerB = new Player(playerB.data, this, new Paddle({
+        console.log(this.playerA.user.username, "position :", this.playerA.paddle.position)
+        this.playerB = new Player(clientB.data, this, new Paddle({
             x: (GameDim.court.width - Paddle.xOffset),
             y: GameDim.court.height / 2
         }, this))
+        console.log(this.playerB.user.username, "position :", this.playerB.paddle.position)
+        clientA.data.status = 'GAME'
+        clientB.data.status = 'GAME'
+
+        clientA.join(this.id)
+        clientB.join(this.id)
+
+        this.status = 'INIT'
+
+        clientA.on('disconnecting', (() => {
+            this.handleDisconnect(clientA.data.intraUserName)
+        }).bind(this))
+        clientB.on('disconnecting', (() => {
+            this.handleDisconnect(clientB.data.intraUserName)
+        }).bind(this))
+        this.webSocket.server.on('connect', (client) => {
+            if (!this.playerA.pause && !this.playerB.pause)
+                return
+            if (client.data.intraUserName !== this.playerA.user.intraUserName &&
+                client.data.intraUserName !== this.playerB.user.intraUserName
+            ) {
+                return
+            }
+            client.emit('updatedGameStatus', {
+                status: 'INIT',
+                timeout: 0,
+                paddleLeftUserName: this.playerA.user.username,
+                paddleRightUserName: this.playerB.user.username
+            })
+            client.join(this.id)
+            const player = this.getPlayerByIntraUserName(client.data.intraUserName)
+            player.user = client.data
+            player.unpause()
+            client.on('disconnecting', (() => {
+                this.handleDisconnect(client.data.intraUserName)
+            }).bind(this))
+            this.status = 'PLAY'
+        })
         // TODO listener for crash and all this kind of shit I guess
+    }
+
+    private handleDisconnect(intraUserName: IntraUserName) {
+        this.status = 'PAUSE'
+        this.getPlayerByIntraUserName(intraUserName)
+            .pause()
     }
 
     private emitGamePositions() {
@@ -466,16 +539,27 @@ class Game {
         })
     }
 
+    public handleWin() {
+        this.status = 'END'
+        emitInternalEvent(this.eventEmitter, "game.end", {
+            id: this.id,
+            playerA: this.playerA.user,
+            playerB: this.playerB.user
+        })
+    }
+
+    public surrend(intraUserName: IntraUserName) {
+        this.getPlayerByIntraUserName(intraUserName)
+            .score = this.maxScore
+        this.handleWin()
+    }
+
     public score(player: Player) {
+        console.log(player.user.username, "a marqué")
         player.score++
         this.callOnAllGameObjects("reset")
         if (player.score >= this.maxScore) {
-            this.status = 'END'
-            emitInternalEvent(this.eventEmitter, "game.end", {
-                id: this.id,
-                playerA: this.playerA.user,
-                playerB: this.playerB.user
-            })
+            this.handleWin()
             return
         }
         this.status = 'BREAK'
@@ -513,19 +597,19 @@ export class GameService {
     public disconnectUser({ intraUserName }: EnrichedSocket['data']) {
         if (this.queue?.data.intraUserName === intraUserName)
             this.queue = null
-        const game = this.usersToGame.get(intraUserName)
-        if (!game)
-            return
+        // const game = this.usersToGame.get(intraUserName)
+        // if (!game)
+        //     return
         // game.pause()
     }
 
     public connectUser(client: EnrichedSocket) {
-        const game = this.usersToGame.get(client.data.intraUserName)
+        // const game = this.usersToGame.get(client.data.intraUserName)
         client.on('disconnect', (a) => this.disconnectUser(client.data))
-        if (!game)
-            return
-        client.data.status = 'GAME'
-        client.join(game.id)
+        // if (!game)
+        //     return
+        // client.data.status = 'GAME'
+        // client.join(game.id)
         // play
     }
 
@@ -547,14 +631,6 @@ export class GameService {
         this.games.set(newGame.id, newGame)
         this.usersToGame.set(userOne.data.intraUserName, newGame)
         this.usersToGame.set(userTwo.data.intraUserName, newGame)
-
-        userOne.data.status = 'GAME'
-        userTwo.data.status = 'GAME'
-
-        userOne.join(newGame.id)
-        userTwo.join(newGame.id)
-
-        newGame.status = 'INIT'
     }
 
     @OnEvent('game.end')

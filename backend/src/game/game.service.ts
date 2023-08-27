@@ -139,7 +139,9 @@ class Player {
     private pauseAmount = GameTimings.userPauseAmount
     public score = 0
 
-    public _pauseData: {
+    public isPause = () => (!!this._pauseData)
+
+    private _pauseData: {
         time: number,
         callbackId: NodeJS.Timeout
     } | null = null
@@ -153,6 +155,7 @@ class Player {
                 this.game.surrend(this.user.intraUserName)
             }).bind(this), this.pauseAmount)
         }
+        console.log(this.user.username, "paused game, pause Amount :", this.pauseAmount)
     }
 
     public unpause() {
@@ -161,6 +164,7 @@ class Player {
         clearTimeout(this._pauseData.callbackId)
         this.pauseAmount -= (Date.now() - this._pauseData.time)
         this._pauseData = null
+        console.log(this.user.username, "unpaused game, pause Amount :", this.pauseAmount)
     }
 
     constructor(
@@ -184,7 +188,7 @@ class Ball extends GameObject {
         do {
             const heading = Math.random() * 2 * Math.PI
             direction = { x: Math.cos(heading), y: Math.sin(heading) }
-        } while (Math.abs(direction.x) <= 0.2 || Math.abs(direction.x) >= 0.9)
+        } while (Math.abs(direction.x) <= 0.35 || Math.abs(direction.x) >= 0.9)
         return direction
     }
 
@@ -217,13 +221,21 @@ class Ball extends GameObject {
     constructor(
         _startingPosition: Position,
         private readonly game: Game,
-        private speed = GameSpeed.ball / 1000
-    ) { super(_startingPosition) }
+        private readonly baseSpeed = GameSpeed.ball / 1000,
+        private speed = baseSpeed,
+        percentageSpeedIncr = 2,
+        private linearSpeedIncr = (baseSpeed * (percentageSpeedIncr / 100)) / 1000,
+        private exponentialSpeedIncr = percentageSpeedIncr / 100 / 1000,
+        private speedIncrType: 'linear' | 'exponential' = 'exponential'
+    ) {
+        super(_startingPosition)
+    }
 
     public reset() {
         super.reset()
         this.direction = this.getRandomDirection()
         this.passedPaddleLine = false
+        this.speed = this.baseSpeed
     }
 
     private getNextPositionWithoutCollision(dist: number) {
@@ -344,7 +356,11 @@ class Ball extends GameObject {
     }
 
     public update(deltaTime: number) {
-        this.move((GameSpeed.ball / 1000) * deltaTime)
+        this.move(this.speed * deltaTime)
+        if (this.speedIncrType === 'linear')
+            this.speed += this.linearSpeedIncr * deltaTime
+        else
+            this.speed *= 1 + this.exponentialSpeedIncr * deltaTime
     }
 }
 
@@ -354,7 +370,7 @@ class Game {
 
     private lastUpdateTime: number | null = null
     private _status: GameStatus['status'] = 'INIT';
-    private readonly maxScore: number = 10
+    private readonly maxScore: number = 2
 
     get status() {
         return this._status
@@ -460,14 +476,10 @@ class Game {
 
         this.status = 'INIT'
 
-        clientA.on('disconnecting', (() => {
-            this.handleDisconnect(clientA.data.intraUserName)
-        }).bind(this))
-        clientB.on('disconnecting', (() => {
-            this.handleDisconnect(clientB.data.intraUserName)
-        }).bind(this))
+        this.clientListen(clientA)
+        this.clientListen(clientB)
         this.webSocket.server.on('connect', (client) => {
-            if (!this.playerA.pause && !this.playerB.pause)
+            if (!this.playerA.isPause() && !this.playerB.isPause())
                 return
             if (client.data.intraUserName !== this.playerA.user.intraUserName &&
                 client.data.intraUserName !== this.playerB.user.intraUserName
@@ -484,12 +496,21 @@ class Game {
             const player = this.getPlayerByIntraUserName(client.data.intraUserName)
             player.user = client.data
             player.unpause()
-            client.on('disconnecting', (() => {
-                this.handleDisconnect(client.data.intraUserName)
-            }).bind(this))
-            this.status = 'PLAY'
+            this.clientListen(client)
+            if (!this.playerA.isPause() && !this.playerB.isPause())
+                this.status = 'PLAY'
         })
-        // TODO listener for crash and all this kind of shit I guess
+    }
+
+    private clientListen(client: EnrichedSocket) {
+        client.on('disconnecting', (() => {
+            if (this.status !== 'END')
+                this.handleDisconnect(client.data.intraUserName)
+        }).bind(this))
+        client.on('surrend', (() => {
+            this.surrend(client.data.intraUserName)
+        }).bind(this))
+
     }
 
     private handleDisconnect(intraUserName: IntraUserName) {
@@ -597,20 +618,10 @@ export class GameService {
     public disconnectUser({ intraUserName }: EnrichedSocket['data']) {
         if (this.queue?.data.intraUserName === intraUserName)
             this.queue = null
-        // const game = this.usersToGame.get(intraUserName)
-        // if (!game)
-        //     return
-        // game.pause()
     }
 
     public connectUser(client: EnrichedSocket) {
-        // const game = this.usersToGame.get(client.data.intraUserName)
         client.on('disconnect', (a) => this.disconnectUser(client.data))
-        // if (!game)
-        //     return
-        // client.data.status = 'GAME'
-        // client.join(game.id)
-        // play
     }
 
     private loop() {

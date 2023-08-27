@@ -71,9 +71,7 @@ export interface ClientToServerEvents {
     surrend: (e: "") => void
     newInGameMessage: (e: InGameMessage) => void
     gameMovement: (e: GameMovement) => void
-    invite: (e: Invitation, callback: () => 'accepted' | 'refused') => void,
-    refuseInvitation: (e: Invitation) => void,
-    acceptInvitation: (e: Invitation) => void
+    invite: (e: Invitation, callback: () => 'accepted' | 'refused' | 'badRequest') => void,
 }
 
 export interface ServerToClientEvents {
@@ -83,5 +81,5 @@ export interface ServerToClientEvents {
     }) => void,
     updatedGameStatus: (e: GameStatus) => void,
     updatedGamePositions: (e: GamePositions) => void,
-    invited: (e: Invitation) => void
+    invited: (e: Invitation, callback: () => 'accepted' | 'refused') => void
 }

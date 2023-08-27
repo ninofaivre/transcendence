@@ -54,9 +54,11 @@
 			if (data.status === "INIT") {
 				my_paddle_is_left = data.paddleLeftUserName === $my_name
 				;({ paddleLeftUserName, paddleRightUserName } = data)
+                button_disabled = false
 			} else if (data.status === "BREAK") {
                 ({paddleLeftScore, paddleRightScore} = data)
 			} else if (data.status === "PAUSE") {
+			} else if (data.status === "END") {
 			}
 		})
 
@@ -137,13 +139,17 @@
 			PLAY
 		</button>
 	{:else if state === "WAITING"}
-		<button class="btn variant-ringed-error rounded" on:click={cancelGame}>
-			<div>CANCEL</div>
-			<div class="spinner" />
-		</button>
+		<div class="grid grid-rows-2 card gap-2 p-8">
+			<button class="btn variant-ringed-error rounded" on:click={cancelGame}>CANCEL</button>
+			<div class="spinner justify-self-center" />
+		</div>
 	{:else if state === "INIT"}
-		<button class="btn variant-ringed-error rounded" on:click={cancelGame}>
+		<div class="" >
 			FOUND A GAME !
+		</div>
+	{:else if state === "END"}
+		<button class="btn variant-ringed-error rounded" on:click={createGame} disabled={button_disabled}>
+	        REPLAY ?	
 		</button>
 	{/if}
 </div>
@@ -190,7 +196,7 @@
 	}
 
 	.menu-container > div,
-	button {
+	button, p {
 		align-self: center;
 		justify-self: center;
 		font-family: "ArcadeClassic", "VT323", serif;

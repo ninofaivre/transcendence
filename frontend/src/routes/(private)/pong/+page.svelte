@@ -99,7 +99,7 @@
 <div
 	id="left-score"
 	class="grid grid-rows-2 gap-2"
-	style:--score-color={my_paddle_is_left ? "green" : "red"}
+	style:--score-color={my_paddle_is_left ? "red" : "green"}
 >
 	<div>
 		{paddleLeftUserName}
@@ -111,7 +111,7 @@
 <div
 	id="right-score"
 	class="grid grid-rows-2 gap-2"
-	style:--score-color={my_paddle_is_left ? "red" : "green"}
+	style:--score-color={my_paddle_is_left ? "green" : "red"}
 >
 	<div>
 		{paddleRightUserName}
@@ -173,12 +173,12 @@
 	}
 	#left-score {
 		--score-color: white;
-		right: 25%;
+		left: 25%;
 		color: var(--score-color);
 	}
 	#right-score {
 		--score-color: white;
-		left: 25%;
+		right: 25%;
 		color: var(--score-color);
 	}
 

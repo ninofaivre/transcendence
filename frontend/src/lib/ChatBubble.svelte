@@ -34,10 +34,11 @@
 	let isAdmin: boolean | undefined
 	let isMuted: boolean | undefined
 	let filterType: "#Noir" | "" = ""
-	let menu_admin: { label: string; handler: () => void }[] = [
+	const menu_admin_init: { label: string; handler: () => void }[] = [
 		{ label: "Show profile", handler: () => goto(`/users/${message.author}`) },
 		{ label: "Invite to a game", handler: inviteToGame },
 	]
+	let menu_admin = menu_admin_init
 
 	$: {
 		if (discussion && isChan(discussion)) {
@@ -48,7 +49,7 @@
 				isAdmin = user.roles.includes("ADMIN")
 				isMuted = user.myPermissionOver.includes("UNMUTE")
 				menu_admin = [
-					...menu_admin,
+					...menu_admin_init,
 					{ label: "Kick", handler: kickHandler },
 					isAdmin
 						? { label: "Remove Admin status", handler: toggleAdmin }
@@ -66,7 +67,16 @@
 		}
 	}
 
-	async function inviteToGame() {}
+	async function inviteToGame() {
+		const modal: ModalSettings = {
+			type: "component",
+			component: "WaitForGame",
+			response: () => {
+				modalStore.close()
+			},
+		}
+		modalStore.trigger(modal)
+	}
 
 	async function kickHandler() {
 		const ret = await client.chans.kickUserFromChan({

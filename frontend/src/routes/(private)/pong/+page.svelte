@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { type Socket, io } from "socket.io-client"
 	import type { ServerToClientEvents, ClientToServerEvents, Position } from "contract"
+	import { ProgressRadial } from "@skeletonlabs/skeleton"
 
 	import { Canvas } from "@threlte/core"
 	import Pong from "./Pong.svelte"
@@ -12,8 +13,6 @@
 
 	let game_socket: Socket<ServerToClientEvents, ClientToServerEvents>
 	let my_paddle_is_left: boolean = false
-	let my_score = 0
-	let other_score = 0
 	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "WAITING" | "END" = "IDLE"
 
 	// Fixed sizings
@@ -34,8 +33,12 @@
 	let button_disabled = false
 	let paddleLeftUserName = ""
 	let paddleRightUserName = ""
-    let paddleLeftScore = 0
-    let paddleRightScore = 0
+	let paddleLeftScore = 0
+	let paddleRightScore = 0
+	let timeout = 0
+	let value = 0
+	let progress: number
+	$: progress = (value * 100) / timeout
 
 	onMount(() => {
 		game_socket = io(PUBLIC_BACKEND_URL, {
@@ -54,9 +57,24 @@
 			if (data.status === "INIT") {
 				my_paddle_is_left = data.paddleLeftUserName === $my_name
 				;({ paddleLeftUserName, paddleRightUserName } = data)
-                button_disabled = false
+				timeout = data.timeout / 1000
+				value = timeout
+				button_disabled = false
+				for (let i = 0; i < timeout; ++i) {
+					setTimeout(() => {
+						value -= 1
+					}, 1000 * i)
+				}
 			} else if (data.status === "BREAK") {
-                ({paddleLeftScore, paddleRightScore} = data)
+				;({ paddleLeftScore, paddleRightScore } = data)
+				timeout = data.timeout / 1000
+				value = timeout
+				button_disabled = false
+				for (let i = 0; i < timeout; ++i) {
+					setTimeout(() => {
+						value -= 1
+					}, 1000 * i)
+				}
 			} else if (data.status === "PAUSE") {
 			} else if (data.status === "END") {
 			}
@@ -129,7 +147,14 @@
 			<div class="spinner" />
 		</div>
 	{:else if state === "BREAK"}
-		<div class="">READY ?</div>
+		<div class="grid grid-rows-2 gap-1">
+			<div>READY ?</div>
+			<div class="justify-self-center">
+				<ProgressRadial bind:value={progress} width="w-32" font={100}>
+					{value}
+				</ProgressRadial>
+			</div>
+		</div>
 	{:else if state === "IDLE"}
 		<button
 			class="btn variant-ringed-primary rounded"
@@ -139,17 +164,26 @@
 			PLAY
 		</button>
 	{:else if state === "WAITING"}
-		<div class="grid grid-rows-2 card gap-2 p-8">
+		<div class="card grid grid-rows-2 gap-2 p-8">
 			<button class="btn variant-ringed-error rounded" on:click={cancelGame}>CANCEL</button>
 			<div class="spinner justify-self-center" />
 		</div>
 	{:else if state === "INIT"}
-		<div class="" >
-			FOUND A GAME !
+		<div class="grid grid-rows-2 gap-1">
+			<div>FOUND A GAME !</div>
+			<div class="justify-self-center">
+				<ProgressRadial bind:value={progress} width="w-32" font={100}>
+					{value}
+				</ProgressRadial>
+			</div>
 		</div>
 	{:else if state === "END"}
-		<button class="btn variant-ringed-error rounded" on:click={createGame} disabled={button_disabled}>
-	        REPLAY ?	
+		<button
+			class="btn variant-ringed-error rounded"
+			on:click={createGame}
+			disabled={button_disabled}
+		>
+			REPLAY ?
 		</button>
 	{/if}
 </div>
@@ -196,7 +230,7 @@
 	}
 
 	.menu-container > div,
-	button, p {
+	button {
 		align-self: center;
 		justify-self: center;
 		font-family: "ArcadeClassic", "VT323", serif;

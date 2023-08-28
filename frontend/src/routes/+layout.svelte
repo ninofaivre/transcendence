@@ -65,25 +65,6 @@
 		{ inner: "✉️", href: "/dms" },
 		{ inner: "🤝", href: "/friends" },
 	]
-
-	// game_socket.on("invited", async (invitation, callback) => {
-	// 	console.log("Am being invited!")
-	// 	const r = await new Promise<"accepted" | "refused" | undefined>((resolve) => {
-	// 		const modal: ModalSettings = {
-	// 			type: "component",
-	// 			component: "AcceptGameInvitationModal",
-	// 			response: (r) => {
-	// 				modalStore.close()
-	// 				resolve(r)
-	// 			},
-	// 			meta: {
-	// 				username: invitation.username,
-	// 			},
-	// 		}
-	// 		modalStore.trigger(modal)
-	// 	})
-	// 	if (r) callback(r)
-	// })
 </script>
 
 <!-- App Shell -->

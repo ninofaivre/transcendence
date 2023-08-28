@@ -1,17 +1,18 @@
 <script lang="ts">
-	import { type Socket, io } from "socket.io-client"
-	import type { ServerToClientEvents, ClientToServerEvents, Position } from "contract"
-	import { ProgressRadial } from "@skeletonlabs/skeleton"
+	import type { Position } from "contract"
+	import type { GameSocket } from "$types"
 
+	import { ProgressRadial } from "@skeletonlabs/skeleton"
 	import { Canvas } from "@threlte/core"
 	import Pong from "./Pong.svelte"
-
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
-	import { onMount } from "svelte"
+	import { getContext, onMount } from "svelte"
 	import { GameDim } from "contract"
 	import { my_name } from "$stores"
-	import { game_socket } from "$lib/global"
+	import { io } from "socket.io-client"
+	// import { game_socket } from "$lib/global"
 
+	let game_socket: GameSocket = getContext("game_socket")
 	let my_paddle_is_left: boolean = false
 	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "WAITING" | "END" = "IDLE"
 
@@ -41,6 +42,7 @@
 	$: progress = (value * 100) / timeout
 
 	onMount(() => {
+		console.log("game socket pong", game_socket)
 		//Receive data
 		game_socket.on("updatedGamePositions", (data) => {
 			// console.log(data)
@@ -81,7 +83,7 @@
 			state = "IDLE"
 		})
 
-		return () => game_socket.close()
+		// return () => game_socket.close()
 	})
 
 	function createGame() {

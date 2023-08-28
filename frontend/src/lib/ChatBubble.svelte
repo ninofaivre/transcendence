@@ -5,7 +5,7 @@
 	import { my_name } from "$stores"
 	import ChatBox from "$lib/ChatBox.svelte"
 	import { checkError, listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
-	import { createEventDispatcher } from "svelte"
+	import { createEventDispatcher, getContext } from "svelte"
 	import { makeToast } from "$lib/global"
 	import { isContractError } from "contract"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
@@ -21,6 +21,7 @@
 	export let message: Message
 	export let from_me = message.author === $my_name
 	export let discussion: Chan | DirectConversation
+	let game_socket = getContext("game_socket")
 	// $: {
 	// console.log((discussion as Chan)?.users)
 	// }
@@ -75,7 +76,7 @@
 			response: () => {
 				modalStore.close()
 			},
-			meta: { username: message.author },
+			meta: { username: message.author, game_socket },
 		}
 		modalStore.trigger(modal)
 	}

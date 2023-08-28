@@ -1,16 +1,18 @@
 <script lang="ts">
-	import { type Socket, io } from "socket.io-client"
+	import type { Socket } from "socket.io-client"
 	import type { ServerToClientEvents, ClientToServerEvents, Position } from "contract"
-	import { ProgressRadial } from "@skeletonlabs/skeleton"
+	import type { GameSocket } from "$types"
 
+	import { ProgressRadial } from "@skeletonlabs/skeleton"
 	import { Canvas } from "@threlte/core"
 	import Pong from "./Pong.svelte"
 
-	import { PUBLIC_BACKEND_URL } from "$env/static/public"
-	import { onMount } from "svelte"
+	import { getContext, onMount } from "svelte"
 	import { GameDim } from "contract"
 	import { my_name } from "$stores"
-	import { game_socket } from "$lib/global"
+	import { io } from "socket.io-client"
+
+	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 
 	let my_paddle_is_left: boolean = false
 	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "WAITING" | "END" = "IDLE"
@@ -40,14 +42,17 @@
 	let progress: number
 	$: progress = (value * 100) / timeout
 
+	let game_socket: GameSocket = getContext("game_socket")
+
 	onMount(() => {
-		//Receive data
+		game_socket = io(PUBLIC_BACKEND_URL, {
+			withCredentials: true,
+		})
 		game_socket.on("updatedGamePositions", (data) => {
 			// console.log(data)
 			;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
 		})
 		game_socket.on("newInGameMessage", (data) => {})
-
 		game_socket.on("updatedGameStatus", (data) => {
 			console.log(data)
 			state = data.status
@@ -76,11 +81,9 @@
 			} else if (data.status === "END") {
 			}
 		})
-
 		game_socket.on("disconnect", () => {
 			state = "IDLE"
 		})
-
 		return () => game_socket.close()
 	})
 

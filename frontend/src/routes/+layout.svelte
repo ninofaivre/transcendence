@@ -11,9 +11,15 @@
 	import { logged_in, my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
-	import { Modal, type ModalComponent } from "@skeletonlabs/skeleton"
+	import {
+		modalStore,
+		Modal,
+		type ModalComponent,
+		type ModalSettings,
+	} from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { page } from "$app/stores"
+	// import { game_socket } from "$lib/global"
 
 	// Modals
 	import TimeChooser from "$lib/TimeChooser.svelte"
@@ -21,6 +27,7 @@
 	import CreateRoom from "$lib/CreateRoom.svelte"
 	import WaitForGame from "$lib/WaitForGame.svelte"
 	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
+	import AcceptGameInvitationModal from "$lib/AcceptGameInvitationModal.svelte"
 
 	$: {
 		// Prevents redir coming back from 42, or losing the query string for /auth
@@ -47,6 +54,7 @@
 		CreateRoom: { ref: CreateRoom },
 		WaitForGame: { ref: WaitForGame },
 		SendFriendRequestModal: { ref: SendFriendRequestModal },
+		AcceptGameInvitationModal: { ref: AcceptGameInvitationModal },
 	}
 
 	onMount(() => console.log("Layout mounted"))
@@ -57,6 +65,25 @@
 		{ inner: "✉️", href: "/dms" },
 		{ inner: "🤝", href: "/friends" },
 	]
+
+	// game_socket.on("invited", async (invitation, callback) => {
+	// 	console.log("Am being invited!")
+	// 	const r = await new Promise<"accepted" | "refused" | undefined>((resolve) => {
+	// 		const modal: ModalSettings = {
+	// 			type: "component",
+	// 			component: "AcceptGameInvitationModal",
+	// 			response: (r) => {
+	// 				modalStore.close()
+	// 				resolve(r)
+	// 			},
+	// 			meta: {
+	// 				username: invitation.username,
+	// 			},
+	// 		}
+	// 		modalStore.trigger(modal)
+	// 	})
+	// 	if (r) callback(r)
+	// })
 </script>
 
 <!-- App Shell -->

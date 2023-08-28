@@ -5,10 +5,13 @@
 	import { client } from "$clients"
 	import { isContractError } from "contract"
 	import { checkError, makeToast } from "$lib/global"
+	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { page } from "$app/stores"
 
 	export let data: PageData
 
 	let invite_state: null | "pending" | "accepted"
+	let already_friend: boolean = data.friendList.includes($page.params.username)
 
 	async function askFriend() {
 		const ret = await client.invitations.friend.createFriendInvitation({
@@ -16,6 +19,22 @@
 		})
 		if (ret.status != 201) checkError(ret, "send friend request")
 		else makeToast("Sent friend request to " + data.username)
+	}
+
+	async function revokeFriend() {
+		alert("Not implemented")
+	}
+
+	async function inviteToGame() {
+		const modal: ModalSettings = {
+			type: "component",
+			component: "WaitForGame",
+			response: () => {
+				modalStore.close()
+			},
+			meta: { username: $page.params.username },
+		}
+		modalStore.trigger(modal)
 	}
 </script>
 
@@ -38,8 +57,12 @@
 			<p>
 				{`You friend request has been ${invite_state}`}
 			</p>
+		{:else if already_friend}
+			<button class="btn btn-sm variant-filled-error h-fit" on:click={revokeFriend}
+				>Revoke friendship</button
+			>
 		{:else}
-			<button class="btn btn-sm variant-filled" on:click={askFriend}
+			<button class="btn btn-sm variant-filled-primary h-fit" on:click={askFriend}
 				>Send friend request</button
 			>
 		{/if}

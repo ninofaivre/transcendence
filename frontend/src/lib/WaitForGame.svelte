@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { ProgressRadial, modalStore } from "@skeletonlabs/skeleton"
 	import { timeReplyToInvitation } from "contract"
+	import { game_socket } from "./global"
 
 	let value = timeReplyToInvitation
 	const username = $modalStore[0].meta.username
-	const game_socket = $modalStore[0].meta.game_socket
 
 	game_socket.emit("invite", { username }, (res: "accepted" | "refused" | "badRequest") => {
 		state = res

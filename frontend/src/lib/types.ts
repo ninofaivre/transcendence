@@ -4,6 +4,8 @@ import type { client } from "$clients"
 import type { ClientInferResponseBody } from "@ts-rest/core"
 
 import type { contract } from "contract"
+import type { Socket } from "socket.io-client"
+import type { ClientToServerEvents, ServerToClientEvents } from "contract"
 
 type Flatten<T> = T extends any[] ? T[number] : T
 
@@ -38,3 +40,5 @@ export type CreateMessageFunction =
 
 export type Friendships = ClientInferResponseBody<typeof contract.friends.getFriends, 200>
 export type Friendship = Flatten<Friendships>
+
+export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>

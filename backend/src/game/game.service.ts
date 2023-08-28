@@ -636,7 +636,7 @@ export class GameService {
         return this.usersToGame.get(username)?.id
     }
 
-    private async createGame(userOne: EnrichedSocket, userTwo: EnrichedSocket) {
+    public async createGame(userOne: EnrichedSocket, userTwo: EnrichedSocket) {
         console.log("createGame")
         const newGame = new Game(userOne, userTwo, this.webSocket, this.eventEmitter)
         this.games.set(newGame.id, newGame)

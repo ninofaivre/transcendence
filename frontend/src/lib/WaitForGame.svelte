@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ProgressRadial, modalStore } from "@skeletonlabs/skeleton"
 	import { timeReplyToInvitation } from "contract"
-	import { game_socket } from "./global"
+	import { game_socket } from "$lib/global"
 
 	let value = timeReplyToInvitation
 	const username = $modalStore[0].meta.username
@@ -10,7 +10,7 @@
 		state = res
 	})
 
-	let i = timeReplyToInvitation + 3
+	let i = timeReplyToInvitation
 	while (i--) {
 		setTimeout(() => {
 			value -= 1

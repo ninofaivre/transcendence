@@ -152,6 +152,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             return (new Promise((res) => setTimeout(() => { res('refused') }, 5000)))
         try {
             const res: unknown = await invitedClient.timeout(5000).emitWithAck('invited', { username: client.data.username })
+            this.gameService.createGame(client, invitedClient)
             return InvitationClientResponseSchema.parse(res)
         } catch {}
         return "refused"

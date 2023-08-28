@@ -57,10 +57,6 @@
 		{ inner: "✉️", href: "/dms" },
 		{ inner: "🤝", href: "/friends" },
 	]
-
-	function setup_logout(node: HTMLButtonElement) {
-		node.addEventListener("click", () => logout())
-	}
 </script>
 
 <!-- App Shell -->
@@ -95,7 +91,7 @@
 			<svelte:fragment slot="trail">
 				{#if $logged_in}
 					<button
-						use:setup_logout
+						on:click={() => logout()}
 						class="btn btn-sm variant-filled-secondary mr-1 text-xs font-semibold"
 					>
 						Log out

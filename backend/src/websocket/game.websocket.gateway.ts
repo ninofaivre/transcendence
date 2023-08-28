@@ -151,9 +151,8 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         if (!invitedClient || invitedClient.data.status !== 'IDLE')
             return (new Promise((res) => setTimeout(() => { res('refused') }, 5000)))
         try {
-            return InvitationClientResponseSchema.parse(
-                await invitedClient.timeout(5000).emitWithAck('invited', { username: client.data.username })
-            )
+            const res: unknown = await invitedClient.timeout(5000).emitWithAck('invited', { username: client.data.username })
+            return InvitationClientResponseSchema.parse(res)
         } catch {}
         return "refused"
     }

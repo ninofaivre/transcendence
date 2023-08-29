@@ -1,17 +1,17 @@
 <script lang="ts">
 	import type { GameSocket } from "$types"
+	import type { Writable } from "svelte/store"
 
 	import { ProgressRadial, modalStore } from "@skeletonlabs/skeleton"
 	import { timeReplyToInvitation } from "contract"
 	import { getContext } from "svelte"
 
-	// import { game_socket } from "$lib/global"
 	let value = timeReplyToInvitation
 	const username = $modalStore[0].meta.username
 
-	let game_socket: GameSocket = getContext("game_socket")
+	let game_socket: Writable<GameSocket> = getContext("game_socket")
 	console.log("Got game_socket from context:", game_socket)
-	game_socket.emit("invite", { username }, (res: "accepted" | "refused" | "badRequest") => {
+	$game_socket.emit("invite", { username }, (res: "accepted" | "refused" | "badRequest") => {
 		state = res
 	})
 

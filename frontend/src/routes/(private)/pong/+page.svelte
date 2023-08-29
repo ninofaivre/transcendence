@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Position } from "contract"
 	import type { GameSocket } from "$types"
+	import type { Writable } from "svelte/store"
 
 	import { ProgressRadial } from "@skeletonlabs/skeleton"
 	import { Canvas } from "@threlte/core"
@@ -10,9 +11,7 @@
 	import { GameDim } from "contract"
 	import { my_name } from "$stores"
 	import { io } from "socket.io-client"
-	// import { game_socket } from "$lib/global"
 
-	let game_socket: GameSocket = getContext("game_socket")
 	let my_paddle_is_left: boolean = false
 	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "WAITING" | "END" = "IDLE"
 
@@ -41,16 +40,23 @@
 	let progress: number
 	$: progress = (value * 100) / timeout
 
-	onMount(() => {
-		console.log("game socket pong", game_socket)
+	// let game_socket: GameSocket & { test?: number } = io(PUBLIC_BACKEND_URL, {
+	// 	withCredentials: true,
+	// })
+	let game_socket: Writable<GameSocket> = getContext("game_socket")
+
+	// game_socket.test = 42
+	applyCallback()
+
+	function applyCallback() {
+		console.log("Applying pong callback to socket:", $game_socket.id) //, $game_socket.test)
 		//Receive data
-		game_socket.on("updatedGamePositions", (data) => {
+		$game_socket.on("updatedGamePositions", (data) => {
 			// console.log(data)
 			;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
 		})
-		game_socket.on("newInGameMessage", (data) => {})
-
-		game_socket.on("updatedGameStatus", (data) => {
+		$game_socket.on("newInGameMessage", (data) => {})
+		$game_socket.on("updatedGameStatus", (data) => {
 			console.log(data)
 			state = data.status
 			if (data.status === "INIT") {
@@ -78,39 +84,40 @@
 			} else if (data.status === "END") {
 			}
 		})
-
-		game_socket.on("disconnect", () => {
+		$game_socket.on("disconnect", () => {
+			console.log("pong disconnect")
+			// let save = game_socket.test!
 			state = "IDLE"
+			// game_socket = io(PUBLIC_BACKEND_URL, { withCredentials: true })
+			// game_socket.test = save * 2
+			console.log("applying callbacks for pong page")
+			applyCallback()
 		})
-
-		// return () => game_socket.close()
-	})
+	}
 
 	function createGame() {
 		console.log("Clicked to create")
-		game_socket.emit("queue", "")
+		$game_socket.emit("queue", "")
 		button_disabled = true
 		state = "WAITING"
 	}
-
 	function cancelGame() {
 		console.log("Cancelled game")
-		game_socket.emit("deQueue", "")
+		$game_socket.emit("deQueue", "")
 		button_disabled = false
 		state = "IDLE"
 	}
-
 	function onUP() {
 		console.log("UP")
-		game_socket.emit("gameMovement", "UP")
+		$game_socket.emit("gameMovement", "UP")
 	}
 	function onDOWN() {
 		console.log("DOWN")
-		game_socket.emit("gameMovement", "DOWN")
+		$game_socket.emit("gameMovement", "DOWN")
 	}
 	function onNONE() {
 		console.log("NONE")
-		game_socket.emit("gameMovement", "NONE")
+		$game_socket.emit("gameMovement", "NONE")
 	}
 </script>
 

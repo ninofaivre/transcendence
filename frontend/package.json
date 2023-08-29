@@ -6,6 +6,7 @@
     "dev": "pnpm vite",
     "preview": "pnpm vite preview",
     "build": "pnpm svelte-kit sync && pnpm exec vite build",
+    "build:front": "pnpm svelte-kit sync && pnpm exec vite build",
     "build:watch": "pnpm svelte-kit sync && pnpm vite build --watch ",
     "check": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --compiler-warnings \"a11y-click-events-have-key-events:ignore,\"",
     "check:watch": "pnpm svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",

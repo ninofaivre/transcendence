@@ -19,7 +19,6 @@
 	} from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { page } from "$app/stores"
-	// import { game_socket } from "$lib/global"
 
 	// Modals
 	import TimeChooser from "$lib/TimeChooser.svelte"

@@ -9,6 +9,7 @@ export function WebSocketAuthMiddleware(
     clients: Map<IntraUserName, unknown>
 ) {
     return ((client: EnrichedSocket, next: (err?: unknown) => void) => {
+        console.log(`client tryed to connect in the middleware ${client.data.username}`)
         try {
             client.data = new SocketData(authService.isValidAccessTokenFromCookie(client), userService)
             if (clients.has(client.data.intraUserName))

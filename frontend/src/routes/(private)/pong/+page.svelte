@@ -212,7 +212,11 @@
 </div>
 
 <Canvas frameloop="demand" debugFrameloop={false}>
-	<Text text="COUCOU" fontSize={100} up={[0, -1, 0]} lookAt={[0, 0, -1]} />
+    <Text text={`${paddleLeftUserName}                                                   ${paddleRightUserName}`}
+        fontSize={100}
+        up={[0, -1, 0]}
+        lookAt={[0, 0, -1]}
+    />
 	<Pong
 		{court}
 		{ball_sz}

@@ -7,11 +7,14 @@
 	import { checkError, makeToast } from "$lib/global"
 	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { page } from "$app/stores"
+	import { SlideToggle } from "@skeletonlabs/skeleton"
 
 	export let data: PageData
 
 	let invite_state: null | "pending" | "accepted"
 	let already_friend: boolean = data.friendList.includes($page.params.username)
+	let twoFA: boolean = false
+	// let twoFA: boolean = data.twoFA
 
 	async function askFriend() {
 		const ret = await client.invitations.friend.createFriendInvitation({
@@ -39,9 +42,9 @@
 </script>
 
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
-	<div class="grid grid-rows-2 gap-2 rounded-lg bg-gray-50 p-8 sm:px-10">
-		<!-- row1 -->
-		<div class="grid grid-cols-2">
+	<div class="flex flex-col gap-2 rounded-lg bg-gray-50 p-8 sm:px-10">
+		<!-- Avatar -->
+		<div class="grid flex-1 grid-cols-2">
 			<!-- col1 -->
 			<Avatar
 				src="{PUBLIC_BACKEND_URL}/users/{data.username}/profilePicture"
@@ -52,19 +55,27 @@
 			<h1 class="self-center text-black">{data.username}</h1>
 		</div>
 
-		<!-- row2 -->
-		{#if invite_state}
-			<p>
-				{`You friend request has been ${invite_state}`}
-			</p>
-		{:else if already_friend}
-			<button class="btn btn-sm variant-filled-error h-fit" on:click={revokeFriend}
-				>Revoke friendship</button
+		<!-- Send Friend Request -->
+		<div class="flex-1">
+			{#if invite_state}
+				<p>
+					{`You friend request has been ${invite_state}`}
+				</p>
+			{:else if already_friend}
+				<button class="btn btn-sm variant-filled-error h-fit" on:click={revokeFriend}
+					>Revoke friendship</button
+				>
+			{:else}
+				<button class="btn btn-sm variant-filled-primary h-fit" on:click={askFriend}
+					>Send friend request</button
+				>
+			{/if}
+		</div>
+
+		<div class="flex-1">
+			<SlideToggle class="text-black" name="slider-label" checked={twoFA}
+				>2FA Authentication</SlideToggle
 			>
-		{:else}
-			<button class="btn btn-sm variant-filled-primary h-fit" on:click={askFriend}
-				>Send friend request</button
-			>
-		{/if}
+		</div>
 	</div>
 </div>

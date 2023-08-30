@@ -84,13 +84,14 @@
 				}
 			} else if (data.status === "PAUSE") {
 			} else if (data.status === "END") {
+				;({ paddleLeftScore, paddleRightScore } = data)
 				winner = data.winner
 			}
 		})
 		$game_socket.on("disconnect", () => {
 			console.log("pong disconnect")
 			// let save = game_socket.test!
-			state = "IDLE"
+			// state = "IDLE"
 			// game_socket = io(PUBLIC_BACKEND_URL, { withCredentials: true })
 			// game_socket.test = save * 2
 			console.log("applying callbacks for pong page")
@@ -186,11 +187,12 @@
 			</div>
 		</div>
 	{:else if state === "END"}
+		<div class="grid grid-rows-2 gap-1">
 		{#if winner === $my_name}
-			<div>🎉 You won! 🎉</div>
+			<div>🎉 You won 🎉</div>
 		{:else}
 			<div>
-				📉 {winner} has won ! 📉
+				📉 {winner} has won 📉
 			</div>
 		{/if}
 		<button
@@ -200,6 +202,7 @@
 		>
 			PLAY AGAIN ?
 		</button>
+		</div>
 	{/if}
 </div>
 

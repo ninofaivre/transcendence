@@ -41,7 +41,8 @@
 			applyCallbacks()
 		})
 		$game_socket.on("connect_error", (data) => {
-			alert(data)
+			// console.log("connect_error", data)
+			console.log("connect_error")
 		})
 		$game_socket.on("invited", async (invitation, callback) => {
 			console.log("Am being invited!")
@@ -63,10 +64,11 @@
 		})
 	}
 
-	// onDestroy(() => {
-	// 	$game_socket.close()
-	// 	console.log("private layout destroy", $game_socket)
-	// })
+	onDestroy(() => {
+		$game_socket.removeAllListeners()
+		console.log("private layout destroy", $game_socket)
+		$game_socket.close()
+	})
 
 	setContext("game_socket", game_socket)
 </script>

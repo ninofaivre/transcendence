@@ -4,8 +4,10 @@
 
 	import { ProgressRadial, modalStore } from "@skeletonlabs/skeleton"
 	import { timeReplyToInvitation } from "contract"
-	import { getContext } from "svelte"
+	import { afterUpdate, getContext } from "svelte"
+	import { goto } from "$app/navigation"
 
+	let state: "accepted" | "refused" | "timedOut" | "waiting" | "badRequest" = "waiting"
 	let value = timeReplyToInvitation
 	const username = $modalStore[0].meta.username
 	const game_socket: Writable<GameSocket> = $modalStore[0].meta.game_socket
@@ -14,6 +16,11 @@
 	console.log("Got game_socket from context:", game_socket)
 	$game_socket.emit("invite", { username }, (res: "accepted" | "refused" | "badRequest") => {
 		state = res
+		if (state === "accepted") {
+			if ($modalStore[0].response) {
+				$modalStore[0].response(true)
+			}
+		}
 	})
 
 	let i = timeReplyToInvitation
@@ -31,11 +38,9 @@
 
 	$: {
 		if (value <= 0) {
-			state = "timedOut"
+			if (state === "waiting") state = "timedOut"
 		}
 	}
-
-	let state: "accepted" | "refused" | "timedOut" | "waiting" | "badRequest" = "waiting"
 </script>
 
 <div class="card grid grid-rows-3 p-8">

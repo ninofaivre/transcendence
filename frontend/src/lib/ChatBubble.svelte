@@ -69,15 +69,21 @@
 	}
 
 	async function inviteToGame() {
-		const modal: ModalSettings = {
-			type: "component",
-			component: "WaitForGame",
-			response: () => {
-				modalStore.close()
-			},
-			meta: { username: message.author, game_socket },
+		const r = await new Promise<true | undefined>((resolve) => {
+			const modal: ModalSettings = {
+				type: "component",
+				component: "WaitForGame",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+				meta: { username: message.author, game_socket },
+			}
+			modalStore.trigger(modal)
+		})
+		if (r) {
+			goto("/pong")
 		}
-		modalStore.trigger(modal)
 	}
 
 	async function kickHandler() {

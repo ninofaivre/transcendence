@@ -58,9 +58,13 @@
 		console.log("Applying pong callback to socket:", $game_socket.id) //, $game_socket.test)
 		//Receive data
 		$game_socket.on("updatedGamePositions", (data) => {
-			// console.log(data)
-			// ;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos, paddleLeftScore, paddleRightScore } = data)
-			;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
+			;({
+				ball: ball_pos,
+				paddleLeft: lpaddle_pos,
+				paddleRight: rpaddle_pos,
+				// paddleLeftScore,
+				// paddleRightScore,
+			} = data)
 		})
 		$game_socket.on("newInGameMessage", (data) => {})
 		$game_socket.on("updatedGameStatus", (data) => {
@@ -130,30 +134,6 @@
 	}
 </script>
 
-<div
-	id="left-score"
-	class="grid grid-rows-2 gap-2"
-	style:--score-color={my_paddle_is_left ? "red" : "green"}
->
-	<div>
-		{paddleLeftUserName}
-	</div>
-	<div class="justify-self-center">
-		{paddleLeftScore}
-	</div>
-</div>
-<div
-	id="right-score"
-	class="grid grid-rows-2 gap-2"
-	style:--score-color={my_paddle_is_left ? "green" : "red"}
->
-	<div>
-		{paddleRightUserName}
-	</div>
-	<div class="justify-self-center">
-		{paddleRightScore}
-	</div>
-</div>
 <div class="menu-container grid grid-cols-1">
 	{#if state === "PAUSE"}
 		<div class="justify-self self-center">
@@ -217,16 +197,18 @@
 		fontSize={100}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}
-		anchorX={-200}
-		anchorY={0}
+		font="/arcadeclassic.regular.ttf"
+		anchorX={-court.width / 2 + 400}
+		anchorY={court.height / 2 - 400}
 	/>
 	<Text
 		text={paddleRightUserName}
 		fontSize={100}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}
-		anchorX={-200}
-		anchorY={0}
+		font="/arcadeclassic.regular.ttf"
+		anchorX={-court.width / 2 - 400}
+		anchorY={court.height / 2 - 400}
 	/>
 	<Text
 		text={paddleLeftScore.toString()}
@@ -235,7 +217,7 @@
 		lookAt={[0, 0, -1]}
 		anchorX={-court.width / 2 + 400}
 		anchorY={court.height / 2 - 300}
-		font="ArcadeClassic"
+		font="/arcadeclassic.regular.ttf"
 	/>
 	<Text
 		text={paddleRightScore.toString()}
@@ -244,7 +226,7 @@
 		lookAt={[0, 0, -1]}
 		anchorX={-court.width / 2 - 400}
 		anchorY={court.height / 2 - 300}
-		font="ArcadeClassic"
+		font="/arcadeclassic.regular.ttf"
 	/>
 	<Pong
 		{court}
@@ -261,24 +243,6 @@
 </Canvas>
 
 <style>
-	#left-score,
-	#right-score {
-		position: absolute;
-		top: 30%;
-		font-family: "Press Start 2P", "ArcadeClassic", serif;
-		font-size: 1.4rem;
-	}
-	#left-score {
-		--score-color: white;
-		left: 25%;
-		color: var(--score-color);
-	}
-	#right-score {
-		--score-color: white;
-		right: 25%;
-		color: var(--score-color);
-	}
-
 	.menu-container {
 		display: grid;
 		position: absolute;

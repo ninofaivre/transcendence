@@ -63,10 +63,10 @@
 		})
 	}
 
-	onDestroy(() => {
-		$game_socket.close()
-		console.log("private layout destroy", $game_socket)
-	})
+	// onDestroy(() => {
+	// 	$game_socket.close()
+	// 	console.log("private layout destroy", $game_socket)
+	// })
 
 	setContext("game_socket", game_socket)
 </script>

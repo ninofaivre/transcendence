@@ -119,6 +119,9 @@
 	}}
 ></T.OrthographicCamera>
 
+<!-- Test orientation with this -->
+<!-- <Paddle position={{ x: 300, y: 300 }} size={ball_sz} color="blue" /> -->
+
 <!-- Ball -->
 <!-- <Ball {ball} /> -->
 <Paddle position={ball_pos} size={ball_sz} color="red" />

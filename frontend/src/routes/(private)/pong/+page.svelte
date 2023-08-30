@@ -212,11 +212,40 @@
 </div>
 
 <Canvas frameloop="demand" debugFrameloop={false}>
-    <Text text={`${paddleLeftUserName}                                                   ${paddleRightUserName}`}
-        fontSize={100}
-        up={[0, -1, 0]}
-        lookAt={[0, 0, -1]}
-    />
+	<Text
+		text={paddleLeftUserName}
+		fontSize={100}
+		up={[0, -1, 0]}
+		lookAt={[0, 0, -1]}
+		anchorX={-200}
+		anchorY={0}
+	/>
+	<Text
+		text={paddleRightUserName}
+		fontSize={100}
+		up={[0, -1, 0]}
+		lookAt={[0, 0, -1]}
+		anchorX={-200}
+		anchorY={0}
+	/>
+	<Text
+		text={paddleLeftScore.toString()}
+		fontSize={100}
+		up={[0, -1, 0]}
+		lookAt={[0, 0, -1]}
+		anchorX={-court.width / 2 + 400}
+		anchorY={court.height / 2 - 300}
+		font="ArcadeClassic"
+	/>
+	<Text
+		text={paddleRightScore.toString()}
+		fontSize={100}
+		up={[0, -1, 0]}
+		lookAt={[0, 0, -1]}
+		anchorX={-court.width / 2 - 400}
+		anchorY={court.height / 2 - 300}
+		font="ArcadeClassic"
+	/>
 	<Pong
 		{court}
 		{ball_sz}

@@ -119,8 +119,6 @@
 	}}
 ></T.OrthographicCamera>
 
-<Text text="HELLO WORLD" fontSize={100} up={[0, -1, 0]} lookAt={[0, 0, -1]} />
-
 <!-- Ball -->
 <!-- <Ball {ball} /> -->
 <Paddle position={ball_pos} size={ball_sz} color="red" />

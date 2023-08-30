@@ -48,6 +48,8 @@
 	// game_socket.test = 42
 	applyCallback()
 
+	let winner = "none"
+
 	function applyCallback() {
 		console.log("Applying pong callback to socket:", $game_socket.id) //, $game_socket.test)
 		//Receive data
@@ -82,6 +84,7 @@
 				}
 			} else if (data.status === "PAUSE") {
 			} else if (data.status === "END") {
+				winner = data.winner
 			}
 		})
 		$game_socket.on("disconnect", () => {
@@ -183,12 +186,19 @@
 			</div>
 		</div>
 	{:else if state === "END"}
+		{#if winner === $my_name}
+			<div>🎉 You won! 🎉</div>
+		{:else}
+			<div>
+				📉 {winner} has won ! 📉
+			</div>
+		{/if}
 		<button
 			class="btn variant-ringed-error rounded"
 			on:click={createGame}
 			disabled={button_disabled}
 		>
-			REPLAY ?
+			PLAY AGAIN ?
 		</button>
 	{/if}
 </div>

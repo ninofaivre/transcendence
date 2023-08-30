@@ -90,7 +90,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
 
     afterInit(server: Socket) {
         server.use(WebSocketAuthMiddleware(this.authService,
-            this.userService, this.intraNameToClientId) as any)
+            this.userService, this) as any)
     }
 
     // TODO do a typed decorator ?
@@ -133,7 +133,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         return this.server.sockets.sockets.get(clientId)
     }
 
-    private findClientSocketByIntraName(clientName: IntraUserName) {
+    public findClientSocketByIntraName(clientName: IntraUserName) {
         const clientId = this.intraNameToClientId.get(clientName)
         if (!clientId)
             return

@@ -10,6 +10,9 @@ import { join } from "path"
 import { EnvService } from "./env/env.service"
 import { PrismaClientExceptionFilter } from "./prisma/exception-filter"
 
+import { install } from 'source-map-support';
+install();
+
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
 		// bodyParser: true,

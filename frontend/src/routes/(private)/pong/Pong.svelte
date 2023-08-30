@@ -7,7 +7,9 @@
 	import { createEventDispatcher } from "svelte"
 	import Paddle from "./Paddle.svelte"
 	import Ball from "./Ball.svelte"
+	import { Suspense, Text } from "@threlte/extras"
 	import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
+	import { text } from "@sveltejs/kit"
 
 	export let court: Size = {
 		width: 1600,
@@ -94,14 +96,27 @@
 <!-- </T.PerspectiveCamera> -->
 
 <!-- above camera -->
+<!-- <T.OrthographicCamera -->
+<!-- 	makeDefault -->
+<!-- 	{zoom} -->
+<!-- 	position={[court.width / 2, 100, court.height / 2]} -->
+<!-- 	on:create={({ ref }) => { -->
+<!-- 		ref.lookAt(new Vector3(court.width / 2, -1, court.height / 2)) -->
+<!-- 	}} -->
+<!-- ></T.OrthographicCamera> -->
+
+<!-- in front camera -->
 <T.OrthographicCamera
 	makeDefault
 	{zoom}
-	position={[court.width / 2, 100, court.height / 2]}
+    position={[court.width/2, court.height/2, -100]} 
+    up={[0, -1, 0]}
 	on:create={({ ref }) => {
-		ref.lookAt(new Vector3(court.width / 2, -1, court.height / 2))
+		ref.lookAt(new Vector3(court.width/2, court.height/2, 1))
 	}}
 ></T.OrthographicCamera>
+
+<Text text="HELLO WORLD"  fontSize={100} />
 
 <!-- Ball -->
 <!-- <Ball {ball} /> -->

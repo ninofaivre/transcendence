@@ -5,6 +5,7 @@
 
 	import { ProgressRadial } from "@skeletonlabs/skeleton"
 	import { Canvas } from "@threlte/core"
+	import { Text } from "@threlte/extras"
 	import Pong from "./Pong.svelte"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { getContext, onMount } from "svelte"
@@ -188,20 +189,20 @@
 		</div>
 	{:else if state === "END"}
 		<div class="grid grid-rows-2 gap-1">
-		{#if winner === $my_name}
-			<div>🎉 You won 🎉</div>
-		{:else}
-			<div>
-				📉 {winner} has won 📉
-			</div>
-		{/if}
-		<button
-			class="btn variant-ringed-error rounded"
-			on:click={createGame}
-			disabled={button_disabled}
-		>
-			PLAY AGAIN ?
-		</button>
+			{#if winner === $my_name}
+				<div>🎉 You won 🎉</div>
+			{:else}
+				<div>
+					📉 {winner} has won 📉
+				</div>
+			{/if}
+			<button
+				class="btn variant-ringed-error rounded"
+				on:click={createGame}
+				disabled={button_disabled}
+			>
+				PLAY AGAIN ?
+			</button>
 		</div>
 	{/if}
 </div>

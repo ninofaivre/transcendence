@@ -12,6 +12,7 @@
 	import { GameDim } from "contract"
 	import { my_name } from "$stores"
 	import { io } from "socket.io-client"
+	import { injectLookAtPlugin } from "./lookAtPlugin"
 
 	let my_paddle_is_left: boolean = false
 	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "WAITING" | "END" = "IDLE"
@@ -56,6 +57,7 @@
 		//Receive data
 		$game_socket.on("updatedGamePositions", (data) => {
 			// console.log(data)
+			// ;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos, paddleLeftScore, paddleRightScore } = data)
 			;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
 		})
 		$game_socket.on("newInGameMessage", (data) => {})

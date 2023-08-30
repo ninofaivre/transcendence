@@ -135,8 +135,7 @@ class Paddle extends GameObject {
 }
 
 class Player {
-
-    private pauseAmount = GameTimings.userPauseAmount
+    public pauseAmount = GameTimings.userPauseAmount
     public score = 0
 
     public isPause = () => (!!this._pauseData)
@@ -155,6 +154,7 @@ class Player {
                 this.game.surrend(this.user.intraUserName)
             }).bind(this), this.pauseAmount)
         }
+        this.game.status = 'PAUSE'
         console.log(this.user.username, "paused game, pause Amount :", this.pauseAmount)
     }
 
@@ -370,13 +370,13 @@ class Game {
 
     private lastUpdateTime: number | null = null
     private _status: GameStatus['status'] = 'INIT';
-    private readonly maxScore: number = 2
+    private readonly maxScore: number = 20
 
-    get status() {
+    public get status() {
         return this._status
     }
 
-    set status(newStatus: typeof this._status) {
+    public set status(newStatus: typeof this._status) {
         switch(newStatus) {
             case 'INIT': {
                 console.log(this.playerA.user.username, "est à gauche")
@@ -405,10 +405,11 @@ class Game {
                 break ;
             }
             case 'PAUSE': {
+                const pausingPlayer = this.playerA.isPause() ? this.playerA : this.playerB
                 this.webSocket.server.to(this.id).emit('updatedGameStatus', {
                     status: 'PAUSE',
-                    timeout: 99999,
-                    username: "notImplementedYet"
+                    timeout: pausingPlayer.pauseAmount,
+                    username: pausingPlayer.user.username
                 })
                 break ;
             }
@@ -454,31 +455,36 @@ class Game {
     constructor(
         clientA: EnrichedSocket,
         clientB: EnrichedSocket,
-        private readonly webSocket: GameWebsocketGateway,
+        public readonly webSocket: GameWebsocketGateway,
         private eventEmitter: EventEmitter2
     ) {
-        this.id = `${clientA.data.intraUserName}${clientB.data.intraUserName}`
+        this.id = `${clientA.data.intraUserName}@${clientB.data.intraUserName}`
         this.playerA = new Player(clientA.data, this, new Paddle({
             x: Paddle.xOffset,
             y: GameDim.court.height / 2
         }, this))
-        console.log(this.playerA.user.username, "position :", this.playerA.paddle.position)
         this.playerB = new Player(clientB.data, this, new Paddle({
             x: (GameDim.court.width - Paddle.xOffset),
             y: GameDim.court.height / 2
         }, this))
-        console.log(this.playerB.user.username, "position :", this.playerB.paddle.position)
+
         clientA.data.status = 'GAME'
         clientB.data.status = 'GAME'
 
-        clientA.join(this.id)
-        clientB.join(this.id)
-
+        this.webSocket.server.sockets
+            .in([
+                clientA.data.intraUserName,
+                clientB.data.intraUserName
+            ])
+            .socketsJoin(this.id)
+        
         this.status = 'INIT'
 
-        this.clientListen(clientA)
-        this.clientListen(clientB)
+        this.clientListen(clientA.data.intraUserName)
+        this.clientListen(clientB.data.intraUserName)
+
         this.webSocket.server.on('connect', (client) => {
+            
             if (!this.playerA.isPause() && !this.playerB.isPause())
                 return
             if (client.data.intraUserName !== this.playerA.user.intraUserName &&
@@ -496,27 +502,17 @@ class Game {
             const player = this.getPlayerByIntraUserName(client.data.intraUserName)
             player.user = client.data
             player.unpause()
-            this.clientListen(client)
             if (!this.playerA.isPause() && !this.playerB.isPause())
                 this.status = 'PLAY'
         })
     }
 
-    private clientListen(client: EnrichedSocket) {
-        client.on('disconnecting', (() => {
-            if (this.status !== 'END')
-                this.handleDisconnect(client.data.intraUserName)
-        }).bind(this))
-        client.on('surrend', (() => {
-            this.surrend(client.data.intraUserName)
-        }).bind(this))
-
-    }
-
-    private handleDisconnect(intraUserName: IntraUserName) {
-        this.status = 'PAUSE'
-        this.getPlayerByIntraUserName(intraUserName)
-            .pause()
+    private async clientListen(intraUserName: IntraUserName) {
+        this.webSocket.server.sockets.adapter
+            .on('delete-room', (roomId) => {
+                if (roomId === intraUserName && this.status !== 'END')
+                    this.getPlayerByIntraUserName(intraUserName).pause()
+            })
     }
 
     private emitGamePositions() {

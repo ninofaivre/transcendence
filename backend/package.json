@@ -50,6 +50,7 @@
 		"@types/node": "^20.5.0",
 		"@types/passport-jwt": "^3.0.9",
 		"@types/passport-local": "^1.0.35",
+		"@types/source-map-support": "^0.5.7",
 		"@typescript-eslint/eslint-plugin": "^6.4.0",
 		"eslint": "^8.47.0",
 		"eslint-plugin-prettier": "^5.0.0"

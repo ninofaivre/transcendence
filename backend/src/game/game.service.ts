@@ -415,7 +415,7 @@ class Game {
                 })
                 setTimeout(
                     () => {
-                        if (this.status = 'PAUSE')
+                        if (this.status == 'PAUSE')
                             return
                         this.status = 'PLAY'
                     },
@@ -449,7 +449,7 @@ class Game {
                 })
                 setTimeout(
                     () => {
-                        if (this.status = 'PAUSE')
+                        if (this.status == 'PAUSE')
                             return
                         this.status = 'PLAY'
                     },
@@ -619,7 +619,7 @@ export class GameService {
         private eventEmitter: EventEmitter2
     ) {
         // wtf is that shit
-        setTimeout((() => { this.webSocket.server.on('connect', this.connectUser.bind(this) )}).bind(this), 0)
+        setTimeout(() => { this.webSocket.server.on('connect', this.connectUser.bind(this))}, 0)
         setTimeout(this.loop.bind(this), 0)
     }
 
@@ -629,7 +629,7 @@ export class GameService {
     }
 
     public connectUser(client: EnrichedSocket) {
-        client.on('disconnect', (a) => this.disconnectUser(client.data))
+        client.once('disconnect', () => this.disconnectUser(client.data))
     }
 
     private loop() {

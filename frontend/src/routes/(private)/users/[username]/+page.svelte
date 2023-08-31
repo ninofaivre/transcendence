@@ -49,13 +49,6 @@
 		modalStore.trigger(modal)
 	}
 
-	let paginationSettings = {
-		page: 0,
-		limit: 5,
-		size: data.match_history.length,
-		amounts: [1, 2, 5, 10],
-	} satisfies PaginationSettings
-
 	function onAmountChange(e: CustomEvent) {
 		console.log(e.detail)
 	}
@@ -64,11 +57,12 @@
 		console.log(e.detail)
 	}
 
-	data.match_history[0]
-
-	console.log("Your friendships are:", $page.data.friendships)
-	console.log(tableMapperValues($page.data.friendships, ["friendName"]))
-	let table_source: TableSource
+	let paginationSettings = {
+		page: 0,
+		limit: 2,
+		size: data.match_history.length,
+		amounts: [1, 2, 5, 10],
+	} satisfies PaginationSettings
 
 	$: match_history = data.match_history.map((arr) => {
 		return {
@@ -87,11 +81,17 @@
 
 	$: fields = Object.keys(match_history[0])
 
+	$: paginated_match_history = match_history.slice(
+		paginationSettings.page * paginationSettings.limit,
+		paginationSettings.page * paginationSettings.limit + paginationSettings.limit,
+	)
+
+	let table_source: TableSource
 	$: table_source = {
 		// A list of heading labels.
 		head: fields,
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues(match_history, fields),
+		body: tableMapperValues(paginated_match_history, fields),
 	}
 </script>
 
@@ -134,4 +134,9 @@
 	</div>
 </div>
 <Table source={table_source} />
-<Paginator bind:settings={paginationSettings} on:page={onPageChange} on:amount={onAmountChange} />
+<Paginator
+	bind:settings={paginationSettings}
+	showNumerals
+	on:page={onPageChange}
+	on:amount={onAmountChange}
+/>

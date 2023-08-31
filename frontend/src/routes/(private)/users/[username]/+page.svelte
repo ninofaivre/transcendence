@@ -1,6 +1,11 @@
 <script lang="ts">
 	import type { PageData } from "./$types"
-	import type { PaginationSettings } from "@skeletonlabs/skeleton"
+	import {
+		Table,
+		type PaginationSettings,
+		type TableSource,
+		tableMapperValues,
+	} from "@skeletonlabs/skeleton"
 
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { Avatar } from "@skeletonlabs/skeleton"
@@ -44,7 +49,6 @@
 		modalStore.trigger(modal)
 	}
 
-	const source = ["1", "2", "3"]
 	let paginationSettings = {
 		page: 0,
 		limit: 5,
@@ -58,6 +62,19 @@
 
 	function onPageChange(e: CustomEvent) {
 		console.log(e.detail)
+	}
+
+	data.match_history[0]
+
+	console.log("Your friendships are:", $page.data.friendships)
+	console.log(tableMapperValues($page.data.friendships, ["friendName"]))
+	let table_source: TableSource
+
+	$: table_source = {
+		// A list of heading labels.
+		head: Object.keys(data.match_history[0]),
+		// The data visibly shown in your table body UI.
+		body: tableMapperValues(data.match_history, ["id"]),
 	}
 </script>
 
@@ -98,10 +115,6 @@
 			>
 		</div>
 	</div>
-
-	<Paginator
-		bind:settings={paginationSettings}
-		on:page={onPageChange}
-		on:amount={onAmountChange}
-	/>
 </div>
+<Table source={table_source} />
+<Paginator bind:settings={paginationSettings} on:page={onPageChange} on:amount={onAmountChange} />

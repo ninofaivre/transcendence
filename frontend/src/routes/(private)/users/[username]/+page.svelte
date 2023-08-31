@@ -1,10 +1,13 @@
 <script lang="ts">
 	import type { PageData } from "./$types"
+	import type { MatchHistoryElement, MatchHistory } from "$types"
 	import {
 		Table,
 		type PaginationSettings,
 		type TableSource,
 		tableMapperValues,
+		getToastStore,
+		ProgressRadial,
 	} from "@skeletonlabs/skeleton"
 
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
@@ -24,6 +27,8 @@
 	let already_friend: boolean = data.friendList.includes($page.params.username)
 	let twoFA: boolean = false
 	// let twoFA: boolean = data.twoFA
+	let spin = false
+	let keep_loading = true
 
 	async function askFriend() {
 		const ret = await client.invitations.friend.createFriendInvitation({
@@ -49,42 +54,54 @@
 		modalStore.trigger(modal)
 	}
 
-	function onAmountChange(e: CustomEvent) {
-		console.log(e.detail)
+	function remap(to_remap: MatchHistory) {
+		return to_remap.map((obj) => {
+			return {
+				Date: new Date(obj.creationDate).toLocaleDateString("en-GB", {
+					weekday: "long",
+					year: "numeric",
+					month: "short",
+					day: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
+                    second: "numeric"
+				}),
+				Winner: obj.winner_name,
+				"Winning Score": obj.winner_score,
+				Looser: obj.looser_name,
+				"Loosing Score": obj.looser_score,
+				id: obj.id,
+			}
+		})
 	}
 
-	function onPageChange(e: CustomEvent) {
-		console.log(e.detail)
-	}
-
-	let paginationSettings = {
+	let settings: PaginationSettings = {
 		page: 0,
 		limit: 2,
 		size: data.match_history.length,
-		amounts: [1, 2, 5, 10],
-	} satisfies PaginationSettings
+		amounts: [1, 2, 3, 4, 5, 6, 10],
+	}
+	$: settings.size = match_history.length
 
-	$: match_history = data.match_history.map((arr) => {
-		return {
-			Date: new Date(arr.date).toLocaleDateString("en-US", {
-				weekday: "long",
-				year: "numeric",
-				month: "short",
-				day: "numeric",
-			}),
-			Winner: arr.winnerName,
-			"Winning Score": arr.winnerScore,
-			Looser: arr.looserName,
-			"Loosing Score": arr.looserScore,
-		}
-	})
+	let match_history: ReturnType<typeof remap> = remap(data.match_history)
 
-	$: fields = Object.keys(match_history[0])
+	let last_page_number: number
+	$: last_page_number = Math.ceil(match_history.length / settings.limit)
 
-	$: paginated_match_history = match_history.slice(
-		paginationSettings.page * paginationSettings.limit,
-		paginationSettings.page * paginationSettings.limit + paginationSettings.limit,
-	)
+	let last_match_history_element_id: string
+	$: last_match_history_element_id = match_history.at(-1)?.id ?? ""
+
+	// This does not need to be reactive
+	let fields: string[] = Object.keys(match_history[0]).filter((el) => el !== "id")
+
+	let paginated_match_history: typeof match_history
+	$: {
+		paginated_match_history = match_history.slice(
+			settings.page * settings.limit,
+			settings.page * settings.limit + settings.limit,
+		)
+		paginated_match_history = paginated_match_history
+	}
 
 	let table_source: TableSource
 	$: table_source = {
@@ -92,6 +109,33 @@
 		head: fields,
 		// The data visibly shown in your table body UI.
 		body: tableMapperValues(paginated_match_history, fields),
+	}
+
+	async function onPageChange(e: CustomEvent) {
+        if (keep_loading == false) return
+		if (last_page_number === e.detail + 1) {
+			spin = true
+			const ret = await client.game.getMatchHistory({
+				params: { username: data.user.userName },
+				query: {
+					nMatches: settings.limit,
+					cursor: last_match_history_element_id,
+				},
+			})
+			if (ret.status !== 200) checkError(ret, "load match history", getToastStore())
+			else {
+				if (ret.body.length < settings.limit) {
+					// alert("After this one, no more data")
+                    keep_loading = false
+				}
+				match_history = [...match_history, ...remap(ret.body)]
+			}
+			spin = false
+		}
+	}
+
+	function onAmountChange(e: CustomEvent) {
+		console.log(e.detail)
 	}
 </script>
 
@@ -133,10 +177,10 @@
 		</div>
 	</div>
 </div>
-<Table source={table_source} />
-<Paginator
-	bind:settings={paginationSettings}
-	showNumerals
-	on:page={onPageChange}
-	on:amount={onAmountChange}
-/>
+<div class="p-3">
+	<Table source={table_source} />
+	<Paginator bind:settings showNumerals on:page={onPageChange} on:amount={onAmountChange} />
+</div>
+{#if spin}
+	<ProgressRadial class="absolute left-1/2 top-1/2" />
+{/if}

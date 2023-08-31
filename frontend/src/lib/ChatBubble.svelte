@@ -1,9 +1,15 @@
 <script lang="ts">
+	import type { Writable } from "svelte/store"
+	import type { ModalSettings } from "@skeletonlabs/skeleton"
+	import type { Chan, DirectConversation, GameSocket, Message } from "$types"
+
+	//Components
 	import { Avatar } from "@skeletonlabs/skeleton"
-	import { blur, slide } from "svelte/transition"
-	import type { Chan, DirectConversation, Message } from "$types"
-	import { my_name } from "$stores"
 	import ChatBox from "$lib/ChatBox.svelte"
+
+	//Utils
+	import { blur, slide } from "svelte/transition"
+	import { my_name } from "$stores"
 	import { checkError, listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
 	import { makeToast } from "$lib/global"
@@ -11,19 +17,13 @@
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { filter, Noir } from "@skeletonlabs/skeleton"
 	import { modalStore } from "@skeletonlabs/skeleton"
-	import type { ModalSettings, ModalComponent } from "@skeletonlabs/skeleton"
-
 	import { client } from "$clients"
 	import { goto } from "$app/navigation"
-
-	// console.log("init ChatBubble")
 
 	export let message: Message
 	export let from_me = message.author === $my_name
 	export let discussion: Chan | DirectConversation
-	// $: {
-	// console.log((discussion as Chan)?.users)
-	// }
+	export let game_socket: Writable<GameSocket>
 
 	// POPUP SECTION
 	let perms: string[] | undefined
@@ -69,15 +69,21 @@
 	}
 
 	async function inviteToGame() {
-		const modal: ModalSettings = {
-			type: "component",
-			component: "WaitForGame",
-			response: () => {
-				modalStore.close()
-			},
-			meta: { username: message.author },
+		const r = await new Promise<true | undefined>((resolve) => {
+			const modal: ModalSettings = {
+				type: "component",
+				component: "WaitForGame",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+				meta: { username: message.author, game_socket },
+			}
+			modalStore.trigger(modal)
+		})
+		if (r) {
+			goto("/pong")
 		}
-		modalStore.trigger(modal)
 	}
 
 	async function kickHandler() {

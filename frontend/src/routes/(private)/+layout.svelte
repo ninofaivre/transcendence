@@ -10,6 +10,7 @@
 	import { modalStore } from "@skeletonlabs/skeleton"
 	import { writable } from "svelte/store"
 	import { get } from "svelte/store"
+	import { goto } from "$app/navigation"
 
 	console.log("private layout init")
 
@@ -60,7 +61,10 @@
 				}
 				modalStore.trigger(modal)
 			})
-			if (r) callback(r)
+			if (r) {
+				callback(r)
+				goto("/pong")
+			}
 		})
 	}
 

@@ -1,13 +1,13 @@
 <script lang="ts">
 	// DiscussionDisplay.svelte
 
-	import type { Chan, DirectConversation, MessageOrEvent } from "$types"
+	import type { Chan, DirectConversation, GameSocket, MessageOrEvent } from "$types"
+	import type { Writable } from "svelte/store"
 
 	import ChatBubble from "$lib/ChatBubble.svelte"
-	import { onMount } from "svelte"
+	import { getContext, onMount } from "svelte"
 	import { my_name } from "$stores"
 	import { createEventDispatcher } from "svelte"
-	import { bs_hash } from "$lib/global"
 
 	console.log("DiscussionDisplay init")
 
@@ -21,6 +21,7 @@
 	let canary: HTMLDivElement
 	let _init: boolean = true
 	const dispatch = createEventDispatcher()
+	let game_socket: Writable<GameSocket> = getContext("game_socket")
 
 	async function intersectionHandler([entry, ..._]: IntersectionObserverEntry[]) {
 		if (_init) return
@@ -61,6 +62,7 @@
 					from_me={message.author === $my_name}
 					on:delete
 					on:edit
+					{game_socket}
 				/>
 			{:else if message.type === "event"}
 				<div id={message.id}>

@@ -15,7 +15,7 @@
 </script>
 
 <!-- Paddle  -->
-<T.Mesh position.x={position.x} position.z={position.y}>
-	<T.BoxGeometry args={[size.width, 1, size.height]} />
+<T.Mesh position.x={position.x} position.y={position.y}>
+	<T.BoxGeometry args={[size.width, size.height, 1]}  />
 	<T.MeshBasicMaterial args={[{ color }]} />
 </T.Mesh>

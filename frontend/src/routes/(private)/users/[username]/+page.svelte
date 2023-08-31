@@ -22,10 +22,10 @@
 
 	async function askFriend() {
 		const ret = await client.invitations.friend.createFriendInvitation({
-			body: { invitedUserName: data.username },
+			body: { invitedUserName: data.user.userName },
 		})
 		if (ret.status != 201) checkError(ret, "send friend request")
-		else makeToast("Sent friend request to " + data.username)
+		else makeToast("Sent friend request to " + data.user.userName)
 	}
 
 	async function revokeFriend() {
@@ -44,14 +44,21 @@
 		modalStore.trigger(modal)
 	}
 
-	const source = ["coucou"]
+	const source = ["1", "2", "3"]
+	let paginationSettings = {
+		page: 0,
+		limit: 5,
+		size: data.match_history.length,
+		amounts: [1, 2, 5, 10],
+	} satisfies PaginationSettings
 
-	// let paginationSettings = {
-	// 	page: 0,
-	// 	limit: 5,
-	// 	size: source.length,
-	// 	amounts: [1, 2, 5, 10],
-	// } satisfies PaginationSettings
+	function onAmountChange(e: CustomEvent) {
+		console.log(e.detail)
+	}
+
+	function onPageChange(e: CustomEvent) {
+		console.log(e.detail)
+	}
 </script>
 
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
@@ -60,12 +67,12 @@
 		<div class="grid flex-1 grid-cols-2">
 			<!-- col1 -->
 			<Avatar
-				src="{PUBLIC_BACKEND_URL}/users/{data.username}/profilePicture"
-				fallback="https://i.pravatar.cc/?u={data.username}"
+				src="{PUBLIC_BACKEND_URL}/users/{data.user.userName}/profilePicture"
+				fallback="https://i.pravatar.cc/?u={data.user.userName}"
 				alt="profile"
 			/>
 			<!-- col2 -->
-			<h1 class="self-center text-black">{data.username}</h1>
+			<h1 class="self-center text-black">{data.user.userName}</h1>
 		</div>
 
 		<!-- Send Friend Request -->
@@ -92,5 +99,9 @@
 		</div>
 	</div>
 
-	<!-- <Paginator bind:this={paginationSettings} /> -->
+	<Paginator
+		bind:settings={paginationSettings}
+		on:page={onPageChange}
+		on:amount={onAmountChange}
+	/>
 </div>

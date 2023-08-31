@@ -676,6 +676,9 @@ export class GameService {
             this.queue = null
     }
 
+    public surrend = (intraUserName: IntraUserName) =>
+        this.usersToGame.get(intraUserName)?.surrend(intraUserName)
+
     public movement(intraUserName: IntraUserName, move: GameMovement) {
         const game = this.usersToGame.get(intraUserName)
         if (!game)

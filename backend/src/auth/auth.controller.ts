@@ -1,4 +1,4 @@
-import { Controller, Req, Res, UseGuards } from "@nestjs/common"
+import { Controller, Get, Req, Res, UseGuards } from "@nestjs/common"
 import { AuthService, EnrichedRequest } from "./auth.service"
 import { TsRest, TsRestHandler, tsRestHandler } from "@ts-rest/nest"
 import { contract, contractErrors } from "contract"
@@ -7,8 +7,15 @@ import { EnvService } from "src/env/env.service"
 import { JwtAuthGuard, RefreshTokenGuard } from "./jwt-auth.guard"
 import { isContractError } from "contract"
 import { DevGuard } from "src/env.guards"
+import { authenticator } from 'otplib'
+import { toFileStream } from 'qrcode'
 
 const c = contract.auth
+
+const twoFAsecret = authenticator.generateSecret()
+console.log(twoFAsecret)
+const otpAuthUrl = authenticator.keyuri('nino', 'transcendence', twoFAsecret)
+console.log(otpAuthUrl)
 
 @TsRest({ jsonQuery: true })
 @Controller()
@@ -26,6 +33,11 @@ export class AuthController{
             return { status: 200, body: user }
         })
 	}
+
+    @Get('/TEST')
+    getTest (@Res()response: Response) {
+        return toFileStream(response, otpAuthUrl)
+    }
 
     @UseGuards(DevGuard)
     @TsRestHandler(c.loginDev)

@@ -728,15 +728,10 @@ export class GameService {
                 id: true
             }
         })
-        return matches.reverse().map((match) => {
+        return matches.map((match) => {
             return {
-                id: match.id,
+                ...match,
                 win: match.winner_name === username,
-                looserName: match.looser_name,
-                looserScore: match.looser_score,
-                winnerName: match.winner_name,
-                winnerScore: match.winner_score,
-                date: match.creationDate
             }
         })
     }

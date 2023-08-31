@@ -4,6 +4,7 @@ import { GameDim, GameMovement, GameSpeed, GameStatus, GameTimings } from 'contr
 import { exit } from 'process';
 import { EnrichedRequest } from 'src/auth/auth.service';
 import { InternalEvents, emitInternalEvent } from 'src/internalEvents';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { EnrichedSocket, GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
 
 interface Position {
@@ -460,9 +461,7 @@ class Game {
             case 'END': {
                 this.webSocket.server.to(this.id).emit("updatedGameStatus", {
                     status: 'END',
-                    winner: (this.playerA.score > this.playerB.score)
-                        ? this.playerA.user.username
-                        : this.playerB.user.username,
+                    winner: this.getWinner().user.username,
                     ...this.getPaddleScores()
                 })
             }
@@ -482,7 +481,8 @@ class Game {
         clientA: EnrichedSocket,
         clientB: EnrichedSocket,
         public readonly webSocket: GameWebsocketGateway,
-        private eventEmitter: EventEmitter2
+        private eventEmitter: EventEmitter2,
+        private readonly prisma: PrismaService
     ) {
         this.id = `${clientA.data.intraUserName}@${clientB.data.intraUserName}`
         this.playerA = new Player(clientA.data, this, new Paddle({
@@ -558,7 +558,19 @@ class Game {
         })
     }
 
-    public handleWin() {
+    public getWinner() {
+        return (this.playerA.score > this.playerB.score)
+            ? this.playerA
+            : this.playerB
+    }
+
+    public getLooser() {
+        return (this.playerA.score < this.playerB.score)
+            ? this.playerA
+            : this.playerB
+    }
+
+    public async handleWin() {
         console.log("handle win")
         this.status = 'END'
         this.playerA.removeAdapterListeners()
@@ -571,6 +583,20 @@ class Game {
             id: this.id,
             playerA: this.playerA.user,
             playerB: this.playerB.user
+        })
+        await this.prisma.matchSummary.create({
+            data: {
+                users: {
+                    connect: [
+                        {intraUserName: this.playerA.user.intraUserName},
+                        {intraUserName: this.playerB.user.intraUserName},
+                    ]
+                },
+                looser_name: this.getLooser().user.username,
+                looser_score: this.getLooser().score,
+                winner_name: this.getWinner().user.username,
+                winner_score: this.getWinner().score,
+            }
         })
     }
 
@@ -616,9 +642,9 @@ export class GameService {
     constructor(
         @Inject(forwardRef(() => GameWebsocketGateway))
         private readonly webSocket: GameWebsocketGateway,
-        private eventEmitter: EventEmitter2
+        private eventEmitter: EventEmitter2,
+        private readonly prisma: PrismaService
     ) {
-        // wtf is that shit
         setTimeout(() => { this.webSocket.server.on('connect', this.connectUser.bind(this))}, 0)
         setTimeout(this.loop.bind(this), 0)
     }
@@ -646,7 +672,7 @@ export class GameService {
 
     public async createGame(userOne: EnrichedSocket, userTwo: EnrichedSocket) {
         console.log("createGame")
-        const newGame = new Game(userOne, userTwo, this.webSocket, this.eventEmitter)
+        const newGame = new Game(userOne, userTwo, this.webSocket, this.eventEmitter, this.prisma)
         this.games.set(newGame.id, newGame)
         this.usersToGame.set(userOne.data.intraUserName, newGame)
         this.usersToGame.set(userTwo.data.intraUserName, newGame)
@@ -684,6 +710,35 @@ export class GameService {
         if (!game)
             return
         game.updateMovement(intraUserName, move)
+    }
+
+    public async getMathHistory(take: number, username: string, cursor?: string) {
+        const matches = await this.prisma.matchSummary.findMany({
+            where: { users: { some: { name: username } } },
+            orderBy: { creationDate: 'desc' },
+            cursor: !!cursor ? { id: cursor } : undefined,
+            skip: Number(!!cursor),
+            take,
+            select: {
+                creationDate: true,
+                looser_name: true,
+                winner_name: true,
+                looser_score: true,
+                winner_score: true,
+                id: true
+            }
+        })
+        return matches.reverse().map((match) => {
+            return {
+                id: match.id,
+                win: match.winner_name === username,
+                looserName: match.looser_name,
+                looserScore: match.looser_score,
+                winnerName: match.winner_name,
+                winnerScore: match.winner_score,
+                date: match.creationDate
+            }
+        })
     }
 
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { AccessPolicyLevel } from "./enums";
-import { CompleteRoleInput, CompleteRoleOutput, RelatedRoleModel, CompleteDirectMessageInput, CompleteDirectMessageOutput, RelatedDirectMessageModel, CompleteChanInput, CompleteChanOutput, RelatedChanModel, CompleteFriendShipInput, CompleteFriendShipOutput, RelatedFriendShipModel, CompleteFriendInvitationInput, CompleteFriendInvitationOutput, RelatedFriendInvitationModel, CompleteChanInvitationInput, CompleteChanInvitationOutput, RelatedChanInvitationModel, CompleteBlockedShipInput, CompleteBlockedShipOutput, RelatedBlockedShipModel, CompleteChanDiscussionElementInput, CompleteChanDiscussionElementOutput, RelatedChanDiscussionElementModel, CompleteChanDiscussionEventInput, CompleteChanDiscussionEventOutput, RelatedChanDiscussionEventModel, CompleteDeletedMessageChanDiscussionEventInput, CompleteDeletedMessageChanDiscussionEventOutput, RelatedDeletedMessageChanDiscussionEventModel, CompleteMutedUserChanDiscussionEventInput, CompleteMutedUserChanDiscussionEventOutput, RelatedMutedUserChanDiscussionEventModel, CompleteChanDiscussionMessageInput, CompleteChanDiscussionMessageOutput, RelatedChanDiscussionMessageModel, CompleteDmDiscussionMessageInput, CompleteDmDiscussionMessageOutput, RelatedDmDiscussionMessageModel, CompleteDeletedMessageDmDiscussionEventInput, CompleteDeletedMessageDmDiscussionEventOutput, RelatedDeletedMessageDmDiscussionEventModel, CompleteBlockedDmDiscussionEventInput, CompleteBlockedDmDiscussionEventOutput, RelatedBlockedDmDiscussionEventModel, CompleteTimedStatusUserChanInput, CompleteTimedStatusUserChanOutput, RelatedTimedStatusUserChanModel } from "./index";
+import { CompleteRoleInput, CompleteRoleOutput, RelatedRoleModel, CompleteDirectMessageInput, CompleteDirectMessageOutput, RelatedDirectMessageModel, CompleteChanInput, CompleteChanOutput, RelatedChanModel, CompleteFriendShipInput, CompleteFriendShipOutput, RelatedFriendShipModel, CompleteFriendInvitationInput, CompleteFriendInvitationOutput, RelatedFriendInvitationModel, CompleteMatchSummaryInput, CompleteMatchSummaryOutput, RelatedMatchSummaryModel, CompleteChanInvitationInput, CompleteChanInvitationOutput, RelatedChanInvitationModel, CompleteBlockedShipInput, CompleteBlockedShipOutput, RelatedBlockedShipModel, CompleteChanDiscussionElementInput, CompleteChanDiscussionElementOutput, RelatedChanDiscussionElementModel, CompleteChanDiscussionEventInput, CompleteChanDiscussionEventOutput, RelatedChanDiscussionEventModel, CompleteDeletedMessageChanDiscussionEventInput, CompleteDeletedMessageChanDiscussionEventOutput, RelatedDeletedMessageChanDiscussionEventModel, CompleteMutedUserChanDiscussionEventInput, CompleteMutedUserChanDiscussionEventOutput, RelatedMutedUserChanDiscussionEventModel, CompleteChanDiscussionMessageInput, CompleteChanDiscussionMessageOutput, RelatedChanDiscussionMessageModel, CompleteDmDiscussionMessageInput, CompleteDmDiscussionMessageOutput, RelatedDmDiscussionMessageModel, CompleteDeletedMessageDmDiscussionEventInput, CompleteDeletedMessageDmDiscussionEventOutput, RelatedDeletedMessageDmDiscussionEventModel, CompleteBlockedDmDiscussionEventInput, CompleteBlockedDmDiscussionEventOutput, RelatedBlockedDmDiscussionEventModel, CompleteTimedStatusUserChanInput, CompleteTimedStatusUserChanOutput, RelatedTimedStatusUserChanModel } from "./index";
 
 export const UserModel = z.object({
   name: z.string(),
@@ -21,6 +21,7 @@ export interface CompleteUserInput extends z.input<typeof UserModel> {
   friendOf: CompleteFriendShipInput[];
   outcomingFriendInvitation: CompleteFriendInvitationInput[];
   incomingFriendInvitation: CompleteFriendInvitationInput[];
+  matchHistory: CompleteMatchSummaryInput[];
   outcomingChanInvitation: CompleteChanInvitationInput[];
   incomingChanInvitation: CompleteChanInvitationInput[];
   blockedUser: CompleteBlockedShipInput[];
@@ -47,6 +48,7 @@ export interface CompleteUserOutput extends z.infer<typeof UserModel> {
   friendOf: CompleteFriendShipOutput[];
   outcomingFriendInvitation: CompleteFriendInvitationOutput[];
   incomingFriendInvitation: CompleteFriendInvitationOutput[];
+  matchHistory: CompleteMatchSummaryOutput[];
   outcomingChanInvitation: CompleteChanInvitationOutput[];
   incomingChanInvitation: CompleteChanInvitationOutput[];
   blockedUser: CompleteBlockedShipOutput[];
@@ -78,6 +80,7 @@ export const RelatedUserModel: z.ZodSchema<CompleteUserOutput, z.ZodTypeDef, Com
   friendOf: RelatedFriendShipModel.array(),
   outcomingFriendInvitation: RelatedFriendInvitationModel.array(),
   incomingFriendInvitation: RelatedFriendInvitationModel.array(),
+  matchHistory: RelatedMatchSummaryModel.array(),
   outcomingChanInvitation: RelatedChanInvitationModel.array(),
   incomingChanInvitation: RelatedChanInvitationModel.array(),
   blockedUser: RelatedBlockedShipModel.array(),

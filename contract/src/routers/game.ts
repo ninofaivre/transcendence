@@ -1,5 +1,6 @@
 import { initContract } from "@ts-rest/core"
 import { z } from "zod"
+import { zUserName } from "../zod/user.zod"
 
 const c = initContract()
 
@@ -23,51 +24,64 @@ export const GameSpeed = {
 	ball: 400, // will be a base speed (speed of ball will change over time) random value for now
 }
 
-export const zGameParameters = z.strictObject({
-	court: z.strictObject({
-		start: z.strictObject({
-			x: z.number(),
-			y: z.number(),
-		}),
-		size: z.strictObject({
-			width: z.number(),
-			height: z.number(),
-		}),
-	}),
-	ball: z.strictObject({
-		start: z.strictObject({
-			x: z.number(),
-			y: z.number(),
-		}),
-		// Radius
-		size: z.number(),
-	}),
-	paddle: z.strictObject({
-		start: z.strictObject({
-			x: z.number(),
-			y: z.number(),
-		}),
-		size: z.strictObject({
-			width: z.number(),
-			height: z.number(),
-		}),
-	}),
+// export const zGameParameters = z.strictObject({
+// 	court: z.strictObject({
+// 		start: z.strictObject({
+// 			x: z.number(),
+// 			y: z.number(),
+// 		}),
+// 		size: z.strictObject({
+// 			width: z.number(),
+// 			height: z.number(),
+// 		}),
+// 	}),
+// 	ball: z.strictObject({
+// 		start: z.strictObject({
+// 			x: z.number(),
+// 			y: z.number(),
+// 		}),
+// 		// Radius
+// 		size: z.number(),
+// 	}),
+// 	paddle: z.strictObject({
+// 		start: z.strictObject({
+// 			x: z.number(),
+// 			y: z.number(),
+// 		}),
+// 		size: z.strictObject({
+// 			width: z.number(),
+// 			height: z.number(),
+// 		}),
+// 	}),
+// })
+
+const zMatch = z.strictObject({
+    id: z.string().uuid(),
+    date: z.date(),
+    win: z.boolean(),
+    looserName: zUserName,
+    winnerName: zUserName,
+    looserScore: z.number().positive().int(),
+    winnerScore: z.number().positive().int()
 })
 
 export const gameContract = c.router(
 	{
-		// Valid for all games ? Or should I send an id of a game that was created beforehand ?
-		getGameParameters: {
-			method: "GET",
-			path: "/",
-			// path: "/:id",
-			// pathParams: z.strictObject({
-			// 	gameId: z.string().uuid(),
-			// }),
-			responses: {
-				200: zGameParameters,
-			},
-		},
+        getMatchHistory: {
+            method: "GET",
+            path:"/:username/match-history",
+            summary: "get match history",
+            pathParams: z.strictObject({
+                username: zUserName
+            }),
+            query: z.strictObject({
+                nMatches: z.number().positive().int().max(50).default(20),
+                cursor: z.string().uuid().optional()
+            }),
+            responses: {
+                200: z.array(zMatch)
+            }
+        },
 	},
 	{
 		pathPrefix: "/game",

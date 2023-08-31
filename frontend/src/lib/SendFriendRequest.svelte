@@ -1,11 +1,11 @@
 <script lang="ts">
 	import Autocomplete from "$lib/Autocomplete.svelte"
-	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
+	import { getToastStore, type AutocompleteOption } from "@skeletonlabs/skeleton"
 
 	import { onMount } from "svelte"
 	import { client } from "$clients"
 	import { invalidate } from "$app/navigation"
-	import { reportUnexpectedCode, listenOutsideClick } from "$lib/global"
+	import { checkError, listenOutsideClick } from "$lib/global"
 
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
@@ -15,11 +15,11 @@
 	let border_radius = "15px"
 
 	async function sendFriendRequest(username: string) {
-		const { status, body } = await client.invitations.friend.createFriendInvitation({
+		const ret = await client.invitations.friend.createFriendInvitation({
 			body: { invitedUserName: username },
 		})
-		if (status != 201) {
-			reportUnexpectedCode(status, "create friend request", body, "error")
+		if (ret.status != 201) {
+			checkError(ret, "send friend request", getToastStore())
 		} else {
 			invalidate(":friendships")
 			console.log("Sent friendship request to " + username)
@@ -33,21 +33,17 @@
 	}
 
 	async function getUsernames(input: string) {
-		return client.users
-			.searchUsers({
-				query: {
-					userNameContains: input,
-					filter: {
-						type: "inc",
-						friends: false,
-					},
+		const ret = await client.users.searchUsers({
+			query: {
+				userNameContains: input,
+				filter: {
+					type: "inc",
+					friends: false,
 				},
-			})
-			.then(({ status, body }) => {
-				if (status === 200) {
-					users = body.map((obj) => ({ label: obj.userName, value: obj.userName }))
-				} else reportUnexpectedCode(status, "get users' names", body)
-			})
+			},
+		})
+		if (ret.status !== 200) checkError(ret, "get user names", getToastStore())
+		else users = ret.body.map((obj) => ({ label: obj.userName, value: obj.userName }))
 	}
 
 	async function onKeypress(event: KeyboardEvent) {
@@ -69,8 +65,8 @@
 <div use:listenOutsideClick on:outsideclick={() => void (input_focused = false)}>
 	<div class="grid min-w-[50vw] grid-cols-[1fr_auto]">
 		<input
-			bind:this={input_element}
 			class="input py-2"
+			bind:this={input_element}
 			type="search"
 			bind:value={search_input}
 			placeholder="Search user..."

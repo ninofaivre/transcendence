@@ -1,6 +1,11 @@
 <script lang="ts">
 	import type { PageData } from "./$types"
-	import type { PaginationSettings } from "@skeletonlabs/skeleton"
+	import {
+		Table,
+		type PaginationSettings,
+		type TableSource,
+		tableMapperValues,
+	} from "@skeletonlabs/skeleton"
 
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { Avatar } from "@skeletonlabs/skeleton"
@@ -22,10 +27,10 @@
 
 	async function askFriend() {
 		const ret = await client.invitations.friend.createFriendInvitation({
-			body: { invitedUserName: data.username },
+			body: { invitedUserName: data.user.userName },
 		})
 		if (ret.status != 201) checkError(ret, "send friend request")
-		else makeToast("Sent friend request to " + data.username)
+		else makeToast("Sent friend request to " + data.user.userName)
 	}
 
 	async function revokeFriend() {
@@ -44,14 +49,50 @@
 		modalStore.trigger(modal)
 	}
 
-	const source = ["coucou"]
+	function onAmountChange(e: CustomEvent) {
+		console.log(e.detail)
+	}
 
-	// let paginationSettings = {
-	// 	page: 0,
-	// 	limit: 5,
-	// 	size: source.length,
-	// 	amounts: [1, 2, 5, 10],
-	// } satisfies PaginationSettings
+	function onPageChange(e: CustomEvent) {
+		console.log(e.detail)
+	}
+
+	let paginationSettings = {
+		page: 0,
+		limit: 2,
+		size: data.match_history.length,
+		amounts: [1, 2, 5, 10],
+	} satisfies PaginationSettings
+
+	$: match_history = data.match_history.map((arr) => {
+		return {
+			Date: new Date(arr.date).toLocaleDateString("en-US", {
+				weekday: "long",
+				year: "numeric",
+				month: "short",
+				day: "numeric",
+			}),
+			Winner: arr.winnerName,
+			"Winning Score": arr.winnerScore,
+			Looser: arr.looserName,
+			"Loosing Score": arr.looserScore,
+		}
+	})
+
+	$: fields = Object.keys(match_history[0])
+
+	$: paginated_match_history = match_history.slice(
+		paginationSettings.page * paginationSettings.limit,
+		paginationSettings.page * paginationSettings.limit + paginationSettings.limit,
+	)
+
+	let table_source: TableSource
+	$: table_source = {
+		// A list of heading labels.
+		head: fields,
+		// The data visibly shown in your table body UI.
+		body: tableMapperValues(paginated_match_history, fields),
+	}
 </script>
 
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
@@ -60,12 +101,12 @@
 		<div class="grid flex-1 grid-cols-2">
 			<!-- col1 -->
 			<Avatar
-				src="{PUBLIC_BACKEND_URL}/users/{data.username}/profilePicture"
-				fallback="https://i.pravatar.cc/?u={data.username}"
+				src="{PUBLIC_BACKEND_URL}/users/{data.user.userName}/profilePicture"
+				fallback="https://i.pravatar.cc/?u={data.user.userName}"
 				alt="profile"
 			/>
 			<!-- col2 -->
-			<h1 class="self-center text-black">{data.username}</h1>
+			<h1 class="self-center text-black">{data.user.userName}</h1>
 		</div>
 
 		<!-- Send Friend Request -->
@@ -91,6 +132,11 @@
 			>
 		</div>
 	</div>
-
-	<!-- <Paginator bind:this={paginationSettings} /> -->
 </div>
+<Table source={table_source} />
+<Paginator
+	bind:settings={paginationSettings}
+	showNumerals
+	on:page={onPageChange}
+	on:amount={onAmountChange}
+/>

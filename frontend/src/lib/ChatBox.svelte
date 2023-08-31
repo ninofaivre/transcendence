@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte"
 
-	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
-
 	export let outline = false
 	export let min_rows = 1
 	export let max_rows: number | undefined = undefined

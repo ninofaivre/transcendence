@@ -34,10 +34,12 @@
 			console.log("reconnect_attempt!")
 		})
 		$game_socket.on("disconnect", (data) => {
-			console.log("disconnect!", data)
-			$game_socket = io(PUBLIC_BACKEND_URL, {
-				withCredentials: true,
-			})
+			console.log(data)
+            if (data === "io server disconnect") {
+                $game_socket = io(PUBLIC_BACKEND_URL, {
+                    withCredentials: true,
+                })
+            }
 			console.log("applying callbacks for layout !")
 			applyCallbacks()
 		})

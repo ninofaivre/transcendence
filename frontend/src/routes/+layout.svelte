@@ -1,10 +1,10 @@
 <script lang="ts">
 	// Most of your app wide CSS should be put in this file
 	import "../app.postcss"
-	import { initializeStores } from "@skeletonlabs/skeleton"
+	import { getToastStore, initializeStores } from "@skeletonlabs/skeleton"
 
 	import { AppShell, AppBar, LightSwitch, Toast, Avatar } from "@skeletonlabs/skeleton"
-	import { logout } from "$lib/global"
+	import { makeToast } from "$lib/global"
 	import { logged_in, my_name } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
@@ -24,6 +24,7 @@
 	import WaitForGame from "$lib/WaitForGame.svelte"
 	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
 	import AcceptGameInvitationModal from "$lib/AcceptGameInvitationModal.svelte"
+	import { client } from "$clients"
 
 	initializeStores()
 	const modalStore = getModalStore()
@@ -64,6 +65,25 @@
 		{ inner: "✉️", href: "/dms" },
 		{ inner: "🤝", href: "/friends" },
 	]
+
+	async function logout() {
+		return client.auth
+			.logout()
+			.catch(({ status, message }) => {
+				makeToast(
+					`Can't log out. Server returned ${status} ${
+						message ? "without a message" : `${message}`
+					}`,
+					getToastStore(),
+				)
+			})
+			.then(() => {
+				makeToast("Logging out...")
+			})
+			.finally(() => {
+				logged_in.set(false)
+			})
+	}
 </script>
 
 <!-- App Shell -->

@@ -1,114 +1,33 @@
 import type { SseEvent } from "contract"
 
-import { PUBLIC_BACKEND_URL } from "$env/static/public"
-import { logged_in } from "$lib/stores"
-import { client } from "$clients"
 import { isContractError } from "contract"
-import { getToastStore } from "@skeletonlabs/skeleton"
+import type { getToastStore } from "@skeletonlabs/skeleton"
 
-const toastStore = getToastStore()
+// const toastStore = getToastStore()
 
-export function checkError(ret: { status: number; body: any }, what: string) {
+export function makeToast(message: string, toastStore?: ReturnType<typeof getToastStore>) {
+	if (toastStore)
+		toastStore.trigger({
+			message,
+		})
+	else alert(message)
+	return message
+}
+
+export function checkError(
+	ret: { status: number; body: any },
+	what: string,
+	toastStore?: ReturnType<typeof getToastStore>,
+) {
 	if (isContractError(ret)) {
-		makeToast("Could not " + what + " : " + ret.body.message)
+		makeToast("Could not " + what + " : " + ret.body.message, toastStore)
 		console.log(ret.body.code)
 	} else {
 		let msg = "Server return unexpected status " + ret.status
 		if ("message" in ret.body) msg += " with message " + ret.body.message
-		makeToast(msg)
+		makeToast(msg, toastStore)
 		console.error(msg)
 	}
-}
-
-export function getCookie(cname: string) {
-	const name = cname + "="
-	const ca = document.cookie.split(";")
-	for (let i = 0; i < ca.length; i++) {
-		let c = ca[i]
-		while (c.charAt(0) == " ") {
-			c = c.substring(1)
-		}
-		if (c.indexOf(name) == 0) {
-			return c.substring(name.length, c.length)
-		}
-	}
-	return ""
-}
-
-export function deleteCookie(cname: string) {
-	if (getCookie(cname))
-		document.cookie = cname + "=" + ";path=/" + ";expires=Thu, 01 Jan 1970 00:00:01 GMT"
-}
-
-export async function fetchGet(apiEndPoint: string, urlArgs?: object) {
-	let params = ""
-	if (urlArgs) {
-		params =
-			"?" +
-			Object.entries(urlArgs)
-				.map(([k, v]) => `${k}=${v}`)
-				.join("&")
-	}
-	const response = await fetch(PUBLIC_BACKEND_URL + apiEndPoint + params, {
-		// mode: "cors",
-		credentials: "include",
-	})
-	if (response.status == 401) {
-		console.log(
-			`GET request to ${
-				PUBLIC_BACKEND_URL + apiEndPoint + params
-			} returned 401 although we are logged in ! : Logging us out...`,
-		)
-		logged_in.set(false)
-	}
-	return response
-}
-
-export async function fetchPostJSON(apiEndPoint: string, jsBody: object, urlArgs?: object) {
-	let params = ""
-	if (urlArgs)
-		params =
-			"?" +
-			Object.entries(urlArgs)
-				.map(([k, v]) => `${k}=${v}`)
-				.join("&")
-	let body = JSON.stringify(jsBody)
-	let headers = {
-		"Content-Type": "application/json",
-	}
-	const response = await fetch(PUBLIC_BACKEND_URL + apiEndPoint + params, {
-		// mode: "cors",
-		credentials: "include",
-		method: "POST",
-		headers,
-		body,
-	})
-	if (response.status == 401) {
-		console.log(
-			`POST request to ${PUBLIC_BACKEND_URL + apiEndPoint} returned 401`,
-			"Logging out after unauthorized request...",
-			logged_in.set(false),
-		)
-	}
-	return response
-}
-
-export async function logout() {
-	return client.auth
-		.logout()
-		.catch(({ status, message }) => {
-			makeToast(
-				`Can't log out. Server returned ${status} ${
-					message ? "without a message" : `${message}`
-				}`,
-			)
-		})
-		.then(() => {
-			makeToast("Logging out...")
-		})
-		.finally(() => {
-			logged_in.set(false)
-		})
 }
 
 type GetDataFromEventType<T extends SseEvent["type"]> = Extract<SseEvent, { type: T }>["data"]
@@ -151,40 +70,6 @@ export function listenOutsideClick(
 	}
 }
 
-export function reportUnexpectedCode(
-	code: Number,
-	what: string,
-	ret: any,
-	level?: "error" | "warning" | "log",
-) {
-	const message = ret?.message
-		? `Could not ${what}. Server returned ${code}\n with message \"${ret?.message}\"`
-		: `Could not ${what}. Server returned ${code}\n with the following data: ${JSON.stringify(
-				ret,
-		  )}`
-	switch (level) {
-		case "log":
-			console.log(message)
-			break
-		case "warning":
-			console.warn(message)
-			break
-		case "error":
-			console.error(message)
-			break
-		default:
-			console.log(message)
-	}
-	return message
-}
-
-export function makeToast(message: string) {
-	toastStore.trigger({
-		message,
-	})
-	return message
-}
-
 // Give a list of keys and call a function for those
 export function simpleKeypressHandlerFactory(keys: string[], func: (ev?: KeyboardEvent) => void) {
 	return (ev: KeyboardEvent) => {
@@ -204,15 +89,6 @@ export function keypressHandlerFactory(map: Map<string, (ev?: KeyboardEvent) => 
 			func(ev)
 		}
 	}
-}
-
-export function bs_hash(str: string) {
-	let sum = 0
-	for (let char of str) {
-		sum += char.charCodeAt(0) - 98
-	}
-	sum = sum % 70
-	return String(sum)
 }
 
 export function shallowCopyPartialToNotPartial<T extends Object>(src: Partial<T>, dest: T) {

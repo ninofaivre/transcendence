@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res, UseGuards } from "@nestjs/common"
+import { Controller, Get, Param, Req, Res, UseGuards } from "@nestjs/common"
 import { AuthService, EnrichedRequest } from "./auth.service"
 import { TsRest, TsRestHandler, tsRestHandler } from "@ts-rest/nest"
 import { contract, contractErrors } from "contract"
@@ -34,9 +34,21 @@ export class AuthController{
         })
 	}
 
-    @Get('/TEST')
-    getTest (@Res()response: Response) {
+    @Get('/TESTA')
+    getTestA(@Res()response: Response) {
         return toFileStream(response, otpAuthUrl)
+    }
+
+    @Get('/TESTB/:code')
+    getTestB(@Param('code')token: string) {
+        if (authenticator.verify({ token, secret: twoFAsecret })) {
+            console.log("user authentifié")
+            return "SUCCESS"
+        }
+        else {
+            console.log("user non authentifié")
+            return "FAILURE"
+        }
     }
 
     @UseGuards(DevGuard)

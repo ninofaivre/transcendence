@@ -41,9 +41,9 @@
 				$game_socket = io(PUBLIC_BACKEND_URL, {
 					withCredentials: true,
 				})
+				applyCallbacks()
 			}
 			console.log("applying callbacks for layout !")
-			applyCallbacks()
 		})
 		$game_socket.on("connect_error", (data) => {
 			// console.log("connect_error", data)

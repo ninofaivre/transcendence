@@ -5,7 +5,7 @@
 
 	import { ProgressRadial } from "@skeletonlabs/skeleton"
 	import { Canvas } from "@threlte/core"
-	import { Text } from "@threlte/extras"
+	import { Text, HTML } from "@threlte/extras"
 	import Pong from "./Pong.svelte"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { getContext, onMount } from "svelte"
@@ -81,6 +81,7 @@
 						value -= 1
 					}, 1000 * i)
 				}
+				;({ paddleLeftScore, paddleRightScore } = data)
 			} else if (data.status === "BREAK") {
 				;({ paddleLeftScore, paddleRightScore } = data)
 				timeout = data.timeout / 1000
@@ -92,6 +93,7 @@
 					}, 1000 * i)
 				}
 			} else if (data.status === "PAUSE") {
+                // Implemeting the timeout
 			} else if (data.status === "END") {
 				;({ paddleLeftScore, paddleRightScore } = data)
 				winner = data.winner
@@ -132,12 +134,15 @@
 		console.log("NONE")
 		$game_socket.emit("gameMovement", "NONE")
 	}
+    function surrend() {
+        alert("I surrend !")
+    }
 </script>
 
 <div class="menu-container grid grid-cols-1">
 	{#if state === "PAUSE"}
 		<div class="justify-self self-center">
-			<div>Waiting for user</div>
+			<div>Waiting for { $my_name === paddleLeftUserName ? paddleRightUserName : paddleLeftUserName }</div>
 			<div class="spinner" />
 		</div>
 	{:else if state === "BREAK"}
@@ -228,6 +233,17 @@
 		anchorY={court.height / 2 - 300}
 		font="/arcadeclassic.regular.ttf"
 	/>
+    <HTML
+        position.x={court.width}
+        position.y={200}
+    >
+        <button
+          on:click={surrend}
+          class="btn bg-orange-500 px-2 hover:opacity-90 active:opacity-70"
+        >
+            Surrend
+        </button>
+    </HTML>
 	<Pong
 		{court}
 		{ball_sz}

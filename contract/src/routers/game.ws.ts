@@ -17,7 +17,9 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
         status: z.literal("INIT"),
         timeout: z.number().positive().int(),
         paddleLeftUserName: zUserName,
-        paddleRightUserName: zUserName
+        paddleRightUserName: zUserName,
+        paddleLeftScore: ScoreSchema,
+        paddleRightScore: ScoreSchema
     }),
     z.strictObject({
         // BREAK = décompte entre les manches

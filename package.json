@@ -27,13 +27,12 @@
     }
   },
   "dependencies": {
-    "@ts-rest/core": "^3.28.0",
-    "@ts-rest/nest": "^3.28.0",
-    "@ts-rest/open-api": "^3.28.0",
-    "zod": "^3.22.0",
-    "@anatine/zod-openapi": "^2.1.0",
-    "dotenv-cli": "^7.2.1"
-  },
-  "devDependencies": {
+    "@anatine/zod-openapi": "^2.2.0",
+    "@nestjs/common": "^10.2.3",
+    "@ts-rest/core": "^3.30.0",
+    "@ts-rest/nest": "^3.30.0",
+    "@ts-rest/open-api": "^3.30.0",
+    "dotenv-cli": "^7.3.0",
+    "zod": "^3.22.2"
   }
 }

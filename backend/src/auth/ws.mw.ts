@@ -9,7 +9,6 @@ export function WebSocketAuthMiddleware(
     gameWebsocketGateway: GameWebsocketGateway
 ) {
     return (async (client: EnrichedSocket, next: (err?: unknown) => void) => {
-        console.log(`client tryed to connect in the middleware ${client.data.username}`)
         try {
             const data = new SocketData(authService.isValidAccessTokenFromCookie(client), userService)
             const alreadyExistingClient = (await gameWebsocketGateway.server.sockets.in(data.intraUserName)

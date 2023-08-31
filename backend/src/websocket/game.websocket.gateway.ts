@@ -39,8 +39,10 @@ export class SocketData {
         return this._status
     }
 
-    set status(status) {
-        this._status = status
+    set status(newStatus) {
+        if (this._status === newStatus)
+            return
+        this._status = newStatus
         this.userService.notifyStatus(this.username)
     }
 
@@ -96,22 +98,28 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     // TODO do a typed decorator ?
     @OnEvent('game.end')
     endedGame(payload: InternalEvents['game.end']) {
-        this.server.in(payload.id).disconnectSockets()
-        this.findClientSocketByIntraName(payload.playerA.intraUserName)?.disconnect()
-        this.findClientSocketByIntraName(payload.playerB.intraUserName)?.disconnect()
+        // this.server.in(payload.id).disconnectSockets()
+        // this.findClientSocketByIntraName(payload.playerA.intraUserName)?.disconnect()
+        // this.findClientSocketByIntraName(payload.playerB.intraUserName)?.disconnect()
+        const clientA = this.findClientSocketByIntraName(payload.playerA.intraUserName)
+        if (clientA)
+            clientA.data.status = "IDLE"
+        const clientB = this.findClientSocketByIntraName(payload.playerB.intraUserName)
+        if (clientB)
+            clientB.data.status = "IDLE"
     }
 
     intraNameToClientId = new Map<IntraUserName, string>()
     userNameToClientId = new Map<string, string>()
 
     handleConnection(client: EnrichedSocket, ...args: any[]) {
-        console.log(`${client.data.intraUserName} logged in with id ${client.id}`)
+        // console.log(`${client.data.intraUserName} logged in with id ${client.id}`)
         this.intraNameToClientId.set(client.data.intraUserName, client.id)
         this.userNameToClientId.set(client.data.username, client.id)
     }
 
     handleDisconnect(client: EnrichedSocket) {
-        console.log(`${client.data.intraUserName} logged out with id ${client.id}`)
+        // console.log(`${client.data.intraUserName} logged out with id ${client.id}`)
         this.intraNameToClientId.delete(client.data.intraUserName)
         this.userNameToClientId.delete(client.data.username)
         client.data.status = "OFFLINE"
@@ -169,6 +177,15 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         console.log("queue :", client.data.intraUserName)
         client.data.status = 'QUEUE'
         this.gameService.queueUser(client)
+    }
+
+    @SubscribeMessage("surrend")
+    surrend(
+        @ConnectedSocket()client: EnrichedSocket,
+        @MessageBody(EmptyValidation)payload: never
+    ) {
+        if (client.data.status !== 'GAME')
+            return
     }
 
     @SubscribeMessage("deQueue")

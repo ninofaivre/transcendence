@@ -26,6 +26,9 @@ export type DirectMessagesOrEvents = ClientInferResponseBody<typeof contract.dms
 export type DirectMessageOrEvent = Flatten<DirectMessagesOrEvents>
 export type DirectMessage = Extract<DirectMessageOrEvent, { type: "message" }>
 
+export type MatchHistory = ClientInferResponseBody<typeof contract.game.getMatchHistory, 200>
+export type MatchHistoryElement = Flatten<MatchHistory>
+
 export type Message = ChanMessage | DirectMessage
 export type MessageOrEvent = ChanMessageOrEvent | DirectMessageOrEvent
 export type DeleteMessageFunction =

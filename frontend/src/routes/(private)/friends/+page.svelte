@@ -5,9 +5,10 @@
 	import { Table } from "@skeletonlabs/skeleton"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import { toastStore } from "@skeletonlabs/skeleton"
+	import { getToastStore } from "@skeletonlabs/skeleton"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { invalidate } from "$app/navigation"
+	import { makeToast } from "$lib/global"
 
 	async function acceptFriendInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
 		const id = e.currentTarget.dataset.id
@@ -20,9 +21,7 @@
 				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
-				toastStore.trigger({
-					message,
-				})
+				makeToast(message)
 				console.error(message)
 			} else invalidate(":friends:invitations")
 		}
@@ -39,9 +38,7 @@
 				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
-				toastStore.trigger({
-					message,
-				})
+				makeToast(message)
 				console.error(message)
 			} else invalidate(":friends:invitations")
 		}
@@ -58,9 +55,7 @@
 				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
-				toastStore.trigger({
-					message,
-				})
+				makeToast(message)
 				console.error(message)
 			} else invalidate(":chans:invitations")
 		}
@@ -77,9 +72,7 @@
 				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
-				toastStore.trigger({
-					message,
-				})
+				makeToast(message)
 				console.error(message)
 			} else invalidate(":chans:invitations")
 		}
@@ -107,18 +100,18 @@
 	{#if $page.data.chan_invites.incoming.length != 0}
 		Pending chan invitations:
 		{#each $page.data.chan_invites.incoming as request}
-			<li class="chip variant-soft m-2">
+			<li class="variant-soft chip m-2">
 				<span>
 					{request.invitingUserName} invited you to the {request.chanTitle} channel :
 				</span>
 				<button
 					data-id={request.id}
-					class="chip variant-ghost-primary"
+					class="variant-ghost-primary chip"
 					on:click={acceptChanInvitation}>✅</button
 				>
 				<button
 					data-id={request.id}
-					class="chip variant-ghost-error"
+					class="variant-ghost-error chip"
 					on:click={declineChanInvitation}>❌</button
 				>
 			</li>
@@ -132,18 +125,18 @@
 	{#if $page.data.friend_requests.incoming.length != 0}
 		Pending friend invitations:
 		{#each $page.data.friend_requests.incoming as request}
-			<li class="chip variant-soft m-2">
+			<li class="variant-soft chip m-2">
 				<span>
 					{request.invitingUserName}
 				</span>
 				<button
 					data-id={request.id}
-					class="chip variant-ghost-primary"
+					class="variant-ghost-primary chip"
 					on:click={acceptFriendInvitation}>✅</button
 				>
 				<button
 					data-id={request.id}
-					class="chip variant-ghost-error"
+					class="variant-ghost-error chip"
 					on:click={declineFriendInvitation}>❌</button
 				>
 			</li>

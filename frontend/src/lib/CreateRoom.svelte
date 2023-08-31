@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { modalStore } from "@skeletonlabs/skeleton"
+	import { getModalStore } from "@skeletonlabs/skeleton"
+
+	const modalStore = getModalStore()
 
 	async function onDiscussionCreation() {
 		let formdata = new FormData(form) // `form` is bound to the form node
@@ -48,8 +50,8 @@
 	<div class="mt-3"></div>
 
 	<footer class="modal-footer">
-		<button type="button" class="btn variant-ghost-error" on:click={onClose}>Cancel</button>
-		<button type="submit" class="btn variant-ghost">Create Room</button>
+		<button type="button" class="variant-ghost-error btn" on:click={onClose}>Cancel</button>
+		<button type="submit" class="variant-ghost btn">Create Room</button>
 	</footer>
 </form>
 

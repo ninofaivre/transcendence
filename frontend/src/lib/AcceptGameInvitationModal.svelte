@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { ProgressRadial, modalStore } from "@skeletonlabs/skeleton"
+	import { ProgressRadial, getModalStore } from "@skeletonlabs/skeleton"
 	import { timeReplyToInvitation } from "contract"
 
+	const modalStore = getModalStore()
 	let value = timeReplyToInvitation
 	const username = $modalStore[0].meta.username
 
@@ -40,13 +41,13 @@
 	</div>
 	<button
 		on:click={onDeny}
-		class="btn btn-sm variant-ghost-error mt-4 h-fit w-fit self-center justify-self-center"
+		class="variant-ghost-error btn btn-sm mt-4 h-fit w-fit self-center justify-self-center"
 	>
 		Deny
 	</button>
 	<button
 		on:click={onAccept}
-		class="btn btn-sm variant-ghost-success mt-4 h-fit w-fit self-center justify-self-center"
+		class="variant-ghost-success btn btn-sm mt-4 h-fit w-fit self-center justify-self-center"
 	>
 		Accept
 	</button>

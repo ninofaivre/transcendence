@@ -22,10 +22,11 @@
 	import { sse_store, my_name } from "$stores"
 	import { isContractError } from "contract"
 	import { invalidate, invalidateAll } from "$app/navigation"
-	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 
 	console.log($page.route.id, " init")
 
+	const modalStore = getModalStore()
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
 	let chan: Chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { RangeSlider, modalStore } from "@skeletonlabs/skeleton"
+	import { RangeSlider, getModalStore } from "@skeletonlabs/skeleton"
 
+	const modalStore = getModalStore()
 	// 1 s -- 1000 ms
 	// 60 s -- 1 mn
 	// 60 min -- 1h
@@ -47,8 +48,8 @@
 		</div>
 	</RangeSlider>
 	<footer class="modal-footer">
-		<button type="button" class="btn variant-ghost-surface" on:click={onClose}>Cancel</button>
-		<button type="submit" class="btn variant-filled">Mute</button>
+		<button type="button" class="variant-ghost-surface btn" on:click={onClose}>Cancel</button>
+		<button type="submit" class="variant-filled btn">Mute</button>
 	</footer>
 </form>
 

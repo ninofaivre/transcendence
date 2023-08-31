@@ -5,9 +5,11 @@
 	import { addListenerToEventSource } from "$lib/global"
 	import { invalidate } from "$app/navigation"
 	import { makeToast } from "$lib/global"
-	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { checkError } from "$lib/global"
+
+	const modalStore = getModalStore()
 
 	export let currentDiscussionId: string
 	export let discussions: Chan[]
@@ -69,7 +71,7 @@
 		</a>
 		<button
 			on:click={() => onInviteToChan(d.id)}
-			class="btn btn-sm variant-ghost-secondary justify-self-end">👥+</button
+			class="variant-ghost-secondary btn btn-sm justify-self-end">👥+</button
 		>
 	</div>
 {/each}

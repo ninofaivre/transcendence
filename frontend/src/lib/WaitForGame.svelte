@@ -2,11 +2,12 @@
 	import type { GameSocket } from "$types"
 	import type { Writable } from "svelte/store"
 
-	import { ProgressRadial, modalStore } from "@skeletonlabs/skeleton"
+	import { ProgressRadial, getModalStore } from "@skeletonlabs/skeleton"
 	import { timeReplyToInvitation } from "contract"
 	import { afterUpdate, getContext } from "svelte"
 	import { goto } from "$app/navigation"
 
+	const modalStore = getModalStore()
 	let state: "accepted" | "refused" | "timedOut" | "waiting" | "badRequest" = "waiting"
 	let value = timeReplyToInvitation
 	const username = $modalStore[0].meta.username
@@ -53,7 +54,7 @@
 		</div>
 		<button
 			on:click={onClose}
-			class="btn btn-sm variant-ghost-error mt-4 h-fit w-fit self-center justify-self-center"
+			class="variant-ghost-error btn btn-sm mt-4 h-fit w-fit self-center justify-self-center"
 		>
 			Cancel
 		</button>
@@ -61,7 +62,7 @@
 		<p class="">Challenge accepted!</p>
 		<button
 			on:click={onClose}
-			class="btn btn-sm variant-ghost-error mt-4 h-fit w-fit self-center justify-self-center"
+			class="variant-ghost-error btn btn-sm mt-4 h-fit w-fit self-center justify-self-center"
 		>
 			Go to game
 		</button>
@@ -69,7 +70,7 @@
 		<p class="">Invitation declined</p>
 		<button
 			on:click={onClose}
-			class="btn btn-sm variant-ghost-error mt-4 h-fit w-fit self-center justify-self-center"
+			class="variant-ghost-error btn btn-sm mt-4 h-fit w-fit self-center justify-self-center"
 		>
 			Close
 		</button>
@@ -77,7 +78,7 @@
 		<p class="">Invitation timed out</p>
 		<button
 			on:click={onClose}
-			class="btn btn-sm variant-ghost-error mt-4 h-fit w-fit self-center justify-self-center"
+			class="variant-ghost-error btn btn-sm mt-4 h-fit w-fit self-center justify-self-center"
 		>
 			Close
 		</button>
@@ -85,7 +86,7 @@
 		<p class="">Invitation timed out</p>
 		<button
 			on:click={onClose}
-			class="btn btn-sm variant-ghost-error mt-4 h-fit w-fit self-center justify-self-center"
+			class="variant-ghost-error btn btn-sm mt-4 h-fit w-fit self-center justify-self-center"
 		>
 			Close
 		</button>

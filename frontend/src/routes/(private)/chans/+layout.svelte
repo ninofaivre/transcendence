@@ -10,7 +10,7 @@
 	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store } from "$stores"
 	import { invalidate } from "$app/navigation"
-	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { checkError } from "$lib/global"
 	import { client } from "$clients"
 	import { makeToast } from "$lib/global"
@@ -18,6 +18,7 @@
 	// Get our discussions
 	// export let data: LayoutData // TODO wtf
 
+	const modalStore = getModalStore()
 	let header: HTMLElement | null
 	let header_height: number
 
@@ -99,7 +100,7 @@
 		>
 			<section class="mt-2">
 				<button
-					class="btn btn-sm variant-ghost-primary w-full rounded"
+					class="variant-ghost-primary btn btn-sm w-full rounded"
 					on:click={onCreateChan}
 				>
 					Create new Room
@@ -124,7 +125,7 @@
 		<div class="mx-auto my-10">
 			<h2 class="my-2">Invite a friend:</h2>
 			<SendFriendRequest />
-			<button class="btn btn-sm variant-filled" on:click={onCreateChan}>
+			<button class="variant-filled btn btn-sm" on:click={onCreateChan}>
 				Create new Room
 			</button>
 		</div>

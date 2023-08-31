@@ -4,6 +4,9 @@ import { PUBLIC_BACKEND_URL } from "$env/static/public"
 import { logged_in } from "$lib/stores"
 import { client } from "$clients"
 import { isContractError } from "contract"
+import { getToastStore } from "@skeletonlabs/skeleton"
+
+const toastStore = getToastStore()
 
 export function checkError(ret: { status: number; body: any }, what: string) {
 	if (isContractError(ret)) {
@@ -124,7 +127,6 @@ export function addListenerToEventSource<EventType extends SseEvent["type"]>(
 }
 
 import type { ActionReturn } from "svelte/action"
-import { toastStore } from "@skeletonlabs/skeleton"
 // use: function
 export function listenOutsideClick(
 	node: HTMLElement,

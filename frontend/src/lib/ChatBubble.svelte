@@ -16,9 +16,11 @@
 	import { isContractError } from "contract"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { filter, Noir } from "@skeletonlabs/skeleton"
-	import { modalStore } from "@skeletonlabs/skeleton"
+	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { goto } from "$app/navigation"
+
+	const modalStore = getModalStore()
 
 	export let message: Message
 	export let from_me = message.author === $my_name
@@ -257,12 +259,12 @@
 				use:listenOutsideClick
 				on:outsideclick={() => (is_admin_menu_open = false)}
 				transition:slide={{ axis: "x", duration: 200 }}
-				class="list variant-filled-tertiary rounded px-2 py-2"
+				class="variant-filled-tertiary list rounded px-2 py-2"
 			>
 				{#each menu_admin as item}
 					<li class="">
 						<button
-							class="btn btn-sm variant-filled-secondary flex-auto"
+							class="variant-filled-secondary btn btn-sm flex-auto"
 							on:click={item.handler}>{item.label}</button
 						>
 					</li>
@@ -317,7 +319,7 @@
 	{#if is_sent}
 		{#if is_message_menu_open}
 			<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
-				<menu class="list text-token mx-1 px-1">
+				<menu class="text-token list mx-1 px-1">
 					{#each menu_items as menu_item}
 						<li class="my-1 list-item px-2 hover:variant-filled-secondary">
 							<button tabindex="0" on:click={menu_item.handler}>

@@ -7,12 +7,14 @@
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { io } from "socket.io-client"
 	import { onDestroy, setContext } from "svelte"
-	import { modalStore } from "@skeletonlabs/skeleton"
+	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { writable } from "svelte/store"
 	import { get } from "svelte/store"
 	import { goto } from "$app/navigation"
 
 	console.log("private layout init")
+
+	const modalStore = getModalStore()
 
 	let game_socket: Writable<GameSocket> = writable(
 		io(PUBLIC_BACKEND_URL, {
@@ -35,11 +37,11 @@
 		})
 		$game_socket.on("disconnect", (data) => {
 			console.log(data)
-            if (data === "io server disconnect") {
-                $game_socket = io(PUBLIC_BACKEND_URL, {
-                    withCredentials: true,
-                })
-            }
+			if (data === "io server disconnect") {
+				$game_socket = io(PUBLIC_BACKEND_URL, {
+					withCredentials: true,
+				})
+			}
 			console.log("applying callbacks for layout !")
 			applyCallbacks()
 		})
@@ -84,7 +86,7 @@
 		console.log("click")
 		console.log($game_socket)
 	}}
-	class="btn btn-sm variant-ghost absolute left-1/4 top-1/4 z-50">Show socket</button
+	class="variant-ghost btn btn-sm absolute left-1/4 top-1/4 z-50">Show socket</button
 >
 
 <slot />

@@ -7,13 +7,14 @@
 	import { client } from "$clients"
 	import { isContractError } from "contract"
 	import { checkError, makeToast } from "$lib/global"
-	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { page } from "$app/stores"
 	import { SlideToggle } from "@skeletonlabs/skeleton"
 	import { Paginator } from "@skeletonlabs/skeleton"
 
 	export let data: PageData
 
+	const modalStore = getModalStore()
 	let invite_state: null | "pending" | "accepted"
 	let already_friend: boolean = data.friendList.includes($page.params.username)
 	let twoFA: boolean = false
@@ -74,11 +75,11 @@
 					{`You friend request has been ${invite_state}`}
 				</p>
 			{:else if already_friend}
-				<button class="btn btn-sm variant-filled-error h-fit" on:click={revokeFriend}
+				<button class="variant-filled-error btn btn-sm h-fit" on:click={revokeFriend}
 					>Revoke friendship</button
 				>
 			{:else}
-				<button class="btn btn-sm variant-filled-primary h-fit" on:click={askFriend}
+				<button class="variant-filled-primary btn btn-sm h-fit" on:click={askFriend}
 					>Send friend request</button
 				>
 			{/if}

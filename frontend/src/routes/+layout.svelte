@@ -1,10 +1,7 @@
 <script lang="ts">
-	// The ordering of these imports is critical to your app working properly
-	import "@skeletonlabs/skeleton/themes/theme-skeleton.css"
-	// If you have source.organizeImports set to true in VSCode, then it will auto change this ordering
-	import "@skeletonlabs/skeleton/styles/skeleton.css"
 	// Most of your app wide CSS should be put in this file
 	import "../app.postcss"
+	import { initializeStores } from "@skeletonlabs/skeleton"
 
 	import { AppShell, AppBar, LightSwitch, Toast, Avatar } from "@skeletonlabs/skeleton"
 	import { logout } from "$lib/global"
@@ -12,7 +9,7 @@
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
 	import {
-		modalStore,
+		getModalStore,
 		Modal,
 		type ModalComponent,
 		type ModalSettings,
@@ -27,6 +24,9 @@
 	import WaitForGame from "$lib/WaitForGame.svelte"
 	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
 	import AcceptGameInvitationModal from "$lib/AcceptGameInvitationModal.svelte"
+
+	initializeStores()
+	const modalStore = getModalStore()
 
 	$: {
 		// Prevents redir coming back from 42, or losing the query string for /auth
@@ -68,6 +68,7 @@
 
 <!-- App Shell -->
 <Modal components={modalComponentRegistry} />
+<Toast />
 <AppShell regionPage="w-full">
 	<svelte:fragment slot="header">
 		<!-- App Bar -->
@@ -88,7 +89,7 @@
 			{#if $logged_in}
 				{#each menuItems as menuItem}
 					<a
-						class="btn btn-sm variant-filled-success mx-4 mb-1 text-2xl font-semibold"
+						class="variant-filled-success btn btn-sm mx-4 mb-1 text-2xl font-semibold"
 						href={menuItem.href}
 					>
 						{menuItem.inner}
@@ -99,11 +100,11 @@
 				{#if $logged_in}
 					<button
 						on:click={() => logout()}
-						class="btn btn-sm variant-filled-secondary mr-1 text-xs font-semibold"
+						class="variant-filled-secondary btn btn-sm mr-1 text-xs font-semibold"
 					>
 						Log out
 					</button>
-					<a href="/myprofile" class="chip variant-ghost ml-1 flex">
+					<a href="/myprofile" class="variant-ghost chip ml-1 flex">
 						<Avatar
 							src="{PUBLIC_BACKEND_URL}/api/users/{$my_name}/profilePicture"
 							fallback="https://i.pravatar.cc/?u={$my_name}"
@@ -121,5 +122,4 @@
 	</svelte:fragment>
 	<!-- Page Route Content -->
 	<slot />
-	<Toast />
 </AppShell>

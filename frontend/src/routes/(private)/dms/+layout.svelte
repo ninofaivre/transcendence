@@ -8,13 +8,14 @@
 	import { page } from "$app/stores"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { checkError, listenOutsideClick } from "$lib/global"
-	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { invalidate } from "$app/navigation"
 
 	// Get our discussions
 	// export let data: LayoutData // TODO wtf
 
+	const modalStore = getModalStore()
 	let header: HTMLElement | null
 	let header_height: number
 
@@ -78,7 +79,7 @@
 		>
 			<section class="mt-2">
 				<button
-					class="btn btn-sm variant-ghost-primary mt-1 rounded"
+					class="variant-ghost-primary btn btn-sm mt-1 rounded"
 					on:click={onSendFriendRequest}
 				>
 					Send friend request

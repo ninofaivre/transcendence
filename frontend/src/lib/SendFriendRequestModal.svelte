@@ -4,9 +4,10 @@
 
 	import { onMount } from "svelte"
 	import { client } from "$clients"
-	import { modalStore } from "@skeletonlabs/skeleton"
+	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { checkError } from "./global"
 
+	const modalStore = getModalStore()
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
 	let input_element: HTMLElement

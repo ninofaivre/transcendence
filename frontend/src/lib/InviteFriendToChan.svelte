@@ -3,10 +3,11 @@
 
 	import { Autocomplete } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import { modalStore } from "@skeletonlabs/skeleton"
+	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { onMount } from "svelte"
 	import { checkError } from "./global"
 
+	const modalStore = getModalStore()
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
 	let input_element: HTMLElement
@@ -90,13 +91,13 @@
 	</div>
 	<!-- row 2  -->
 	<footer class="modal-footer self-end">
-		<button type="button" class="btn variant-filled-error" on:click={onClose}> Cancel </button>
+		<button type="button" class="variant-filled-error btn" on:click={onClose}> Cancel </button>
 		<button
 			bind:this={send_button}
 			on:click={() => {
 				onModalSubmit(search_input)
 			}}
-			class="btn variant-filled-primary hover:font-medium"
+			class="variant-filled-primary btn hover:font-medium"
 		>
 			Send invitation
 		</button>

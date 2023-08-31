@@ -17,10 +17,6 @@ import { InternalEvents } from "src/internalEvents";
 
 export type IntraUserName = string
 
-// export type SocketData = {
-//     status: Status
-// } & EnrichedRequest['user']
-
 export class SocketData {
 
     public username: string;
@@ -49,8 +45,6 @@ export class SocketData {
 }
 
 export type EnrichedSocket = Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>
-
-type GameEvents = string
 
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
@@ -93,6 +87,8 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     afterInit(server: Socket) {
         server.use(WebSocketAuthMiddleware(this.authService,
             this.userService, this) as any)
+        this.server.sockets.adapter
+            .on('delete-room', this.handleDeleteRoom.bind(this))
     }
 
     // TODO do a typed decorator ?
@@ -102,47 +98,37 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             payload.playerA.intraUserName,
             payload.playerB.intraUserName
         ]).disconnectSockets(true)
-        this.findClientSocketByIntraName(payload.playerA.intraUserName)?.disconnect(true)
-        this.findClientSocketByIntraName(payload.playerB.intraUserName)?.disconnect(true)
     }
 
-    intraNameToClientId = new Map<IntraUserName, string>()
-    userNameToClientId = new Map<string, string>()
+    userNameToSocketData = new Map<string, SocketData>()
+    intraNameToSocketData = new Map<IntraUserName, SocketData>()
 
     handleConnection(client: EnrichedSocket, ...args: any[]) {
         console.log(`${client.data.intraUserName} logged in with id ${client.id}`)
-        this.intraNameToClientId.set(client.data.intraUserName, client.id)
-        this.userNameToClientId.set(client.data.username, client.id)
+        this.userNameToSocketData.set(client.data.username, client.data)
+        this.intraNameToSocketData.set(client.data.username, client.data)
     }
 
     handleDisconnect(client: EnrichedSocket) {
         console.log(`${client.data.intraUserName} logged out with id ${client.id}`)
-        this.intraNameToClientId.delete(client.data.intraUserName)
-        this.userNameToClientId.delete(client.data.username)
-        client.data.status = "OFFLINE"
+    }
+
+    handleDeleteRoom(roomId: string) {
+        const clientData = this.intraNameToSocketData.get(roomId)
+        if (!clientData)
+            return
+        clientData.status = "OFFLINE"
+        this.intraNameToSocketData.delete(clientData.intraUserName)
+        this.userNameToSocketData.delete(clientData.username)
     }
 
     public getStatusByUserName(username: string) {
-        const client = this.findClientSocketByUserName(username)
-        if (!client)
+        const userData = this.userNameToSocketData.get(username)
+        if (!userData)
             return "OFFLINE"
-        if (client.data.status === "IDLE")
+        if (userData.status === "IDLE")
             return "ONLINE"
-        return client.data.status
-    }
-
-    private findClientSocketByUserName(userName: string) {
-        const clientId = this.userNameToClientId.get(userName)
-        if (!clientId)
-            return
-        return this.server.sockets.sockets.get(clientId)
-    }
-
-    public findClientSocketByIntraName(clientName: IntraUserName) {
-        const clientId = this.intraNameToClientId.get(clientName)
-        if (!clientId)
-            return
-        return this.server.sockets.sockets.get(clientId)
+        return userData.status
     }
 
     @SubscribeMessage('invite')
@@ -150,16 +136,17 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         @ConnectedSocket()client: EnrichedSocket,
         @MessageBody(new ZodValidationPipe(InvitationSchema))payload: Invitation,
     ): Promise<'accepted' | 'refused' | 'badRequest'> {
-        if (payload.username === client.data.username)
-            return 'badRequest'
-        const invitedClient = this.findClientSocketByUserName(payload.username)
-        if (!invitedClient || invitedClient.data.status !== 'IDLE')
-            return (new Promise((res) => setTimeout(() => { res('refused') }, 5000)))
-        try {
-            const res: unknown = await invitedClient.timeout(5000).emitWithAck('invited', { username: client.data.username })
-            this.gameService.createGame(client, invitedClient)
-            return InvitationClientResponseSchema.parse(res)
-        } catch {}
+        // if (payload.username === client.data.username)
+        //     return 'badRequest'
+        // const invitedClient = this.findClientSocketByUserName(payload.username)
+        // if (!invitedClient || invitedClient.data.status !== 'IDLE')
+        //     return (new Promise((res) => setTimeout(() => { res('refused') }, 5000)))
+        // try {
+        //     const res: unknown = await invitedClient.timeout(5000).emitWithAck('invited', { username: client.data.username })
+        //     this.gameService.createGame(client, invitedClient)
+        //     return InvitationClientResponseSchema.parse(res)
+        // } catch {}
+        // return "refused"
         return "refused"
     }
 

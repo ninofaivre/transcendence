@@ -180,6 +180,8 @@ model User {
   outcomingFriendInvitation FriendInvitation[] @relation("outcomingFriendInvitation")
   incomingFriendInvitation  FriendInvitation[] @relation("incomingFriendInvitation")
 
+  matchHistory MatchSummary[]
+
   outcomingChanInvitation	ChanInvitation[] @relation("outcomingChanInvitation")
   incomingChanInvitation	ChanInvitation[] @relation("incomingChanInvitation")
 
@@ -202,6 +204,19 @@ model User {
 
   dmPolicyLevel	AccessPolicyLevel @default(ONLY_FRIEND)
   statusVisibilityLevel AccessPolicyLevel @default(IN_COMMON_CHAN)
+}
+
+model MatchSummary {
+    id String @id @default(uuid())
+    creationDate     DateTime  @default(now())
+
+    users User[]
+
+    winner_name  String
+    looser_name  String
+    winner_score Int
+    looser_score Int
+    @@index([creationDate(sort: Asc)])
 }
 
 enum AccessPolicyLevel {

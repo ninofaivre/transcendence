@@ -4,6 +4,7 @@ export * from "./ChanInvitation";
 export * from "./FriendShip";
 export * from "./BlockedShip";
 export * from "./User";
+export * from "./MatchSummary";
 export * from "./DirectMessage";
 export * from "./DmDiscussionElement";
 export * from "./DmDiscussionMessage";

@@ -99,14 +99,11 @@
 				winner = data.winner
 			}
 		})
-		$game_socket.on("disconnect", () => {
-			console.log("pong disconnect")
-			// let save = game_socket.test!
-			// state = "IDLE"
-			// game_socket = io(PUBLIC_BACKEND_URL, { withCredentials: true })
-			// game_socket.test = save * 2
-			console.log("applying callbacks for pong page")
-			applyCallback()
+		$game_socket.on("disconnect", (data) => {
+            if (data === "io server disconnect") {
+                console.log("applying callbacks for pong page")
+                applyCallback()
+            }
 		})
 	}
 
@@ -135,7 +132,7 @@
 		$game_socket.emit("gameMovement", "NONE")
 	}
     function surrend() {
-        alert("I surrend !")
+		$game_socket.emit("surrend", "")
     }
 </script>
 

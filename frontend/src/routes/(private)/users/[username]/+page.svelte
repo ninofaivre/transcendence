@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { PageData } from "./$types"
+	import type { PaginationSettings } from "@skeletonlabs/skeleton"
+
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { Avatar } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
@@ -8,6 +10,7 @@
 	import { modalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { page } from "$app/stores"
 	import { SlideToggle } from "@skeletonlabs/skeleton"
+	import { Paginator } from "@skeletonlabs/skeleton"
 
 	export let data: PageData
 
@@ -39,6 +42,15 @@
 		}
 		modalStore.trigger(modal)
 	}
+
+	const source = ["coucou"]
+
+	// let paginationSettings = {
+	// 	page: 0,
+	// 	limit: 5,
+	// 	size: source.length,
+	// 	amounts: [1, 2, 5, 10],
+	// } satisfies PaginationSettings
 </script>
 
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
@@ -78,4 +90,6 @@
 			>
 		</div>
 	</div>
+
+	<!-- <Paginator bind:this={paginationSettings} /> -->
 </div>

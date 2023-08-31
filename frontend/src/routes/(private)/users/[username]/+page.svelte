@@ -70,11 +70,28 @@
 	console.log(tableMapperValues($page.data.friendships, ["friendName"]))
 	let table_source: TableSource
 
+	$: match_history = data.match_history.map((arr) => {
+		return {
+			Date: new Date(arr.date).toLocaleDateString("en-US", {
+				weekday: "long",
+				year: "numeric",
+				month: "short",
+				day: "numeric",
+			}),
+			Winner: arr.winnerName,
+			"Winning Score": arr.winnerScore,
+			Looser: arr.looserName,
+			"Loosing Score": arr.looserScore,
+		}
+	})
+
+	$: fields = Object.keys(match_history[0])
+
 	$: table_source = {
 		// A list of heading labels.
-		head: Object.keys(data.match_history[0]),
+		head: fields,
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues(data.match_history, ["id"]),
+		body: tableMapperValues(match_history, fields),
 	}
 </script>
 

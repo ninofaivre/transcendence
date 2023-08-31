@@ -98,6 +98,10 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     // TODO do a typed decorator ?
     @OnEvent('game.end')
     endedGame(payload: InternalEvents['game.end']) {
+        this.server.sockets.in([
+            payload.playerA.intraUserName,
+            payload.playerB.intraUserName
+        ]).disconnectSockets(true)
         this.findClientSocketByIntraName(payload.playerA.intraUserName)?.disconnect(true)
         this.findClientSocketByIntraName(payload.playerB.intraUserName)?.disconnect(true)
     }

@@ -415,7 +415,7 @@ class Game {
                 })
                 setTimeout(
                     () => {
-                        if (this.status == 'PAUSE')
+                        if (this.status !== 'INIT')
                             return
                         this.status = 'PLAY'
                     },
@@ -449,7 +449,7 @@ class Game {
                 })
                 setTimeout(
                     () => {
-                        if (this.status == 'PAUSE')
+                        if (this.status !== 'BREAK')
                             return
                         this.status = 'PLAY'
                     },

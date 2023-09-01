@@ -30,16 +30,16 @@ export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
 	),
     blockedBy: z.boolean(),
     blocked: z.boolean(),
-    // friend: z.boolean(),
-    // invited: z.string().uuid().nullable(),
-    // inviting: z.string().uuid().nullable(),
-    // twoFAEnalbe: z.boolean()
+    friend: z.boolean(),
+    invited: z.string().uuid().nullable(),
+    inviting: z.string().uuid().nullable(),
 	status: zUserStatus,
 })
 
 export const zPartialUserProfileReturn = zUserProfileReturn.partial()
 
 export const zMyProfileReturn = z.strictObject({
+    // twoFAEnalbe: z.boolean()
 	userName: zUserName,
 	dmPolicyLevel: zAccessPolicyLevel.exclude(["NO_ONE"]),
 	statusVisibilityLevel: zAccessPolicyLevel,

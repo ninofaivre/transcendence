@@ -55,7 +55,10 @@ export class UserService {
 				select: { title: true, id: true, type: true },
 			},
 			dmPolicyLevel: true,
-            // incomingFriendInvitation: { where:   }
+            incomingFriendInvitation: { where: { invitingUserName: username }, select: { id: true } },
+            outcomingFriendInvitation: { where: { invitedUserName: username }, select: { id: true } },
+            friend: { where: { requestedUserName: username }, select: { id: true } },
+            friendOf: { where: { requestingUserName: username}, select: { id: true } },
 			blockedUser: { where: { blockedUserName: username }, select: { id: true }, take: 1 },
 			blockedByUser: { where: { blockingUserName: username }, select: { id: true }, take: 1 },
 		} satisfies Prisma.UserSelect
@@ -171,7 +174,9 @@ export class UserService {
 		username: string,
 		toFormat: Prisma.UserGetPayload<typeof this.userProfileSelectGetPayload>,
 	): Promise<z.infer<typeof zUserProfileReturn>> {
-		const { name, chans, blockedUser, blockedByUser, dmPolicyLevel, ...rest } = toFormat
+		const { name, chans, blockedUser, blockedByUser,
+            dmPolicyLevel, friend, friendOf,
+            incomingFriendInvitation, outcomingFriendInvitation, ...rest } = toFormat
 
 		return {
 			...rest,
@@ -180,6 +185,9 @@ export class UserService {
 			status: await this.formatUserStatusForUser(username, name),
 			...this.formatUserProfilePreviewForUser(username, { name }),
 			commonChans: chans,
+            friend: friend.length != 0 || friendOf.length != 0,
+            invited: outcomingFriendInvitation.length ? outcomingFriendInvitation[0].id : null,
+            inviting: incomingFriendInvitation.length ? incomingFriendInvitation[0].id : null,
             blocked: blockedUser.length != 0,
             blockedBy: blockedByUser.length != 0,
 		}

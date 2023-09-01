@@ -11,11 +11,13 @@
 	} from "$env/static/public"
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
+	import { getToastStore } from "@skeletonlabs/skeleton"
+	import { isContractError } from "contract"
 
 	let username = ""
 	const isProd = PUBLIC_MODE.toLowerCase() === "prod"
 	const code = $page.url.searchParams.get("code")
-
+	const toastStore = getToastStore()
 	const signup = $page.url.searchParams.get("signup")
 	let ft_uri = new URL(PUBLIC_API42_OAUTH_URI)
 	ft_uri.searchParams.append("redirect_uri", new URL("auth", PUBLIC_FRONTEND_URL).toString())
@@ -36,7 +38,9 @@
 						code: $page.url.searchParams.get("code")!,
 					},
 				})
-				if (ret.status !== 200) {
+				if (isContractError(ret) && ret.body.code === "TwoFATokenNeeded") {
+					goto("/auth/2fa")
+				} else if (ret.status !== 200) {
 					if (ret.status === 404) {
 						ft_uri.searchParams.set(
 							"redirect_uri",
@@ -46,9 +50,8 @@
 					}
 					checkError(ret, "log in")
 				} else {
-					makeToast("Logged in successfully")
+					makeToast("Logged in successfully", toastStore)
 					logged_in.set(true)
-					const ret = await client.users.getMe()
 					goto("/")
 				}
 			} else {
@@ -64,9 +67,11 @@
 				username,
 			},
 		})
-		if (ret.status !== 200) checkError(ret, "log in")
+		if (isContractError(ret) && ret.body.code === "TwoFATokenNeeded") {
+			goto("/auth/2fa")
+		} else if (ret.status !== 200) checkError(ret, "log in")
 		else {
-			makeToast("Logged in successfully")
+			makeToast("Logged in successfully", toastStore)
 			logged_in.set(true)
 			goto("/")
 		}
@@ -88,7 +93,7 @@
 			<a
 				bind:this={sign_in_42}
 				href={ft_uri.toString()}
-				class="btn variant-filled-success flex-auto text-lg"
+				class="variant-filled-success btn flex-auto text-lg"
 			>
 				Sign in with <img
 					alt="42"
@@ -116,10 +121,9 @@
 			</label>
 			<button
 				type="submit"
-				class="btn btn-sm variant-filled-primary grid grid-rows-2 rounded-2xl"
+				class="variant-filled-primary btn btn-sm grid grid-rows-2 rounded-2xl"
 			>
-				<div>Get in with username</div>
-				<small>Create it if it does not exist</small>
+				<div>Get in with existing username</div>
 			</button>
 		</div>
 	</form>

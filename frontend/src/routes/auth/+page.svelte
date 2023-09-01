@@ -18,7 +18,6 @@
 	const isProd = PUBLIC_MODE.toLowerCase() === "prod"
 	const code = $page.url.searchParams.get("code")
 	const toastStore = getToastStore()
-	const signup = $page.url.searchParams.get("signup")
 	let ft_uri = new URL(PUBLIC_API42_OAUTH_URI)
 	ft_uri.searchParams.append("redirect_uri", new URL("auth", PUBLIC_FRONTEND_URL).toString())
 	ft_uri.searchParams.append("client_id", PUBLIC_API42_CLIENT_ID)
@@ -26,10 +25,6 @@
 	ft_uri.searchParams.append("scope", "public")
 	ft_uri.searchParams.append("state", PUBLIC_RANDOM_PHRASE)
 	;(async () => {
-		if (signup) {
-			alert("---> " + "/auth/signup" + $page.url.search)
-			goto("/auth/signup" + $page.url.search)
-		}
 		if (code) {
 			if ($page.url.searchParams.get("state") === PUBLIC_RANDOM_PHRASE) {
 				const ret = await client.auth.login({
@@ -39,6 +34,7 @@
 					},
 				})
 				if (isContractError(ret) && ret.body.code === "TwoFATokenNeeded") {
+					alert("You are being redirected to the 2fa page")
 					goto("/auth/2fa")
 				} else if (ret.status !== 200) {
 					if (ret.status === 404) {
@@ -46,6 +42,7 @@
 							"redirect_uri",
 							new URL("/auth/signup", PUBLIC_FRONTEND_URL).toString(),
 						)
+						alert("You are being redirected to the 2fa page")
 						window.location.assign(ft_uri)
 					}
 					checkError(ret, "log in")
@@ -67,9 +64,7 @@
 				username,
 			},
 		})
-		if (isContractError(ret) && ret.body.code === "TwoFATokenNeeded") {
-			goto("/auth/2fa")
-		} else if (ret.status !== 200) checkError(ret, "log in")
+		if (ret.status !== 200) checkError(ret, "log in")
 		else {
 			makeToast("Logged in successfully", toastStore)
 			logged_in.set(true)

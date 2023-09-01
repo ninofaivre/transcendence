@@ -16,7 +16,6 @@
 	import { checkError, makeToast } from "$lib/global"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { page } from "$app/stores"
-	import { SlideToggle } from "@skeletonlabs/skeleton"
 	import { Paginator } from "@skeletonlabs/skeleton"
 	import { my_name } from "$stores"
 	import { goto } from "$app/navigation"

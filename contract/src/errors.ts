@@ -66,7 +66,7 @@ export const contractErrors = {
         }
     } as const),
 
-    TwoFATokenNeeded: (api_url: string) =>
+    TwoFATokenNeeded: () =>
     ({
         status: 200,
         body: {

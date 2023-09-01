@@ -543,7 +543,7 @@ export class UserService {
         let { twoFAsecret } = user
         if (!twoFAsecret) {
             twoFAsecret = authenticator.generateSecret()
-            this.prisma.user.update({ where: { name: username }, data: { twoFAsecret } })
+            await this.prisma.user.update({ where: { name: username }, data: { twoFAsecret } })
         }
         return authenticator.keyuri(username, EnvService.env.APP_NAME, twoFAsecret)
     }

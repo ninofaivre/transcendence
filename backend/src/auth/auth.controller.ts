@@ -7,15 +7,8 @@ import { EnvService } from "src/env/env.service"
 import { JwtAuthGuard, RefreshTokenGuard } from "./jwt-auth.guard"
 import { isContractError } from "contract"
 import { DevGuard } from "src/env.guards"
-import { authenticator } from 'otplib'
-import { toFileStream } from 'qrcode'
 
 const c = contract.auth
-
-const twoFAsecret = authenticator.generateSecret()
-console.log(twoFAsecret)
-const otpAuthUrl = authenticator.keyuri('nino', EnvService.env.APP_NAME, twoFAsecret)
-console.log(otpAuthUrl)
 
 @TsRest({ jsonQuery: true })
 @Controller()
@@ -33,23 +26,6 @@ export class AuthController{
             return { status: 200, body: user }
         })
 	}
-
-    @Get('/TESTA')
-    getTestA(@Res()response: Response) {
-        return toFileStream(response, otpAuthUrl)
-    }
-
-    @Get('/TESTB/:code')
-    getTestB(@Param('code')token: string) {
-        if (authenticator.verify({ token, secret: twoFAsecret })) {
-            console.log("user authentifié")
-            return "SUCCESS"
-        }
-        else {
-            console.log("user non authentifié")
-            return "FAILURE"
-        }
-    }
 
     @UseGuards(DevGuard)
     @TsRestHandler(c.loginDev)

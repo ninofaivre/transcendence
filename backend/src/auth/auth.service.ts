@@ -54,7 +54,7 @@ export class AuthService {
     }
 
     public async setNewTokensAsCookies(res: Response, user: EnrichedRequest['user']) {
-        const tokens = await this.getTokens(user)
+        const tokens = await this.getTokens(user, false)
         res.cookie("access_token", tokens.accessToken, {
             ...AuthService.cookieOptions,
             maxAge: (EnvService.env.PUBLIC_MODE === 'DEV' ? 3600 : 900) * 1000,
@@ -67,8 +67,8 @@ export class AuthService {
         this.updateRefreshToken(user.username, tokens.refreshToken)
     }
 
-    public async getTokens(user: EnrichedRequest['user']) {
-        const payload = { ...user, sub: user.username }
+    public async getTokens(user: EnrichedRequest['user'], twoFA: boolean) {
+        const payload = { ...user, sub: user.username, twoFA }
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
                 secret: EnvService.env.JWT_SECRET,

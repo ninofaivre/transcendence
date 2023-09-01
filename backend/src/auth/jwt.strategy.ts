@@ -8,6 +8,7 @@ export type JwtPayload = {
     sub: string
     username: string
     intraUserName: string
+    twoFA: boolean
 }
 
 function extractJwtFromCookie(tokenType: "access_token" | "refresh_token") {

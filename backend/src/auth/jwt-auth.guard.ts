@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common"
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from "@nestjs/common"
 import { AuthGuard } from "@nestjs/passport"
 import { Socket } from "socket.io";
 import { AuthService } from "./auth.service";
@@ -7,6 +7,15 @@ import { EnrichedSocket } from "src/websocket/game.websocket.gateway";
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard("jwt") {}
+
+@Injectable()
+export class TestGuard extends JwtAuthGuard {
+    handleRequest<TUser = any>(err: any, user: any, info: any, context: ExecutionContext, status?: any): TUser {
+        if (!user.twoFa)
+            throw new ForbiddenException('test')
+        return user
+    }
+}
 
 @Injectable()
 export class RefreshTokenGuard extends AuthGuard("jwt-refresh") {}

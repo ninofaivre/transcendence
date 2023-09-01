@@ -55,6 +55,7 @@ export class UserService {
 				select: { title: true, id: true, type: true },
 			},
 			dmPolicyLevel: true,
+            // incomingFriendInvitation: { where:   }
 			blockedUser: { where: { blockedUserName: username }, select: { id: true }, take: 1 },
 			blockedByUser: { where: { blockingUserName: username }, select: { id: true }, take: 1 },
 		} satisfies Prisma.UserSelect

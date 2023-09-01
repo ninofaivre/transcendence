@@ -67,11 +67,6 @@ const friendInvitationsContract = c.router(
 			}),
 			body: z.strictObject({
 				status: zFriendInvitationStatus.extract(["ACCEPTED", "REFUSED", "CANCELED"]),
-				// status: z.enum([
-				// 	zFriendInvitationStatus.enum.ACCEPTED,
-				// 	zFriendInvitationStatus.enum.REFUSED,
-				// 	zFriendInvitationStatus.enum.CANCELED,
-				// ]),
 			}),
 			responses: {
 				200: zFriendInvitationReturn,

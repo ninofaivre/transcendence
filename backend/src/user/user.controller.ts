@@ -1,4 +1,4 @@
-import { Res, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common"
+import { Res, StreamableFile, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common"
 import { Controller, Request } from "@nestjs/common"
 import { JwtAuthGuard } from "../auth/jwt-auth.guard"
 import { UserService } from "./user.service"
@@ -95,7 +95,7 @@ export class UserController {
 
             qrCode: async () => {
                 const res = await this.userService.getUserTwoFAqrCode(username)
-                return isContractError(res) ? res : { status: 200, body: toFileStream(response, res) }
+                return isContractError(res) ? res : { status: 200, body: (await toFileStream(response, res)) as unknown as StreamableFile }
             }
 
 		})

@@ -34,7 +34,7 @@
 	let my_profile: boolean
 	$: my_profile = $my_name === data.user.userName
 
-	if (my_profile) goto("/my_profile")
+	if (my_profile) goto("/myprofile")
 
 	async function askFriend() {
 		const ret = await client.invitations.friend.createFriendInvitation({
@@ -150,9 +150,6 @@
 	async function unblockUser() {
 		//To implement
 	}
-
-	if (my_profile) {
-	}
 </script>
 
 <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
@@ -201,14 +198,6 @@
 				</button>
 			{/if}
 		</div>
-
-		{#if my_profile}
-			<div class="flex-1">
-				<SlideToggle class="text-black" name="slider-label" checked={twoFA}>
-					2FA Authentication
-				</SlideToggle>
-			</div>
-		{/if}
 	</div>
 </div>
 <div class="p-3">

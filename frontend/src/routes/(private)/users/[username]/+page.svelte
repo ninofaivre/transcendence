@@ -23,6 +23,7 @@
 	export let data: PageData
 
 	const modalStore = getModalStore()
+	const toastStore = getToastStore()
 	let invite_state: null | "pending" | "accepted"
 	let already_friend: boolean = data.friendList.includes($page.params.username)
 	let twoFA: boolean = false
@@ -34,8 +35,10 @@
 		const ret = await client.invitations.friend.createFriendInvitation({
 			body: { invitedUserName: data.user.userName },
 		})
-		if (ret.status != 201) checkError(ret, "send friend request")
-		else makeToast("Sent friend request to " + data.user.userName)
+		if (ret.status != 201) checkError(ret, "send friend request", toastStore)
+		else {
+            makeToast("Sent friend request to " + data.user.userName, toastStore)
+        }
 	}
 
 	async function revokeFriend() {
@@ -62,9 +65,9 @@
 					year: "numeric",
 					month: "short",
 					day: "numeric",
-                    hour: "numeric",
-                    minute: "numeric",
-                    second: "numeric"
+					hour: "numeric",
+					minute: "numeric",
+					second: "numeric",
 				}),
 				Winner: obj.winner_name,
 				"Winning Score": obj.winner_score,
@@ -77,9 +80,9 @@
 
 	let settings: PaginationSettings = {
 		page: 0,
-		limit: 2,
+		limit: 5,
 		size: data.match_history.length,
-		amounts: [1, 2, 3, 4, 5, 6, 10],
+		amounts: [5, 30, 100],
 	}
 	$: settings.size = match_history.length
 
@@ -112,7 +115,7 @@
 	}
 
 	async function onPageChange(e: CustomEvent) {
-        if (keep_loading == false) return
+		if (keep_loading == false) return
 		if (last_page_number === e.detail + 1) {
 			spin = true
 			const ret = await client.game.getMatchHistory({
@@ -126,7 +129,7 @@
 			else {
 				if (ret.body.length < settings.limit) {
 					// alert("After this one, no more data")
-                    keep_loading = false
+					keep_loading = false
 				}
 				match_history = [...match_history, ...remap(ret.body)]
 			}
@@ -134,8 +137,12 @@
 		}
 	}
 
-	function onAmountChange(e: CustomEvent) {
-		console.log(e.detail)
+	async function blockUser() {
+        // const ret = await client
+	}
+
+	async function unblockUser() {
+		//To implement
 	}
 </script>
 
@@ -153,7 +160,7 @@
 			<h1 class="self-center text-black">{data.user.userName}</h1>
 		</div>
 
-		<!-- Send Friend Request -->
+		<!-- Send friend request -->
 		<div class="flex-1">
 			{#if invite_state}
 				<p>
@@ -161,13 +168,26 @@
 				</p>
 			{:else if already_friend}
 				<button class="variant-filled-error btn btn-sm h-fit" on:click={revokeFriend}
-					>Revoke friendship</button
-				>
+					>Revoke Friendship
+                </button >
 			{:else}
-				<button class="variant-filled-primary btn btn-sm h-fit" on:click={askFriend}
-					>Send friend request</button
-				>
+				<button class="variant-filled-primary btn btn-sm h-fit" disabled={data.user.blockedBy ? true : false} on:click={askFriend}
+					>Send Friend Request
+                </button >
 			{/if}
+		</div>
+
+		<!-- Block -->
+		<div class="flex-1">
+			{#if data.user.blocked}
+				<button class="variant-filled-warning btn btn-sm h-fit" on:click={unblockUser}>
+                    Remove Block
+                </button>
+			{:else if invite_state !== "pending" || !already_friend}
+				<button class="variant-filled-error btn btn-sm h-fit" on:click={blockUser}>
+                    Block
+                </button >
+            {/if}
 		</div>
 
 		<div class="flex-1">
@@ -179,7 +199,7 @@
 </div>
 <div class="p-3">
 	<Table source={table_source} />
-	<Paginator bind:settings showNumerals on:page={onPageChange} on:amount={onAmountChange} />
+	<Paginator bind:settings showNumerals on:page={onPageChange}  />
 </div>
 {#if spin}
 	<ProgressRadial class="absolute left-1/2 top-1/2" />

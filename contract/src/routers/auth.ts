@@ -26,7 +26,11 @@ export const authContract = c.router(
 					username: zUserName,
 					intraUserName: z.string(),
 				}),
-				...getErrorsForContract(c, [403, "Invalid42ApiCode"], [404, "NotRegisteredUser"]),
+				...getErrorsForContract(c,
+                    [200, "TwoFATokenNeeded"],
+                    [403, "Invalid42ApiCode"],
+                    [404, "NotRegisteredUser"]
+                ),
 			},
 		},
 		loginDev: {

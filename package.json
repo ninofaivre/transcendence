@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@anatine/zod-openapi": "^2.2.0",
-    "@nestjs/common": "^10.2.3",
+    "@nestjs/common": "^10.2.4",
     "@ts-rest/core": "^3.30.0",
     "@ts-rest/nest": "^3.30.0",
     "@ts-rest/open-api": "^3.30.0",

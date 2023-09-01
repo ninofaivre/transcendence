@@ -55,6 +55,7 @@ export class UserService {
 			},
 			dmPolicyLevel: true,
 			blockedUser: { where: { blockedUserName: username }, select: { id: true }, take: 1 },
+			blockedByUser: { where: { blockingUserName: username }, select: { id: true }, take: 1 },
 		} satisfies Prisma.UserSelect
 	}
 
@@ -168,7 +169,7 @@ export class UserService {
 		username: string,
 		toFormat: Prisma.UserGetPayload<typeof this.userProfileSelectGetPayload>,
 	): Promise<z.infer<typeof zUserProfileReturn>> {
-		const { name, chans, blockedUser, dmPolicyLevel, ...rest } = toFormat
+		const { name, chans, blockedUser, blockedByUser, dmPolicyLevel, ...rest } = toFormat
 
 		return {
 			...rest,
@@ -177,7 +178,8 @@ export class UserService {
 			status: await this.formatUserStatusForUser(username, name),
 			...this.formatUserProfilePreviewForUser(username, { name }),
 			commonChans: chans,
-			blockedShipId: blockedUser.length ? blockedUser[0].id : undefined,
+            blocked: blockedUser.length != 0,
+            blockedBy: blockedByUser.length != 0,
 		}
 	}
 

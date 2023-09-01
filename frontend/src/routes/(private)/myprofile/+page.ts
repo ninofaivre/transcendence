@@ -1,13 +1,13 @@
 import type { PageLoad } from "./$types"
 import { client } from "$clients"
 import { checkError } from "$lib/global"
-import { my_name } from "$stores"
-import { get } from "svelte/store"
 
-export const load: PageLoad = async ({}) => {
+export const load: PageLoad = async ({ parent }) => {
+	let { me } = await parent()
+
 	const match_history = await client.game.getMatchHistory({
 		params: {
-			username: get(my_name),
+			username: me.userName,
 		},
 	})
 

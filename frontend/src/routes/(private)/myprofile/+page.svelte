@@ -35,17 +35,12 @@
 	let toastStore = getToastStore()
 	let twoFA: boolean = data.me.enabledTwoFA
 	let modalStore = getModalStore()
-	$: {
-		if (!_init) {
-			setup2FA(twoFA)
-		}
-	}
+	alert(twoFA)
 
-	async function setup2FA(twoFA: boolean) {
-		let image: string = "https://i.imgur.com/TykCy5e.gif"
+	async function setup2FA() {
 		const code = await new Promise<string | undefined>((resolve) => {
 			const modalSettings: ModalSettings = {
-				image,
+				image: twoFA ? PUBLIC_BACKEND_URL + "/api/users/@me/qr-code" : "",
 				type: "prompt",
 				response: (r) => {
 					modalStore.close()
@@ -54,16 +49,18 @@
 			}
 			modalStore.trigger(modalSettings)
 		})
-		let fetchMethod = twoFA ? client.users.disable2FA : client.users.enable2FA
+		let fetchMethod = twoFA ? client.users.enable2FA : client.users.disable2FA
 		if (code) {
 			if (twoFA) {
 				const ret = await fetchMethod({
 					body: { twoFAtoken: code },
 				})
-				if (ret.status !== 200)
+				if (ret.status !== 200) {
 					checkError(ret, `${twoFA ? "enable" : "disable"} 2FA`, toastStore)
+					twoFA = !twoFA
+				}
 			}
-		}
+		} else twoFA = !twoFA
 	}
 
 	// Match Hisotry
@@ -250,7 +247,12 @@
 		</div>
 
 		<div class="flex-1">
-			<SlideToggle class="text-black" name="slider-label" bind:checked={twoFA}>
+			<SlideToggle
+				class="text-black"
+				name="slider-label"
+				bind:checked={twoFA}
+				on:change={setup2FA}
+			>
 				2FA Authentication
 			</SlideToggle>
 		</div>

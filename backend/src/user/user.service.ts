@@ -68,6 +68,7 @@ export class UserService {
 		name: true,
 		dmPolicyLevel: true,
 		statusVisibilityLevel: true,
+        enabledTwoFA: true
 	} satisfies Prisma.UserSelect
 
 	private myProfileSelectGetPayload = {
@@ -269,7 +270,7 @@ export class UserService {
 
 	async getMe(username: string) {
 		const me = await this.getUserByName(username, this.myProfileSelect)
-		if (!me) return contractErrors.NotFoundUser(username)
+		if (!me) return contractErrors.NotFoundUserForValidToken(username)
 		return this.formatMe(me)
 	}
 

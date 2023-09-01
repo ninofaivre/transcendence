@@ -39,7 +39,7 @@ export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
 export const zPartialUserProfileReturn = zUserProfileReturn.partial()
 
 export const zMyProfileReturn = z.strictObject({
-    // twoFAEnalbe: z.boolean()
+    enabledTwoFA: z.boolean(),
 	userName: zUserName,
 	dmPolicyLevel: zAccessPolicyLevel.exclude(["NO_ONE"]),
 	statusVisibilityLevel: zAccessPolicyLevel,
@@ -90,7 +90,7 @@ export const usersContract = c.router(
 			path: "/@me",
 			responses: {
 				200: zMyProfileReturn,
-				...getErrorsForContract(c, [404, "NotFoundUser"]),
+				...getErrorsForContract(c, [404, "NotFoundUserForValidToken"]),
 			},
 		},
 		getUser: {
@@ -144,7 +144,11 @@ export const usersContract = c.router(
         //         twoFAtoken: z.string()
         //     }),
         //     responses: {
-        //         201: c.type<null>()
+        //         201: c.type<null>(),
+        //         ...getErrorsForContract(c,
+        //             [403, "InvalidTwoFAToken"],
+        //             [404, "NotFoundUserForValidToken"]
+        //         )
         //     }
         // },
         // disable2FA: {

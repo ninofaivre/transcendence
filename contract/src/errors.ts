@@ -7,6 +7,7 @@ type Codes =
     | "ForbiddenByEnv"
     | "NotRegisteredUser"
     | "Invalid42ApiCode"
+    | "InvalidTwoFAToken"
 	| "NotFoundUser"
     | "InvalidProfilePicture"
     | "ServerUnableToWriteProfilePicture"
@@ -49,6 +50,15 @@ export const contractErrors = {
         body: {
             code: "Invalid42ApiCode",
             message: `api code ${code} is not valid`
+        }
+    } as const),
+
+    InvalidTwoFAToken: (token: string) =>
+    ({
+        status: 403,
+        body: {
+            code: "InvalidTwoFAToken",
+            message: `token ${token} is not valid (may be outOfDate)`
         }
     } as const),
 

@@ -32,17 +32,7 @@
 
 	$: {
 		// Prevents redir coming back from 42, or losing the query string for /auth
-		const pathname =
-			$page.url.pathname.slice(-1) === "/"
-				? $page.url.pathname.slice(0, -1)
-				: $page.url.pathname
-		if (
-			!(
-				pathname.endsWith("/auth") ||
-				pathname.endsWith("/signup") ||
-				pathname.endsWith("/login")
-			)
-		) {
+		if ($page.url.pathname.match(/\bauth\b/)) {
 			if ($logged_in == false) {
 				goto("/auth" + $page.url.searchParams.toString())
 			}

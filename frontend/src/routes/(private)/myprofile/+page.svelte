@@ -4,7 +4,9 @@
 	import type { MatchHistory } from "$types"
 	import type { PageData } from "./$types"
 	import type { TableSource } from "@skeletonlabs/skeleton"
+	import type { ModalSettings, ModalComponent, ModalStore } from "@skeletonlabs/skeleton"
 
+	import { Modal, getModalStore } from "@skeletonlabs/skeleton"
 	import {
 		Avatar,
 		FileDropzone,
@@ -25,10 +27,25 @@
 	import { my_name } from "$stores"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 
+	let _init = true
 	export let data: PageData
 
 	// 2FA
-	let twoFA: boolean = false
+	let twoFA: boolean = data.me.enabledTwoFA
+	let modalStore = getModalStore()
+	$: {
+		if (!_init) {
+			twoFA ? enable2FA() : disable2FA()
+		}
+	}
+
+	function enable2FA() {
+		alert("Stepper to enable 2fa")
+	}
+
+	function disable2FA() {
+		alert("Stepper to disable 2fa")
+	}
 
 	// Match Hisotry
 	let keep_loading = true
@@ -111,7 +128,7 @@
 		}
 	}
 
-	// File Upload
+	// PP Upload
 	let files: FileList
 	$: files, console.log(files)
 	let cropped_image_src: string | null = null
@@ -130,6 +147,7 @@
 		width: 0,
 		height: 0,
 	}
+	let picker_lock = true
 
 	function onFileSelected() {
 		if (files && files[0]) {
@@ -195,8 +213,7 @@
 			)
 	}
 
-	let picker_lock = true
-	let cropper_lock = true
+	_init = false
 </script>
 
 <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
@@ -214,7 +231,7 @@
 		</div>
 
 		<div class="flex-1">
-			<SlideToggle class="text-black" name="slider-label" checked={twoFA}>
+			<SlideToggle class="text-black" name="slider-label" bind:checked={twoFA}>
 				2FA Authentication
 			</SlideToggle>
 		</div>

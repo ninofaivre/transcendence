@@ -26,6 +26,7 @@
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { my_name } from "$stores"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
+	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
 
 	let _init = true
 	export let data: PageData
@@ -35,16 +36,28 @@
 	let modalStore = getModalStore()
 	$: {
 		if (!_init) {
-			twoFA ? enable2FA() : disable2FA()
+			setup2FA(twoFA)
 		}
 	}
 
-	function enable2FA() {
-		alert("Stepper to enable 2fa")
-	}
+	async function setup2FA(twoFA: boolean) {
+		let image: string = "https://i.imgur.com/TykCy5e.gif"
 
-	function disable2FA() {
-		alert("Stepper to disable 2fa")
+		const r = await new Promise<number | string | undefined>((resolve) => {
+			let modalSettings: ModalSettings = {
+				image,
+				type: "prompt",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+			}
+			modalStore.trigger(modalSettings)
+		})
+		if (r) {
+			// const r = await client.???
+			alert(r)
+		}
 	}
 
 	// Match Hisotry

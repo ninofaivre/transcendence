@@ -8,6 +8,7 @@ type Codes =
     | "NotRegisteredUser"
     | "Invalid42ApiCode"
     | "InvalidTwoFAToken"
+    | "TwoFATokenNeeded"
     | "twoFAalreadyEnabled"
     | "twoFAalreadyDisabled"
     | "twoFAqrCodeNeverRequested"
@@ -64,6 +65,16 @@ export const contractErrors = {
             message: `token ${token} is not valid (may be outOfDate)`
         }
     } as const),
+
+    TwoFATokenNeeded: (api_url: string) =>
+    ({
+        status: 200,
+        body: {
+            code: "TwoFATokenNeeded",
+            message: `need to provide 2FA token to complete authentication`
+        }
+    } as const),
+
 
     twoFAalreadyEnabled: () =>
     ({

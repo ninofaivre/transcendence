@@ -1,10 +1,8 @@
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from "@nestjs/websockets"
-import { UseGuards, Request, Injectable, Req, PipeTransform, UsePipes, Logger, Inject, forwardRef } from "@nestjs/common"
-import { JwtAuthGuard, WsJwtAuthGuard } from "../auth/jwt-auth.guard"
-import { Server, Socket, Event } from "socket.io"
+import { Injectable, PipeTransform, Logger, Inject, forwardRef } from "@nestjs/common"
+import { Server, Socket } from "socket.io"
 import { AuthService, EnrichedRequest } from "src/auth/auth.service";
 import { WebSocketAuthMiddleware } from "src/auth/ws.mw";
-import * as cookie from "cookie"
 import { GameService } from "src/game/game.service";
 import { Schema, z } from "zod";
 import { EnvService } from "src/env/env.service";

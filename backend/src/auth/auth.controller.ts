@@ -4,9 +4,9 @@ import { TsRest, TsRestHandler, tsRestHandler } from "@ts-rest/nest"
 import { contract, contractErrors } from "contract"
 import { Response } from "express"
 import { EnvService } from "src/env/env.service"
-import { JwtAuthGuard, RefreshTokenGuard } from "./jwt-auth.guard"
+import { JwtAuthGuard, JwtAuthGuardBase, RefreshTokenGuard } from "./jwt-auth.guard"
 import { isContractError } from "contract"
-import { DevGuard } from "src/env.guards"
+import { DevGuard } from "src/env/env.guards"
 
 const c = contract.auth
 
@@ -22,11 +22,14 @@ export class AuthController{
             const user = await this.authService.validateUser(code, redirect_uri)
             if (isContractError(user))
                 return user
-            await this.authService.setNewTokensAsCookies(res, user)
-            return { status: 200, body: user }
+            const { enabledTwoFA, ...rest } = user
+            await this.authService.setNewTokensAsCookies(res, { ...rest, twoFA: !enabledTwoFA })
+            if (enabledTwoFA)
+                return contractErrors.TwoFATokenNeeded()
+            return { status: 200, body: { username: user.username, intraUserName: user.intraUserName  } }
         })
 	}
-
+    
     @UseGuards(DevGuard)
     @TsRestHandler(c.loginDev)
     async loginDev(@Res({ passthrough: true }) res: Response) {
@@ -34,7 +37,7 @@ export class AuthController{
             const user = await this.authService.validateUserDev(username)
             if (!user)
                 return { status: 404, body: { code: "NotFound" } }
-            await this.authService.setNewTokensAsCookies(res, user)
+            await this.authService.setNewTokensAsCookies(res, { ...user, twoFA: true })
             return { status: 200, body: user }
         })
     }
@@ -50,14 +53,25 @@ export class AuthController{
         })
 	}
 
+    @UseGuards(JwtAuthGuardBase)
+    @TsRestHandler(c.twoFAauth)
+    async twoFAauth(@Req(){ user }: EnrichedRequest, @Res({ passthrough: true })response: Response) {
+        return tsRestHandler(c.twoFAauth, async ({ body: { twoFAtoken } }) => {
+            const res = await this.authService.twoFAauth(user.username, twoFAtoken)
+            if (isContractError(res))
+                return res
+            await this.authService.setNewTokensAsCookies(response, { ...user, twoFA: true })
+            return { status: 200, body: null }
+        })
+    }
+
     @UseGuards(RefreshTokenGuard)
     @TsRestHandler(c.refreshTokens)
     async refreshTokens(
         @Res({ passthrough: true })res: Response,
-        @Req(){ user: { username, refreshToken } }: Omit<Request, "user"> & Record<"user", EnrichedRequest['user'] & { refreshToken: string }>
+        @Req(){ user }: Omit<Request, "user"> & Record<"user", EnrichedRequest['user'] & { refreshToken: string, twoFA: boolean }>
     ) {
-        const user = await this.authService.doesRefreshTokenMatch(username, refreshToken)
-        if (!user)
+        if (!await this.authService.doesRefreshTokenMatch(user.username, user.refreshToken))
             return contractErrors.Unauthorized()
         await this.authService.setNewTokensAsCookies(res, user)
         return tsRestHandler(c.refreshTokens, async () => {

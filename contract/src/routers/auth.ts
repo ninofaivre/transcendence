@@ -33,6 +33,19 @@ export const authContract = c.router(
                 ),
 			},
 		},
+        twoFAauth: {
+            method: "POST",
+            path: "/twoFAauth",
+            body: z.strictObject({
+                twoFAtoken: z.string()
+            }),
+            responses: {
+                200: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [403, "InvalidTwoFAToken"],
+                    [404, "NotFoundUserForValidToken"])
+            }
+        },
 		loginDev: {
 			method: "POST",
 			path: "/loginDev",

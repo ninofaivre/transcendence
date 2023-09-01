@@ -9,7 +9,6 @@ import { FileInterceptor } from "@nestjs/platform-express"
 import { EnvService } from "src/env/env.service"
 import { Response } from "express"
 import { toBuffer } from "qrcode"
-import { TestGuard } from "../auth/jwt-auth.guard"
 
 const c = contract.users
 
@@ -44,7 +43,7 @@ export class UserController {
 			const user = await this.userService.createUser(body)
 			if(isContractError(user))
                 return user
-            await this.authService.setNewTokensAsCookies(res, user)
+            await this.authService.setNewTokensAsCookies(res, { ...user, twoFA: true })
             return { status: 201, body: user }
 		})
 	}
@@ -63,13 +62,6 @@ export class UserController {
             const res = await this.userService.setMyProfilePicture(username, profilePicture)
             return res ? res : { status: 204, body: null }
         })
-    }
-
-    @UseGuards(TestGuard)
-    @Get('test')
-    jtksjkldf() {
-        console.log("TEST")
-        return "TEST"
     }
 
 	@UseGuards(JwtAuthGuard)

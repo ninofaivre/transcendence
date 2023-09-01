@@ -1,11 +1,7 @@
-import { CanActivate, HttpException } from "@nestjs/common";
-import { EnvService } from "./env/env.service";
+import { CanActivate } from "@nestjs/common";
+import { EnvService } from "./env.service";
 import { contractErrors } from "contract";
-import { ContractErrorUnion } from "contract";
-
-// TODO move this to an other place
-const getHttpExceptionFromContractError = (error: ContractErrorUnion)  =>
-    new HttpException(error.body, error.status)
+import { getHttpExceptionFromContractError } from "../utils";
 
 export class EnvGuard<
     Key extends keyof typeof EnvService.env,

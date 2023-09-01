@@ -53,8 +53,8 @@ export class AuthService {
         })
     }
 
-    public async setNewTokensAsCookies(res: Response, user: EnrichedRequest['user']) {
-        const tokens = await this.getTokens(user, false)
+    public async setNewTokensAsCookies(res: Response, user: EnrichedRequest['user'] & { twoFA: boolean }) {
+        const tokens = await this.getTokens(user)
         res.cookie("access_token", tokens.accessToken, {
             ...AuthService.cookieOptions,
             maxAge: (EnvService.env.PUBLIC_MODE === 'DEV' ? 3600 : 900) * 1000,
@@ -67,8 +67,8 @@ export class AuthService {
         this.updateRefreshToken(user.username, tokens.refreshToken)
     }
 
-    public async getTokens(user: EnrichedRequest['user'], twoFA: boolean) {
-        const payload = { ...user, sub: user.username, twoFA }
+    public async getTokens(user: EnrichedRequest['user'] & { twoFA: boolean }) {
+        const payload = { ...user, sub: user.username, twoFA: user.twoFA }
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
                 secret: EnvService.env.JWT_SECRET,
@@ -88,10 +88,10 @@ export class AuthService {
         if (!intraUserName)
             return contractErrors.Invalid42ApiCode(code)
         const user = await this.prisma.user.findUnique({ where: { intraUserName },
-            select: { name: true }}) 
+            select: { name: true, enabledTwoFA: true }}) 
         if (!user)
             return contractErrors.NotRegisteredUser(intraUserName)
-        return { username: user.name, intraUserName }
+        return { username: user.name, intraUserName, enabledTwoFA: user.enabledTwoFA }
 	}
 
     public async validateUserDev(username: string) {
@@ -117,13 +117,27 @@ export class AuthService {
 
     public async doesRefreshTokenMatch(username: string, refreshToken: string) {
         const user = await this.usersService.getUserByName(username,
-            { refreshToken: true, intraUserName: true })
+            { refreshToken: true })
         if (!user || !user.refreshToken)
             return null 
-        const { intraUserName } = user
         return bcrypt.compareSync(refreshToken, user.refreshToken)
-            ? { username, intraUserName }
-            : null
+            ? true
+            : false 
+    }
+
+    public async twoFAauth(username: string, twoFAtoken: string) {
+        const user = await this.usersService.getUserByName(username, {
+            twoFAsecret: true,
+            enabledTwoFA: true
+        })
+        if (!user)
+            return contractErrors.NotFoundUserForValidToken(username)
+        if (!user.enabledTwoFA)
+            return
+        if (!user.twoFAsecret)
+            return contractErrors.twoFAqrCodeNeverRequested()
+        if (!authenticator.verify({ token: twoFAtoken, secret: user.twoFAsecret }))
+            return contractErrors.InvalidTwoFAToken(twoFAtoken)
     }
 
 }

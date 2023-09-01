@@ -32,6 +32,7 @@
 	export let data: PageData
 
 	// 2FA
+	let toastStore = getToastStore()
 	let twoFA: boolean = data.me.enabledTwoFA
 	let modalStore = getModalStore()
 	$: {
@@ -42,9 +43,8 @@
 
 	async function setup2FA(twoFA: boolean) {
 		let image: string = "https://i.imgur.com/TykCy5e.gif"
-
-		const r = await new Promise<number | string | undefined>((resolve) => {
-			let modalSettings: ModalSettings = {
+		const code = await new Promise<string | undefined>((resolve) => {
+			const modalSettings: ModalSettings = {
 				image,
 				type: "prompt",
 				response: (r) => {
@@ -54,9 +54,15 @@
 			}
 			modalStore.trigger(modalSettings)
 		})
-		if (r) {
-			// const r = await client.???
-			alert(r)
+		let fetchMethod = twoFA ? client.users.disable2FA : client.users.enable2FA
+		if (code) {
+			if (twoFA) {
+				const ret = await fetchMethod({
+					body: { twoFAtoken: code },
+				})
+				if (ret.status !== 200)
+					checkError(ret, `${twoFA ? "enable" : "disable"} 2FA`, toastStore)
+			}
 		}
 	}
 

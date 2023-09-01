@@ -1,16 +1,117 @@
 <script lang="ts">
 	import type { StepperState } from "@skeletonlabs/skeleton/dist/components/Stepper/types"
+	import type { PaginationSettings } from "@skeletonlabs/skeleton"
+	import type { MatchHistory } from "$types"
+	import type { PageData } from "./$types"
+	import type { TableSource } from "@skeletonlabs/skeleton"
 
-	import { FileDropzone } from "@skeletonlabs/skeleton"
+	import {
+		Avatar,
+		FileDropzone,
+		Paginator,
+		SlideToggle,
+		Table,
+		getToastStore,
+	} from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import { makeToast } from "$lib/global"
+	import { checkError, makeToast } from "$lib/global"
 	import { Stepper, Step } from "@skeletonlabs/skeleton"
 	import Toggle from "$lib/Toggle.svelte"
 	import { listenOutsideClick } from "$lib/global"
 	import Cropper from "svelte-easy-crop"
 	import { getCroppedImg } from "$lib/canvas_utils"
 	import { isContractError } from "contract"
+	import { tableMapperValues } from "@skeletonlabs/skeleton"
+	import { my_name } from "$stores"
+	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 
+	export let data: PageData
+
+	// 2FA
+	let twoFA: boolean = false
+
+	// Match Hisotry
+	let keep_loading = true
+	function remap(to_remap: MatchHistory) {
+		return to_remap.map((obj) => {
+			return {
+				Date: new Date(obj.creationDate).toLocaleDateString("en-GB", {
+					weekday: "long",
+					year: "numeric",
+					month: "short",
+					day: "numeric",
+					hour: "numeric",
+					minute: "numeric",
+					second: "numeric",
+				}),
+				Winner: obj.winner_name,
+				"Winning Score": obj.winner_score,
+				Looser: obj.looser_name,
+				"Loosing Score": obj.looser_score,
+				id: obj.id,
+			}
+		})
+	}
+
+	let settings: PaginationSettings = {
+		page: 0,
+		limit: 5,
+		size: data.match_history.length,
+		amounts: [5, 30, 100],
+	}
+	$: settings.size = match_history.length
+
+	let match_history: ReturnType<typeof remap> = remap(data.match_history)
+
+	let last_page_number: number
+	$: last_page_number = Math.ceil(match_history.length / settings.limit)
+
+	let last_match_history_element_id: string
+	$: last_match_history_element_id = match_history.at(-1)?.id ?? ""
+
+	// This does not need to be reactive
+	let fields: string[] =
+		match_history.length > 0 ? Object.keys(match_history[0]).filter((el) => el !== "id") : []
+
+	let paginated_match_history: typeof match_history
+	$: {
+		paginated_match_history = match_history.slice(
+			settings.page * settings.limit,
+			settings.page * settings.limit + settings.limit,
+		)
+		paginated_match_history = paginated_match_history
+	}
+
+	let table_source: TableSource
+	$: table_source = {
+		// A list of heading labels.
+		head: fields,
+		// The data visibly shown in your table body UI.
+		body: tableMapperValues(paginated_match_history, fields),
+	}
+
+	async function onPageChange(e: CustomEvent) {
+		if (keep_loading == false) return
+		if (last_page_number === e.detail + 1) {
+			const ret = await client.game.getMatchHistory({
+				params: { username: $my_name },
+				query: {
+					nMatches: settings.limit,
+					cursor: last_match_history_element_id,
+				},
+			})
+			if (ret.status !== 200) checkError(ret, "load match history", getToastStore())
+			else {
+				if (ret.body.length < settings.limit) {
+					// alert("After this one, no more data")
+					keep_loading = false
+				}
+				match_history = [...match_history, ...remap(ret.body)]
+			}
+		}
+	}
+
+	// File Upload
 	let files: FileList
 	$: files, console.log(files)
 	let cropped_image_src: string | null = null
@@ -98,6 +199,36 @@
 	let cropper_lock = true
 </script>
 
+<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
+	<div class="flex flex-col gap-2 rounded-lg bg-gray-50 p-8 sm:px-10">
+		<!-- Avatar -->
+		<div class="grid flex-1 grid-cols-2">
+			<!-- col1 -->
+			<Avatar
+				src="{PUBLIC_BACKEND_URL}/users/{$my_name}/profilePicture"
+				fallback="https://i.pravatar.cc/?u={$my_name}"
+				alt="profile"
+			/>
+			<!-- col2 -->
+			<h1 class="self-center text-black">{$my_name}</h1>
+		</div>
+
+		<div class="flex-1">
+			<SlideToggle class="text-black" name="slider-label" checked={twoFA}>
+				2FA Authentication
+			</SlideToggle>
+		</div>
+	</div>
+</div>
+<div class="p-3">
+	{#if match_history.length > 0}
+		<Table source={table_source} />
+		<Paginator bind:settings showNumerals on:page={onPageChange} />
+	{:else}
+		<div class="py-20 text-center text-3xl font-bold text-gray-500">No games to show yet</div>
+	{/if}
+</div>
+
 <Toggle let:toggle>
 	<svelte:fragment let:toggle slot="active">
 		<div use:listenOutsideClick on:outsideclick={toggle}>
@@ -137,5 +268,5 @@
 			</Stepper>
 		</div>
 	</svelte:fragment>
-	<button class="btn btn-sm variant-filled" on:click={toggle}>Change profile picture</button>
+	<button class="variant-filled btn btn-sm" on:click={toggle}>Change profile picture</button>
 </Toggle>

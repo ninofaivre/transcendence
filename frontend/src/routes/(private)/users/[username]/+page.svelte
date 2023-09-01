@@ -13,12 +13,13 @@
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { Avatar } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import { isContractError } from "contract"
 	import { checkError, makeToast } from "$lib/global"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { page } from "$app/stores"
 	import { SlideToggle } from "@skeletonlabs/skeleton"
 	import { Paginator } from "@skeletonlabs/skeleton"
+	import { my_name } from "$stores"
+	import { goto } from "$app/navigation"
 
 	export let data: PageData
 
@@ -27,9 +28,13 @@
 	let invite_state: null | "pending" | "accepted"
 	let already_friend: boolean = data.friendList.includes($page.params.username)
 	let twoFA: boolean = false
-	// let twoFA: boolean = data.twoFA
+	// let twoFA: boolean = data.user.twoFA
 	let spin = false
 	let keep_loading = true
+	let my_profile: boolean
+	$: my_profile = $my_name === data.user.userName
+
+	if (my_profile) goto("/myprofile")
 
 	async function askFriend() {
 		const ret = await client.invitations.friend.createFriendInvitation({
@@ -37,8 +42,8 @@
 		})
 		if (ret.status != 201) checkError(ret, "send friend request", toastStore)
 		else {
-            makeToast("Sent friend request to " + data.user.userName, toastStore)
-        }
+			makeToast("Sent friend request to " + data.user.userName, toastStore)
+		}
 	}
 
 	async function revokeFriend() {
@@ -95,7 +100,8 @@
 	$: last_match_history_element_id = match_history.at(-1)?.id ?? ""
 
 	// This does not need to be reactive
-	let fields: string[] = Object.keys(match_history[0]).filter((el) => el !== "id")
+	let fields: string[] =
+		match_history.length > 0 ? Object.keys(match_history[0]).filter((el) => el !== "id") : []
 
 	let paginated_match_history: typeof match_history
 	$: {
@@ -138,7 +144,7 @@
 	}
 
 	async function blockUser() {
-        // const ret = await client
+		// const ret = await client
 	}
 
 	async function unblockUser() {
@@ -146,7 +152,7 @@
 	}
 </script>
 
-<div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
+<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
 	<div class="flex flex-col gap-2 rounded-lg bg-gray-50 p-8 sm:px-10">
 		<!-- Avatar -->
 		<div class="grid flex-1 grid-cols-2">
@@ -169,11 +175,14 @@
 			{:else if already_friend}
 				<button class="variant-filled-error btn btn-sm h-fit" on:click={revokeFriend}
 					>Revoke Friendship
-                </button >
+				</button>
 			{:else}
-				<button class="variant-filled-primary btn btn-sm h-fit" disabled={data.user.blockedBy ? true : false} on:click={askFriend}
+				<button
+					class="variant-filled-primary btn btn-sm h-fit"
+					disabled={data.user.blockedBy ? true : false}
+					on:click={askFriend}
 					>Send Friend Request
-                </button >
+				</button>
 			{/if}
 		</div>
 
@@ -181,25 +190,23 @@
 		<div class="flex-1">
 			{#if data.user.blocked}
 				<button class="variant-filled-warning btn btn-sm h-fit" on:click={unblockUser}>
-                    Remove Block
-                </button>
+					Remove Block
+				</button>
 			{:else if invite_state !== "pending" || !already_friend}
 				<button class="variant-filled-error btn btn-sm h-fit" on:click={blockUser}>
-                    Block
-                </button >
-            {/if}
-		</div>
-
-		<div class="flex-1">
-			<SlideToggle class="text-black" name="slider-label" checked={twoFA}
-				>2FA Authentication</SlideToggle
-			>
+					Block
+				</button>
+			{/if}
 		</div>
 	</div>
 </div>
 <div class="p-3">
-	<Table source={table_source} />
-	<Paginator bind:settings showNumerals on:page={onPageChange}  />
+	{#if match_history.length > 0}
+		<Table source={table_source} />
+		<Paginator bind:settings showNumerals on:page={onPageChange} />
+	{:else}
+		<div class="py-20 text-center text-3xl font-bold text-gray-500">No games to show yet</div>
+	{/if}
 </div>
 {#if spin}
 	<ProgressRadial class="absolute left-1/2 top-1/2" />

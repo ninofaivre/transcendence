@@ -129,7 +129,11 @@ export const usersContract = c.router(
 		},
         qrCode: {
             method: "GET",
-            path: "qr-code",
+            query: z.strictObject({
+                lightColor: z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/).default("#ffffff"),
+                darkColor: z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/).default("#000000")
+            }),
+            path: "/@me/qr-code",
             responses: {
                 200: c.type<StreamableFile>(),
                 ...getErrorsForContract(c,
@@ -137,30 +141,36 @@ export const usersContract = c.router(
                 )
             }
         },
-        // enable2FA: {
-        //     method: "POST",
-        //     path: "/@me/twoFA",
-        //     body: z.strictObject({
-        //         twoFAtoken: z.string()
-        //     }),
-        //     responses: {
-        //         201: c.type<null>(),
-        //         ...getErrorsForContract(c,
-        //             [403, "InvalidTwoFAToken"],
-        //             [404, "NotFoundUserForValidToken"]
-        //         )
-        //     }
-        // },
-        // disable2FA: {
-        //     method: "DELETE",
-        //     path: "/@me/twoFA",
-        //     body: z.strictObject({
-        //         twoFAtoken: z.string()
-        //     }),
-        //     responses: {
-        //         200: c.type<null>()
-        //     }
-        // },
+        enable2FA: {
+            method: "POST",
+            path: "/@me/twoFA",
+            body: z.strictObject({
+                twoFAtoken: z.string()
+            }),
+            responses: {
+                201: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [400, "twoFAqrCodeNeverRequested", "twoFAalreadyEnabled"],
+                    [403, "InvalidTwoFAToken"],
+                    [404, "NotFoundUserForValidToken"]
+                )
+            }
+        },
+        disable2FA: {
+            method: "DELETE",
+            path: "/@me/twoFA",
+            body: z.strictObject({
+                twoFAtoken: z.string()
+            }),
+            responses: {
+                200: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [400, "twoFAalreadyDisabled"],
+                    [403, "InvalidTwoFAToken"],
+                    [404, "NotFoundUserForValidToken"]
+                )
+            }
+        },
 		setMyProfilePicture: {
 			method: "PUT",
 			path: "/@me/PP",

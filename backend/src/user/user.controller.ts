@@ -8,7 +8,7 @@ import { AuthService, EnrichedRequest } from "src/auth/auth.service"
 import { FileInterceptor } from "@nestjs/platform-express"
 import { EnvService } from "src/env/env.service"
 import { Response } from "express"
-import { toFileStream } from "qrcode"
+import { toBuffer } from "qrcode"
 
 const c = contract.users
 
@@ -66,16 +66,11 @@ export class UserController {
 
 	@UseGuards(JwtAuthGuard)
 	@TsRestHandler(c)
-	async handler(@Request() { user: { username } }: EnrichedRequest,
-        @Res({ passthrough: true })response: Response
-    ) {
+	async handler(@Request() { user: { username } }: EnrichedRequest) {
 		return tsRestHandler<Omit<typeof c, "signUp" | "setMyProfilePicture">>(c, {
 			getMe: async () => {
 				const res = await this.userService.getMe(username)
-                if (isContractError(res))
-                    return res
-                console.log(res)
-				return { status: 200, body: res }
+				return isContractError(res) ? res : { status: 200, body: res }
 			},
 
 			updateMe: async ({ body }) => {
@@ -98,9 +93,25 @@ export class UserController {
                 return isContractError(res) ? res : { status: 200, body: res }
             },
 
-            qrCode: async () => {
+            qrCode: async ({ query: { lightColor, darkColor } }) => {
                 const res = await this.userService.getUserTwoFAqrCode(username)
-                return isContractError(res) ? res : { status: 200, body: (await toFileStream(response, res)) as unknown as StreamableFile }
+                if (isContractError(res))
+                    return res
+                const buffer = await toBuffer(res,
+                    {
+                        color: { light: lightColor, dark: darkColor },
+                    })
+                return { status: 200, body: new StreamableFile(buffer) }
+            },
+
+            enable2FA: async ({ body: { twoFAtoken } }) => {
+                const res = await this.userService.enableTwoFA(username, twoFAtoken)
+                return isContractError(res) ? res : { status: 200, body: null }
+            },
+            
+            disable2FA: async ({ body: { twoFAtoken } }) => {
+                const res = await this.userService.disableTwoFA(username, twoFAtoken)
+                return isContractError(res) ? res : { status: 200, body: null }
             }
 
 		})

@@ -10,6 +10,7 @@ import * as cookie from "cookie"
 import { contract, contractErrors } from "contract"
 import { Socket } from "socket.io"
 import { JwtPayload } from "./jwt.strategy"
+import { authenticator } from "otplib"
 
 export interface EnrichedRequest extends Request {
     user: {

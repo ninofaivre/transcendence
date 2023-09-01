@@ -537,18 +537,50 @@ export class UserService {
     }
 
     public async getUserTwoFAqrCode(username: string) {
-        const req = await this.prisma.user.findUnique({ where: { name: username },
-            select: {
-                twoFAsecret: true
-            }})
-        if (!req)
+        const user = await this.getUserByName(username, { twoFAsecret: true })
+        if (!user)
             return contractErrors.NotFoundUserForValidToken(username)
-        let { twoFAsecret } = req
+        let { twoFAsecret } = user
         if (!twoFAsecret) {
             twoFAsecret = authenticator.generateSecret()
             this.prisma.user.update({ where: { name: username }, data: { twoFAsecret } })
         }
         return authenticator.keyuri(username, EnvService.env.APP_NAME, twoFAsecret)
+    }
+
+    public async enableTwoFA(username: string, twoFAtoken: string) {
+        const user = await this.getUserByName(username, {
+            twoFAsecret: true,
+            enabledTwoFA: true
+        })
+        if (!user)
+            return contractErrors.NotFoundUserForValidToken(username)
+        if (user.enabledTwoFA)
+            return contractErrors.twoFAalreadyEnabled()
+        if (!user.twoFAsecret)
+            return contractErrors.twoFAqrCodeNeverRequested()
+        if (!authenticator.verify({ token: twoFAtoken, secret: user.twoFAsecret }))
+            return contractErrors.InvalidTwoFAToken(twoFAtoken)
+        this.prisma.user.update({ where: { name: username }, data: { enabledTwoFA: true } })
+    }
+
+    public async disableTwoFA(username: string, twoFAtoken: string) {
+        const user = await this.getUserByName(username, {
+            twoFAsecret: true,
+            enabledTwoFA: true
+        })
+        if (!user)
+            return contractErrors.NotFoundUserForValidToken(username)
+        if (!user.enabledTwoFA)
+            return contractErrors.twoFAalreadyDisabled()
+        if (!user.twoFAsecret)
+            return
+        if (!authenticator.verify({ token: twoFAtoken, secret: user.twoFAsecret }))
+            return contractErrors.InvalidTwoFAToken(twoFAtoken)
+        this.prisma.user.update({
+            where: { name: username },
+            data: { enabledTwoFA: false, twoFAsecret: null }
+        })
     }
 
 }

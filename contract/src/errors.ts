@@ -8,6 +8,9 @@ type Codes =
     | "NotRegisteredUser"
     | "Invalid42ApiCode"
     | "InvalidTwoFAToken"
+    | "twoFAalreadyEnabled"
+    | "twoFAalreadyDisabled"
+    | "twoFAqrCodeNeverRequested"
 	| "NotFoundUser"
     | "InvalidProfilePicture"
     | "ServerUnableToWriteProfilePicture"
@@ -59,6 +62,33 @@ export const contractErrors = {
         body: {
             code: "InvalidTwoFAToken",
             message: `token ${token} is not valid (may be outOfDate)`
+        }
+    } as const),
+
+    twoFAalreadyEnabled: () =>
+    ({
+        status: 400,
+        body: {
+            code: "twoFAalreadyEnabled",
+            message: `2FA is already enabled, to change secret disable and reenable it`
+        }
+    } as const),
+
+    twoFAalreadyDisabled: () =>
+    ({
+        status: 400,
+        body: {
+            code: "twoFAalreadyDisabled",
+            message: `2FA is already disabled`
+        }
+    } as const),
+
+    twoFAqrCodeNeverRequested: () =>
+    ({
+        status: 400,
+        body: {
+            code: "twoFAqrCodeNeverRequested",
+            message: `you can't enable two FA without requesting the QR code, it would soft lock the account`
         }
     } as const),
 

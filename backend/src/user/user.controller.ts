@@ -8,6 +8,7 @@ import { AuthService, EnrichedRequest } from "src/auth/auth.service"
 import { FileInterceptor } from "@nestjs/platform-express"
 import { EnvService } from "src/env/env.service"
 import { Response } from "express"
+import { toFileStream } from "qrcode"
 
 const c = contract.users
 
@@ -65,7 +66,7 @@ export class UserController {
 
 	@UseGuards(JwtAuthGuard)
 	@TsRestHandler(c)
-	async handler(@Request() { user: { username } }: EnrichedRequest) {
+	async handler(@Request() { user: { username } }: EnrichedRequest, @Res()response: Response) {
 		return tsRestHandler<Omit<typeof c, "signUp" | "setMyProfilePicture">>(c, {
 			getMe: async () => {
 				const res = await this.userService.getMe(username)
@@ -90,7 +91,13 @@ export class UserController {
             getUserProfilePicture: async ({ params: { userName: otherUserName } }) => {
                 const res = await this.userService.getUserProfilePicture(otherUserName)
                 return isContractError(res) ? res : { status: 200, body: res }
+            },
+
+            qrCode: async () => {
+                const res = await this.userService.getUserTwoFAqrCode(username)
+                return isContractError(res) ? res : { status: 200, body: toFileStream(response, res) }
             }
+
 		})
 	}
 }

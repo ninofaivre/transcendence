@@ -9,6 +9,8 @@ export const UserModel = z.object({
   profilePicture: z.string(),
   dmPolicyLevel: z.nativeEnum(AccessPolicyLevel),
   statusVisibilityLevel: z.nativeEnum(AccessPolicyLevel),
+  enabledTwoFA: z.boolean(),
+  twoFAsecret: z.string().nullish(),
 });
 
 export interface CompleteUserInput extends z.input<typeof UserModel> {

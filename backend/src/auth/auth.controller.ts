@@ -14,7 +14,7 @@ const c = contract.auth
 
 const twoFAsecret = authenticator.generateSecret()
 console.log(twoFAsecret)
-const otpAuthUrl = authenticator.keyuri('nino', 'transcendence', twoFAsecret)
+const otpAuthUrl = authenticator.keyuri('nino', EnvService.env.APP_NAME, twoFAsecret)
 console.log(otpAuthUrl)
 
 @TsRest({ jsonQuery: true })

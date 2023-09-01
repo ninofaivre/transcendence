@@ -22,6 +22,7 @@ const envSchema = z.object({
     PRIVATE_BACKEND_PORT: z.coerce.number().min(1024).max(65535),
 
     PUBLIC_API42_CLIENT_ID: z.string(),
+    APP_NAME: z.string()
 })
 
 @Injectable()

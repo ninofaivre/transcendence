@@ -123,13 +123,16 @@ export const usersContract = c.router(
 				...getErrorsForContract(c, [404, "NotFoundUser"]),
 			},
 		},
-        // qrCode: {
-        //     method: "GET",
-        //     path: "qr-code",
-        //     responses: {
-        //         200: c.type<StreamableFile>()
-        //     }
-        // },
+        qrCode: {
+            method: "GET",
+            path: "qr-code",
+            responses: {
+                200: c.type<StreamableFile>(),
+                ...getErrorsForContract(c,
+                    [404, "NotFoundUserForValidToken"],
+                )
+            }
+        },
         // enable2FA: {
         //     method: "POST",
         //     path: "/@me/twoFA",

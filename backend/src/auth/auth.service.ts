@@ -68,7 +68,7 @@ export class AuthService {
     }
 
     public async getTokens(user: EnrichedRequest['user'] & { twoFA: boolean }) {
-        const payload = { ...user, sub: user.username, twoFA: user.twoFA }
+        const payload = { username: user.username, intraUserName: user.intraUserName, sub: user.username, twoFA: user.twoFA }
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
                 secret: EnvService.env.JWT_SECRET,

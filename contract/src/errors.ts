@@ -68,7 +68,7 @@ export const contractErrors = {
 
     TwoFATokenNeeded: () =>
     ({
-        status: 100,
+        status: 403,
         body: {
             code: "TwoFATokenNeeded",
             message: `need to provide 2FA token to complete authentication`

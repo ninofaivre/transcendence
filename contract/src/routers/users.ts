@@ -122,6 +122,33 @@ export const usersContract = c.router(
 				...getErrorsForContract(c, [404, "NotFoundUser"]),
 			},
 		},
+        qrCode: {
+            method: "GET",
+            path: "qr-code",
+            responses: {
+                200: c.type<StreamableFile>()
+            }
+        },
+        enable2FA: {
+            method: "POST",
+            path: "/@me/twoFA",
+            body: z.strictObject({
+                twoFAtoken: z.string()
+            }),
+            responses: {
+                201: c.type<null>()
+            }
+        },
+        disable2FA: {
+            method: "DELETE",
+            path: "/@me/twoFA",
+            body: z.strictObject({
+                twoFAtoken: z.string()
+            }),
+            responses: {
+                200: c.type<null>()
+            }
+        },
 		setMyProfilePicture: {
 			method: "PUT",
 			path: "/@me/PP",

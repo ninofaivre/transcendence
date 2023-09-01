@@ -561,7 +561,7 @@ export class UserService {
             return contractErrors.twoFAqrCodeNeverRequested()
         if (!authenticator.verify({ token: twoFAtoken, secret: user.twoFAsecret }))
             return contractErrors.InvalidTwoFAToken(twoFAtoken)
-        this.prisma.user.update({ where: { name: username }, data: { enabledTwoFA: true } })
+        await this.prisma.user.update({ where: { name: username }, data: { enabledTwoFA: true } })
     }
 
     public async disableTwoFA(username: string, twoFAtoken: string) {
@@ -577,7 +577,7 @@ export class UserService {
             return
         if (!authenticator.verify({ token: twoFAtoken, secret: user.twoFAsecret }))
             return contractErrors.InvalidTwoFAToken(twoFAtoken)
-        this.prisma.user.update({
+        await this.prisma.user.update({
             where: { name: username },
             data: { enabledTwoFA: false, twoFAsecret: null }
         })

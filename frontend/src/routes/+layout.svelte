@@ -24,6 +24,7 @@
 	import WaitForGame from "$lib/WaitForGame.svelte"
 	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
 	import AcceptGameInvitationModal from "$lib/AcceptGameInvitationModal.svelte"
+	import TwoFAModal from "$lib/TwoFAModal.svelte"
 	import { client } from "$clients"
 
 	initializeStores()
@@ -55,6 +56,7 @@
 		WaitForGame: { ref: WaitForGame },
 		SendFriendRequestModal: { ref: SendFriendRequestModal },
 		AcceptGameInvitationModal: { ref: AcceptGameInvitationModal },
+		TwoFAModal: { ref: TwoFAModal },
 	}
 
 	onMount(() => console.log("Layout mounted"))

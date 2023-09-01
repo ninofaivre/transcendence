@@ -19,5 +19,5 @@ export const load = async ({ depends }: LayoutLoadEvent) => {
 		let friendList: string[] = friendships_res.body.map((friendship) => friendship.friendName)
 		return { friendships: friendships_res.body, friendList, me: me_res.body }
 	}
-	return { me: {} as Record<string, any>, friendships_res: [] }
+	return { me: {} as Record<string, any>, friendships: [], friendList: [] }
 }

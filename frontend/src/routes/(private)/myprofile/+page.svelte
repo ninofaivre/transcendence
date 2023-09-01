@@ -4,7 +4,9 @@
 	import type { MatchHistory } from "$types"
 	import type { PageData } from "./$types"
 	import type { TableSource } from "@skeletonlabs/skeleton"
+	import type { ModalSettings, ModalComponent, ModalStore } from "@skeletonlabs/skeleton"
 
+	import { Modal, getModalStore } from "@skeletonlabs/skeleton"
 	import {
 		Avatar,
 		FileDropzone,
@@ -24,11 +26,42 @@
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { my_name } from "$stores"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
+	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
 
+	let _init = true
 	export let data: PageData
 
 	// 2FA
-	let twoFA: boolean = false
+	let toastStore = getToastStore()
+	let twoFA: boolean = data.me.enabledTwoFA
+	let modalStore = getModalStore()
+	alert(twoFA)
+
+	async function setup2FA() {
+		const code = await new Promise<string | undefined>((resolve) => {
+			const modalSettings: ModalSettings = {
+				image: twoFA ? PUBLIC_BACKEND_URL + "/api/users/@me/qr-code" : "",
+				type: "prompt",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+			}
+			modalStore.trigger(modalSettings)
+		})
+		let fetchMethod = twoFA ? client.users.enable2FA : client.users.disable2FA
+		if (code) {
+			if (twoFA) {
+				const ret = await fetchMethod({
+					body: { twoFAtoken: code },
+				})
+				if (ret.status !== 200) {
+					checkError(ret, `${twoFA ? "enable" : "disable"} 2FA`, toastStore)
+					twoFA = !twoFA
+				}
+			}
+		} else twoFA = !twoFA
+	}
 
 	// Match Hisotry
 	let keep_loading = true
@@ -111,7 +144,7 @@
 		}
 	}
 
-	// File Upload
+	// PP Upload
 	let files: FileList
 	$: files, console.log(files)
 	let cropped_image_src: string | null = null
@@ -130,6 +163,7 @@
 		width: 0,
 		height: 0,
 	}
+	let picker_lock = true
 
 	function onFileSelected() {
 		if (files && files[0]) {
@@ -195,8 +229,7 @@
 			)
 	}
 
-	let picker_lock = true
-	let cropper_lock = true
+	_init = false
 </script>
 
 <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
@@ -214,7 +247,12 @@
 		</div>
 
 		<div class="flex-1">
-			<SlideToggle class="text-black" name="slider-label" checked={twoFA}>
+			<SlideToggle
+				class="text-black"
+				name="slider-label"
+				bind:checked={twoFA}
+				on:change={setup2FA}
+			>
 				2FA Authentication
 			</SlideToggle>
 		</div>

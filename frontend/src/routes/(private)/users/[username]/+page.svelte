@@ -16,7 +16,6 @@
 	import { checkError, makeToast } from "$lib/global"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { page } from "$app/stores"
-	import { SlideToggle } from "@skeletonlabs/skeleton"
 	import { Paginator } from "@skeletonlabs/skeleton"
 	import { my_name } from "$stores"
 	import { goto } from "$app/navigation"
@@ -145,10 +144,11 @@
 
 	async function blockUser() {
 		// const ret = await client
+        console.log("Not implemented")
 	}
 
 	async function unblockUser() {
-		//To implement
+        console.log("Not implemented")
 	}
 </script>
 
@@ -197,6 +197,15 @@
 					Block
 				</button>
 			{/if}
+		</div>
+
+		<!-- Game invite -->
+		<div class="flex-1">
+			{#if !data.user.blocked || data.user.blockedBy }
+				<button class="variant-filled-warning btn btn-sm h-fit" on:click={inviteToGame}>
+                    Invite to a Game
+				</button>
+            {/if}
 		</div>
 	</div>
 </div>

@@ -33,6 +33,7 @@
 						code: $page.url.searchParams.get("code")!,
 					},
 				})
+				alert("I am never reached from a clean url")
 				if (isContractError(ret) && ret.body.code === "TwoFATokenNeeded") {
 					alert("You are being redirected to the 2fa page")
 					goto("/auth/2fa")

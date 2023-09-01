@@ -2,29 +2,29 @@
 	import { checkError, makeToast } from "$lib/global"
 	import { logged_in } from "$stores"
 	import { client } from "$clients"
-    import { getToastStore } from "@skeletonlabs/skeleton";
+	import { getToastStore } from "@skeletonlabs/skeleton"
 
-    const toastStore = getToastStore()
+	const toastStore = getToastStore()
 	let input = ""
 
 	async function login2FA() {
-        const ret = await client.auth.login2FA({
-            body: {
-                twoFAtoken: input,
-            }
-        })
-        if (ret.status !== 200) checkError(ret, "confirm log in", getToastStore())
-        else {
-            logged_in.set(true)
-            makeToast("Logged in successfully", toastStore)
-        }
+		const ret = await client.auth.twoFAauth({
+			body: {
+				twoFAtoken: input,
+			},
+		})
+		if (ret.status !== 200) checkError(ret, "confirm log in", getToastStore())
+		else {
+			logged_in.set(true)
+			makeToast("Logged in successfully", toastStore)
+		}
 	}
 </script>
 
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
 	<div class="grid grid-rows-2 gap-2 rounded-lg bg-gray-50 p-8 sm:px-10">
 		<label class="label text-black" for="username">
-			Username
+			2FA code
 			<input
 				bind:value={input}
 				type="text"
@@ -34,7 +34,7 @@
 				minlength="3"
 			/>
 		</label>
-		<button on:click={login2FA} class="btn btn-sm variant-filled-primary rounded-2xl">
+		<button on:click={login2FA} class="variant-filled-primary btn btn-sm rounded-2xl">
 			<div>Send confirmation code</div>
 		</button>
 	</div>

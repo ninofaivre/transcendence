@@ -66,11 +66,16 @@ export class UserController {
 
 	@UseGuards(JwtAuthGuard)
 	@TsRestHandler(c)
-	async handler(@Request() { user: { username } }: EnrichedRequest, @Res()response: Response) {
+	async handler(@Request() { user: { username } }: EnrichedRequest,
+        @Res({ passthrough: true })response: Response
+    ) {
 		return tsRestHandler<Omit<typeof c, "signUp" | "setMyProfilePicture">>(c, {
 			getMe: async () => {
 				const res = await this.userService.getMe(username)
-				return isContractError(res) ? res : { status: 200, body: res }
+                if (isContractError(res))
+                    return res
+                console.log(res)
+				return { status: 200, body: res }
 			},
 
 			updateMe: async ({ body }) => {

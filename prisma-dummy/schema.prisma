@@ -204,6 +204,9 @@ model User {
 
   dmPolicyLevel	AccessPolicyLevel @default(ONLY_FRIEND)
   statusVisibilityLevel AccessPolicyLevel @default(IN_COMMON_CHAN)
+
+  enabledTwoFA Boolean @default(false)
+    twoFAsecret String?
 }
 
 model MatchSummary {

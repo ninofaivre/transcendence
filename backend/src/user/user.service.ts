@@ -18,6 +18,7 @@ import { EnvService } from "src/env/env.service"
 import { readFileSync, writeFileSync } from "fs"
 import { Oauth42Service } from "src/oauth42/oauth42.service"
 import { GameWebsocketGateway } from "src/websocket/game.websocket.gateway"
+import { authenticator } from "otplib"
 
 const sharp = require('sharp')
 
@@ -523,6 +524,21 @@ export class UserService {
             return new StreamableFile(buffer)
         } catch {}
         return contractErrors.NotFoundProfilePicture(otherUserName)
+    }
+
+    public async getUserTwoFAqrCode(username: string) {
+        const req = await this.prisma.user.findUnique({ where: { name: username },
+            select: {
+                twoFAsecret: true
+            }})
+        if (!req)
+            return contractErrors.NotFoundUserForValidToken(username)
+        let { twoFAsecret } = req
+        if (!twoFAsecret) {
+            twoFAsecret = authenticator.generateSecret()
+            this.prisma.user.update({ where: { name: username }, data: { twoFAsecret } })
+        }
+        return authenticator.keyuri(username, EnvService.env.APP_NAME, twoFAsecret)
     }
 
 }

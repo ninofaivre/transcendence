@@ -708,4 +708,39 @@ export class UserService {
         })
     }
 
+    // private searchMode = {
+    //     "*": ({}: {}) => ({}),
+    //     "CREATE_CHAN_INVITE": ({ username, chanId }: { username: string, chanId: string }) => ({
+    //         name: { not: username },
+    //         blockedByUser: { none: { blockingUserName: username } },
+    //         blockedUser: { none: { blockedUserName: username } },
+    //         directMessage: {
+    //             some: {
+    //                 OR: [
+    //                     { requestedUserName: username },
+    //                     { requestingUserName: username }
+    //                 ],
+    //                 status: 'ENABLED'
+    //             }
+    //         },
+    //         chans: { none: { id: chanId } },
+    //         timedUserChan: { none: { chanId } }
+    //     } as const),
+    //     "CREATE_FRIEND_INVITE": ({ username }: { username: string }) => ({}),
+    // } satisfies {
+    //     [key in RequestShapes['searchUsersV2']['query']['action']]: ((...args: any[]) => Prisma.UserWhereInput)
+    // }
+
+    // public async searchUsersV2(username: string, { chanId, action, nResult, userNameContains }: RequestShapes['searchUsersV2']['query']) {
+    //     this.prisma.user.findMany({
+    //         where: {
+    //             AND: [
+    //                 { name: { contains: userNameContains } },
+    //                 this.searchMode[action]({ username, chanId })
+    //             ]
+    //         },
+    //         take: nResult
+    //     })
+    // }
+
 }

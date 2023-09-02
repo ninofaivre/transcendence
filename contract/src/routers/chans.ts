@@ -192,7 +192,7 @@ export const chansContract = c.router(
 			method: "POST",
 			path: "/@me",
 			body: z.strictObject({
-				chanId: z.string().uuid(),
+				title: zChanTitle,
 				password: zChanPassword.optional(),
 			}),
 			responses: {

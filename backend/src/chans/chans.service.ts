@@ -1001,10 +1001,11 @@ export class ChansService {
         return chan as RetypeChan<typeof chan>
     }
 
-	async joinChanById(username: string, { chanId, password }: RequestShapes['joinChanById']['body']) {
+	async joinChanById(username: string, { title, password }: RequestShapes['joinChanById']['body']) {
 		const chan = await this.getChan(
 			{
-				id: chanId,
+                
+				title,
 				type: ChanType.PUBLIC,
 			},
 			{
@@ -1013,28 +1014,29 @@ export class ChansService {
                 timedStatusUsers: {
                     where: { ...this.getTimedChanUsersByStatus('BAN'), timedUserName: username },
                     select: { type: true, timedUserName: true, untilDate: true }
-                }
+                },
+                id: true
 			}
 		)
         if (!chan)
-            return contractErrors.NotFoundChan(chanId)
+            return contractErrors.NotFoundChan(title)
         const { password: chanPassword, users, timedStatusUsers } = chan
 		if (users.some(({ name }) => name === username))
-            return contractErrors.ChanUserAlreadyExist(username, chanId)
+            return contractErrors.ChanUserAlreadyExist(username, title)
         const timedStatusUser = timedStatusUsers.find(({ timedUserName, type }) =>
                 timedUserName === username && type === 'BAN')
         if (timedStatusUser)
-            return contractErrors.UserBannedFromChan(username, chanId, timedStatusUser.untilDate)
+            return contractErrors.UserBannedFromChan(username, title, timedStatusUser.untilDate)
 		if (password && !chanPassword)
-            return contractErrors.ChanDoesntNeedPassword(chanId)
+            return contractErrors.ChanDoesntNeedPassword(title)
 		if (!password && chanPassword)
-            return contractErrors.ChanNeedPassword(chanId)
+            return contractErrors.ChanNeedPassword(title)
 		if (chanPassword && password && !compareSync(password, chanPassword))
-            return contractErrors.ChanWrongPassword(chanId)
+            return contractErrors.ChanWrongPassword(title)
         await this.chanInvitationsService
-            .updateAndNotifyManyInvsStatus('ACCEPTED', { chanId, invitedUserName: username })
+            .updateAndNotifyManyInvsStatus('ACCEPTED', { chanId: chan.id, invitedUserName: username })
         // TODO test this with invalid token user to see if prisma global catch is working
-		return this.pushUserToChanAndNotifyUsers(username, chanId)
+		return this.pushUserToChanAndNotifyUsers(username, title)
 	}
 
 	async searchChans({ titleContains, nResult }: RequestShapes['searchChans']['query']) {

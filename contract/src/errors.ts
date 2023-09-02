@@ -366,7 +366,7 @@ export const contractErrors = {
             code: "NotFoundBlockedUser",
             message: `not found blocked user ${username}`
         }
-    }),
+    } as const),
 
     ForbiddenSelfOperation: (operation: 'to block' | 'create friend invitation' | 'create chan invitation' | 'kick') =>
     ({
@@ -375,7 +375,7 @@ export const contractErrors = {
             code: "ForbiddenSelfOperation",
             message: `forbidden self operation *${operation}*`
         }
-    })
+    } as const)
 
 } satisfies { [Code in Codes]: (...args: any) => ContractError<Code> }
 

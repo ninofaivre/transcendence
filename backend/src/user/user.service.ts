@@ -592,6 +592,8 @@ export class UserService {
     }
 
     public async blockUser(username: string, blockedUserName: string) {
+        if (username === blockedUserName)
+            return contractErrors.ForbiddenSelfOperation('to block')
         const user = await this.getUserByName(blockedUserName, {
             blockedUser: {
                 where: { blockedUserName: username },
@@ -602,6 +604,17 @@ export class UserService {
         if (user.blockedUser)
             return contractErrors.UserAlreadyBlocked(blockedUserName)
         await Promise.all([
+            this.prisma.directMessage.updateMany({
+                where: {
+                    OR: [
+                        { requestedUserName: username, requestingUserName: blockedUserName },
+                        { requestingUserName: username, requestedUserName: blockedUserName }
+                    ]
+                },
+                data: {
+                    status: "DISABLED"
+                }
+            }),
             this.prisma.friendShip.deleteMany({
                 where: {
                     OR: [
@@ -640,13 +653,44 @@ export class UserService {
                 blockingUser: { connect: { name: username } },
                 blockedUser: { connect: { name: blockedUserName } }
             },
-            select: { id: true }
+            select: {
+                id: true,
+                blockedUserName: true
+            }
         })
         await this.sse.pushEvent(blockedUserName, {
             type: "BLOCKED_BY_USER",
             data: { username }
         })
         return res
+    }
+
+    public async unblockUser(username: string, unblockUserName: string) {
+        const res = await this.prisma.blockedShip.delete({
+            where: {
+                blockingUserName_blockedUserName: {
+                    blockedUserName: unblockUserName,
+                    blockingUserName: username
+                }
+            }, select: { id: true }
+        }).catch(() => null)
+        if (!res)
+            return contractErrors.NotFoundBlockedUser(unblockUserName)
+        await this.prisma.directMessage.updateMany({
+            where: {
+                OR: [
+                    { requestedUserName: username, requestingUserName: unblockUserName },
+                    { requestingUserName: username, requestedUserName: unblockUserName }
+                ]
+            },
+            data: {
+                status: "ENABLED"
+            }
+        })
+        await this.sse.pushEvent(unblockUserName, {
+            type: "UNBLOCKED_BY_USER",
+            data: { username }
+        })
     }
 
     public async getBlockedUsers(username: string) {
@@ -657,7 +701,10 @@ export class UserService {
                     { blockedUserName: username }
                 ]
             },
-            select: { id: true }
+            select: {
+                id: true,
+                blockedUserName: true
+            }
         })
     }
 

@@ -47,6 +47,11 @@ const zSearchUsersQueryBase = z.strictObject({
 
 export const acceptedProfilePictureMimeTypes = ['image/png', 'image/jpeg'] as const
 
+const zBlockedUser = z.strictObject({
+    id: z.string().uuid(),
+    blockedUserName: zUserName
+})
+
 export const usersContract = c.router(
 	{
 		searchUsersV1: {
@@ -213,11 +218,7 @@ export const usersContract = c.router(
             method: "GET",
             path: "/@me/blockedUsers",
             responses: {
-                200: z.array(
-                    z.strictObject({
-                        id: z.string().uuid()
-                    })
-                )
+                200: z.array(zBlockedUser)
             }
         },
         blockUser: {
@@ -227,22 +228,23 @@ export const usersContract = c.router(
                 username: zUserName
             }),
             responses: {
-                201: z.strictObject({
-                    id: z.string().uuid()
-                })
+                201: zBlockedUser
             }
         },
-        // unBlockUser:  {
-        //     method: "DELETE",
-        //     path: "/@me/blocked/:username",
-        //     pathParams: z.strictObject({
-        //         username: zUserName
-        //     }),
-        //     body: c.type<null>(),
-        //     responses: {
-        //         204: c.type<null>()
-        //     }
-        // }
+        unBlockUser:  {
+            method: "DELETE",
+            path: "/@me/blockedUsers",
+            query: z.strictObject({
+                username: zUserName
+            }),
+            body: c.type<null>(),
+            responses: {
+                204: c.type<null>(),
+                ...getErrorsForContract(c,
+                    [404, "NotFoundBlockedUser"]
+                )
+            }
+        }
 	},
 	{
 		pathPrefix: "/users",
@@ -259,6 +261,12 @@ export type UserEvent =
     }
     | {
         type: "BLOCKED_BY_USER",
+        data: {
+            username: z.infer<typeof zUserName>
+        }
+    }
+    | {
+        type: "UNBLOCKED_BY_USER",
         data: {
             username: z.infer<typeof zUserName>
         }

@@ -112,6 +112,11 @@ export class UserController {
             disable2FA: async ({ body: { twoFAtoken } }) => {
                 const res = await this.userService.disableTwoFA(username, twoFAtoken)
                 return isContractError(res) ? res : { status: 200, body: null }
+            },
+
+            blockUser: async ({ body: { username: blockedUserName } }) => {
+                const res = await this.userService.blockUser(username, blockedUserName)
+                return isContractError(res) ? res : { status: 201, body: res }
             }
 
 		})

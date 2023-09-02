@@ -591,4 +591,62 @@ export class UserService {
         })
     }
 
+    public async blockUser(username: string, blockedUserName: string) {
+        const user = await this.getUserByName(blockedUserName, {
+            blockedUser: {
+                where: { blockedUserName: username },
+                select: { id: true }
+            }})
+        if (!user)
+            return contractErrors.NotFoundUser(blockedUserName)
+        if (user.blockedUser)
+            return contractErrors.UserAlreadyBlocked(blockedUserName)
+        await Promise.all([
+            this.prisma.friendShip.deleteMany({
+                where: {
+                    OR: [
+                        { requestingUserName: username, requestedUserName: blockedUserName },
+                        { requestedUserName: username, requestingUserName: blockedUserName }
+                    ]
+                }
+            }),
+            this.prisma.friendInvitation.updateMany({
+                where: {
+                    OR: [
+                        { invitingUserName: username, invitedUserName: blockedUserName },
+                        { invitedUserName: username, invitingUserName: blockedUserName }
+                    ],
+                    status: "PENDING"
+                },
+                data: {
+                    status: "BLOCKED_USER"
+                }
+            }),
+            this.prisma.chanInvitation.updateMany({
+                where: {
+                    OR: [
+                        { invitingUserName: username, invitedUserName: blockedUserName },
+                        { invitedUserName: username, invitingUserName: blockedUserName }
+                    ],
+                    status: "PENDING"
+                },
+                data: {
+                    status: "BLOCKED_USER"
+                }
+            })
+        ])
+        const res = await this.prisma.blockedShip.create({
+            data: {
+                blockingUser: { connect: { name: username } },
+                blockedUser: { connect: { name: blockedUserName } }
+            },
+            select: { id: true }
+        })
+        await this.sse.pushEvent(blockedUserName, {
+            type: "BLOCKED_BY_USER",
+            data: { username }
+        })
+        return res
+    }
+
 }

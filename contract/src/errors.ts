@@ -20,6 +20,7 @@ type Codes =
 	| "NotFoundProfilePicture"
 	| "UserAlreadyExist"
 	| "DmAlreadyExist"
+    | "UserAlreadyBlocked"
 	| "ChanUserAlreadyExist"
 	| "ChanAlreadyExist"
 	| "BlockedByUser"
@@ -143,6 +144,15 @@ export const contractErrors = {
 				message: `not found profilePicture for user ${username}`,
 			},
 		}) as const,
+
+    UserAlreadyBlocked: (username: string) =>
+    ({
+        status: 409,
+        body: {
+            code: "UserAlreadyBlocked",
+            message: `conlict, user ${username} is already blocked`
+        }
+    } as const),
 
     InvalidProfilePicture: (reason: 'no file' | 'unsupported mimetype' | 'not square' | 'too small') => 
     ({

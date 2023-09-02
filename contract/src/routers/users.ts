@@ -8,14 +8,6 @@ import { z } from "zod"
 import { getErrorsForContract } from "../errors"
 import { StreamableFile } from "@nestjs/common"
 
-export type UserEvent = {
-	type: "UPDATED_USER_STATUS"
-	data: {
-		userName: z.infer<typeof zUserName>
-		status: z.infer<typeof zUserStatus>
-	}
-}
-
 const c = initContract()
 
 export const zUserProfilePreviewReturn = z.strictObject({
@@ -217,17 +209,25 @@ export const usersContract = c.router(
                 ),
 			},
 		},
-        // blockUser: {
-        //     method: "POST",
-        //     path: "/@me/blocked/:username",
-        //     pathParams: z.strictObject({
-        //         username: zUserName
-        //     }),
-        //     body: c.type<null>(),
+        // getBlockedUsers: {
+        //     method: "GET",
+        //     path: "/@me/blockedUsers",
         //     responses: {
-        //         204: c.type<null>()
+        //         200: z.array(z.strictObject({ id: z.string().uuid() }))
         //     }
         // },
+        blockUser: {
+            method: "POST",
+            path: "/@me/blockedUsers",
+            body: z.strictObject({
+                username: zUserName
+            }),
+            responses: {
+                201: z.strictObject({
+                    id: z.string().uuid()
+                })
+            }
+        },
         // unBlockUser:  {
         //     method: "DELETE",
         //     path: "/@me/blocked/:username",
@@ -244,3 +244,19 @@ export const usersContract = c.router(
 		pathPrefix: "/users",
 	},
 )
+
+export type UserEvent =
+    | {
+        type: "UPDATED_USER_STATUS"
+        data: {
+            userName: z.infer<typeof zUserName>
+            status: z.infer<typeof zUserStatus>
+        },
+    }
+    | {
+        type: "BLOCKED_BY_USER",
+        data: {
+            username: z.infer<typeof zUserName>
+        }
+    }
+

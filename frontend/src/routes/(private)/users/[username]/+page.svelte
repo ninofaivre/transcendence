@@ -26,8 +26,6 @@
 	const toastStore = getToastStore()
 	let invite_state: null | "pending" | "accepted"
 	let already_friend: boolean = data.friendList.includes($page.params.username)
-	let twoFA: boolean = false
-	// let twoFA: boolean = data.user.twoFA
 	let spin = false
 	let keep_loading = true
 	let my_profile: boolean
@@ -150,62 +148,92 @@
 	async function unblockUser() {
 		console.log("Not implemented")
 	}
+
+	$: nPlayed = data.user.nWin + data.user.nLoose
+	$: winRate = (data.user.nWin / nPlayed) * 100
 </script>
 
-<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-	<div class="flex flex-col gap-2 rounded-lg bg-gray-50 p-8 sm:px-10">
-		<!-- Avatar -->
-		<div class="grid flex-1 grid-cols-2">
-			<!-- col1 -->
+<!-- Container -->
+<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-xl">
+	<!-- Card -->
+	<div class="flex flex-row gap-2 rounded-lg bg-gray-100 p-8 sm:px-10">
+		<!-- User basic info -->
+		<div class="flex flex-1 flex-col gap-2">
+			<!-- col1: Avatar + menu -->
 			<Avatar
 				src="{PUBLIC_BACKEND_URL}/users/{data.user.userName}/profilePicture"
 				fallback="https://i.pravatar.cc/?u={data.user.userName}"
 				alt="profile"
 			/>
-			<!-- col2 -->
-			<h1 class="self-center text-black">{data.user.userName}</h1>
+			<!-- Block -->
+			<div class="flex-1">
+				{#if data.user.blocked}
+					<button class="variant-filled-warning btn btn-sm h-fit" on:click={unblockUser}>
+						Remove Block
+					</button>
+				{:else if invite_state !== "pending" || !already_friend}
+					<button class="variant-filled-error btn btn-sm h-fit" on:click={blockUser}>
+						Block
+					</button>
+				{/if}
+			</div>
+			<!-- Game invite -->
+			<div class="flex-1">
+				{#if !data.user.blocked || data.user.blockedBy}
+					<button class="variant-filled-warning btn btn-sm h-fit" on:click={inviteToGame}>
+						Invite to a Game
+					</button>
+				{/if}
+			</div>
+			<!-- Send friend request -->
+			<div class="flex-1">
+				{#if invite_state}
+					<p>
+						{`You friend request has been ${invite_state}`}
+					</p>
+				{:else if already_friend}
+					<button class="variant-filled-error btn btn-sm h-fit" on:click={revokeFriend}
+						>Revoke Friendship
+					</button>
+				{:else}
+					<button
+						class="variant-filled-primary btn btn-sm h-fit"
+						disabled={data.user.blockedBy ? true : false}
+						on:click={askFriend}
+						>Send Friend Request
+					</button>
+				{/if}
+			</div>
 		</div>
 
-		<!-- Send friend request -->
-		<div class="flex-1">
-			{#if invite_state}
-				<p>
-					{`You friend request has been ${invite_state}`}
-				</p>
-			{:else if already_friend}
-				<button class="variant-filled-error btn btn-sm h-fit" on:click={revokeFriend}
-					>Revoke Friendship
-				</button>
-			{:else}
-				<button
-					class="variant-filled-primary btn btn-sm h-fit"
-					disabled={data.user.blockedBy ? true : false}
-					on:click={askFriend}
-					>Send Friend Request
-				</button>
-			{/if}
-		</div>
-
-		<!-- Block -->
-		<div class="flex-1">
-			{#if data.user.blocked}
-				<button class="variant-filled-warning btn btn-sm h-fit" on:click={unblockUser}>
-					Remove Block
-				</button>
-			{:else if invite_state !== "pending" || !already_friend}
-				<button class="variant-filled-error btn btn-sm h-fit" on:click={blockUser}>
-					Block
-				</button>
-			{/if}
-		</div>
-
-		<!-- Game invite -->
-		<div class="flex-1">
-			{#if !data.user.blocked || data.user.blockedBy}
-				<button class="variant-filled-warning btn btn-sm h-fit" on:click={inviteToGame}>
-					Invite to a Game
-				</button>
-			{/if}
+		<!-- col2 : Name + stats-->
+		<div class="flex flex-1 flex-col" style:font-family="ArcadeClassic">
+			<!-- Name  -->
+			<h1 class="text-4xl text-black">{data.user.userName}</h1>
+			<!-- Stats  -->
+			<div class="flex flex-1 items-center text-black">
+				<div class="flex flex-1 flex-col items-center">
+					<div class="">Played</div>
+					<div class="flex-1">
+						<ProgressRadial font={160} width="w-20" value={100} fill="">
+							{nPlayed}
+						</ProgressRadial>
+					</div>
+				</div>
+				<div class="flex flex-1 flex-col items-center">
+					<p class="">Win ratio</p>
+					<div class="flex-1">
+						<ProgressRadial
+							font={160}
+							width="w-20"
+							value={winRate}
+							fill="variant-filled-primary"
+						>
+							{`${winRate}/100`}
+						</ProgressRadial>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

@@ -71,6 +71,7 @@ export class AuthController{
         @Res({ passthrough: true })res: Response,
         @Req(){ user }: Omit<Request, "user"> & Record<"user", EnrichedRequest['user'] & { refreshToken: string, twoFA: boolean }>
     ) {
+        console.log(`twoFA: ${user.twoFA}`)
         if (!await this.authService.doesRefreshTokenMatch(user.username, user.refreshToken))
             return contractErrors.Unauthorized()
         await this.authService.setNewTokensAsCookies(res, user)

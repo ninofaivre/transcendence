@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from "@nestjs/common"
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common"
 import { AuthGuard } from "@nestjs/passport"
 import { Socket } from "socket.io";
 import { AuthService } from "./auth.service";
@@ -14,6 +14,8 @@ export class JwtAuthGuardBase extends AuthGuard("jwt") {}
 @Injectable()
 export class JwtAuthGuard extends JwtAuthGuardBase {
     handleRequest<TUser extends JwtPayload>(err: any, user: TUser, info: any, context: ExecutionContext, status?: any): TUser {
+        if (!user)
+            throw getHttpExceptionFromContractError(contractErrors.Unauthorized())
         if (!user.twoFA)
             throw getHttpExceptionFromContractError(contractErrors.TwoFATokenNeeded())
         return user

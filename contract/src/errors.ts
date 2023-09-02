@@ -35,6 +35,7 @@ type Codes =
 	| "NotOwnedChanMessage"
     | "UserBannedFromChan"
     | "Unauthorized"
+    | "NotFoundFriendShip"
 
 // as const is only useful for precise type of message
 export const contractErrors = {
@@ -336,6 +337,15 @@ export const contractErrors = {
             message: `user ${username} is banned from chan ${chanId} ${timeout ? `until ${timeout}` : 'for ever'}`
         }
     } as const),
+
+    NotFoundFriendShip: (friendShipId: string) =>
+    ({
+        status: 404,
+        body: {
+            code: "NotFoundFriendShip",
+            message: `not found FriendShip ${friendShipId}`
+        }
+    } as const)
 
 } satisfies { [Code in Codes]: (...args: any) => ContractError<Code> }
 

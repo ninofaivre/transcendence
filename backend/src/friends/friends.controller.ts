@@ -5,33 +5,34 @@ import {
 	NestControllerInterface,
 	NestRequestShapes,
 	TsRest,
+	TsRestHandler,
 	TsRestRequest,
 	nestControllerContract,
+    tsRestHandler,
 } from "@ts-rest/nest"
 import { contract } from "contract"
 import { EnrichedRequest } from "src/auth/auth.service"
+import { isContractError } from "contract"
 
-const c = nestControllerContract(contract.friends)
-type RequestShapes = NestRequestShapes<typeof c>
+const c = contract.friends
 
+@TsRest({})
 @Controller()
-export class FriendsController implements NestControllerInterface<typeof c> {
+export class FriendsController {
 	constructor(private readonly friendsService: FriendsService) {}
 
-	@UseGuards(JwtAuthGuard)
-	@TsRest(c.getFriends)
-	async getFriends(@Request() req: EnrichedRequest) {
-		const body = await this.friendsService.getFriends(req.user.username)
-		return { status: 200 as const, body: body }
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@TsRest(c.deleteFriend)
-	async deleteFriend(
-		@Request() req: EnrichedRequest,
-		@TsRestRequest() { params: { friendShipId } }: RequestShapes["deleteFriend"],
-	) {
-		await this.friendsService.deleteFriend(req.user.username, friendShipId)
-		return { status: 202 as const, body: null }
-	}
+    @UseGuards(JwtAuthGuard)
+    @TsRestHandler(c)
+    async handler(@Request(){ user: { username } }: EnrichedRequest) {
+        return tsRestHandler(c, {
+            getFriends: async () => {
+                const res = await this.friendsService.getFriends(username)
+                return { status: 200, body: res }
+            },
+            deleteFriend: async ({ params: { friendShipId } }) => {
+                const res = await this.friendsService.deleteFriend(username, friendShipId)
+                return isContractError(res) ? res : { status: 202, body: null }
+            }
+        })
+    }
 }

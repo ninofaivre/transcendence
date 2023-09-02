@@ -314,10 +314,7 @@ export class DmsService {
 			...rest,
 			data: { classicDmDiscussionEvent: { create: { eventType: eventType } }, ...data },
 		} satisfies Prisma.DmDiscussionEventCreateArgs
-		const newEvent = (await this.prisma.dmDiscussionEvent.create(createArgs)).discussionElement
-		if (!newEvent?.event?.classicDmDiscussionEvent)
-			throw new InternalServerErrorException("a discussion event has failed to be created")
-		return newEvent
+		return (await this.prisma.dmDiscussionEvent.create(createArgs)).discussionElement
 	}
 
 	public async createChanInvitationDmEvent(

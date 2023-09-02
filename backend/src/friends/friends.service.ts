@@ -10,6 +10,8 @@ import { SseService } from "src/sse/sse.service"
 import { UserService } from "src/user/user.service"
 import { z } from "zod"
 import { PrismaService } from "src/prisma/prisma.service"
+import { contractErrors } from "contract"
+import { request } from "http"
 
 @Injectable()
 export class FriendsService {
@@ -96,18 +98,21 @@ export class FriendsService {
 			dmId,
 			ClassicDmEventType.CREATED_FRIENDSHIP,
 		)
+		if (directMessage && directMessage.status === DirectMessageStatus.DISABLED) {
+			await this.dmsService.updateAndNotifyDmStatus(
+				directMessage.id,
+				DirectMessageStatus.ENABLED,
+				requestedUserName
+            )
+        }
+        if (!newEvent)
+            return
 		await this.dmsService.formatAndNotifyDmElement(
 			requestingUserName,
 			requestedUserName,
 			dmId,
 			newEvent,
 		)
-		if (directMessage && directMessage.status === DirectMessageStatus.DISABLED)
-			await this.dmsService.updateAndNotifyDmStatus(
-				directMessage.id,
-				DirectMessageStatus.ENABLED,
-				requestedUserName,
-			)
 	}
 
 	public async areUsersFriend(usernameA: string, usernameB: string) {
@@ -124,47 +129,40 @@ export class FriendsService {
 		)
 	}
 
-	// bien crade mais techniquement ça devrait marcher
 	public async deleteFriend(username: string, friendShipId: string) {
-		try {
-			const { requestingUserName, requestedUserName } = await this.prisma.friendShip.delete({
-				where: {
-					id: friendShipId,
-					OR: [{ requestedUserName: username }, { requestingUserName: username }],
-				},
-				select: { requestingUserName: true, requestedUserName: true },
-			})
-			await this.sse.pushEventMultipleUser([requestingUserName, requestedUserName], {
-				type: "DELETED_FRIENDSHIP",
-				data: { friendShipId: friendShipId },
-			})
-			const res = await this.dmsService.findDmBetweenUsers(
-				requestingUserName,
-				requestedUserName,
-				{ id: true },
-			)
-			if (!res) {
-				// should never happen as dms is auto created at friendShip Creation and there should not be any way of deleting a dm
-				throw new NotFoundException(
-					`not found dm between ${requestedUserName} and ${requestingUserName}`,
-				)
-			}
-			const { id: dmId } = res
-			const newEvent = await this.dmsService.createClassicDmEvent(
-				dmId,
-				ClassicDmEventType.DELETED_FRIENDSHIP,
-			)
-			await this.dmsService.formatAndNotifyDmElement(
-				requestingUserName,
-				requestedUserName,
-				dmId,
-				newEvent,
-			)
-		} catch (e) {
-			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025")
-				throw new NotFoundException(`not found friendShip ${friendShipId}`)
-			else throw e
-		}
+        const friendShip = await this.prisma.friendShip.findUnique({
+            where: { id: friendShipId },
+            select: { requestedUserName: true, requestingUserName: true }
+        })
+        if (!friendShip)
+            return contractErrors.NotFoundFriendShip(friendShipId)
+        const { requestedUserName, requestingUserName } = friendShip
+        if (requestedUserName !== username && requestedUserName !== username)
+            return contractErrors.NotFoundFriendShip(friendShipId)
+        await this.sse.pushEventMultipleUser([requestingUserName, requestedUserName], {
+            type: "DELETED_FRIENDSHIP",
+            data: { friendShipId: friendShipId },
+        })
+        const res = await this.dmsService.findDmBetweenUsers(
+            requestingUserName,
+            requestedUserName,
+            { id: true },
+        )
+        if (!res)
+            return
+        const { id: dmId } = res
+        const newEvent = await this.dmsService.createClassicDmEvent(
+            dmId,
+            ClassicDmEventType.DELETED_FRIENDSHIP,
+        )
+        if (!newEvent)
+            return
+        await this.dmsService.formatAndNotifyDmElement(
+            requestingUserName,
+            requestedUserName,
+            dmId,
+            newEvent
+        )
 	}
 
 	async getFriends(username: string) {

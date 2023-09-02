@@ -128,8 +128,6 @@ model ChanInvitation {
   status ChanInvitationStatus @default(PENDING)
 }
 
-// TODO: let one of the users disconnect without deleting FriendShip to display removed friend notification to the other
-// user at connexion and not only by sse
 model FriendShip {
   id String @id @default(uuid())
 

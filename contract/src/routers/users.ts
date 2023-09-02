@@ -23,16 +23,15 @@ export const zUserProfilePreviewReturn = z.strictObject({
 })
 
 export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
-    // TODO CUSTOM.sql (see usersservice)
 	dmPolicyLevel: zAccessPolicyLevel.exclude(["NO_ONE"]),
 	commonChans: z.array(
 		z.strictObject({ type: zChanType, title: zChanTitle.nullable(), id: z.string().uuid() }),
 	),
-    blockedBy: z.boolean(),
-    blocked: z.boolean(),
-    friend: z.boolean(),
-    invited: z.string().uuid().nullable(),
-    inviting: z.string().uuid().nullable(),
+    blockedId: z.string().uuid().nullable(),
+    blockedById: z.string().uuid().nullable(),
+    friendId: z.string().uuid().nullable(),
+    invitedId: z.string().uuid().nullable(),
+    invitingId: z.string().uuid().nullable(),
 	status: zUserStatus,
     winRatePercentage: z.number().positive().int().max(100),
     nWin: z.number().positive().int(),
@@ -58,9 +57,10 @@ export const acceptedProfilePictureMimeTypes = ['image/png', 'image/jpeg'] as co
 
 export const usersContract = c.router(
 	{
-		searchUsers: {
+		searchUsersV1: {
 			method: "GET",
-			path: "/",
+            deprecated: true,
+			path: "/V1/",
 			summary: "search for users",
 			description: "not finished yet (beta)",
 			query: z.union([
@@ -89,6 +89,16 @@ export const usersContract = c.router(
 				200: z.array(zUserProfilePreviewReturn),
 			},
 		},
+        searchUsersV2: {
+            method: "GET",
+            path: "/",
+            query: z.strictObject({
+                action: z.enum([/*"CREATE_DM", */"CREATE_FRIEND_INVITE", "INVITE_TO_CHAN", "*"])
+            }),
+            responses: {
+                200: z.array(zUserProfilePreviewReturn)
+            }
+        },
 		getMe: {
 			method: "GET",
 			path: "/@me",
@@ -152,7 +162,7 @@ export const usersContract = c.router(
                 twoFAtoken: z.string()
             }),
             responses: {
-                201: c.type<null>(),
+                204: c.type<null>(),
                 ...getErrorsForContract(c,
                     [400, "twoFAqrCodeNeverRequested", "twoFAalreadyEnabled"],
                     [403, "InvalidTwoFAToken"],
@@ -207,6 +217,28 @@ export const usersContract = c.router(
                 ),
 			},
 		},
+        // blockUser: {
+        //     method: "POST",
+        //     path: "/@me/blocked/:username",
+        //     pathParams: z.strictObject({
+        //         username: zUserName
+        //     }),
+        //     body: c.type<null>(),
+        //     responses: {
+        //         204: c.type<null>()
+        //     }
+        // },
+        // unBlockUser:  {
+        //     method: "DELETE",
+        //     path: "/@me/blocked/:username",
+        //     pathParams: z.strictObject({
+        //         username: zUserName
+        //     }),
+        //     body: c.type<null>(),
+        //     responses: {
+        //         204: c.type<null>()
+        //     }
+        // }
 	},
 	{
 		pathPrefix: "/users",

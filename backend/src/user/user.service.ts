@@ -185,16 +185,16 @@ export class UserService {
 
 		return {
 			...rest,
-            // TODO rule this shit to avoir having NO_ONE via CUSTOM.sql
+            // TODO rule this shit to avoid having NO_ONE via CUSTOM.sql
             dmPolicyLevel: (dmPolicyLevel === "NO_ONE") ? "ONLY_FRIEND" : dmPolicyLevel,
 			status: await this.formatUserStatusForUser(username, name),
 			...this.formatUserProfilePreviewForUser(username, { name }),
 			commonChans: chans,
-            friend: friend.length != 0 || friendOf.length != 0,
-            invited: outcomingFriendInvitation.length ? outcomingFriendInvitation[0].id : null,
-            inviting: incomingFriendInvitation.length ? incomingFriendInvitation[0].id : null,
-            blocked: blockedUser.length != 0,
-            blockedBy: blockedByUser.length != 0,
+            friendId: friend?.[0].id || friendOf?.[0].id || null,
+            invitedId: outcomingFriendInvitation?.[0].id || null,
+            invitingId: incomingFriendInvitation?.[0].id || null,
+            blockedId: blockedUser?.[0].id || null,
+            blockedById: blockedByUser?.[0].id || null,
             winRatePercentage: _count.wonMatchHistory / (_count.wonMatchHistory + _count.lostMatchHistory) * 100,
             nWin: _count.wonMatchHistory,
             nLoose: _count.lostMatchHistory,
@@ -221,14 +221,14 @@ export class UserService {
             ]
 		} satisfies Record<
 			keyof Omit<
-				Extract<RequestShapes["searchUsers"]["query"]["filter"], { type: "inc" }>,
+				Extract<RequestShapes["searchUsersV1"]["query"]["filter"], { type: "inc" }>,
 				"type"
 			>,
 			Prisma.Enumerable<Prisma.UserWhereInput>
 		> &
 			Record<
 				keyof Omit<
-					Extract<RequestShapes["searchUsers"]["query"]["filter"], { type: "only" }>,
+					Extract<RequestShapes["searchUsersV1"]["query"]["filter"], { type: "only" }>,
 					"type"
 				>,
 				Prisma.Enumerable<Prisma.UserWhereInput>
@@ -236,7 +236,7 @@ export class UserService {
 	}
 
 	getTest(
-		arg: Omit<RequestShapes["searchUsers"]["query"]["filter"], "type">,
+		arg: Omit<RequestShapes["searchUsersV1"]["query"]["filter"], "type">,
 		type: "inc" | "only",
 		username: string,
 	) {
@@ -248,9 +248,9 @@ export class UserService {
 		return (type === "inc" ? { NOT: res } : { OR: res }) satisfies Prisma.UserWhereInput
 	}
 
-	async searchUsers(
+	async searchUsersV1(
 		username: string,
-		{ filter, nResult, userNameContains }: RequestShapes["searchUsers"]["query"],
+		{ filter, nResult, userNameContains }: RequestShapes["searchUsersV1"]["query"],
 	) {
 		const where = {
 			name: { contains: userNameContains },

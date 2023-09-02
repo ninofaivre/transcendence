@@ -29,6 +29,7 @@
 
 	initializeStores()
 	const modalStore = getModalStore()
+	const toastStore = getToastStore()
 
 	$: {
 		// Prevents redir coming back from 42, or losing the query string for /auth
@@ -66,11 +67,11 @@
 					`Can't log out. Server returned ${status} ${
 						message ? "without a message" : `${message}`
 					}`,
-					getToastStore(),
+					toastStore,
 				)
 			})
 			.then(() => {
-				makeToast("Logging out...")
+				makeToast("Logging out...", toastStore)
 			})
 			.finally(() => {
 				logged_in.set(false)

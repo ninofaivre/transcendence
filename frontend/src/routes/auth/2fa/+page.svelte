@@ -3,6 +3,7 @@
 	import { logged_in } from "$stores"
 	import { client } from "$clients"
 	import { getToastStore } from "@skeletonlabs/skeleton"
+	import { goto } from "$app/navigation"
 
 	const toastStore = getToastStore()
 	let input = ""
@@ -17,6 +18,7 @@
 		else {
 			logged_in.set(true)
 			makeToast("Logged in successfully", toastStore)
+			goto("/")
 		}
 	}
 </script>

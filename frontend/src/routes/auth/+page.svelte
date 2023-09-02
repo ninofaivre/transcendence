@@ -33,9 +33,7 @@
 						code: $page.url.searchParams.get("code")!,
 					},
 				})
-				alert("I am never reached from a clean url")
 				if (isContractError(ret) && ret.body.code === "TwoFATokenNeeded") {
-					alert("You are being redirected to the 2fa page")
 					goto("/auth/2fa")
 				} else if (ret.status !== 200) {
 					if (ret.status === 404) {
@@ -43,7 +41,6 @@
 							"redirect_uri",
 							new URL("/auth/signup", PUBLIC_FRONTEND_URL).toString(),
 						)
-						alert("You are being redirected to the 2fa page")
 						window.location.assign(ft_uri)
 					}
 					checkError(ret, "log in")

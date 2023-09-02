@@ -37,6 +37,8 @@ type Codes =
     | "UserBannedFromChan"
     | "Unauthorized"
     | "NotFoundFriendShip"
+    | "NotFoundBlockedUser"
+    | "ForbiddenSelfOperation"
 
 // as const is only useful for precise type of message
 export const contractErrors = {
@@ -355,7 +357,25 @@ export const contractErrors = {
             code: "NotFoundFriendShip",
             message: `not found FriendShip ${friendShipId}`
         }
-    } as const)
+    } as const),
+
+    NotFoundBlockedUser: (username: string) =>
+    ({
+        status: 404,
+        body: {
+            code: "NotFoundBlockedUser",
+            message: `not found blocked user ${username}`
+        }
+    }),
+
+    ForbiddenSelfOperation: (operation: 'to block' | 'create friend invitation' | 'create chan invitation' | 'kick') =>
+    ({
+        status: 403,
+        body: {
+            code: "ForbiddenSelfOperation",
+            message: `forbidden self operation *${operation}*`
+        }
+    })
 
 } satisfies { [Code in Codes]: (...args: any) => ContractError<Code> }
 

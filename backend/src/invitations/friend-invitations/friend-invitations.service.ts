@@ -67,7 +67,13 @@ export class FriendInvitationsService {
 	async createFriendInvitation(invitingUserName: string, invitedUserName: string) {
 		if (invitingUserName === invitedUserName)
 			throw new ForbiddenException(`self friend invitation`)
-		await this.userService.getUserByNameOrThrow(invitedUserName, { name: true })
+		const invitedUser = await this.userService.getUserByNameOrThrow(invitedUserName, {
+            name: true,
+            blockedUser: { where: { blockedUserName: invitingUserName } },
+            blockedByUser: { where: { blockingUserName: invitingUserName } }
+        })
+        if (invitedUser.blockedByUser.length || invitedUser.blockedByUser.length)
+            throw new ForbiddenException("can't invite blocked or blocked by user")
 		const {
 			blockedByUser,
 			blockedUser,

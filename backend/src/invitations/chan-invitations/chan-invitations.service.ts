@@ -106,8 +106,14 @@ export class ChanInvitationsService {
 
 	async createChanInvitation(invitingUserName: string, invitedUserName: string, chanId: string) {
 		if (invitingUserName === invitedUserName)
-			throw new ForbiddenException(`self chan invitation`)
-		await this.usersService.getUserByNameOrThrow(invitedUserName, { name: true })
+			return contractErrors.ForbiddenSelfOperation('create chan invitation')
+		const invitedUser = await this.usersService.getUserByNameOrThrow(invitedUserName, {
+            name: true,
+            blockedByUser: { where: { blockingUserName: invitingUserName } },
+            blockedUser: { where: { blockingUserName: invitingUserName } }
+        })
+        if (invitedUser.blockedUser.length || invitedUser.blockedByUser.length)
+            throw new ForbiddenException("can't invited blocked or blocked by users")
 		const directMessageId = (
 			await this.dmsService.findDmBetweenUsers(invitedUserName, invitingUserName, {
 				id: true,

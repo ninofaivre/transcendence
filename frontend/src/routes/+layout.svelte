@@ -16,6 +16,7 @@
 	} from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { page } from "$app/stores"
+	import { client } from "$clients"
 
 	// Modals
 	import TimeChooser from "$lib/TimeChooser.svelte"
@@ -25,7 +26,7 @@
 	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
 	import AcceptGameInvitationModal from "$lib/AcceptGameInvitationModal.svelte"
 	import TwoFAModal from "$lib/TwoFAModal.svelte"
-	import { client } from "$clients"
+	import JoinRoom from "$lib/JoinRoom.svelte"
 
 	initializeStores()
 	const modalStore = getModalStore()
@@ -44,6 +45,7 @@
 		TimeChooser: { ref: TimeChooser },
 		InviteFriendToChan: { ref: InviteFriendToChan },
 		CreateRoom: { ref: CreateRoom },
+		JoinRoom: { ref: JoinRoom },
 		WaitForGame: { ref: WaitForGame },
 		SendFriendRequestModal: { ref: SendFriendRequestModal },
 		AcceptGameInvitationModal: { ref: AcceptGameInvitationModal },

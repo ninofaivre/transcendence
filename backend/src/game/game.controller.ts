@@ -20,7 +20,7 @@ export class GameController {
         return tsRestHandler(c, {
             getMatchHistory: async ({ query, params }) => {
                 const res = await this.gameService
-                    .getMathHistory(query.nMatches, params.username, query.cursor)
+                    .getMatchHistory(query.nMatches, params.username, query.cursor)
                 return { status: 200, body: res }
             }
         })

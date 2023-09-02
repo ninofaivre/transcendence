@@ -706,7 +706,7 @@ export class GameService {
         game.updateMovement(intraUserName, move)
     }
 
-    public async getMathHistory(take: number, username: string, cursor?: string) {
+    public async getMatchHistory(take: number, username: string, cursor?: string) {
         const matches = await this.prisma.matchSummary.findMany({
             where: { OR:[{winnerName: username}, {looserName: username}] },
             orderBy: { creationDate: 'desc' },

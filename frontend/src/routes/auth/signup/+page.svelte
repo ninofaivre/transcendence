@@ -35,7 +35,7 @@
 			logged_in.set(true)
 			const ret = await client.users.getMe()
 			if (ret.status === 200) {
-				goto("/users/" + ret.body.userName)
+				goto("/myprofile")
 			} else {
 				console.log(ret)
 				goto("/")
@@ -57,7 +57,7 @@
 				minlength="3"
 			/>
 		</label>
-		<button on:click={signUp} class="btn btn-sm variant-filled-primary rounded-2xl">
+		<button on:click={signUp} class="variant-filled-primary btn btn-sm rounded-2xl">
 			<div>Confirm</div>
 		</button>
 	</div>

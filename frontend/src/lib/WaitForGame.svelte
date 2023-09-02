@@ -4,8 +4,6 @@
 
 	import { ProgressRadial, getModalStore } from "@skeletonlabs/skeleton"
 	import { timeReplyToInvitation } from "contract"
-	import { afterUpdate, getContext } from "svelte"
-	import { goto } from "$app/navigation"
 
 	const modalStore = getModalStore()
 	let state: "accepted" | "refused" | "timedOut" | "waiting" | "badRequest" = "waiting"

@@ -3,13 +3,11 @@
 	import type { ModalSettings } from "@skeletonlabs/skeleton"
 	import type { Writable } from "svelte/store"
 
-	// import { game_socket } from "$lib/global"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { io } from "socket.io-client"
 	import { onDestroy, setContext } from "svelte"
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { writable } from "svelte/store"
-	import { get } from "svelte/store"
 	import { goto } from "$app/navigation"
 
 	console.log("private layout init")

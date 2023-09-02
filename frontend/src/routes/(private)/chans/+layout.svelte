@@ -85,7 +85,7 @@
 	}
 
 	async function onJoinChan() {
-		type ModalReturnType = { chan_name: string; password: string | undefined } | undefined
+		type ModalReturnType = { chan: string; password: string | undefined } | undefined
 		const r = await new Promise<ModalReturnType>((resolve) => {
 			const modal: ModalSettings = {
 				type: "component",
@@ -98,6 +98,7 @@
 			modalStore.trigger(modal)
 		})
 		if (r) {
+			alert(r.chan + " | " + r.password)
 			// 	const { chanName, password } = r
 			// 	const ret = await client.chans.createChan({
 			// 		body: {

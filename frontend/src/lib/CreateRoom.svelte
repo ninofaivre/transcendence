@@ -21,7 +21,7 @@
 		}
 	}
 
-	let minlength = 3
+	let minlength = 8
 	let maxlength = 100
 
 	let priv: boolean = false
@@ -35,10 +35,10 @@
 >
 	<label for="title" class="label"> Choose a name for the room </label>
 	<input type="text" name="title" id="title" {minlength} {maxlength} class="input" required />
-	<label for="Password" class="label">Password (Optional)</label>
+	<label for="password" class="label">Password (Optional)</label>
 	<input
 		type="text"
-		name="title"
+		name="password"
 		id="password"
 		{minlength}
 		{maxlength}

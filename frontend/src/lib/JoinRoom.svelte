@@ -5,20 +5,27 @@
 	import { onMount } from "svelte"
 	import { client } from "$clients"
 	import { getModalStore } from "@skeletonlabs/skeleton"
-	import { checkError } from "./global"
+	import { checkError, simpleKeypressHandlerFactory } from "./global"
 
 	const modalStore = getModalStore()
 	let search_input: string = ""
 	let password_input: string = ""
-	let users: AutocompleteOption[] = []
+	let chans: AutocompleteOption[] = []
 	let input_element: HTMLElement
 	let send_button: HTMLButtonElement
 	let input_focused = false
 	let password_element: HTMLInputElement
+	let can_send: boolean = false
+	let password_needed: boolean = false
+	let form: HTMLFormElement
 
-	async function sendBackData(data: [name: string, password: string]) {
+	async function sendBackData(e: SubmitEvent) {
+		const formdata = new FormData(form)
+		const chan = formdata.get("chan")
+		const password = formdata.get("password")
+
 		if ($modalStore[0].response) {
-			$modalStore[0].response(data)
+			$modalStore[0].response({ chan, password })
 		}
 	}
 
@@ -27,7 +34,10 @@
 		password_needed = event.detail.meta
 		input_focused = false
 		if (password_needed) password_element.focus()
-		else send_button.focus()
+		else {
+			can_send = true
+			send_button.focus()
+		}
 	}
 
 	async function getChanList(input: string) {
@@ -41,49 +51,59 @@
 				if (ret.status !== 200) {
 					checkError(ret, "get room list")
 				} else {
-					users = ret.body.map((obj) => ({
+					chans = ret.body.map((obj) => ({
 						label: obj.title,
 						value: obj.title,
 						meta: obj.passwordProtected,
 					}))
+					console.log(chans)
 				}
 			})
 	}
 
-	async function onKeypress(event: KeyboardEvent) {
-		switch (event.key) {
-			case "Enter":
-				if (users.find((el) => el.value === search_input)?.meta) {
-					password_element.focus
-				}
-				sendBackData([search_input, password_input])
-		}
+	function onSearchEnter(event: KeyboardEvent) {
+		if (chans.find((el) => el.value === search_input)?.meta) {
+			password_element.focus
+		} //else sendBackData([search_input, password_input])
+	}
+
+	function onPasswordEnter(event: KeyboardEvent) {
+		//sendBackData([search_input, password_input])
 	}
 
 	$: if (search_input) getChanList(search_input)
+	$: {
+		if (!chans.find((el) => el.label === search_input)) {
+			can_send = false
+		}
+	}
+	$: if (password_needed && !password_input) can_send = false
+	$: if (password_input) can_send = true
 
 	onMount(() => void input_element.focus())
-
-	let password_needed: boolean = false
 </script>
 
-<div class="card flex flex-col items-center gap-2 p-8">
+<form
+	class="card flex flex-col items-center gap-2 p-8"
+	bind:this={form}
+	on:submit|preventDefault={sendBackData}
+>
 	<!-- input container -->
 	<div class="relative min-w-[50vw] flex-1">
 		<input
 			bind:this={input_element}
 			class="input"
 			type="search"
+			name="chan"
 			bind:value={search_input}
 			placeholder="Search room..."
 			on:focusin={() => void (input_focused = true)}
-			on:focusout={() => void (input_focused = false)}
-			on:keypress={onKeypress}
+			on:keypress={simpleKeypressHandlerFactory(["Enter"], onSearchEnter)}
 		/>
-		{#if input_focused && search_input}
+		{#if search_input && input_focused}
 			<div class="card absolute z-10 mt-1 max-h-48 w-full overflow-y-auto p-2" tabindex="-1">
 				<Autocomplete
-					options={users}
+					options={chans}
 					on:selection={onUserSelection}
 					regionButton="w-full btn-md"
 					class="w-full"
@@ -96,22 +116,23 @@
 		class="input flex-1"
 		bind:this={password_element}
 		type="text"
+		name="password"
 		bind:value={password_input}
 		placeholder="Password"
 		disabled={!password_needed}
 		required={password_needed}
+		on:keypress={simpleKeypressHandlerFactory(["Enter"], onPasswordEnter)}
 	/>
 	<!-- send button -->
 	<button
 		bind:this={send_button}
-		on:click={() => {
-			sendBackData([search_input, password_input])
-		}}
+		type="submit"
 		class="variant-filled-primary btn w-fit justify-self-center px-12"
+		disabled={!can_send}
 	>
 		Send
 	</button>
-</div>
+</form>
 
 <style>
 	input {

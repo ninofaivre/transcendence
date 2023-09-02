@@ -20,7 +20,7 @@
     "@types/three": "^0.155.1",
     "contract": "workspace:*",
     "socket.io-client": "^4.7.2",
-    "three": "^0.155.0"
+    "three": "^0.156.0"
   },
   "devDependencies": {
     "@floating-ui/dom": "^1.5.1",

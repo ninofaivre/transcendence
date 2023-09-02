@@ -10,7 +10,7 @@
 	import { addListenerToEventSource } from "$lib/global"
 	import { sse_store } from "$stores"
 	import { invalidate } from "$app/navigation"
-	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { checkError } from "$lib/global"
 	import { client } from "$clients"
 	import { makeToast } from "$lib/global"
@@ -78,9 +78,39 @@
 			})
 			if (ret.status != 201) checkError(ret, "create a new room")
 			else {
-				makeToast(`Created a new ${type.toLowerCase()} room: ${r}`)
+				makeToast(`Created a new ${type.toLowerCase()} room: ${r}`, getToastStore())
 				invalidate(":chans")
 			}
+		}
+	}
+
+	async function onJoinChan() {
+		type ModalReturnType = { chan_name: string; password: string | undefined } | undefined
+		const r = await new Promise<ModalReturnType>((resolve) => {
+			const modal: ModalSettings = {
+				type: "component",
+				component: "JoinRoom",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+			}
+			modalStore.trigger(modal)
+		})
+		if (r) {
+			// 	const { chanName, password } = r
+			// 	const ret = await client.chans.createChan({
+			// 		body: {
+			// 			type,
+			// 			title,
+			// 			password,
+			// 		},
+			// 	})
+			// 	if (ret.status != 201) checkError(ret, "create a new room")
+			// 	else {
+			// 		makeToast(`Created a new ${type.toLowerCase()} room: ${r}`, getToastStore())
+			// 		invalidate(":chans")
+			// 	}
 		}
 	}
 </script>
@@ -94,16 +124,22 @@
 	>
 		<!-- Rows for Column 1-->
 		<div
-			class="grid grid-rows-[auto_1fr] gap-3"
+			class="grid grid-rows-[auto_1fr] gap-1"
 			id="col1"
 			style="height: calc(100vh - {header_height}px);"
 		>
-			<section class="mt-2">
+			<section class="mt-1 grid gap-1">
+				<button
+					class="variant-ghost-primary btn btn-sm w-full rounded"
+					on:click={onJoinChan}
+				>
+					Join a room
+				</button>
 				<button
 					class="variant-ghost-primary btn btn-sm w-full rounded"
 					on:click={onCreateChan}
 				>
-					Create new Room
+					Create new room
 				</button>
 			</section>
 			<section id="discussions" class="overflow-y-auto">

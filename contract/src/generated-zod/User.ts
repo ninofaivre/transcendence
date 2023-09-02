@@ -23,7 +23,8 @@ export interface CompleteUserInput extends z.input<typeof UserModel> {
   friendOf: CompleteFriendShipInput[];
   outcomingFriendInvitation: CompleteFriendInvitationInput[];
   incomingFriendInvitation: CompleteFriendInvitationInput[];
-  matchHistory: CompleteMatchSummaryInput[];
+  lostMatchHistory: CompleteMatchSummaryInput[];
+  wonMatchHistory: CompleteMatchSummaryInput[];
   outcomingChanInvitation: CompleteChanInvitationInput[];
   incomingChanInvitation: CompleteChanInvitationInput[];
   blockedUser: CompleteBlockedShipInput[];
@@ -50,7 +51,8 @@ export interface CompleteUserOutput extends z.infer<typeof UserModel> {
   friendOf: CompleteFriendShipOutput[];
   outcomingFriendInvitation: CompleteFriendInvitationOutput[];
   incomingFriendInvitation: CompleteFriendInvitationOutput[];
-  matchHistory: CompleteMatchSummaryOutput[];
+  lostMatchHistory: CompleteMatchSummaryOutput[];
+  wonMatchHistory: CompleteMatchSummaryOutput[];
   outcomingChanInvitation: CompleteChanInvitationOutput[];
   incomingChanInvitation: CompleteChanInvitationOutput[];
   blockedUser: CompleteBlockedShipOutput[];
@@ -82,7 +84,8 @@ export const RelatedUserModel: z.ZodSchema<CompleteUserOutput, z.ZodTypeDef, Com
   friendOf: RelatedFriendShipModel.array(),
   outcomingFriendInvitation: RelatedFriendInvitationModel.array(),
   incomingFriendInvitation: RelatedFriendInvitationModel.array(),
-  matchHistory: RelatedMatchSummaryModel.array(),
+  lostMatchHistory: RelatedMatchSummaryModel.array(),
+  wonMatchHistory: RelatedMatchSummaryModel.array(),
   outcomingChanInvitation: RelatedChanInvitationModel.array(),
   incomingChanInvitation: RelatedChanInvitationModel.array(),
   blockedUser: RelatedBlockedShipModel.array(),

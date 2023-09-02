@@ -4,18 +4,20 @@ import { CompleteUserInput, CompleteUserOutput, RelatedUserModel } from "./index
 export const MatchSummaryModel = z.object({
   id: z.string(),
   creationDate: z.date(),
-  winner_name: z.string(),
-  looser_name: z.string(),
-  winner_score: z.number().int(),
-  looser_score: z.number().int(),
+  winnerName: z.string(),
+  looserName: z.string(),
+  winnerScore: z.number().int(),
+  looserScore: z.number().int(),
 });
 
 export interface CompleteMatchSummaryInput extends z.input<typeof MatchSummaryModel> {
-  users: CompleteUserInput[];
+  winner: CompleteUserInput;
+  looser: CompleteUserInput;
 }
 
 export interface CompleteMatchSummaryOutput extends z.infer<typeof MatchSummaryModel> {
-  users: CompleteUserOutput[];
+  winner: CompleteUserOutput;
+  looser: CompleteUserOutput;
 }
 
 /**
@@ -24,5 +26,6 @@ export interface CompleteMatchSummaryOutput extends z.infer<typeof MatchSummaryM
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
 export const RelatedMatchSummaryModel: z.ZodSchema<CompleteMatchSummaryOutput, z.ZodTypeDef, CompleteMatchSummaryInput> = z.lazy(() => MatchSummaryModel.extend({
-  users: RelatedUserModel.array(),
+  winner: RelatedUserModel,
+  looser: RelatedUserModel,
 }));

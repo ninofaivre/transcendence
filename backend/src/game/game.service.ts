@@ -586,16 +586,10 @@ class Game {
         })
         await this.prisma.matchSummary.create({
             data: {
-                users: {
-                    connect: [
-                        {intraUserName: this.playerA.user.intraUserName},
-                        {intraUserName: this.playerB.user.intraUserName},
-                    ]
-                },
-                looser_name: this.getLooser().user.username,
-                looser_score: this.getLooser().score,
-                winner_name: this.getWinner().user.username,
-                winner_score: this.getWinner().score,
+                looser: { connect: { name: this.getLooser().user.username } },
+                looserScore: this.getLooser().score,
+                winner: { connect: { name : this.getWinner().user.username } },
+                winnerScore: this.getWinner().score,
             }
         })
     }
@@ -714,24 +708,24 @@ export class GameService {
 
     public async getMathHistory(take: number, username: string, cursor?: string) {
         const matches = await this.prisma.matchSummary.findMany({
-            where: { users: { some: { name: username } } },
+            where: { OR:[{winnerName: username}, {looserName: username}] },
             orderBy: { creationDate: 'desc' },
             cursor: !!cursor ? { id: cursor } : undefined,
             skip: Number(!!cursor),
             take,
             select: {
                 creationDate: true,
-                looser_name: true,
-                winner_name: true,
-                looser_score: true,
-                winner_score: true,
+                looserName: true,
+                winnerName: true,
+                looserScore: true,
+                winnerScore: true,
                 id: true
             }
         })
         return matches.map((match) => {
             return {
                 ...match,
-                win: match.winner_name === username,
+                win: match.winnerName === username,
             }
         })
     }

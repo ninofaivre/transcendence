@@ -61,6 +61,9 @@ export class UserService {
             friendOf: { where: { requestingUserName: username}, select: { id: true } },
 			blockedUser: { where: { blockedUserName: username }, select: { id: true }, take: 1 },
 			blockedByUser: { where: { blockingUserName: username }, select: { id: true }, take: 1 },
+            _count: {
+                select: { wonMatchHistory: true, lostMatchHistory: true }
+            }
 		} satisfies Prisma.UserSelect
 	}
 
@@ -177,7 +180,8 @@ export class UserService {
 	): Promise<z.infer<typeof zUserProfileReturn>> {
 		const { name, chans, blockedUser, blockedByUser,
             dmPolicyLevel, friend, friendOf,
-            incomingFriendInvitation, outcomingFriendInvitation, ...rest } = toFormat
+            incomingFriendInvitation, outcomingFriendInvitation,
+            _count, ...rest } = toFormat
 
 		return {
 			...rest,
@@ -191,6 +195,10 @@ export class UserService {
             inviting: incomingFriendInvitation.length ? incomingFriendInvitation[0].id : null,
             blocked: blockedUser.length != 0,
             blockedBy: blockedByUser.length != 0,
+            winRatePercentage: _count.wonMatchHistory / (_count.wonMatchHistory + _count.lostMatchHistory) * 100,
+            nWin: _count.wonMatchHistory,
+            nLoose: _count.lostMatchHistory,
+            nMatches: _count.lostMatchHistory + _count.wonMatchHistory
 		}
 	}
 

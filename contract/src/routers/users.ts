@@ -34,6 +34,10 @@ export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
     invited: z.string().uuid().nullable(),
     inviting: z.string().uuid().nullable(),
 	status: zUserStatus,
+    winRatePercentage: z.number().positive().int().max(100),
+    nWin: z.number().positive().int(),
+    nLoose: z.number().positive().int(),
+    nMatches: z.number().positive().int()
 })
 
 export const zPartialUserProfileReturn = zUserProfileReturn.partial()

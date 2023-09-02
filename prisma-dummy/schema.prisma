@@ -180,7 +180,8 @@ model User {
   outcomingFriendInvitation FriendInvitation[] @relation("outcomingFriendInvitation")
   incomingFriendInvitation  FriendInvitation[] @relation("incomingFriendInvitation")
 
-  matchHistory MatchSummary[]
+  lostMatchHistory MatchSummary[] @relation(name: "looser")
+  wonMatchHistory MatchSummary[] @relation(name: "winner")
 
   outcomingChanInvitation	ChanInvitation[] @relation("outcomingChanInvitation")
   incomingChanInvitation	ChanInvitation[] @relation("incomingChanInvitation")
@@ -213,13 +214,13 @@ model MatchSummary {
     id String @id @default(uuid())
     creationDate     DateTime  @default(now())
 
-    users User[]
-
-    winner_name  String
-    looser_name  String
-    winner_score Int
-    looser_score Int
-    @@index([creationDate(sort: Asc)])
+    winner User @relation(name: "winner", fields: [winnerName], references: [name])
+    looser User @relation(name: "looser", fields: [looserName], references: [name])
+    winnerName  String @unique
+    looserName  String @unique
+    winnerScore Int
+    looserScore Int
+    @@index([creationDate(sort: Desc)])
 }
 
 enum AccessPolicyLevel {
@@ -274,6 +275,7 @@ model DmDiscussionElement {
 
   directMessage   DirectMessage @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
   directMessageId String
+  @@index([creationDate(sort: Desc)])
 }
 
 model DmDiscussionMessage {
@@ -427,7 +429,7 @@ model ChanDiscussionElement {
   chan            Chan		@relation(fields: [chanId], references: [id], onDelete: Cascade)
   chanId          String
 
-  @@index(fields: [creationDate(sort: Asc)])
+  @@index(fields: [creationDate(sort: Desc)])
 }
 
 model ChanDiscussionMessage {

@@ -216,8 +216,8 @@ model MatchSummary {
 
     winner User @relation(name: "winner", fields: [winnerName], references: [name])
     looser User @relation(name: "looser", fields: [looserName], references: [name])
-    winnerName  String @unique
-    looserName  String @unique
+    winnerName  String
+    looserName  String
     winnerScore Int
     looserScore Int
     @@index([creationDate(sort: Desc)])

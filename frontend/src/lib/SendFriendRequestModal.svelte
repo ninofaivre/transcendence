@@ -29,7 +29,7 @@
 
 	async function getUsernames(input: string) {
 		return client.users
-			.searchUsers({
+			.searchUsersV1({
 				query: {
 					userNameContains: input,
 					filter: {

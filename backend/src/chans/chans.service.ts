@@ -1001,7 +1001,7 @@ export class ChansService {
         return chan as RetypeChan<typeof chan>
     }
 
-	async joinChanById(username: string, { title, password }: RequestShapes['joinChanById']['body']) {
+	async joinChan(username: string, { title, password }: RequestShapes['joinChan']['body']) {
 		const chan = await this.getChan(
 			{
                 

@@ -33,7 +33,7 @@
 	}
 
 	async function getUsernames(input: string) {
-		const ret = await client.users.searchUsers({
+		const ret = await client.users.searchUsersV1({
 			query: {
 				userNameContains: input,
 				filter: {

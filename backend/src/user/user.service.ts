@@ -649,4 +649,16 @@ export class UserService {
         return res
     }
 
+    async getBlockedUsers(username: string) {
+        return this.prisma.blockedShip.findMany({
+            where: {
+                OR:[
+                    { blockingUserName: username },
+                    { blockedUserName: username }
+                ]
+            },
+            select: { id: true }
+        })
+    }
+
 }

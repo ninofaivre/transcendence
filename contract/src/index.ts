@@ -2,51 +2,17 @@ export type { DmEvent } from "./routers/dms"
 export type { ChanEvent } from "./routers/chans"
 export type { SseEvent, GetData } from "./contract"
 
-export { zChanInvitationStatus } from "./generated-zod"
-export { contractErrors, isContractError, isErrorCode } from "./errors"
-export type { ContractErrorUnion } from "./errors"
-export { contract } from "./contract"
-export {
-	zDmReturn,
-	zDmDiscussionElementReturn,
-	zDmDiscussionEventReturn,
-	zDmDiscussionMessageReturn,
-} from "./routers/dms"
-export { zUserProfileReturn, zMyProfileReturn, zUserProfilePreviewReturn, acceptedProfilePictureMimeTypes } from "./routers/users"
-export { zFriendShipReturn } from "./routers/friends"
-export { zChanInvitationReturn, zFriendInvitationReturn } from "./routers/invitations"
-export {
-	zCreatePublicChan,
-	zCreatePrivateChan,
-	zChanDiscussionEventReturn,
-	zChanDiscussionElementReturn,
-	zChanDiscussionMessageReturn,
-	zSelfPermissionList,
-	zPermissionOverList,
-	zChanReturn,
-	zChanUser,
-} from "./routers/chans"
+export * from "./generated-zod"
+export * from "./errors"
+export * from "./contract"
+export type * from "./contract"
+export * from "./routers/dms"
+export * from "./routers/users"
+export * from "./routers/friends"
+export * from "./routers/invitations"
+export * from "./routers/chans"
 
 export * from "./routers/game.ws"
 export * from "./routers/game"
 
-export { zUserStatus } from "./zod/user.zod"
-
-// const contract_module = {
-//   zodTypes: {
-//     zChanDiscussionElementReturn,
-//     zChanDiscussionEventReturn,
-//     zChanInvitationReturn,
-//     zCreatePrivateChan,
-//     zCreatePublicChan,
-//     zDmDiscussionElementReturn,
-//     zDmReturn,
-//     zFriendInvitationReturn,
-//     zFriendShipReturn,
-//     zUserProfileReturn,
-//     zDmDiscussionEventReturn,
-//   },
-//   contract,
-// };
-
-// export default contract_module;
+export * from "./zod/user.zod"

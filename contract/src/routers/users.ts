@@ -209,13 +209,17 @@ export const usersContract = c.router(
                 ),
 			},
 		},
-        // getBlockedUsers: {
-        //     method: "GET",
-        //     path: "/@me/blockedUsers",
-        //     responses: {
-        //         200: z.array(z.strictObject({ id: z.string().uuid() }))
-        //     }
-        // },
+        getBlockedUsers: {
+            method: "GET",
+            path: "/@me/blockedUsers",
+            responses: {
+                200: z.array(
+                    z.strictObject({
+                        id: z.string().uuid()
+                    })
+                )
+            }
+        },
         blockUser: {
             method: "POST",
             path: "/@me/blockedUsers",

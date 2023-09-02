@@ -13,7 +13,7 @@
 				twoFAtoken: input,
 			},
 		})
-		if (ret.status !== 200) checkError(ret, "confirm log in", getToastStore())
+		if (ret.status !== 200) checkError(ret, "confirm log in", toastStore)
 		else {
 			logged_in.set(true)
 			makeToast("Logged in successfully", toastStore)

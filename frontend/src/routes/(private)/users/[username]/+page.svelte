@@ -73,10 +73,10 @@
 					minute: "numeric",
 					second: "numeric",
 				}),
-				Winner: obj.winner_name,
-				"Winning Score": obj.winner_score,
-				Looser: obj.looser_name,
-				"Loosing Score": obj.looser_score,
+				Winner: obj.winnerName,
+				"Winning Score": obj.winnerScore,
+				Looser: obj.looserName,
+				"Loosing Score": obj.looserScore,
 				id: obj.id,
 			}
 		})
@@ -144,11 +144,11 @@
 
 	async function blockUser() {
 		// const ret = await client
-        console.log("Not implemented")
+		console.log("Not implemented")
 	}
 
 	async function unblockUser() {
-        console.log("Not implemented")
+		console.log("Not implemented")
 	}
 </script>
 
@@ -201,11 +201,11 @@
 
 		<!-- Game invite -->
 		<div class="flex-1">
-			{#if !data.user.blocked || data.user.blockedBy }
+			{#if !data.user.blocked || data.user.blockedBy}
 				<button class="variant-filled-warning btn btn-sm h-fit" on:click={inviteToGame}>
-                    Invite to a Game
+					Invite to a Game
 				</button>
-            {/if}
+			{/if}
 		</div>
 	</div>
 </div>

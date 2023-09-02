@@ -77,10 +77,10 @@
 					minute: "numeric",
 					second: "numeric",
 				}),
-				Winner: obj.winner_name,
-				"Winning Score": obj.winner_score,
-				Looser: obj.looser_name,
-				"Loosing Score": obj.looser_score,
+				Winner: obj.winnerName,
+				"Winning Score": obj.winnerScore,
+				Looser: obj.looserName,
+				"Loosing Score": obj.looserScore,
 				id: obj.id,
 			}
 		})

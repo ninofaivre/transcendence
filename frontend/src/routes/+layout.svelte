@@ -34,7 +34,6 @@
 		// Prevents redir coming back from 42, or losing the query string for /auth
 		if (!$page.url.pathname.match(/\bauth\b/)) {
 			if ($logged_in == false) {
-				alert("You're being redirected")
 				goto("/auth" + $page.url.searchParams.toString())
 			}
 		}

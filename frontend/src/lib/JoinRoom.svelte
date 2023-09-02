@@ -18,20 +18,21 @@
 	let can_send: boolean = false
 	let password_needed: boolean = false
 	let form: HTMLFormElement
+	let id: string
 
-	async function sendBackData(e: SubmitEvent) {
+	async function sendBackData() {
 		const formdata = new FormData(form)
 		const chan = formdata.get("chan")
-		const password = formdata.get("password")
+		const password = formdata.get("password") ?? undefined
 
 		if ($modalStore[0].response) {
-			$modalStore[0].response({ chan, password })
+			$modalStore[0].response({ chan, password, id })
 		}
 	}
 
 	async function onUserSelection(event: CustomEvent<AutocompleteOption>) {
 		search_input = event.detail.label
-		password_needed = event.detail.meta
+		;({ password_needed, id } = event.detail.meta)
 		input_focused = false
 		if (password_needed) password_element.focus()
 		else {
@@ -54,7 +55,7 @@
 					chans = ret.body.map((obj) => ({
 						label: obj.title,
 						value: obj.title,
-						meta: obj.passwordProtected,
+						meta: { password_needed: obj.passwordProtected, id: obj.id },
 					}))
 					console.log(chans)
 				}

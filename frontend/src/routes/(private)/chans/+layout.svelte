@@ -19,6 +19,7 @@
 	// export let data: LayoutData // TODO wtf
 
 	const modalStore = getModalStore()
+	const toastStore = getToastStore()
 	let header: HTMLElement | null
 	let header_height: number
 
@@ -78,14 +79,16 @@
 			})
 			if (ret.status != 201) checkError(ret, "create a new room")
 			else {
-				makeToast(`Created a new ${type.toLowerCase()} room: ${r}`, getToastStore())
+				makeToast(`Created a new ${type.toLowerCase()} room: ${r}`, toastStore)
 				invalidate(":chans")
 			}
 		}
 	}
 
 	async function onJoinChan() {
-		type ModalReturnType = { chan: string; password: string | undefined } | undefined
+		type ModalReturnType =
+			| { chan: string; password: string | undefined; id: string }
+			| undefined
 		const r = await new Promise<ModalReturnType>((resolve) => {
 			const modal: ModalSettings = {
 				type: "component",
@@ -98,20 +101,18 @@
 			modalStore.trigger(modal)
 		})
 		if (r) {
-			alert(r.chan + " | " + r.password)
-			// 	const { chanName, password } = r
-			// 	const ret = await client.chans.createChan({
-			// 		body: {
-			// 			type,
-			// 			title,
-			// 			password,
-			// 		},
-			// 	})
-			// 	if (ret.status != 201) checkError(ret, "create a new room")
-			// 	else {
-			// 		makeToast(`Created a new ${type.toLowerCase()} room: ${r}`, getToastStore())
-			// 		invalidate(":chans")
-			// 	}
+			const { chan, password, id } = r
+			const ret = await client.chans.joinChanById({
+				body: {
+					password,
+					chanId: id,
+				},
+			})
+			if (ret.status != 200) checkError(ret, `join ${chan}`)
+			else {
+				makeToast(`Joined ${chan}`, toastStore)
+				invalidate(":chans")
+			}
 		}
 	}
 </script>
@@ -162,9 +163,20 @@
 		<div class="mx-auto my-10">
 			<h2 class="my-2">Invite a friend:</h2>
 			<SendFriendRequest />
-			<button class="variant-filled btn btn-sm" on:click={onCreateChan}>
-				Create new Room
-			</button>
+			<section class="mt-1 grid gap-1">
+				<button
+					class="variant-ghost-primary btn btn-sm w-full rounded"
+					on:click={onJoinChan}
+				>
+					Join a room
+				</button>
+				<button
+					class="variant-ghost-primary btn btn-sm w-full rounded"
+					on:click={onCreateChan}
+				>
+					Create new room
+				</button>
+			</section>
 		</div>
 	</div>
 {/if}

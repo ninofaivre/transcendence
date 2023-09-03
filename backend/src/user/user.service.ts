@@ -59,8 +59,8 @@ export class UserService {
             outcomingFriendInvitation: { where: { invitedUserName: username }, select: { id: true } },
             friend: { where: { requestedUserName: username }, select: { id: true } },
             friendOf: { where: { requestingUserName: username}, select: { id: true } },
-			blockedUser: { where: { blockedUserName: username }, select: { id: true }, take: 1 },
-			blockedByUser: { where: { blockingUserName: username }, select: { id: true }, take: 1 },
+			blockedUser: { where: { blockedUserName: username }, select: { id: true } },
+			blockedByUser: { where: { blockingUserName: username }, select: { id: true } },
             _count: {
                 select: { wonMatchHistory: true, lostMatchHistory: true }
             }
@@ -190,11 +190,11 @@ export class UserService {
 			status: await this.formatUserStatusForUser(username, name),
 			...this.formatUserProfilePreviewForUser(username, { name }),
 			commonChans: chans,
-            friendId: friend?.[0].id || friendOf?.[0].id || null,
-            invitedId: outcomingFriendInvitation?.[0].id || null,
-            invitingId: incomingFriendInvitation?.[0].id || null,
-            blockedId: blockedUser?.[0].id || null,
-            blockedById: blockedByUser?.[0].id || null,
+            friendId: friend[0]?.id || friendOf[0]?.id || null,
+            invitedId: outcomingFriendInvitation[0]?.id || null,
+            invitingId: incomingFriendInvitation[0]?.id || null,
+            blockedId: blockedUser[0]?.id || null,
+            blockedById: blockedByUser[0]?.id || null,
             winRatePercentage: _count.wonMatchHistory / (_count.wonMatchHistory + _count.lostMatchHistory) * 100,
             nWin: _count.wonMatchHistory,
             nLoose: _count.lostMatchHistory,

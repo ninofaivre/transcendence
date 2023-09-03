@@ -1045,7 +1045,7 @@ export class ChansService {
         await this.chanInvitationsService
             .updateAndNotifyManyInvsStatus('ACCEPTED', { chanId: chan.id, invitedUserName: username })
         // TODO test this with invalid token user to see if prisma global catch is working
-		return this.pushUserToChanAndNotifyUsers(username, title)
+		return this.pushUserToChanAndNotifyUsers(username, chan.id)
 	}
 
 	async searchChans({ titleContains, nResult }: RequestShapes['searchChans']['query']) {

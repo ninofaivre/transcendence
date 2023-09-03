@@ -24,7 +24,6 @@
 	import { getCroppedImg } from "$lib/canvas_utils"
 	import { isContractError } from "contract"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
-	import { my_name } from "$stores"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
 
@@ -127,7 +126,7 @@
 		if (keep_loading == false) return
 		if (last_page_number === e.detail + 1) {
 			const ret = await client.game.getMatchHistory({
-				params: { username: $my_name },
+				params: { username: data.me.userName },
 				query: {
 					nMatches: settings.limit,
 					cursor: last_match_history_element_id,
@@ -238,12 +237,12 @@
 		<div class="grid flex-1 grid-cols-2">
 			<!-- col1 -->
 			<Avatar
-				src="{PUBLIC_BACKEND_URL}/users/{$my_name}/profilePicture"
-				fallback="https://i.pravatar.cc/?u={$my_name}"
+				src="{PUBLIC_BACKEND_URL}/users/{data.me.userName}/profilePicture"
+				fallback="https://i.pravatar.cc/?u={data.me.userName}"
 				alt="profile"
 			/>
 			<!-- col2 -->
-			<h1 class="self-center text-black">{$my_name}</h1>
+			<h1 class="self-center text-black">{data.me.userName}</h1>
 		</div>
 
 		<div class="flex-1">

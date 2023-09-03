@@ -2,19 +2,18 @@
 	import type { Position } from "contract"
 	import type { GameSocket } from "$types"
 	import type { Writable } from "svelte/store"
+	import type { PageData } from "./$types"
 
 	import { ProgressRadial } from "@skeletonlabs/skeleton"
 	import { Canvas } from "@threlte/core"
 	import { Text, HTML } from "@threlte/extras"
 	import Pong from "./Pong.svelte"
-	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { getContext, onMount } from "svelte"
 	import { GameDim } from "contract"
-	import { my_name } from "$stores"
-	import { io } from "socket.io-client"
 	import { injectLookAtPlugin } from "./lookAtPlugin"
 
 	injectLookAtPlugin()
+	export let data: PageData
 
 	let my_paddle_is_left: boolean = false
 	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "WAITING" | "END" = "IDLE"
@@ -67,13 +66,13 @@
 			} = data)
 		})
 		$game_socket.on("newInGameMessage", (data) => {})
-		$game_socket.on("updatedGameStatus", (data) => {
-			console.log(data)
-			state = data.status
-			if (data.status === "INIT") {
-				my_paddle_is_left = data.paddleLeftUserName === $my_name
-				;({ paddleLeftUserName, paddleRightUserName } = data)
-				timeout = data.timeout / 1000
+		$game_socket.on("updatedGameStatus", (new_data) => {
+			console.log(new_data)
+			state = new_data.status
+			if (new_data.status === "INIT") {
+				my_paddle_is_left = new_data.paddleLeftUserName === data.me.userName
+				;({ paddleLeftUserName, paddleRightUserName } = new_data)
+				timeout = new_data.timeout / 1000
 				value = timeout
 				button_disabled = false
 				for (let i = 0; i < timeout; ++i) {
@@ -81,10 +80,10 @@
 						value -= 1
 					}, 1000 * i)
 				}
-				;({ paddleLeftScore, paddleRightScore } = data)
-			} else if (data.status === "BREAK") {
-				;({ paddleLeftScore, paddleRightScore } = data)
-				timeout = data.timeout / 1000
+				;({ paddleLeftScore, paddleRightScore } = new_data)
+			} else if (new_data.status === "BREAK") {
+				;({ paddleLeftScore, paddleRightScore } = new_data)
+				timeout = new_data.timeout / 1000
 				value = timeout
 				button_disabled = false
 				for (let i = 0; i < timeout; ++i) {
@@ -92,18 +91,18 @@
 						value -= 1
 					}, 1000 * i)
 				}
-			} else if (data.status === "PAUSE") {
-                // Implemeting the timeout
-			} else if (data.status === "END") {
-				;({ paddleLeftScore, paddleRightScore } = data)
-				winner = data.winner
+			} else if (new_data.status === "PAUSE") {
+				// Implemeting the timeout
+			} else if (new_data.status === "END") {
+				;({ paddleLeftScore, paddleRightScore } = new_data)
+				winner = new_data.winner
 			}
 		})
 		$game_socket.on("disconnect", (data) => {
-            if (data === "io server disconnect") {
-                console.log("applying callbacks for pong page")
-                applyCallback()
-            }
+			if (data === "io server disconnect") {
+				console.log("applying callbacks for pong page")
+				applyCallback()
+			}
 		})
 	}
 
@@ -131,15 +130,19 @@
 		console.log("NONE")
 		$game_socket.emit("gameMovement", "NONE")
 	}
-    function surrend() {
+	function surrend() {
 		$game_socket.emit("surrend", "")
-    }
+	}
 </script>
 
 <div class="menu-container grid grid-cols-1">
 	{#if state === "PAUSE"}
 		<div class="justify-self self-center">
-			<div>Waiting for { $my_name === paddleLeftUserName ? paddleRightUserName : paddleLeftUserName }</div>
+			<div>
+				Waiting for {data.me.userName === paddleLeftUserName
+					? paddleRightUserName
+					: paddleLeftUserName}
+			</div>
 			<div class="spinner" />
 		</div>
 	{:else if state === "BREAK"}
@@ -153,7 +156,7 @@
 		</div>
 	{:else if state === "IDLE"}
 		<button
-			class="btn variant-ringed-primary rounded"
+			class="variant-ringed-primary btn rounded"
 			on:click={createGame}
 			disabled={button_disabled}
 		>
@@ -161,7 +164,7 @@
 		</button>
 	{:else if state === "WAITING"}
 		<div class="card grid grid-rows-2 gap-2 p-8">
-			<button class="btn variant-ringed-error rounded" on:click={cancelGame}>CANCEL</button>
+			<button class="variant-ringed-error btn rounded" on:click={cancelGame}>CANCEL</button>
 			<div class="spinner justify-self-center" />
 		</div>
 	{:else if state === "INIT"}
@@ -175,7 +178,7 @@
 		</div>
 	{:else if state === "END"}
 		<div class="grid grid-rows-2 gap-1">
-			{#if winner === $my_name}
+			{#if winner === data.me.userName}
 				<div>🎉 You won 🎉</div>
 			{:else}
 				<div>
@@ -183,7 +186,7 @@
 				</div>
 			{/if}
 			<button
-				class="btn variant-ringed-error rounded"
+				class="variant-ringed-error btn rounded"
 				on:click={createGame}
 				disabled={button_disabled}
 			>
@@ -230,17 +233,14 @@
 		anchorY={court.height / 2 - 300}
 		font="/arcadeclassic.regular.ttf"
 	/>
-    <HTML
-        position.x={court.width}
-        position.y={200}
-    >
-        <button
-          on:click={surrend}
-          class="btn bg-orange-500 px-2 hover:opacity-90 active:opacity-70"
-        >
-            Surrend
-        </button>
-    </HTML>
+	<HTML position.x={court.width} position.y={200}>
+		<button
+			on:click={surrend}
+			class="btn bg-orange-500 px-2 hover:opacity-90 active:opacity-70"
+		>
+			Surrend
+		</button>
+	</HTML>
 	<Pong
 		{court}
 		{ball_sz}

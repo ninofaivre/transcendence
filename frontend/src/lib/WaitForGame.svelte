@@ -8,19 +8,23 @@
 	const modalStore = getModalStore()
 	let state: "accepted" | "refused" | "timedOut" | "waiting" | "badRequest" = "waiting"
 	let value = timeReplyToInvitation
-	const username = $modalStore[0].meta.username
+	const username: string = $modalStore[0].meta.username
 	const game_socket: Writable<GameSocket> = $modalStore[0].meta.game_socket
 
 	// let game_socket: Writable<GameSocket> = getContext("game_socket")
 	console.log("Got game_socket from context:", game_socket)
-	$game_socket.emit("invite", { username }, (res: "accepted" | "refused" | "badRequest") => {
-		state = res
-		if (state === "accepted") {
-			if ($modalStore[0].response) {
-				$modalStore[0].response(true)
+	$game_socket.emit(
+		"invite",
+		{ intraUserName: username },
+		(res: "accepted" | "refused" | "badRequest") => {
+			state = res
+			if (state === "accepted") {
+				if ($modalStore[0].response) {
+					$modalStore[0].response(true)
+				}
 			}
-		}
-	})
+		},
+	)
 
 	let i = timeReplyToInvitation
 	while (i--) {

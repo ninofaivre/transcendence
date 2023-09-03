@@ -17,7 +17,6 @@
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { page } from "$app/stores"
 	import { Paginator } from "@skeletonlabs/skeleton"
-	import { my_name } from "$stores"
 	import { goto, invalidate } from "$app/navigation"
 
 	export let data: PageData
@@ -26,12 +25,12 @@
 	const toastStore = getToastStore()
 	let invite_state: null | "pending" | "accepted"
 	let already_friend: boolean = data.friendList.includes($page.params.username)
-    console.log(data.friendList)
-    console.log(data.friendships)
+	console.log(data.friendList)
+	console.log(data.friendships)
 	let spin = false
 	let keep_loading = true
 	let my_profile: boolean
-	$: my_profile = $my_name === data.user.userName
+	$: my_profile = data.me.userName === data.user.userName
 
 	if (my_profile) goto("/myprofile")
 
@@ -42,26 +41,26 @@
 		if (ret.status != 201) checkError(ret, "send friend request", toastStore)
 		else {
 			makeToast("Sent friend request to " + data.user.userName, toastStore)
-            invalidate(":friends")
+			invalidate(":friends")
 		}
 	}
 
 	async function revokeFriend() {
-        const friendShipId = data.friendships.find((el) => el.friendName === data.user.userName)?.id ?? "" 
-        if (friendShipId) {
-            const ret = await client.friends.deleteFriend({
-                params : {
-                    friendShipId
-                },
-                body: null
-            })
-            if (ret.status != 201) checkError(ret, "send friend request", toastStore)
-            else {
-                makeToast("Sent friend request to " + data.user.userName, toastStore)
-                invalidate(":friends")
-            }
-        }
-        else throw new Error("There is no friendShipId for this user")
+		const friendShipId =
+			data.friendships.find((el) => el.friendName === data.user.userName)?.id ?? ""
+		if (friendShipId) {
+			const ret = await client.friends.deleteFriend({
+				params: {
+					friendShipId,
+				},
+				body: null,
+			})
+			if (ret.status != 201) checkError(ret, "send friend request", toastStore)
+			else {
+				makeToast("Sent friend request to " + data.user.userName, toastStore)
+				invalidate(":friends")
+			}
+		} else throw new Error("There is no friendShipId for this user")
 	}
 
 	async function inviteToGame() {
@@ -179,7 +178,7 @@
 			},
 			body: null,
 		})
-		if (ret.status != 204 ) checkError(ret, "remove block over " + username, toastStore)
+		if (ret.status != 204) checkError(ret, "remove block over " + username, toastStore)
 		else {
 			makeToast("Unblocked " + username, toastStore)
 			invalidate(":user")
@@ -206,21 +205,27 @@
 			<div class="flex-1">
 				{#if data.user.blockedId}
 					<button class="variant-filled-error btn btn-sm h-fit" on:click={unblockUser}>
-						Remove Block  
+						Remove Block
 					</button>
 				{:else if invite_state !== "pending" || !already_friend}
-					<button class="variant-filled-error btn btn-sm h-fit" on:click={blockUser} disabled={already_friend}>
+					<button
+						class="variant-filled-error btn btn-sm h-fit"
+						on:click={blockUser}
+						disabled={already_friend}
+					>
 						Block
 					</button>
 				{/if}
 			</div>
 			<!-- Game invite -->
 			<div class="flex-1">
-					<button class="variant-filled-warning btn btn-sm h-fit" on:click={inviteToGame}
-						disabled={data.user.blockedId || data.user.blockedById ? true : false}
-                    >
-						Invite to a Game
-					</button>
+				<button
+					class="variant-filled-warning btn btn-sm h-fit"
+					on:click={inviteToGame}
+					disabled={data.user.blockedId || data.user.blockedById ? true : false}
+				>
+					Invite to a Game
+				</button>
 			</div>
 			<!-- Send friend request -->
 			<div class="flex-1">

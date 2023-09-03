@@ -9,11 +9,9 @@
 
 	//Utils
 	import { blur, slide } from "svelte/transition"
-	import { my_name } from "$stores"
 	import { checkError, listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
 	import { makeToast } from "$lib/global"
-	import { isContractError } from "contract"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { filter, Noir } from "@skeletonlabs/skeleton"
 	import { getModalStore } from "@skeletonlabs/skeleton"
@@ -23,14 +21,14 @@
 	const modalStore = getModalStore()
 
 	export let message: Message
-	export let from_me = message.author === $my_name
+	export let from_me: boolean
 	export let discussion: Chan | DirectConversation
 	export let game_socket: Writable<GameSocket>
 
-    let blurred = false
-    if (isChanMesssage(message)) {
-        blurred = message.isAuthorBlocked
-    }
+	let blurred = false
+	if (isChanMesssage(message)) {
+		blurred = message.isAuthorBlocked
+	}
 
 	// POPUP SECTION
 	let perms: string[] | undefined
@@ -192,11 +190,11 @@
 	}
 
 	function isChan(arg: DirectConversation | Chan): arg is Chan {
-        return "users" in arg
+		return "users" in arg
 	}
 
-	function isChanMesssage(arg: Message  ): arg is ChanMessage {
-        return "isAuthorBlocked" in arg
+	function isChanMesssage(arg: Message): arg is ChanMessage {
+		return "isAuthorBlocked" in arg
 	}
 
 	// MENU SECTION
@@ -217,9 +215,10 @@
 		? [
 				{ label: "Edit", handler: editHandler },
 				{ label: "Delete", handler: forwardAsDeletionEvent },
-				{ label: "Reply", handler: replyHandler },
+				// { label: "Reply", handler: replyHandler },
 		  ]
-		: [{ label: "Reply", handler: replyHandler }]
+		: []
+	// : [{ label: "Reply", handler: replyHandler }]
 
 	async function replyHandler() {}
 
@@ -329,7 +328,7 @@
 			</div>
 		</div>
 	</div>
-	{#if is_sent}
+	{#if is_sent && menu_items.length > 0}
 		{#if is_message_menu_open}
 			<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
 				<menu class="text-token list mx-1 px-1">

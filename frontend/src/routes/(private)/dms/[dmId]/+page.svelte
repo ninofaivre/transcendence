@@ -10,17 +10,20 @@
 	/* Components */
 	import DiscussionDisplay from "$lib/DiscussionDisplay.svelte"
 	import ChatBox from "$lib/ChatBox.svelte"
-	import { onMount } from "svelte"
+	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
 	import { client } from "$clients"
 	import { addListenerToEventSource } from "$lib/global"
-	import { sse_store, my_name } from "$stores"
+	import type { Writable } from "svelte/store"
 
 	console.log($page.route.id, " init")
 
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
 	let dm: DirectConversation
+
+	export let data: PageData
+	const sse_store: Writable<EventSource> = getContext("sse_store")
 
 	// Important, resets variable on route parameter change
 	$: messages = $page.data.messages
@@ -56,7 +59,7 @@
 				id: "",
 				content: e.detail,
 				creationDate: new Date(),
-				author: $my_name,
+				author: data.me.userName,
 				hasBeenEdited: false,
 				relatedTo: null,
 				isDeleted: false,
@@ -163,19 +166,19 @@
 		resizeObserver.observe(header!)
 
 		const destroyer: (() => void)[] = new Array(
-			addListenerToEventSource($sse_store!, "CREATED_DM_ELEMENT", (data) => {
+			addListenerToEventSource($sse_store, "CREATED_DM_ELEMENT", (data) => {
 				console.log("Server message: New message", data)
 				if (data.dmId === $page.params.dmId) {
 					messages = [...messages, data.element]
 				}
 			}),
-			addListenerToEventSource($sse_store!, "UPDATED_DM_MESSAGE", (data) => {
-				console.log("Server message: Message was modified", data)
-				if (data.dmId === $page.data.dmId) {
-					updateSomeMessage(data.message.id, data.message.content)
+			addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (new_data) => {
+				console.log("Server message: Message was modified", new_data)
+				if (new_data.dmId === $page.params.dmId) {
+					updateSomeMessage(new_data.message.id, new_data.message.content)
 				}
 			}),
-			addListenerToEventSource($sse_store!, "UPDATED_DM_STATUS", (data) => {
+			addListenerToEventSource($sse_store, "UPDATED_DM_STATUS", (data) => {
 				disabled = data.status === "DISABLED" ? true : false
 			}),
 		)
@@ -195,6 +198,7 @@
 		discussion={dm}
 		{messages}
 		{sendLoadEvents}
+		my_name={data.me.userName}
 		on:delete={deletionHandler}
 		on:edit={editHandler}
 		on:loadprevious={loadPreviousMessages}

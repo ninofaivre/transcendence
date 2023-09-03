@@ -3,6 +3,7 @@ import { client } from "$clients"
 
 export const load = async ({ depends }: LayoutLoadEvent) => {
 	console.log("layout load function from dms/ ")
+
 	depends(":dms")
 	const { status, body: dmList } = await client.dms.getDms()
 	if (status !== 200) {
@@ -11,7 +12,7 @@ export const load = async ({ depends }: LayoutLoadEvent) => {
 				(dmList as any)?.message
 			}\"`,
 		)
+        return { dmList: []}
 	}
-
-	return { dmList }
+    else return { dmList }
 }

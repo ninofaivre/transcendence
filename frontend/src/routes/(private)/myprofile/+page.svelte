@@ -224,7 +224,7 @@
 			makeToast("Upload successful")
             $reload_img = $reload_img + 1
 		} else if (ret.status === 413) {
-			makeToast(`Image is too big. Upload must be under ${PROFILE_PICTURE_MAX_SIZE_MB}MB`)
+			makeToast(`Image is too big. Upload must be under ${PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB}MB`)
 		} else if (isContractError(ret)) {
 			makeToast(`Upload failed: ${ret.body.message}`)
 		} else

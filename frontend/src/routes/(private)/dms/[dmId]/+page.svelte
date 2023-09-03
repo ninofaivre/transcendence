@@ -149,6 +149,7 @@
 	let header: HTMLElement | null
 	let header_height: number
 	let disabled: boolean = false
+    $: disabled = data.dmList.find((el) => el.id === $page.params.dmId)?.status === "DISABLED"
 	let disabled_placeholder = "This user blocked you"
 
 	// Calculate the NavBar height in order to adapt the layout
@@ -178,8 +179,15 @@
 					updateSomeMessage(new_data.message.id, new_data.message.content)
 				}
 			}),
-			addListenerToEventSource($sse_store, "UPDATED_DM_STATUS", (data) => {
-				disabled = data.status === "DISABLED" ? true : false
+			addListenerToEventSource($sse_store, "BLOCKED_BY_USER", (new_data) => {
+                if ( data.dmList.find((el) => el.otherName === new_data.username)!.id === $page.params.dmId) {
+                    disabled = true
+                }
+			}),
+			addListenerToEventSource($sse_store, "UNBLOCKED_BY_USER", (new_data) => {
+                if ( data.dmList.find((el) => el.otherName === new_data.username)!.id === $page.params.dmId) {
+                    disabled = false
+                }
 			}),
 		)
 		return () => {

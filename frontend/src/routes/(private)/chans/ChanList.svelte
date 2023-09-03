@@ -79,9 +79,9 @@
 	a {
 		display: block;
 	}
-	a::first-letter {
-		text-transform: capitalize;
-	}
+	/* a::first-letter { */
+	/* 	text-transform: capitalize; */
+	/* } */
 
 	button {
 		visibility: hidden;

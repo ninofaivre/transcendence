@@ -5,7 +5,7 @@
 
 	import { AppShell, AppBar, LightSwitch, Toast, Avatar } from "@skeletonlabs/skeleton"
 	import { makeToast } from "$lib/global"
-	import { logged_in, my_name } from "$lib/stores"
+	import { logged_in } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
 	import {
@@ -112,7 +112,7 @@
 				{/each}
 			{/if}
 			<svelte:fragment slot="trail">
-				{#if $logged_in}
+				{#if $logged_in && $page.data.me?.userName}
 					<button
 						on:click={() => logout()}
 						class="variant-filled-secondary btn btn-sm mr-1 text-xs font-semibold"
@@ -121,13 +121,13 @@
 					</button>
 					<a href="/myprofile" class="variant-ghost chip ml-1 flex">
 						<Avatar
-							src="{PUBLIC_BACKEND_URL}/api/users/{$my_name}/profilePicture"
-							fallback="https://i.pravatar.cc/?u={$my_name}"
+							src="{PUBLIC_BACKEND_URL}/api/users/{$page.data.me.userName}/profilePicture"
+							fallback="https://i.pravatar.cc/?u={$page.data.me.userName}"
 							class="h-8 w-8"
 							rounded="rounded-full"
 						/>
 						<div>
-							{$my_name}
+							{$page.data.me.userName}
 						</div>
 					</a>
 				{/if}

@@ -11,17 +11,27 @@
 	import { goto } from "$app/navigation"
 
 	console.log("private layout init")
-
 	const modalStore = getModalStore()
 
+    // Sse
+	let sse_store: Writable<EventSource> = writable(
+        new EventSource(PUBLIC_BACKEND_URL + "/api/sse", { withCredentials: true })
+	)
+    $sse_store.onopen = function (_evt) {
+        console.log("Successfully established sse connection")
+    }
+    $sse_store.onerror = function (_evt) {
+        console.log("Error while openning new sse connection: Probably already in use")
+    }
+	setContext("sse_store", sse_store)
+
+    // Game socket
 	let game_socket: Writable<GameSocket> = writable(
 		io(PUBLIC_BACKEND_URL, {
 			withCredentials: true,
 		}),
 	)
-
 	applyCallbacks()
-
 	function applyCallbacks() {
 		console.log("Applying layout callbacks on $game_socket:", $game_socket.id)
 		$game_socket.on("connect", () => {
@@ -72,8 +82,8 @@
 
 	onDestroy(() => {
 		$game_socket.removeAllListeners()
-		console.log("private layout destroy", $game_socket)
 		$game_socket.close()
+		$sse_store.close()
 	})
 
 	setContext("game_socket", game_socket)

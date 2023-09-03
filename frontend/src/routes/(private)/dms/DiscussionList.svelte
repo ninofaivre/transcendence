@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { DirectConversation } from "$types"
-	import { sse_store } from "$lib/stores"
-	import { onMount } from "svelte"
+	import type { Writable } from "svelte/store"
+
+	import { getContext, onMount } from "svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { goto, invalidate } from "$app/navigation"
 	import { Avatar } from "@skeletonlabs/skeleton"
@@ -10,42 +11,42 @@
 	export let currentDiscussionId: string
 	export let discussions: DirectConversation[]
 
+	const sse_store: Writable<EventSource> = getContext("sse_store")
+
 	onMount(() => {
-		if ($sse_store) {
-			const destroyer = new Array(
-				addListenerToEventSource($sse_store, "CREATED_DM", (data) => {
-					console.log("A new dm was created!")
-					invalidate(":dms") // Does this work ?
-				}),
-				addListenerToEventSource($sse_store, "UPDATED_USER_STATUS", (data) => {
-					console.log("Got a event about a dm")
-					const dot_to_update = document.querySelector(
-						`span.online-dot[data-relatedto=${data.userName}]`,
-					) as HTMLElement
-					if (dot_to_update) {
-						if (data.status === "OFFLINE") {
-							// Only works if the element has a style tag onto itself !
-							dot_to_update.style.visibility = "hidden"
-						} else {
-							dot_to_update.style.visibility = "visible"
-							if (data.status === "GAME") {
-								dot_to_update.innerHTML = "&#127918" // 🎮
-								// dot_to_update.innerHTML = "&#127955" // 🏓
-							} else if (data.status === "ONLINE" || data.status === "QUEUE") {
-								dot_to_update.innerHTML = "&#8226"
-							}
+		const destroyer = new Array(
+			addListenerToEventSource($sse_store, "CREATED_DM", (data) => {
+				console.log("A new dm was created!")
+				invalidate(":dms") // Does this work ?
+			}),
+			addListenerToEventSource($sse_store, "UPDATED_USER_STATUS", (data) => {
+				console.log("Got a event about a dm")
+				const dot_to_update = document.querySelector(
+					`span.online-dot[data-relatedto=${data.userName}]`,
+				) as HTMLElement
+				if (dot_to_update) {
+					if (data.status === "OFFLINE") {
+						// Only works if the element has a style tag onto itself !
+						dot_to_update.style.visibility = "hidden"
+					} else {
+						dot_to_update.style.visibility = "visible"
+						if (data.status === "GAME") {
+							dot_to_update.innerHTML = "&#127918" // 🎮
+							// dot_to_update.innerHTML = "&#127955" // 🏓
+						} else if (data.status === "ONLINE" || data.status === "QUEUE") {
+							dot_to_update.innerHTML = "&#8226"
 						}
-					} else console.log("IT WAS NULL !")
-				}),
-				addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (data) => {
-					// Mark unread the discussion that corresponds to the discussion who got a new message
-					// How to I differentiate a modified message from a new message
-				}),
-			)
-			return () => {
-				destroyer.forEach((func: () => void) => func())
-			}
-		} else throw new Error("sse_store is empty ! Grrrr", $sse_store)
+					}
+				} else console.log("IT WAS NULL !")
+			}),
+			addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (data) => {
+				// Mark unread the discussion that corresponds to the discussion who got a new message
+				// How to I differentiate a modified message from a new message
+			}),
+		)
+		return () => {
+			destroyer.forEach((func: () => void) => func())
+		}
 	})
 </script>
 

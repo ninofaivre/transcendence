@@ -4,16 +4,16 @@
 
 	/* Components */
 	import ChanList from "./ChanList.svelte"
-	import { onMount } from "svelte"
+	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { addListenerToEventSource } from "$lib/global"
-	import { sse_store } from "$stores"
 	import { invalidate } from "$app/navigation"
 	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { checkError } from "$lib/global"
 	import { client } from "$clients"
 	import { makeToast } from "$lib/global"
+	import type { Writable } from "svelte/store"
 
 	// Get our discussions
 	// export let data: LayoutData // TODO wtf
@@ -22,6 +22,7 @@
 	const toastStore = getToastStore()
 	let header: HTMLElement | null
 	let header_height: number
+	const sse_store: Writable<EventSource> = getContext("sse_store")
 
 	onMount(() => {
 		header = document.getElementById("shell-header")
@@ -41,7 +42,7 @@
 			// This callback cleans up the observer
 		}
 		const destroyer: (() => void)[] = new Array(
-			addListenerToEventSource($sse_store!, "KICKED_FROM_CHAN", (data) => {
+			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (data) => {
 				if (data.chanId === $page.params.chanId) {
 					invalidate(":chans")
 				}

@@ -1,33 +1,32 @@
 <script lang="ts">
 	import type { Chan } from "$types"
-	import { sse_store } from "$lib/stores"
-	import { onMount } from "svelte"
+	import { getContext, onMount } from "svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { invalidate } from "$app/navigation"
 	import { makeToast } from "$lib/global"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { checkError } from "$lib/global"
+	import type { Writable } from "svelte/store"
 
 	const modalStore = getModalStore()
+	const sse_store: Writable<EventSource> = getContext("sse_store")
 
 	export let currentDiscussionId: string
 	export let discussions: Chan[]
 
 	onMount(() => {
-		if ($sse_store) {
-			const destroyer = new Array(
-				addListenerToEventSource($sse_store, "CREATED_CHAN_ELEMENT", (data) => {
-					invalidate(":chans") // Does this work ?
-				}),
-				addListenerToEventSource($sse_store, "UPDATED_CHAN_MESSAGE", (data) => {
-					invalidate(":chans") // Does this work ?
-				}),
-			)
-			return () => {
-				destroyer.forEach((func: () => void) => func())
-			}
-		} else throw new Error("sse_store is empty ! Grrrr", $sse_store)
+		const destroyer = new Array(
+			addListenerToEventSource($sse_store, "CREATED_CHAN_ELEMENT", (data) => {
+				invalidate(":chans") // Does this work ?
+			}),
+			addListenerToEventSource($sse_store, "UPDATED_CHAN_MESSAGE", (data) => {
+				invalidate(":chans") // Does this work ?
+			}),
+		)
+		return () => {
+			destroyer.forEach((func: () => void) => func())
+		}
 	})
 
 	async function onInviteToChan(chanId: string) {

@@ -6,7 +6,6 @@
 
 	import ChatBubble from "$lib/ChatBubble.svelte"
 	import { getContext, onMount } from "svelte"
-	import { my_name } from "$stores"
 	import { createEventDispatcher } from "svelte"
 
 	console.log("DiscussionDisplay init")
@@ -14,6 +13,7 @@
 	export let discussion: Chan | DirectConversation
 	export let messages: MessageOrEvent[] = []
 	export let sendLoadEvents: boolean
+	export let my_name: string
 
 	let observer: IntersectionObserver
 	const reactivity = 1000
@@ -59,7 +59,7 @@
 				<ChatBubble
 					{discussion}
 					{message}
-					from_me={message.author === $my_name}
+					from_me={message.author === my_name}
 					on:delete
 					on:edit
 					{game_socket}

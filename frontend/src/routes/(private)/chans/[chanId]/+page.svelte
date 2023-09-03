@@ -6,11 +6,12 @@
 	/* types */
 	import type { PageData } from "./$types"
 	import type { Chan, Message, MessageOrEvent } from "$types"
+	import type { Writable } from "svelte/store"
 
 	/* Components */
 	import DiscussionDisplay from "$lib/DiscussionDisplay.svelte"
 	import ChatBox from "$lib/ChatBox.svelte"
-	import { onMount } from "svelte"
+	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
 	import { client } from "$clients"
 	import {
@@ -19,14 +20,16 @@
 		makeToast,
 		shallowCopyPartialToNotPartial,
 	} from "$lib/global"
-	import { sse_store, my_name } from "$stores"
 	import { isContractError } from "contract"
 	import { invalidate, invalidateAll } from "$app/navigation"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 
 	console.log($page.route.id, " init")
 
+	export let data: PageData
 	const modalStore = getModalStore()
+	const sse_store: Writable<EventSource> = getContext("sse_store")
+
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
 	let chan: Chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
@@ -72,7 +75,7 @@
 				id: "",
 				content: e.detail,
 				creationDate: new Date(),
-				author: $my_name,
+				author: data.me.userName,
 				hasBeenEdited: false,
 				relatedTo: null,
 				isDeleted: false,
@@ -221,6 +224,7 @@
 		discussion={chan}
 		{messages}
 		{sendLoadEvents}
+		my_name={data.me.userName}
 		on:delete={deletionHandler}
 		on:edit={editHandler}
 		on:loadprevious={loadPreviousMessages}

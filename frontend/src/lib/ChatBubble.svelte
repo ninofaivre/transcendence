@@ -9,7 +9,6 @@
 
 	//Utils
 	import { blur, slide } from "svelte/transition"
-	import { my_name } from "$stores"
 	import { checkError, listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
 	import { makeToast } from "$lib/global"
@@ -19,18 +18,20 @@
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { goto } from "$app/navigation"
+	// Ideally I would pass that info down instead of relying on page
+	import { page } from "$app/stores"
 
 	const modalStore = getModalStore()
 
 	export let message: Message
-	export let from_me = message.author === $my_name
+	export let from_me: boolean
 	export let discussion: Chan | DirectConversation
 	export let game_socket: Writable<GameSocket>
 
-    let blurred = false
-    if (isChanMesssage(message)) {
-        blurred = message.isAuthorBlocked
-    }
+	let blurred = false
+	if (isChanMesssage(message)) {
+		blurred = message.isAuthorBlocked
+	}
 
 	// POPUP SECTION
 	let perms: string[] | undefined
@@ -192,11 +193,11 @@
 	}
 
 	function isChan(arg: DirectConversation | Chan): arg is Chan {
-        return "users" in arg
+		return "users" in arg
 	}
 
-	function isChanMesssage(arg: Message  ): arg is ChanMessage {
-        return "isAuthorBlocked" in arg
+	function isChanMesssage(arg: Message): arg is ChanMessage {
+		return "isAuthorBlocked" in arg
 	}
 
 	// MENU SECTION

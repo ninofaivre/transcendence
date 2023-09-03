@@ -183,6 +183,8 @@ export class UserService {
             incomingFriendInvitation, outcomingFriendInvitation,
             _count, ...rest } = toFormat
 
+        const nMatches = _count.lostMatchHistory + _count.wonMatchHistory
+
 		return {
 			...rest,
             // TODO rule this shit to avoid having NO_ONE via CUSTOM.sql
@@ -195,10 +197,12 @@ export class UserService {
             invitingId: incomingFriendInvitation[0]?.id || null,
             blockedId: blockedUser[0]?.id || null,
             blockedById: blockedByUser[0]?.id || null,
-            winRatePercentage: _count.wonMatchHistory / (_count.wonMatchHistory + _count.lostMatchHistory) * 100,
+            winRatePercentage: (nMatches !== 0)
+                ? _count.wonMatchHistory / nMatches * 100
+                : 0,
             nWin: _count.wonMatchHistory,
             nLoose: _count.lostMatchHistory,
-            nMatches: _count.lostMatchHistory + _count.wonMatchHistory
+            nMatches
 		}
 	}
 

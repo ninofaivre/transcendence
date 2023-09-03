@@ -26,8 +26,8 @@ export class SseService {
 	}
 
 	public async pushEvent(username: string, event: SseEvent) {
-		// console.log("push Event to", username, "event:", event)
-		// console.log(`this.eventSource.get(${username})`, this.eventSource.get(username))
+		console.log("push Event to", username)
+        console.log("event:", event)
 		this.eventSource.get(username)?.next(event)
 	}
 

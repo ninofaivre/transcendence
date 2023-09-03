@@ -370,24 +370,6 @@ export class DmsService {
 		return newDm.id
 	}
 
-	public async updateAndNotifyDmStatus(
-		dmId: string,
-		newStatus: (typeof DirectMessageStatus)[keyof typeof DirectMessageStatus],
-		username: string,
-	) {
-		const { requestingUserName, requestedUserName } = await this.prisma.directMessage.update({
-			where: { id: dmId },
-			data: {
-				status: newStatus,
-			},
-			select: { requestedUserName: true, requestingUserName: true },
-		})
-		await this.sse.pushEventMultipleUser([requestingUserName, requestedUserName], {
-			type: "UPDATED_DM_STATUS",
-			data: { dmId, status: newStatus },
-		})
-	}
-
 	async getDms(username: string) {
 		return this.formatDirectMessageArray(
 			await this.prisma.directMessage.findMany({

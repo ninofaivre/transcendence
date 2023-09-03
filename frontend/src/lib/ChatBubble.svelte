@@ -229,6 +229,21 @@
 		is_sent = false
 		dispatch("delete", { id: message.id })
 	}
+
+	// Blur
+
+	let blurred = true
+
+	async function removeBlur() {
+		const r = new Promise(() => {
+			const modalSettings: ModalSettings = {
+				type: "confirm",
+			}
+			modalStore.trigger(modalSettings)
+		})
+		alert(r)
+		let blurred = false
+	}
 </script>
 
 <Noir />
@@ -274,6 +289,8 @@
 	{/if}
 	<div
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}
+		style:filter={blurred ? "blur(4px)" : "none"}
+		on:click={removeBlur}
 	>
 		<!-- {#if !from_me} -->
 		<div class="from-field font-medium">{message.author}</div>

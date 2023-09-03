@@ -98,13 +98,6 @@ export class FriendsService {
 			dmId,
 			ClassicDmEventType.CREATED_FRIENDSHIP,
 		)
-		if (directMessage && directMessage.status === DirectMessageStatus.DISABLED) {
-			await this.dmsService.updateAndNotifyDmStatus(
-				directMessage.id,
-				DirectMessageStatus.ENABLED,
-				requestedUserName
-            )
-        }
         if (!newEvent)
             return
 		await this.dmsService.formatAndNotifyDmElement(

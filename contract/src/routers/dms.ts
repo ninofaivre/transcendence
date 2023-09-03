@@ -185,10 +185,6 @@ export type DmEvent =
 			data: z.infer<typeof zDmReturn>
 	  }
 	| {
-			type: "UPDATED_DM_STATUS"
-			data: { dmId: string; status: z.infer<typeof zDirectMessageStatus> }
-	  }
-	| {
 			type: "CREATED_DM_ELEMENT"
 			data: { dmId: string; element: z.infer<typeof zDmDiscussionElementReturn> }
 	  }

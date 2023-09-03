@@ -2,13 +2,14 @@ import type { PageLoad } from "./$types"
 import { client } from "$clients"
 import { checkError } from "$lib/global"
 
-export const load: PageLoad = async ({ params }) => {
+export const load: PageLoad = async ({ params, depends }) => {
+	console.log("[username] page load")
+	depends(":user")
 	const user = await client.users.getUser({
 		params: {
 			userName: params.username,
 		},
 	})
-
 	const match_history = await client.game.getMatchHistory({
 		params: {
 			username: params.username,

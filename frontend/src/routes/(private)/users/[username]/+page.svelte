@@ -18,7 +18,7 @@
 	import { page } from "$app/stores"
 	import { Paginator } from "@skeletonlabs/skeleton"
 	import { my_name } from "$stores"
-	import { goto } from "$app/navigation"
+	import { goto, invalidate } from "$app/navigation"
 
 	export let data: PageData
 
@@ -141,30 +141,32 @@
 	}
 
 	async function blockUser() {
-        const username = data.user.userName
-        const ret = await client.users.blockUser({
-            body: {
-                username,
-            }
-        })
-        if (ret.status != 201) checkError(ret, "block " + username, toastStore)
-        else {
-            makeToast("Blocked " + username , toastStore)
-        }
+		const username = data.user.userName
+		const ret = await client.users.blockUser({
+			body: {
+				username,
+			},
+		})
+		if (ret.status != 201) checkError(ret, "block " + username, toastStore)
+		else {
+			makeToast("Blocked " + username, toastStore)
+			invalidate(":user")
+		}
 	}
 
 	async function unblockUser() {
-        const username = data.user.userName
-        const ret = await client.users.unBlockUser({
-            query: {
-                username,
-            },
-            body: null
-        })
-        if (ret.status != 201) checkError(ret, "remove block over " + username, toastStore)
-        else {
-            makeToast("Unblocked " + username , toastStore)
-        }
+		const username = data.user.userName
+		const ret = await client.users.unBlockUser({
+			query: {
+				username,
+			},
+			body: null,
+		})
+		if (ret.status != 204 ) checkError(ret, "remove block over " + username, toastStore)
+		else {
+			makeToast("Unblocked " + username, toastStore)
+			invalidate(":user")
+		}
 	}
 
 	$: nPlayed = data.user.nWin + data.user.nLoose
@@ -187,7 +189,7 @@
 			<div class="flex-1">
 				{#if data.user.blockedId}
 					<button class="variant-filled-warning btn btn-sm h-fit" on:click={unblockUser}>
-						Remove Block
+						Remove Block  
 					</button>
 				{:else if invite_state !== "pending" || !already_friend}
 					<button class="variant-filled-error btn btn-sm h-fit" on:click={blockUser}>

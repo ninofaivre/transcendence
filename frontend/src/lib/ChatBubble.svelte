@@ -12,14 +12,11 @@
 	import { checkError, listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
 	import { makeToast } from "$lib/global"
-	import { isContractError } from "contract"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { filter, Noir } from "@skeletonlabs/skeleton"
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { goto } from "$app/navigation"
-	// Ideally I would pass that info down instead of relying on page
-	import { page } from "$app/stores"
 
 	const modalStore = getModalStore()
 
@@ -218,9 +215,10 @@
 		? [
 				{ label: "Edit", handler: editHandler },
 				{ label: "Delete", handler: forwardAsDeletionEvent },
-				{ label: "Reply", handler: replyHandler },
+				// { label: "Reply", handler: replyHandler },
 		  ]
-		: [{ label: "Reply", handler: replyHandler }]
+		: []
+	// : [{ label: "Reply", handler: replyHandler }]
 
 	async function replyHandler() {}
 
@@ -330,7 +328,7 @@
 			</div>
 		</div>
 	</div>
-	{#if is_sent}
+	{#if is_sent && menu_items.length > 0}
 		{#if is_message_menu_open}
 			<div class="contents" use:listenOutsideClick on:outsideclick={closeMenu}>
 				<menu class="text-token list mx-1 px-1">

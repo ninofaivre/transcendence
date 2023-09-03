@@ -24,7 +24,7 @@
 	import { getCroppedImg } from "$lib/canvas_utils"
 	import { isContractError } from "contract"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
-	import { PUBLIC_BACKEND_URL } from "$env/static/public"
+	import { PUBLIC_BACKEND_URL, PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB } from "$env/static/public"
 	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
 
 	import { page } from "$app/stores"
@@ -223,6 +223,8 @@
 		if (ret.status === 204) {
 			makeToast("Upload successful")
             $reload_img = $reload_img + 1
+		} else if (ret.status === 413) {
+			makeToast(`Image is too big. Upload must be under ${PROFILE_PICTURE_MAX_SIZE_MB}MB`)
 		} else if (isContractError(ret)) {
 			makeToast(`Upload failed: ${ret.body.message}`)
 		} else

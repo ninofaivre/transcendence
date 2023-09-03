@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Writable } from "svelte/store"
 	import type { ModalSettings } from "@skeletonlabs/skeleton"
-	import type { Chan, DirectConversation, GameSocket, Message } from "$types"
+	import type { Chan, ChanMessage, DirectConversation, GameSocket, Message } from "$types"
 
 	//Components
 	import { Avatar } from "@skeletonlabs/skeleton"
@@ -26,6 +26,11 @@
 	export let from_me = message.author === $my_name
 	export let discussion: Chan | DirectConversation
 	export let game_socket: Writable<GameSocket>
+
+    let blurred = false
+    if (isChanMesssage(message)) {
+        blurred = message.isAuthorBlocked
+    }
 
 	// POPUP SECTION
 	let perms: string[] | undefined
@@ -187,7 +192,11 @@
 	}
 
 	function isChan(arg: DirectConversation | Chan): arg is Chan {
-		return !!(arg as any).users
+        return "users" in arg
+	}
+
+	function isChanMesssage(arg: Message  ): arg is ChanMessage {
+        return "isAuthorBlocked" in arg
 	}
 
 	// MENU SECTION
@@ -228,21 +237,6 @@
 		closeMenu()
 		is_sent = false
 		dispatch("delete", { id: message.id })
-	}
-
-	// Blur
-
-	let blurred = true
-
-	async function removeBlur() {
-		const r = new Promise(() => {
-			const modalSettings: ModalSettings = {
-				type: "confirm",
-			}
-			modalStore.trigger(modalSettings)
-		})
-		alert(r)
-		let blurred = false
 	}
 </script>
 
@@ -290,7 +284,9 @@
 	<div
 		class={`message-bubble ${from_me ? "variant-filled-primary" : "variant-filled-secondary"}`}
 		style:filter={blurred ? "blur(4px)" : "none"}
-		on:click={removeBlur}
+		on:click={() => (blurred = false)}
+		on:keydown
+		role="none"
 	>
 		<!-- {#if !from_me} -->
 		<div class="from-field font-medium">{message.author}</div>

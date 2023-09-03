@@ -126,7 +126,7 @@ export class UserController {
 
             unBlockUser: async ({ query: { username: blockedUserName } }) => {
                 const res = await this.userService.unblockUser(username, blockedUserName)
-                return isContractError(res) ? res : { status: 200, body: null }
+                return isContractError(res) ? res : { status: 204, body: null }
             },
 
             getBlockedUsers: async () => ({

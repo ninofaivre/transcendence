@@ -18,6 +18,7 @@
 	import { page } from "$app/stores"
 	import { Paginator } from "@skeletonlabs/skeleton"
 	import { goto, invalidate } from "$app/navigation"
+    import { reload_img } from "$stores"
 
 	export let data: PageData
 
@@ -147,7 +148,6 @@
 			if (ret.status !== 200) checkError(ret, "load match history", getToastStore())
 			else {
 				if (ret.body.length < settings.limit) {
-					// alert("After this one, no more data")
 					keep_loading = false
 				}
 				match_history = [...match_history, ...remap(ret.body)]
@@ -197,7 +197,7 @@
 		<div class="flex flex-1 flex-col gap-2">
 			<!-- col1: Avatar + menu -->
 			<Avatar
-				src="{PUBLIC_BACKEND_URL}/users/{data.user.userName}/profilePicture"
+                src="{PUBLIC_BACKEND_URL}/api/users/{data.user.userName}/profilePicture?reload={$reload_img}"
 				fallback="https://i.pravatar.cc/?u={data.user.userName}"
 				alt="profile"
 			/>

@@ -141,12 +141,30 @@
 	}
 
 	async function blockUser() {
-		// const ret = await client
-		console.log("Not implemented")
+        const username = data.user.userName
+        const ret = await client.users.blockUser({
+            body: {
+                username,
+            }
+        })
+        if (ret.status != 201) checkError(ret, "block " + username, toastStore)
+        else {
+            makeToast("Blocked " + username , toastStore)
+        }
 	}
 
 	async function unblockUser() {
-		console.log("Not implemented")
+        const username = data.user.userName
+        const ret = await client.users.unBlockUser({
+            query: {
+                username,
+            },
+            body: null
+        })
+        if (ret.status != 201) checkError(ret, "remove block over " + username, toastStore)
+        else {
+            makeToast("Unblocked " + username , toastStore)
+        }
 	}
 
 	$: nPlayed = data.user.nWin + data.user.nLoose

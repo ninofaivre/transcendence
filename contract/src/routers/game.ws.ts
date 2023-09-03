@@ -61,7 +61,7 @@ export const GamePositionsSchema = z.strictObject({
 export type GamePositions = z.infer<typeof GamePositionsSchema>
 
 export const InvitationSchema = z.strictObject({
-    username: zUserName
+    intraUserName: zUserName
 })
 export type Invitation = z.infer<typeof InvitationSchema>
 
@@ -86,5 +86,5 @@ export interface ServerToClientEvents {
     }) => void,
     updatedGameStatus: (e: GameStatus) => void,
     updatedGamePositions: (e: GamePositions) => void,
-    invited: (e: Invitation, callback: (e: InvitationClientResponse) => void) => void
+    invited: (e: { username: string }, callback: (e: InvitationClientResponse) => void) => void
 }

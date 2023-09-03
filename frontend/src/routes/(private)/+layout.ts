@@ -1,6 +1,7 @@
 import type { LayoutLoadEvent } from "./$types"
 import { client } from "$clients"
 import { checkError } from "$lib/global"
+import type { Friendship } from "$types"
 
 export const load = async ({ depends }: LayoutLoadEvent) => {
 	console.log("layout load function from root/(private) layout")
@@ -9,6 +10,7 @@ export const load = async ({ depends }: LayoutLoadEvent) => {
 	depends(":me")
 	const me_res = await client.users.getMe()
 	depends(":friends")
+	depends(":friendships")
 	const friendships_res = await client.friends.getFriends()
 
 	// Check
@@ -21,7 +23,7 @@ export const load = async ({ depends }: LayoutLoadEvent) => {
 	}
 	return {
 		me: {} as Record<string, any>,
-		friendships: [] as string[],
+		friendships: [] as Friendship[],
 		friendList: [] as string[],
 	}
 }

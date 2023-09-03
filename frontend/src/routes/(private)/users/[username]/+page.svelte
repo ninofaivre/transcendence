@@ -26,6 +26,8 @@
 	const toastStore = getToastStore()
 	let invite_state: null | "pending" | "accepted"
 	let already_friend: boolean = data.friendList.includes($page.params.username)
+    console.log(data.friendList)
+    console.log(data.friendships)
 	let spin = false
 	let keep_loading = true
 	let my_profile: boolean
@@ -40,11 +42,26 @@
 		if (ret.status != 201) checkError(ret, "send friend request", toastStore)
 		else {
 			makeToast("Sent friend request to " + data.user.userName, toastStore)
+            invalidate(":friends")
 		}
 	}
 
 	async function revokeFriend() {
-		alert("Not implemented")
+        const friendShipId = data.friendships.find((el) => el.friendName === data.user.userName)?.id ?? "" 
+        if (friendShipId) {
+            const ret = await client.friends.deleteFriend({
+                params : {
+                    friendShipId
+                },
+                body: null
+            })
+            if (ret.status != 201) checkError(ret, "send friend request", toastStore)
+            else {
+                makeToast("Sent friend request to " + data.user.userName, toastStore)
+                invalidate(":friends")
+            }
+        }
+        else throw new Error("There is no friendShipId for this user")
 	}
 
 	async function inviteToGame() {
@@ -192,7 +209,7 @@
 						Remove Block  
 					</button>
 				{:else if invite_state !== "pending" || !already_friend}
-					<button class="variant-filled-error btn btn-sm h-fit" on:click={blockUser}>
+					<button class="variant-filled-error btn btn-sm h-fit" on:click={blockUser} disabled={already_friend}>
 						Block
 					</button>
 				{/if}

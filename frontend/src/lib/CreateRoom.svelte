@@ -9,7 +9,7 @@
 		const type = priv ? "PRIVATE" : "PUBLIC"
 		const password: string | undefined = priv
 			? undefined
-			: (formdata.get("password") as string | null) ?? undefined
+			: (formdata.get("password") as string | null) || undefined
 		if ($modalStore[0].response) {
 			$modalStore[0].response({ type, title, password })
 		}

@@ -172,10 +172,10 @@
 					messages = [...messages, data.element]
 				}
 			}),
-			addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (data) => {
-				console.log("Server message: Message was modified", data)
-				if (data.dmId === $page.data.dmId) {
-					updateSomeMessage(data.message.id, data.message.content)
+			addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (new_data) => {
+				console.log("Server message: Message was modified", new_data)
+				if (new_data.dmId === $page.params.dmId) {
+					updateSomeMessage(new_data.message.id, new_data.message.content)
 				}
 			}),
 			addListenerToEventSource($sse_store, "UPDATED_DM_STATUS", (data) => {

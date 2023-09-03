@@ -167,7 +167,7 @@
 			/>
 			<!-- Block -->
 			<div class="flex-1">
-				{#if data.user.blocked}
+				{#if data.user.blockedId}
 					<button class="variant-filled-warning btn btn-sm h-fit" on:click={unblockUser}>
 						Remove Block
 					</button>
@@ -179,7 +179,7 @@
 			</div>
 			<!-- Game invite -->
 			<div class="flex-1">
-				{#if !data.user.blocked || data.user.blockedBy}
+				{#if !data.user.blockedId || data.user.blockedById}
 					<button class="variant-filled-warning btn btn-sm h-fit" on:click={inviteToGame}>
 						Invite to a Game
 					</button>
@@ -198,7 +198,7 @@
 				{:else}
 					<button
 						class="variant-filled-primary btn btn-sm h-fit"
-						disabled={data.user.blockedBy ? true : false}
+						disabled={data.user.blockedById ? true : false}
 						on:click={askFriend}
 						>Send Friend Request
 					</button>

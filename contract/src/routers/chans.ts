@@ -71,7 +71,7 @@ export const zChanReturn = z.object({
 	ownerName: zUserName,
 	id: z.string().uuid(),
 	users: z.array(zChanUser).min(1),
-    bannedUsers: z.array(zUserName),
+	bannedUsers: z.array(zUserName),
 	passwordProtected: z.boolean(),
 	selfPerms: z.array(zSelfPermissionList),
 })
@@ -188,7 +188,7 @@ export const chansContract = c.router(
 				...getErrorsForContract(c, [403, "OwnerCannotLeaveChan"], [404, "NotFoundChan"]),
 			},
 		},
-		joinChanById: {
+		joinChan: {
 			method: "POST",
 			path: "/@me",
 			body: z.strictObject({
@@ -201,7 +201,7 @@ export const chansContract = c.router(
 					c,
 					[400, "ChanDoesntNeedPassword", "ChanNeedPassword"],
 					[404, "NotFoundChan"],
-                    [403, "UserBannedFromChan", "ChanWrongPassword"],
+					[403, "UserBannedFromChan", "ChanWrongPassword"],
 					[409, "ChanUserAlreadyExist"],
 				),
 			},
@@ -220,10 +220,7 @@ export const chansContract = c.router(
 			]),
 			responses: {
 				201: zChanReturn,
-				...getErrorsForContract(
-					c,
-					[409, "ChanAlreadyExist"]
-				),
+				...getErrorsForContract(c, [409, "ChanAlreadyExist"]),
 			},
 		},
 		updateChan: {
@@ -335,7 +332,7 @@ export const chansContract = c.router(
 				...getErrorsForContract(
 					c,
 					[403, "ChanPermissionTooLow", "NotOwnedChanMessage"],
-					[404, "NotFoundChan", "NotFoundChanEntity"]
+					[404, "NotFoundChan", "NotFoundChanEntity"],
 				),
 			},
 		},
@@ -378,10 +375,10 @@ export const chansContract = c.router(
 			path: "/:chanId/mutedUsers/:username",
 			pathParams: z.strictObject({
 				chanId: z.string().uuid(),
-				username: zUserName
+				username: zUserName,
 			}),
 			body: z.strictObject({
-				timeoutInMs: zTimeOut
+				timeoutInMs: zTimeOut,
 			}),
 			responses: {
 				204: c.type<null>(),
@@ -402,46 +399,49 @@ export const chansContract = c.router(
 			body: c.type<null>(),
 			responses: {
 				204: c.type<null>(),
-				...getErrorsForContract(c,
+				...getErrorsForContract(
+					c,
 					[403, "ChanPermissionTooLowOverUser"],
 					[404, "NotFoundChan", "NotFoundChanEntity"],
 				),
 			},
 		},
-        banUserFromChan: {
-            method: "PUT",
-            path: "/:chanId/bannedUsers/:username",
-            pathParams: z.strictObject({
-                chanId: z.string().uuid(),
-                username: zUserName
-            }),
-            body: z.strictObject({
-                timeoutInMs: zTimeOut
-            }),
-            responses: {
-                204: c.type<null>(),
-                ...getErrorsForContract(c,
-                    [403, "ChanPermissionTooLowOverUser"],
-                    [404, "NotFoundChan", "NotFoundChanEntity"],
-                )
-            }
-        },
-        unbanUserFromChan: {
-            method: "DELETE",
-            path: "/:chanId/bannedUsers/:username",
-            pathParams: z.strictObject({
-                chanId: z.string().uuid(),
-                username: zUserName
-            }),
-            body: c.type<null>(),
-            responses: {
-                204: c.type<null>(),
-                ...getErrorsForContract(c,
-                    [403, "ChanPermissionTooLowOverUser"],
-                    [404, "NotFoundChan", "NotFoundChanEntity"],
-                )
-            }
-        }
+		banUserFromChan: {
+			method: "PUT",
+			path: "/:chanId/bannedUsers/:username",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+				username: zUserName,
+			}),
+			body: z.strictObject({
+				timeoutInMs: zTimeOut,
+			}),
+			responses: {
+				204: c.type<null>(),
+				...getErrorsForContract(
+					c,
+					[403, "ChanPermissionTooLowOverUser"],
+					[404, "NotFoundChan", "NotFoundChanEntity"],
+				),
+			},
+		},
+		unbanUserFromChan: {
+			method: "DELETE",
+			path: "/:chanId/bannedUsers/:username",
+			pathParams: z.strictObject({
+				chanId: z.string().uuid(),
+				username: zUserName,
+			}),
+			body: c.type<null>(),
+			responses: {
+				204: c.type<null>(),
+				...getErrorsForContract(
+					c,
+					[403, "ChanPermissionTooLowOverUser"],
+					[404, "NotFoundChan", "NotFoundChanEntity"],
+				),
+			},
+		},
 	},
 	{
 		pathPrefix: "/chans",
@@ -480,9 +480,9 @@ export type ChanEvent =
 			}
 	  }
 	| {
-            // on BANNED_CHAN_USER add remove chanUser from array and add name to
-            // banUsers array if perm 'BAN' over him. On UNBANNED_CHAN_USER just
-            // remove user from bannedUsers array if he was in.
+			// on BANNED_CHAN_USER add remove chanUser from array and add name to
+			// banUsers array if perm 'BAN' over him. On UNBANNED_CHAN_USER just
+			// remove user from bannedUsers array if he was in.
 			type: "DELETED_CHAN_USER" | "BANNED_CHAN_USER" | "UNBANNED_CHAN_USER"
 			data: {
 				chanId: string

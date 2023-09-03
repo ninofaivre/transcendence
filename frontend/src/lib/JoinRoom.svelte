@@ -22,11 +22,11 @@
 
 	async function sendBackData() {
 		const formdata = new FormData(form)
-		const chan = formdata.get("chan")
+		const title = formdata.get("title")
 		const password = formdata.get("password") ?? undefined
 
 		if ($modalStore[0].response) {
-			$modalStore[0].response({ chan, password, id })
+			$modalStore[0].response({ title, password, id })
 		}
 	}
 
@@ -57,7 +57,6 @@
 						value: obj.title,
 						meta: { password_needed: obj.passwordProtected, id: obj.id },
 					}))
-					console.log(chans)
 				}
 			})
 	}
@@ -95,7 +94,7 @@
 			bind:this={input_element}
 			class="input"
 			type="search"
-			name="chan"
+			name="title"
 			bind:value={search_input}
 			placeholder="Search room..."
 			on:focusin={() => void (input_focused = true)}

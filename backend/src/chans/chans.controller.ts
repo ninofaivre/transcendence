@@ -31,8 +31,8 @@ export class ChansController {
                 return isContractError(res) ? res : { status: 204, body: null }
             },
 
-            joinChanById: async ({ body }) => {
-                const res = await this.chansService.joinChanById(username, body)
+            joinChan: async ({ body }) => {
+                const res = await this.chansService.joinChan(username, body)
                 return isContractError(res) ? res : { status: 200, body: res }
             },
 

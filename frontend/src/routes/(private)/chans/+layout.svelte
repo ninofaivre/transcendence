@@ -87,7 +87,7 @@
 
 	async function onJoinChan() {
 		type ModalReturnType =
-			| { chan: string; password: string | undefined; id: string }
+			| { title: string; password: string | undefined; id: string }
 			| undefined
 		const r = await new Promise<ModalReturnType>((resolve) => {
 			const modal: ModalSettings = {
@@ -101,16 +101,16 @@
 			modalStore.trigger(modal)
 		})
 		if (r) {
-			const { chan, password, id } = r
-			const ret = await client.chans.joinChanById({
+			const { title, password } = r
+			const ret = await client.chans.joinChan({
 				body: {
 					password,
-					chanId: id,
+					title,
 				},
 			})
-			if (ret.status != 200) checkError(ret, `join ${chan}`)
+			if (ret.status != 200) checkError(ret, `join ${title}`)
 			else {
-				makeToast(`Joined ${chan}`, toastStore)
+				makeToast(`Joined ${title}`, toastStore)
 				invalidate(":chans")
 			}
 		}

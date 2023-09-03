@@ -1,4 +1,8 @@
-import { HttpAdapterHost, NestFactory } from "@nestjs/core"
+import { Express } from "express"
+import { Server, ServerOptions, createServer } from "spdy"
+import * as fs from 'fs'
+import * as express from "express"
+import { HttpAdapterHost, NestApplication, NestFactory } from "@nestjs/core"
 import { AppModule } from "./app.module"
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from "@nestjs/swagger"
 import * as cookieParser from "cookie-parser"
@@ -11,16 +15,30 @@ import { EnvService } from "./env/env.service"
 import { PrismaClientExceptionFilter } from "./prisma/exception-filter"
 
 import { install } from 'source-map-support';
+import { ExpressAdapter } from "@nestjs/platform-express"
 install();
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule, {
-		// bodyParser: true,
-		// httpsOptions:
-		// {
-		// 	key: fs.readFileSync('./secrets/key.pem'),
-		// 	cert: fs.readFileSync('./secrets/cert.pem'),
+    const expressApp: Express = express();
+
+	// const app = await NestFactory.create(AppModule, {
+	// 	// bodyParser: true,
+	// 	// httpsOptions:
+	// 	// {
+	// 	// 	key: fs.readFileSync('./secrets/key.pem'),
+	// 	// 	cert: fs.readFileSync('./secrets/cert.pem'),
+	// 	// },
+		// cors: {
+		// 	// Mandatory for any protected route to work (must be set on the client's fetch and EventSource constructor too)
+		// 	credentials: true,
+		// 	//Matches all localhost whether http/https or there's a port
+		// 	origin: [/https?:\/\/localhost(?::\d{1,6})?$/, EnvService.env.PUBLIC_FRONTEND_URL],
+		// 	methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
 		// },
+	// 	// Just this won't work because Access-Control-Allow-Origin can't be * when credentials are included
+	// 	// cors: true,
+	// })
+    const app: NestApplication = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
 		cors: {
 			// Mandatory for any protected route to work (must be set on the client's fetch and EventSource constructor too)
 			credentials: true,
@@ -28,9 +46,14 @@ async function bootstrap() {
 			origin: [/https?:\/\/localhost(?::\d{1,6})?$/, EnvService.env.PUBLIC_FRONTEND_URL],
 			methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
 		},
-		// Just this won't work because Access-Control-Allow-Origin can't be * when credentials are included
-		// cors: true,
-	})
+    })
+
+    const spdyOpts: ServerOptions = {
+        key: fs.readFileSync('./secrets/key.pem'),
+        cert: fs.readFileSync('./secrets/cert.pem')
+    }
+
+    const server: Server = createServer(spdyOpts, expressApp)
 
 	app.use(cookieParser())
 	const config = new DocumentBuilder().setTitle("APIchat").setVersion("0.42").build()
@@ -55,7 +78,8 @@ async function bootstrap() {
 	// 	}),
 	// )
 
-	await app.listen(EnvService.env.PRIVATE_BACKEND_PORT)
+    await app.init();
+	server.listen(EnvService.env.PRIVATE_BACKEND_PORT)
 }
 
 // TODO: make this function a bit cleaner and put it somewhere else

@@ -38,6 +38,7 @@
 		"sharp": "^0.32.5",
 		"socket.io": "^4.7.2",
 		"source-map-support": "^0.5.21",
+		"spdy": "^4.0.2",
 		"swagger-themes": "^1.2.30"
 	},
 	"devDependencies": {
@@ -54,6 +55,7 @@
 		"@types/passport-local": "^1.0.35",
 		"@types/qrcode": "^1.5.2",
 		"@types/source-map-support": "^0.5.7",
+		"@types/spdy": "^3.4.5",
 		"@typescript-eslint/eslint-plugin": "^6.5.0",
 		"eslint": "^8.48.0",
 		"eslint-plugin-prettier": "^5.0.0"

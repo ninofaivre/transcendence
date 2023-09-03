@@ -75,13 +75,16 @@ class ChanElementMessage extends ChanElement {
         this.element
     ))
 
-    protected getSseEvent = (name: string): SseEvent => ({
-        type: `UPDATED_CHAN_MESSAGE`,
-        data: {
-            chanId: this.chanId,
-            message: this.formatted(name)
-        }
-    } as const)
+    protected getSseEvent = (name: string): SseEvent => (this.chanMessageType === "CREATED"
+        ? super.getSseEvent(name)
+        : {
+            type:`UPDATED_CHAN_MESSAGE`,
+            data: {
+                chanId: this.chanId,
+                message: this.formatted(name)
+            }
+        } as const
+    )
 
 }
 

@@ -23,8 +23,8 @@
 			addListenerToEventSource($sse_store, "UPDATED_USER_STATUS", (data) => {
 				console.log("Got a event about a dm")
 				const dot_to_update = document.querySelector(
-					`span.online-dot[data-relatedto=${data.userName}]`,
-				) as HTMLElement
+					`span[data-relatedto=${data.userName}]`,
+				) as HTMLElement | null
 				if (dot_to_update) {
 					if (data.status === "OFFLINE") {
 						// Only works if the element has a style tag onto itself !

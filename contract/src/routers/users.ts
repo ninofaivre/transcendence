@@ -91,11 +91,14 @@ export const usersContract = c.router(
             path: "/",
             query: z.union([
                 zSearchUsersQueryBase.extend({
-                    action: z.enum([/*"CREATE_DM", */"CREATE_FRIEND_INVITE", "*"])
+                    action: z.enum([/*"CREATE_DM", */"CREATE_FRIEND_INVITE", "*"]),
+                    params: z.strictObject({})
                 }),
                 zSearchUsersQueryBase.extend({
                     action: z.literal("CREATE_CHAN_INVITE"),
-                    chanId: z.string().uuid()
+                    params: z.strictObject({
+                        chanId: z.string().uuid()
+                    })
                 })
             ]),
             responses: {

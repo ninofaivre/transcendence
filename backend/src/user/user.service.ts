@@ -4,7 +4,7 @@ import { NotFoundException, ConflictException } from "@nestjs/common"
 import { hash } from "bcrypt"
 import { PrismaService } from "src/prisma/prisma.service"
 import { NestRequestShapes } from "@ts-rest/nest"
-import { acceptedProfilePictureMimeTypes, contract, contractErrors, isContractError } from "contract"
+import { FlattenUnionObjectByDiscriminator, acceptedProfilePictureMimeTypes, contract, contractErrors, isContractError } from "contract"
 import { z } from "zod"
 import { zUserProfileReturn, zMyProfileReturn, zUserProfilePreviewReturn, zUserStatus } from "contract"
 import { SseService } from "src/sse/sse.service"
@@ -708,39 +708,73 @@ export class UserService {
         })
     }
 
-    // private searchMode = {
-    //     "*": ({}: {}) => ({}),
-    //     "CREATE_CHAN_INVITE": ({ username, chanId }: { username: string, chanId: string }) => ({
-    //         name: { not: username },
-    //         blockedByUser: { none: { blockingUserName: username } },
-    //         blockedUser: { none: { blockedUserName: username } },
-    //         directMessage: {
-    //             some: {
-    //                 OR: [
-    //                     { requestedUserName: username },
-    //                     { requestingUserName: username }
-    //                 ],
-    //                 status: 'ENABLED'
-    //             }
-    //         },
-    //         chans: { none: { id: chanId } },
-    //         timedUserChan: { none: { chanId } }
-    //     } as const),
-    //     "CREATE_FRIEND_INVITE": ({ username }: { username: string }) => ({}),
-    // } satisfies {
-    //     [key in RequestShapes['searchUsersV2']['query']['action']]: ((...args: any[]) => Prisma.UserWhereInput)
-    // }
+    private searchMode: {
+        [key in RequestShapes['searchUsersV2']['query']['action']]:
+            ((
+                username: string,
+                args: Extract<
+                    FlattenUnionObjectByDiscriminator<
+                        RequestShapes['searchUsersV2']['query'],
+                        "action",
+                        "params"
+                    >,
+                    { action: key }
+                >['params']
+            ) => Prisma.UserWhereInput)
+    } = {
+        "*": (username) => ({}),
+        "CREATE_CHAN_INVITE": (username, { chanId }) => ({
+            name: { not: username },
+            blockedByUser: { none: { blockingUserName: username } },
+            blockedUser: { none: { blockedUserName: username } },
+            directMessage: {
+                some: {
+                    OR: [
+                        { requestedUserName: username },
+                        { requestingUserName: username }
+                    ],
+                    status: 'ENABLED'
+                }
+            },
+            chans: { none: { id: chanId } },
+            timedUserChan: { none: { chanId } },
+            incomingChanInvitation: {
+                none: { chanId, invitingUserName: username }
+            }
+        }),
+        "CREATE_FRIEND_INVITE": (username: string) => ({
+            name: { not: username },
+            blockedByUser: { none: { blockingUserName: username } },
+            blockedUser: { none: { blockedUserName: username } },
+            friend: { none: { requestedUserName: username } },
+            friendOf: { none: { requestingUserName: username } },
+            incomingFriendInvitation: {
+                none: { invitingUserName: username }
+            },
+            outcomingFriendInvitation: {
+                none: { invitedUserName: username }
+            }
+        }),
+    }
 
-    // public async searchUsersV2(username: string, { chanId, action, nResult, userNameContains }: RequestShapes['searchUsersV2']['query']) {
-    //     this.prisma.user.findMany({
-    //         where: {
-    //             AND: [
-    //                 { name: { contains: userNameContains } },
-    //                 this.searchMode[action]({ username, chanId })
-    //             ]
-    //         },
-    //         take: nResult
-    //     })
-    // }
+    public async searchUsersV2(username: string, dto: RequestShapes['searchUsersV2']['query']) {
+        // useless switch just to narrow type
+        let whereSearch: Prisma.UserWhereInput;
+        switch (dto.action) {
+            case "CREATE_CHAN_INVITE": whereSearch = this.searchMode[dto.action](username, dto.params); break ;
+            default : whereSearch = this.searchMode[dto.action](username, dto.params)
+        }
+        const users = await this.prisma.user.findMany({
+            where: {
+                AND: [
+                    { name: { contains: dto.userNameContains } },
+                    whereSearch
+                ]
+            },
+            take: dto.nResult,
+            select: this.getUserProfilePreviewSelectForUser(username)
+        })
+        return this.formatUserProfilePreviewForUserArray(username, users)
+    }
 
 }

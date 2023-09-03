@@ -5,6 +5,6 @@ export const zUserName = z
 	.nonempty()
 	.min(3)
 	.max(30)
-	.refine((username) => username !== "@me", { message: "forbidden username" })
+    .regex(/^[^@]+$/) // forbid @ char
 export const zUserPassword = z.string().nonempty().min(8).max(150)
 export const zUserStatus = z.enum(["OFFLINE", "ONLINE", "INVISIBLE", "QUEUE", "GAME"])

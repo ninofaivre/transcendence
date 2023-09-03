@@ -73,7 +73,7 @@ export class AuthService {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
                 secret: EnvService.env.JWT_SECRET,
-                expiresIn: EnvService.env.PUBLIC_MODE === 'DEV' ? '1h' : '10s'//'15m'
+                expiresIn: EnvService.env.PUBLIC_MODE === 'DEV' ? '1h' : '15m'
             }),
             this.jwtService.signAsync(payload, {
                 // TODO mb use a different password for refresh and access tokens ?

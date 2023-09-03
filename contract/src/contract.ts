@@ -8,18 +8,24 @@ import type { MessageEvent } from "@nestjs/common"
 import { authContract } from "./routers/auth"
 import { gameContract } from "./routers/game"
 
+export type FlattenUnionObjectByDiscriminator<
+    Union,
+    DiscriminatorKey extends keyof Union,
+    DataKey extends keyof Union
+> = Union extends Record<DiscriminatorKey, infer Discriminator>
+        & Record<DataKey, infer Data>
+	? Discriminator extends any
+		? Record<DiscriminatorKey, Discriminator> & Record<DataKey, Data>
+		: never
+	: never
+
+export type SseEvent = FlattenUnionObjectByDiscriminator<
+	(InvitationEvent | DmEvent | FriendEvent | ChanEvent | UserEvent), "type", "data"
+>
+
 // Dummy function to raise error at contract compilation instead
 // of raising it in backend. There is probably a cleaner way...
 ;(T: SseEvent) => T satisfies MessageEvent
-
-type TransformUnion<T> = T extends { type: infer U; data: infer D }
-	? U extends any
-		? { type: U; data: D }
-		: never
-	: never
-export type SseEvent = TransformUnion<
-	InvitationEvent | DmEvent | FriendEvent | ChanEvent | UserEvent
->
 
 export type GetData<T extends SseEvent["type"]> = Extract<SseEvent, { type: T }>["data"]
 

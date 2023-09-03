@@ -67,7 +67,7 @@ export class UserController {
 	@UseGuards(JwtAuthGuard)
 	@TsRestHandler(c)
 	async handler(@Request() { user: { username } }: EnrichedRequest) {
-		return tsRestHandler<Omit<typeof c, "signUp" | "setMyProfilePicture" | "searchUsersV2">>(c, {
+		return tsRestHandler<Omit<typeof c, "signUp" | "setMyProfilePicture">>(c, {
 			getMe: async () => {
 				const res = await this.userService.getMe(username)
 				return isContractError(res) ? res : { status: 200, body: res }
@@ -81,6 +81,11 @@ export class UserController {
 			searchUsersV1: async ({ query }) => ({
 				status: 200,
 				body: await this.userService.searchUsersV1(username, query),
+			}),
+
+			searchUsersV2: async ({ query }) => ({
+				status: 200,
+				body: await this.userService.searchUsersV2(username, query),
 			}),
 
 			getUser: async ({ params }) => {

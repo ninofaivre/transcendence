@@ -605,7 +605,7 @@ export class UserService {
             }})
         if (!user)
             return contractErrors.NotFoundUser(blockedUserName)
-        if (user.blockedUser)
+        if (user.blockedUser.length)
             return contractErrors.UserAlreadyBlocked(blockedUserName)
         await Promise.all([
             this.prisma.directMessage.updateMany({

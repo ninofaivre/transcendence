@@ -134,10 +134,11 @@ export class FriendsService {
             where: { id: friendShipId },
             select: { requestedUserName: true, requestingUserName: true }
         })
+        console.log(`user ${username} tryed to delete friendship ${friendShipId} :`, friendShip)
         if (!friendShip)
             return contractErrors.NotFoundFriendShip(friendShipId)
         const { requestedUserName, requestingUserName } = friendShip
-        if (requestedUserName !== username && requestedUserName !== username)
+        if (requestedUserName !== username && requestingUserName !== username)
             return contractErrors.NotFoundFriendShip(friendShipId)
         await this.sse.pushEventMultipleUser([requestingUserName, requestedUserName], {
             type: "DELETED_FRIENDSHIP",
@@ -151,12 +152,17 @@ export class FriendsService {
         if (!res)
             return
         const { id: dmId } = res
+        await this.prisma.friendShip.delete({ where: { id: friendShipId } })
         const newEvent = await this.dmsService.createClassicDmEvent(
             dmId,
             ClassicDmEventType.DELETED_FRIENDSHIP,
         )
         if (!newEvent)
             return
+        await this.prisma.directMessage.update({
+            where: { id: friendShipId },
+            data: { status: 'DISABLED' }
+        })
         await this.dmsService.formatAndNotifyDmElement(
             requestingUserName,
             requestedUserName,

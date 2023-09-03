@@ -195,8 +195,8 @@ export class UserService {
             friendId: friend[0]?.id || friendOf[0]?.id || null,
             invitedId: outcomingFriendInvitation[0]?.id || null,
             invitingId: incomingFriendInvitation[0]?.id || null,
-            blockedId: blockedUser[0]?.id || null,
-            blockedById: blockedByUser[0]?.id || null,
+            blockedId: blockedByUser[0]?.id || null,
+            blockedById: blockedUser[0]?.id || null,
             winRatePercentage: (nMatches !== 0)
                 ? _count.wonMatchHistory / nMatches * 100
                 : 0,

@@ -1,11 +1,10 @@
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { GameDim, GameMovement, GameSpeed, GameStatus, GameTimings } from 'contract';
-import { exit } from 'process';
 import { EnrichedRequest } from 'src/auth/auth.service';
 import { InternalEvents, emitInternalEvent } from 'src/internalEvents';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { EnrichedSocket, GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
+import { EnrichedRemoteSocket, EnrichedSocket, GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
 
 interface Position {
     x: number
@@ -478,8 +477,8 @@ class Game {
     }, this)
 
     constructor(
-        clientA: EnrichedSocket,
-        clientB: EnrichedSocket,
+        clientA: EnrichedRemoteSocket | EnrichedSocket,
+        clientB: EnrichedRemoteSocket | EnrichedSocket,
         public readonly webSocket: GameWebsocketGateway,
         private eventEmitter: EventEmitter2,
         private readonly prisma: PrismaService
@@ -664,7 +663,7 @@ export class GameService {
         return this.usersToGame.get(username)?.id
     }
 
-    public async createGame(userOne: EnrichedSocket, userTwo: EnrichedSocket) {
+    public async createGame(userOne: EnrichedRemoteSocket | EnrichedSocket, userTwo: EnrichedRemoteSocket | EnrichedSocket) {
         console.log("createGame")
         const newGame = new Game(userOne, userTwo, this.webSocket, this.eventEmitter, this.prisma)
         this.games.set(newGame.id, newGame)

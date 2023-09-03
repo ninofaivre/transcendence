@@ -1,6 +1,6 @@
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from "@nestjs/websockets"
 import { Injectable, PipeTransform, Logger, Inject, forwardRef } from "@nestjs/common"
-import { Server, Socket } from "socket.io"
+import { RemoteSocket, Server, Socket } from "socket.io"
 import { AuthService, EnrichedRequest } from "src/auth/auth.service";
 import { WebSocketAuthMiddleware } from "src/auth/ws.mw";
 import { GameService } from "src/game/game.service";
@@ -43,6 +43,7 @@ export class SocketData {
 }
 
 export type EnrichedSocket = Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>
+export type EnrichedRemoteSocket = RemoteSocket<ServerToClientEvents, SocketData>
 
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
@@ -134,17 +135,16 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         @ConnectedSocket()client: EnrichedSocket,
         @MessageBody(new ZodValidationPipe(InvitationSchema))payload: Invitation,
     ): Promise<'accepted' | 'refused' | 'badRequest'> {
-        // if (payload.username === client.data.username)
-        //     return 'badRequest'
-        // const invitedClient = this.findClientSocketByUserName(payload.username)
-        // if (!invitedClient || invitedClient.data.status !== 'IDLE')
-        //     return (new Promise((res) => setTimeout(() => { res('refused') }, 5000)))
-        // try {
-        //     const res: unknown = await invitedClient.timeout(5000).emitWithAck('invited', { username: client.data.username })
-        //     this.gameService.createGame(client, invitedClient)
-        //     return InvitationClientResponseSchema.parse(res)
-        // } catch {}
-        // return "refused"
+        if (payload.intraUserName === client.data.intraUserName)
+            return 'badRequest'
+        const invitedClient = (await this.server.sockets.to(payload.intraUserName).fetchSockets()).at(0)
+        if (!invitedClient || invitedClient.data.status !== 'IDLE')
+            return (new Promise((res) => setTimeout(() => { res('refused') }, 5000)))
+        try {
+            const res: unknown = await invitedClient.timeout(5000).emitWithAck('invited', { username: client.data.username })
+            this.gameService.createGame(client, invitedClient)
+            return InvitationClientResponseSchema.parse(res)
+        } catch {}
         return "refused"
     }
 

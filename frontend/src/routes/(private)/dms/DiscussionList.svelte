@@ -7,6 +7,7 @@
 	import { goto, invalidate } from "$app/navigation"
 	import { Avatar } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
+    import { reload_img } from "$stores"
 
 	export let currentDiscussionId: string
 	export let discussions: DirectConversation[]
@@ -22,8 +23,8 @@
 			addListenerToEventSource($sse_store, "UPDATED_USER_STATUS", (data) => {
 				console.log("Got a event about a dm")
 				const dot_to_update = document.querySelector(
-					`span.online-dot[data-relatedto=${data.userName}]`,
-				) as HTMLElement
+					`span[data-relatedto=${data.userName}]`,
+				) as HTMLElement | null
 				if (dot_to_update) {
 					if (data.status === "OFFLINE") {
 						// Only works if the element has a style tag onto itself !
@@ -63,7 +64,7 @@
 		</a>
 		<div class="flex justify-self-end">
 			<Avatar
-				src="{PUBLIC_BACKEND_URL}/api/users/{d.otherName}/profilePicture"
+				src="{PUBLIC_BACKEND_URL}/api/users/{d.otherName}/profilePicture?reload={$reload_img}"
 				fallback="https://i.pravatar.cc/?u={d.otherName}"
 				class="h-8 w-8"
 				rounded="rounded-full"

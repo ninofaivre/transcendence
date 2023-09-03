@@ -27,6 +27,9 @@
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
 
+	import { page } from "$app/stores"
+	import { reload_img } from "$stores"
+
 	let _init = true
 	export let data: PageData
 
@@ -34,7 +37,6 @@
 	let toastStore = getToastStore()
 	let twoFA: boolean = data.me.enabledTwoFA
 	let modalStore = getModalStore()
-	alert(twoFA)
 
 	async function setup2FA() {
 		const code = await new Promise<string | undefined>((resolve) => {
@@ -220,6 +222,7 @@
 		})
 		if (ret.status === 204) {
 			makeToast("Upload successful")
+            $reload_img = $reload_img + 1
 		} else if (isContractError(ret)) {
 			makeToast(`Upload failed: ${ret.body.message}`)
 		} else
@@ -237,7 +240,7 @@
 		<div class="grid flex-1 grid-cols-2">
 			<!-- col1 -->
 			<Avatar
-				src="{PUBLIC_BACKEND_URL}/users/{data.me.userName}/profilePicture"
+                src="{PUBLIC_BACKEND_URL}/api/users/{data.me.userName}/profilePicture?reload={$reload_img}"
 				fallback="https://i.pravatar.cc/?u={data.me.userName}"
 				alt="profile"
 			/>

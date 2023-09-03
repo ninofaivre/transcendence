@@ -17,6 +17,7 @@
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { goto } from "$app/navigation"
+	import { reload_img } from "$stores"
 
 	const modalStore = getModalStore()
 
@@ -251,7 +252,7 @@
 		<!-- <span class="relative left-1 text-xl text-green-600">&#8226</span> -->
 		{#if is_chan}
 			<Avatar
-				src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture"
+				src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture?reload={$reload_img}"
 				fallback="https://i.pravatar.cc/?u={message.author}"
 				class="h-8 w-8"
 				rounded="rounded-full"

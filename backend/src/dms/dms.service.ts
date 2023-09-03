@@ -541,6 +541,10 @@ export class DmsService {
 	}
 
 	async updateMessage(username: string, dmId: string, elementId: string, content: string) {
+        const dm = await this.prisma.directMessage.findUnique({ where: { id: dmId },
+            select: { status: true }})
+        if (dm && dm.status === "DISABLED")
+            throw new ForbiddenException(`dm ${dmId} is DISABLED`)
 		const element = await this.getDmElementOrThrow(
 			username,
 			{ message: { select: { author: true } } },

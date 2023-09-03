@@ -220,6 +220,13 @@ export class ChansService {
 		id: true,
 		event: { select: this.chanDiscussionEventsSelect },
 		message: { select: this.chanDiscussionMessagesSelect },
+        author: {
+            select: {
+                blockedByUser: {
+                    select: { blockingUserName: true }
+                }
+            }
+        },
 		authorName: true,
 		creationDate: true,
 	} satisfies Prisma.ChanDiscussionElementSelect
@@ -323,6 +330,7 @@ export class ChansService {
             return {
                 ...elementRest,
                 isDeleted: true,
+                isAuthorBlocked: element.author.blockedByUser.some(el => el.blockingUserName === username),
                 author,
                 content: "",
                 deletingUserName,
@@ -336,6 +344,7 @@ export class ChansService {
             ...elementRest,
             author,
             isDeleted: false,
+            isAuthorBlocked: element.author.blockedByUser.some(el => el.blockingUserName === username),
             relatedTo: related && this.formatChanDiscussionElementForUser(username, (related.message) ? { ...related, message: { ...related['message'], related: null } } : related),
             ...messageRest,
             mentionMe: !!(this.usersToNames(relatedRoles.concat(relatedUsers))
@@ -1036,7 +1045,7 @@ export class ChansService {
         await this.chanInvitationsService
             .updateAndNotifyManyInvsStatus('ACCEPTED', { chanId: chan.id, invitedUserName: username })
         // TODO test this with invalid token user to see if prisma global catch is working
-		return this.pushUserToChanAndNotifyUsers(username, title)
+		return this.pushUserToChanAndNotifyUsers(username, chan.id)
 	}
 
 	async searchChans({ titleContains, nResult }: RequestShapes['searchChans']['query']) {

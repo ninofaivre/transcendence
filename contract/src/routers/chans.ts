@@ -94,12 +94,14 @@ export const zChanDiscussionMessageReturnTest = z.union([
 	zChanDiscussionBaseMessage.extend({
 		content: z.string(),
 		isDeleted: z.literal(false),
+        isAuthorBlocked: z.boolean(),
 		hasBeenEdited: z.boolean(),
 		mentionMe: z.boolean(),
 	}),
 	zChanDiscussionBaseMessage.extend({
 		content: z.literal(""),
 		isDeleted: z.literal(true),
+        isAuthorBlocked: z.boolean(),
 		deletingUserName: zUserName,
 	}),
 ])
@@ -130,12 +132,14 @@ export const zChanDiscussionMessageReturn = z.union([
 			.union([zChanDiscussionMessageReturnTest, zChanDiscussionEventReturn])
 			.nullable(),
 		isDeleted: z.literal(false),
+        isAuthorBlocked: z.boolean(),
 		hasBeenEdited: z.boolean(),
 		mentionMe: z.boolean(),
 	}),
 	zChanDiscussionBaseMessage.extend({
 		content: z.literal(""),
 		isDeleted: z.literal(true),
+        isAuthorBlocked: z.boolean(),
 		deletingUserName: zUserName,
 	}),
 ])

@@ -26,14 +26,16 @@ abstract class ChanElement {
         return this
     }
 
-    protected getSseEvent = (name: string): SseEvent => ({
-        type: `CREATED_CHAN_ELEMENT`,
-        data: {
-            chanId: this.chanId,
-            element: this.chansService.
-                formatChanDiscussionElementForUser(name, this.element)
-        }
-    } as const)
+    protected getSseEvent(name: string): SseEvent {
+        return ({
+            type: `CREATED_CHAN_ELEMENT`,
+            data: {
+                chanId: this.chanId,
+                element: this.chansService.
+                    formatChanDiscussionElementForUser(name, this.element)
+            }
+        } as const)
+    }
 
 }
 
@@ -75,16 +77,17 @@ class ChanElementMessage extends ChanElement {
         this.element
     ))
 
-    protected getSseEvent = (name: string): SseEvent => (this.chanMessageType === "CREATED"
-        ? super.getSseEvent(name)
-        : {
-            type:`UPDATED_CHAN_MESSAGE`,
-            data: {
-                chanId: this.chanId,
-                message: this.formatted(name)
-            }
-        } as const
-    )
+    protected getSseEvent(name: string): SseEvent {
+        return (this.chanMessageType === "CREATED"
+            ? super.getSseEvent(name)
+            : {
+                type:`UPDATED_CHAN_MESSAGE`,
+                data: {
+                    chanId: this.chanId,
+                    message: this.formatted(name)
+                }
+            } as const)
+    }
 
 }
 

@@ -18,7 +18,7 @@ export class ChansController {
         return tsRestHandler(c, {
             searchChans: async ({ query }) => ({
                 status: 200,
-                body: await this.chansService.searchChans(query)
+                body: await this.chansService.searchChans(username, query)
             }),
 
             getMyChans: async () => ({

@@ -1,8 +1,6 @@
 import { Prisma, AccessPolicyLevel as AccessPolicyLevelPrisma, ChanDiscussionEvent, ChanDiscussionElement } from "@prisma/client"
 import { PrismaService } from "./prisma/prisma.service"
 
-// TODO retype of password and of title by type of chan. commit ref: <600d73f6e2c998c19f4560b825f5e5203abadd61>
-
 export type Tx = Omit<
 	PrismaService,
 	| "$connect"
@@ -25,7 +23,6 @@ type transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<
 	[k in K]: Omit<T, K> & (Record<Exclude<K, k>, null> & { [index in k]: Exclude<T[k], null> }) // could remove that line but null is more in the prisma spirit than undefined
 }[K]
 
-// TODO: Event => DmEvent
 export type EventUnion =
 	| "classicDmDiscussionEvent"
 	| "chanInvitationDmDiscussionEvent"
@@ -39,7 +36,6 @@ export type RetypedEvent<T extends Record<EventUnion, any>> =
 export type RetypedElement<T extends Record<ElementUnion, any>> =
 	transformObjectToUnionOfObjectWithOnlyOnePropertyOfUnionNotNull<T, ElementUnion>
 
-// TODO: Element => DmElement
 export type ElementUnion = "event" | "message"
 ;(elementUnion: ElementUnion) => elementUnion satisfies keyof Prisma.DmDiscussionElementSelect
 

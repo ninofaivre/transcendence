@@ -6,8 +6,6 @@ import { ClassicChanEventType, Prisma } from "@prisma/client"
 import { Inject, forwardRef } from "@nestjs/common"
 import { SseEvent } from "contract"
 
-// TODO after BH, remove unnecessary Inject
-
 type ChanMessageType = 'CREATED' | 'UPDATED'
 
 abstract class ChanElement {
@@ -16,7 +14,6 @@ abstract class ChanElement {
     protected readonly abstract chanId: string
     protected readonly abstract element: ChanDiscussionElementPayload
 
-    // TODO add ommit user
     public notifyByUsers = (users: { name: string }[], omit?: string) =>
         this.notifyByNames(users.map(user => user.name), omit)
 
@@ -185,7 +182,6 @@ export class ChanElementFactory {
 
 }
 
-// TODO move at gestion here
 export class UpdateChanElementFactory {
     
     private readonly prisma: PrismaService;

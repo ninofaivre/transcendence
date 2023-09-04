@@ -76,7 +76,6 @@ export class AuthService {
                 expiresIn: EnvService.env.PUBLIC_MODE === 'DEV' ? '1h' : '15m'
             }),
             this.jwtService.signAsync(payload, {
-                // TODO mb use a different password for refresh and access tokens ?
                 secret: EnvService.env.JWT_SECRET,
                 expiresIn: '7d'
             })

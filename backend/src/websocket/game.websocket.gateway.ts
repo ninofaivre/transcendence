@@ -100,7 +100,6 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             .on('delete-room', this.handleDeleteRoom.bind(this))
     }
 
-    // TODO do a typed decorator ?
     @OnEvent('game.end')
     endedGame(payload: InternalEvents['game.end']) {
         this.server.sockets.in([
@@ -144,7 +143,6 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         return userData.status.type
     }
 
-    // TODO refacto this ugly working shit
     @SubscribeMessage('invite')
     async invite(
         @ConnectedSocket()client: EnrichedSocket,

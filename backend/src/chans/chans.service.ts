@@ -1047,11 +1047,12 @@ export class ChansService {
 		return this.pushUserToChanAndNotifyUsers(username, chan.id)
 	}
 
-	async searchChans({ titleContains, nResult }: RequestShapes['searchChans']['query']) {
+	async searchChans(username: string, { titleContains, nResult }: RequestShapes['searchChans']['query']) {
 		const res = await this.prisma.chan.findMany({
 			where: {
 				type: ChanType.PUBLIC,
 				title: { contains: titleContains, not: null },
+                timedStatusUsers: { none: { type: 'BAN', timedUserName: username } }
 			},
 			select: {
                 id: true,
@@ -1068,10 +1069,7 @@ export class ChansService {
 			return {
                 passwordProtected,
                 nUsers: _count.users,
-                // TODO ref commit: <8353f0dbf75bc37502d97e2c6d01001113874b5d> 
                 title: title as Exclude<typeof title, null>,
-                // TODO change this when ban features is available
-                bannedMe: false,
                 ...trimmedEl
             }
 		})

@@ -80,7 +80,7 @@
 			Close
 		</button>
 	{:else if state === "error"}
-		<p class="">Invitation timed out</p>
+		<p class="text-center">Impossible</p>
 		{#if error_reason === "selfInvitation"}
 			<p class="">You can't invite yourself!</p>
 		{:else if error_reason === "invitingNotAvailable"}

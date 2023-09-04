@@ -19,6 +19,7 @@
 	import { Paginator } from "@skeletonlabs/skeleton"
 	import { goto, invalidate } from "$app/navigation"
     import { reload_img } from "$stores"
+	import { getContext } from "svelte"
 
 	export let data: PageData
 
@@ -32,6 +33,7 @@
 	let keep_loading = true
 	let my_profile: boolean
 	$: my_profile = data.me.userName === data.user.userName
+    const game_socket = getContext("game_socket")
 
 	if (my_profile) goto("/myprofile")
 
@@ -71,7 +73,7 @@
 			response: () => {
 				modalStore.close()
 			},
-			meta: { username: $page.params.username },
+            meta: { username: $page.params.username, game_socket: game_socket },
 		}
 		modalStore.trigger(modal)
 	}

@@ -24,6 +24,7 @@
 	ft_uri.searchParams.append("response_type", "code")
 	ft_uri.searchParams.append("scope", "public")
 	ft_uri.searchParams.append("state", PUBLIC_RANDOM_PHRASE)
+
 	;(async () => {
 		if (code) {
 			if ($page.url.searchParams.get("state") === PUBLIC_RANDOM_PHRASE) {
@@ -54,6 +55,7 @@
 				throw new Error("You are under attack. Close this application as soon as you can")
 			}
 		}
+
 	})()
 
 	async function devLogin() {

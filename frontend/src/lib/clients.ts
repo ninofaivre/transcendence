@@ -35,10 +35,10 @@ export const client = initClient(contract, {
 
 		// perform checks for ret as contractError so we can have even more
 		// precise handling with Code instead of just status
-		if (isErrorCode(ret, "NotFoundUserForValidToken")) {
-			alert(
-				"The current logged in user has probably been erased from the database. Logging out...",
-			)
+		if (isErrorCode(ret, "TwoFATokenNeeded")) {
+			logged_in.set(false)
+		} 
+        else if (isErrorCode(ret, "NotFoundUserForValidToken")) {
 			logged_in.set(false)
 		} // there is a chance of getting a 404 here but I guess we don't care
 		return ret

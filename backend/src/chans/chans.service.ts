@@ -677,7 +677,7 @@ export class ChansService {
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
-        if (!chan.elements.length || !chan.elements[0].message)
+        if (!chan.elements.length || !chan.elements[0]?.message)
             return contractErrors.NotFoundChanEntity(chanId, 'message', elementId)
         const oldMessage = chan.elements[0].message
         if (!this.doesUserHasSelfPermInChan(username, 'UPDATE_MESSAGE', chan))
@@ -707,7 +707,7 @@ export class ChansService {
             return contractErrors.NotFoundChan(chanId)
         if (!chan.elements.length)
             return contractErrors.NotFoundChanEntity(chanId, 'message', elementId)
-        const { authorName } = chan.elements[0]
+        const { authorName } = chan.elements[0]!
         if (!this.doesUserHasPermOverUserInChan(username, authorName, chan, 'DELETE_MESSAGE'))
             return contractErrors.ChanPermissionTooLowOverUser(username, authorName, chanId, 'DELETE_MESSAGE')
         return (await new UpdateChanElementFactory(chanId, elementId, this)

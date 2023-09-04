@@ -144,14 +144,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         return userData.status.type
     }
 
-    // getAllLocalSocketForIntraUserName(intraUserName: IntraUserName): EnrichedSocket[] {
-        // const res: EnrichedSocket[] = []
-        // this.server.sockets.sockets.forEach(socket => {
-        //     if (socket.data.intraUserName === intraUserName)
-        //         res.push(socket)
-        // })
-    // }
-
+    // TODO refacto this ugly working shit
     @SubscribeMessage('invite')
     async invite(
         @ConnectedSocket()client: EnrichedSocket,

@@ -48,7 +48,7 @@ export class AuthService {
         const access_token = cookie
             .parse(client.handshake?.headers?.cookie || '')
             .access_token
-        return this.jwtService.verify<JwtPayload>(access_token, {
+        return this.jwtService.verify<JwtPayload>(access_token || '', {
             secret: EnvService.env.JWT_SECRET
         })
     }

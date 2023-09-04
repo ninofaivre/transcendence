@@ -100,11 +100,11 @@ export class FriendInvitationsService {
 		})
 		if (blockedByUser.length)
 			throw new ForbiddenException(
-				`${invitingUserName} blocked by ${invitedUserName} (${blockedByUser[0].id})`,
+				`${invitingUserName} blocked by ${invitedUserName} (${blockedByUser[0]?.id})`,
 			)
 		if (blockedUser.length)
 			throw new ForbiddenException(
-				`${invitingUserName} blocked ${invitedUserName} (${blockedUser[0].id})`,
+				`${invitingUserName} blocked ${invitedUserName} (${blockedUser[0]?.id})`,
 			)
 		if (friend.length || friendOf.length)
 			throw new ForbiddenException(
@@ -114,11 +114,11 @@ export class FriendInvitationsService {
 			)
 		if (incomingFriendInvitation.length)
 			throw new ForbiddenException(
-				`${invitingUserName} has already a PENDING invitation from ${invitedUserName} (${incomingFriendInvitation[0].id})`,
+				`${invitingUserName} has already a PENDING invitation from ${invitedUserName} (${incomingFriendInvitation[0]?.id})`,
 			)
 		if (outcomingFriendInvitation.length)
 			throw new ForbiddenException(
-				`${invitingUserName} has already a PENDING invitation for ${invitedUserName} (${outcomingFriendInvitation[0].id})`,
+				`${invitingUserName} has already a PENDING invitation for ${invitedUserName} (${outcomingFriendInvitation[0]?.id})`,
 			)
 		const newFriendInvitation = await this.prisma.friendInvitation.create({
 			data: {

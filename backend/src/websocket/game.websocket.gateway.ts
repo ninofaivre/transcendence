@@ -141,13 +141,13 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             return { status: 'error', reason: 'invitingNotAvailable' }
         const invitedClient = (await this.server.sockets.to(payload.intraUserName).fetchSockets()).at(0)
         if (!invitedClient || invitedClient.data.status !== 'IDLE')
-            return (new Promise((res) => setTimeout(() => { res({ status: 'timedOut' }) }, 5000)))
+            return (new Promise((res) => setTimeout(() => { res({ status: 'timedOut', reason: null }) }, 5000)))
         try {
             const res: unknown = await invitedClient.timeout(5000).emitWithAck('invited', { username: client.data.username })
             this.gameService.createGame(client, invitedClient)
-            return { status: InvitationClientResponseSchema.parse(res) }
+            return { status: InvitationClientResponseSchema.parse(res), reason: null }
         } catch {}
-        return { status: 'timedOut' }
+        return { status: 'timedOut', reason: null }
     }
 
 

@@ -86,7 +86,8 @@ export const timeReplyToInvitation = 5
 
 export type InvitationServerResponse =
     | {
-        status: 'accepted' | 'refused' | 'timedOut'
+        status: 'accepted' | 'refused' | 'timedOut',
+        reason: null
     }
     | {
         status: 'error',

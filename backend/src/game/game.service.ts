@@ -189,8 +189,7 @@ class Player {
             client.data.status = 'GAME'
             client.join(this.game.id)
             client.emit('updatedGameStatus', {
-                status: 'INIT',
-                timeout: -1,
+                status: 'RECONNECT',
                 ...this.game.getPaddleScores(),
                 ...this.game.getPaddlesNames()
             })

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { GameSocket } from "$types"
-	import type { ModalSettings } from "@skeletonlabs/skeleton"
+	import { ProgressRadial, type ModalSettings } from "@skeletonlabs/skeleton"
 	import type { Writable } from "svelte/store"
 
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
@@ -13,19 +13,26 @@
 	console.log("private layout init")
 	const modalStore = getModalStore()
 
-    // Sse
+	const banner = {
+		message: "coucou",
+		pending: true,
+	}
+	let banner_store = writable(banner)
+	setContext("banner_store", banner_store)
+
+	// Sse
 	let sse_store: Writable<EventSource> = writable(
-        new EventSource(PUBLIC_BACKEND_URL + "/api/sse", { withCredentials: true })
+		new EventSource(PUBLIC_BACKEND_URL + "/api/sse", { withCredentials: true }),
 	)
-    $sse_store.onopen = function (_evt) {
-        console.log("Successfully established sse connection")
-    }
-    $sse_store.onerror = function (_evt) {
-        console.log("Error while openning new sse connection: Probably already in use")
-    }
+	$sse_store.onopen = function (_evt) {
+		console.log("Successfully established sse connection")
+	}
+	$sse_store.onerror = function (_evt) {
+		console.log("Error while openning new sse connection: Probably already in use")
+	}
 	setContext("sse_store", sse_store)
 
-    // Game socket
+	// Game socket
 	let game_socket: Writable<GameSocket> = writable(
 		io(PUBLIC_BACKEND_URL, {
 			withCredentials: true,
@@ -33,16 +40,6 @@
 	)
 	applyCallbacks()
 	function applyCallbacks() {
-		console.log("Applying layout callbacks on $game_socket:", $game_socket.id)
-		$game_socket.on("connect", () => {
-			console.log("connect!")
-		})
-		$game_socket.io.on("reconnect", () => {
-			console.log("reconnect!")
-		})
-		$game_socket.io.on("reconnect_attempt", () => {
-			console.log("reconnect_attempt!")
-		})
 		$game_socket.on("disconnect", (data) => {
 			console.log(data)
 			if (data === "io server disconnect") {
@@ -51,11 +48,6 @@
 				})
 				applyCallbacks()
 			}
-			console.log("applying callbacks for layout !")
-		})
-		$game_socket.on("connect_error", (data) => {
-			// console.log("connect_error", data)
-			console.log("connect_error")
 		})
 		$game_socket.on("invited", async (invitation, callback) => {
 			console.log("Am being invited!")
@@ -78,6 +70,18 @@
 				goto("/pong")
 			}
 		})
+		$game_socket.on("updatedGameStatus", (new_data) => {
+			if (new_data.status === "INVITING") {
+				$banner_store.message == "Game invitation pending"
+				$banner_store.pending = true
+			} else if (new_data.status === "INVITED") {
+				$banner_store.message == "You are being invited"
+				$banner_store.pending = true
+			} else {
+				$banner_store.message == ""
+				$banner_store.pending = false
+			}
+		})
 	}
 
 	onDestroy(() => {
@@ -89,12 +93,38 @@
 	setContext("game_socket", game_socket)
 </script>
 
-<button
-	on:click={() => {
-		console.log("click")
-		console.log($game_socket)
-	}}
-	class="variant-ghost btn btn-sm absolute left-1/4 top-1/4 z-50">Show socket</button
->
-
+{#if $banner_store.message}
+	<div class="relative">
+		<span class="variant-filled-warning flex justify-between  py-1 text-lg">
+			<div class="px-2">Game Status</div>
+			{#if $banner_store.pending}
+				<div class="px-2 self-center">
+					<ProgressRadial width="w-4"  />
+				</div>
+			{/if}
+		</span>
+	</div>
+{/if}
 <slot />
+
+<!-- <button -->
+<!-- 	on:click={() => { -->
+<!-- 		console.log("click") -->
+<!-- 		console.log($game_socket) -->
+<!-- 	}} -->
+<!-- 	class="absolute top-1/4 left-1/4 z-50 variant-ghost btn btn-sm">Show socket</button -->
+
+<!-- > -->
+<style>
+	span {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		z-index: 999;
+		border-top-left-radius: 2px;
+		border-top-right-radius: 2px;
+		border-bottom-left-radius: 10px;
+		border-bottom-right-radius: 10px;
+		transform: translate(-50%, -0%);
+	}
+</style>

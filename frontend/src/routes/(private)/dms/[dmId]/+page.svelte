@@ -189,6 +189,9 @@
                     disabled = false
                 }
 			}),
+			addListenerToEventSource($sse_store, "CREATED_DM", (new_data) => {
+                alert("New dm created")
+			}),
 		)
 		return () => {
 			destroyer.forEach((func) => void func())
@@ -200,7 +203,6 @@
 <!--Column layout -->
 <!-- Rows for Column 2-->
 <div class="grid grid-rows-[1fr_auto]" id="col2" style="height: calc(100vh - {header_height}px);">
-	<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
 	<!-- Messages -->
 	<DiscussionDisplay
 		discussion={dm}

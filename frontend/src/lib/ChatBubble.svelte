@@ -216,12 +216,16 @@
 		? [
 				{ label: "Edit", handler: editHandler },
 				{ label: "Delete", handler: forwardAsDeletionEvent },
-				// { label: "Reply", handler: replyHandler },
 		  ]
 		: []
-	// : [{ label: "Reply", handler: replyHandler }]
 
-	async function replyHandler() {}
+	$: {
+		if (from_me) {
+			if (message.isDeleted) {
+				menu_items = []
+			}
+		}
+	}
 
 	$: is_sent = message?.id !== ""
 

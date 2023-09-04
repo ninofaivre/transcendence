@@ -83,6 +83,7 @@ export interface ClientToServerEvents {
     newInGameMessage: (e: InGameMessage) => void
     gameMovement: (e: GameMovement) => void
     invite: (e: Invitation, callback: (e: 'accepted' | 'refused' | 'badRequest') => void) => void,
+    getGameStatus: (e: "", callback: (e: GameStatus['status']) => void) => void
 }
 
 export interface ServerToClientEvents {

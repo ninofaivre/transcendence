@@ -213,6 +213,12 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         this.gameService.movement(client.data.intraUserName, payload)
     }
 
+    @SubscribeMessage("getGameStatus")
+    getGameStatus(
+        @ConnectedSocket()client: EnrichedSocket,
+        @MessageBody(EmptyValidation)payload: never
+    ) { return client.data.status }
+
     // @UseGuards(WsJwtAuthGuard)
     // @SubscribeMessage("joinRoomOne")
     // joinRoomOne(@Req(){ user: { username } }: EnrichedRequest) {

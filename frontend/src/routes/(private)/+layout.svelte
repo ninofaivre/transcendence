@@ -13,19 +13,19 @@
 	console.log("private layout init")
 	const modalStore = getModalStore()
 
-    // Sse
+	// Sse
 	let sse_store: Writable<EventSource> = writable(
-        new EventSource(PUBLIC_BACKEND_URL + "/api/sse", { withCredentials: true })
+		new EventSource(PUBLIC_BACKEND_URL + "/api/sse", { withCredentials: true }),
 	)
-    $sse_store.onopen = function (_evt) {
-        console.log("Successfully established sse connection")
-    }
-    $sse_store.onerror = function (_evt) {
-        console.log("Error while openning new sse connection: Probably already in use")
-    }
+	$sse_store.onopen = function (_evt) {
+		console.log("Successfully established sse connection")
+	}
+	$sse_store.onerror = function (_evt) {
+		console.log("Error while openning new sse connection: Probably already in use")
+	}
 	setContext("sse_store", sse_store)
 
-    // Game socket
+	// Game socket
 	let game_socket: Writable<GameSocket> = writable(
 		io(PUBLIC_BACKEND_URL, {
 			withCredentials: true,
@@ -89,12 +89,29 @@
 	setContext("game_socket", game_socket)
 </script>
 
-<button
-	on:click={() => {
-		console.log("click")
-		console.log($game_socket)
-	}}
-	class="variant-ghost btn btn-sm absolute left-1/4 top-1/4 z-50">Show socket</button
->
-
+<div class="relative">
+	<span class="variant-filled-warning px-20 py-1 text-lg">Game Status</span>
+</div>
 <slot />
+
+<!-- <button -->
+<!-- 	on:click={() => { -->
+<!-- 		console.log("click") -->
+<!-- 		console.log($game_socket) -->
+<!-- 	}} -->
+<!-- 	class="absolute top-1/4 left-1/4 z-50 variant-ghost btn btn-sm">Show socket</button -->
+
+<!-- > -->
+<style>
+	span {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		z-index: 999;
+		border-top-left-radius: 2px;
+		border-top-right-radius: 2px;
+		border-bottom-left-radius: 10px;
+		border-bottom-right-radius: 10px;
+		transform: translate(-50%, -0%);
+	}
+</style>

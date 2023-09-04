@@ -49,12 +49,12 @@
 				{value}
 			</ProgressRadial>
 		</div>
-		<button
-			on:click={onClose}
-			class="variant-ghost-error btn btn-sm mt-4 h-fit w-fit self-center justify-self-center"
-		>
-			Cancel
-		</button>
+		<!-- <button -->
+		<!-- 	on:click={onClose} -->
+		<!-- 	class="variant-ghost-error btn btn-sm mt-4 h-fit w-fit self-center justify-self-center" -->
+		<!-- > -->
+		<!-- 	Cancel -->
+		<!-- </button> -->
 	{:else if state === "accepted"}
 		<p class="">Challenge accepted!</p>
 		<button

@@ -6,7 +6,7 @@ import { WebSocketAuthMiddleware } from "src/auth/ws.mw";
 import { GameService } from "src/game/game.service";
 import { Schema, z } from "zod";
 import { EnvService } from "src/env/env.service";
-import { ClientToServerEvents, GameMovement, GameMovementSchema, Invitation, InvitationClientResponseSchema, InvitationSchema, ServerToClientEvents } from "contract";
+import { ClientToServerEvents, GameMovement, GameMovementSchema, Invitation, InvitationClientResponseSchema, InvitationSchema, ServerToClientEvents, timeReplyToInvitation } from "contract";
 import { InGameMessageSchema } from "contract";
 import { InGameMessage, InvitationServerResponse } from "contract";
 import { UserService } from "src/user/user.service";
@@ -178,7 +178,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
                 .emit('updatedGameStatus', {
                     status: 'INVITING',
                     username: invitedClientUserName,
-                    timeout: 5000
+                    timeout: timeReplyToInvitation
                 })
             return new Promise(
                 (res) => setTimeout((client: EnrichedSocket) => {
@@ -186,7 +186,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
                     this.server.in(client.data.intraUserName)
                         .emit('updatedGameStatus', { status: 'IDLE' })
                     res({ status: 'timedOut', reason: null })
-                }, 5000, client)
+                }, timeReplyToInvitation, client)
             )
         }
         try {
@@ -204,12 +204,12 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
                 .emit('updatedGameStatus', {
                     status: 'INVITING',
                     username: invitedClient.data.username,
-                    timeout: 5000
+                    timeout: timeReplyToInvitation
                 })
             const payload: unknown = await Promise.race(
             (await this.server.in(invitedClient.data.intraUserName).fetchSockets())
                 .map(socket => socket
-                    .timeout(5000)
+                    .timeout(timeReplyToInvitation)
                     .emitWithAck('invited', { username: client.data.username })
                 ))
             const status = InvitationClientResponseSchema.parse(payload)

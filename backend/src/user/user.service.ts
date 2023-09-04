@@ -197,9 +197,9 @@ export class UserService {
             invitingId: incomingFriendInvitation[0]?.id || null,
             blockedId: blockedByUser[0]?.id || null,
             blockedById: blockedUser[0]?.id || null,
-            winRatePercentage: (nMatches !== 0)
+            winRatePercentage: Math.round((nMatches !== 0)
                 ? _count.wonMatchHistory / nMatches * 100
-                : 0,
+                : 0),
             nWin: _count.wonMatchHistory,
             nLoose: _count.lostMatchHistory,
             nMatches

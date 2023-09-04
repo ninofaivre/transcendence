@@ -12,6 +12,7 @@ import { InGameMessage, InvitationServerResponse } from "contract";
 import { UserService } from "src/user/user.service";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { InternalEvents } from "src/internalEvents";
+import { PrismaService } from "src/prisma/prisma.service";
 
 export type IntraUserName = string
 
@@ -19,7 +20,15 @@ export class SocketData {
 
     public username: string;
     public intraUserName: string;
-    private _status: "IDLE" | "GAME" | "QUEUE" | "OFFLINE" = "IDLE";
+    private _status:
+        | {
+            type: "IDLE" | "GAME" | "QUEUE" | "OFFLINE"
+        }
+        | {
+            type: "INVITING" | "INVITED",
+            username: string,
+            startTimeoutMs: number
+        } = { type: "IDLE" }
 
     constructor (
         user: EnrichedRequest['user'],
@@ -77,6 +86,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         private readonly gameService: GameService,
         @Inject(forwardRef(() => UserService))
         private readonly userService: UserService,
+        private readonly prisma: PrismaService,
         private readonly eventEmitter: EventEmitter2
     ) {}
 
@@ -116,7 +126,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         const clientData = this.intraNameToSocketData.get(roomId)
         if (!clientData)
             return
-        clientData.status = "OFFLINE"
+        clientData.status = { type: "OFFLINE" }
         this.intraNameToSocketData.delete(clientData.intraUserName)
         this.userNameToSocketData.delete(clientData.username)
     }
@@ -125,10 +135,22 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         const userData = this.userNameToSocketData.get(username)
         if (!userData)
             return "OFFLINE"
-        if (userData.status === "IDLE")
+        if (userData.status.type === "IDLE" ||
+            userData.status.type === 'INVITING' ||
+            userData.status.type === 'INVITED'
+        ) {
             return "ONLINE"
-        return userData.status
+        }
+        return userData.status.type
     }
+
+    // getAllLocalSocketForIntraUserName(intraUserName: IntraUserName): EnrichedSocket[] {
+        // const res: EnrichedSocket[] = []
+        // this.server.sockets.sockets.forEach(socket => {
+        //     if (socket.data.intraUserName === intraUserName)
+        //         res.push(socket)
+        // })
+    // }
 
     @SubscribeMessage('invite')
     async invite(
@@ -136,17 +158,84 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         @MessageBody(new ZodValidationPipe(InvitationSchema))payload: Invitation,
     ): Promise<InvitationServerResponse> {
         if (payload.intraUserName === client.data.intraUserName)
-            return { status: 'error', reason: 'selfInvitation' }
-        if (client.data.status !== 'IDLE')
-            return { status: 'error', reason: 'invitingNotAvailable' }
+            return { status: 'error', reason: 'SelfInvitation' }
+        if (client.data.status.type !== 'IDLE')
+            return { status: 'error', reason: 'InvitingNotAvailable' }
         const invitedClient = (await this.server.sockets.to(payload.intraUserName).fetchSockets()).at(0)
-        if (!invitedClient || invitedClient.data.status !== 'IDLE')
-            return (new Promise((res) => setTimeout(() => { res({ status: 'timedOut', reason: null }) }, 5000)))
+        if (!invitedClient || invitedClient.data.status.type !== 'IDLE') {
+            const invitedClientUserName = (await this.prisma.user.findUnique({
+                where: { intraUserName: payload.intraUserName },
+                select: { name: true }
+            }))?.name
+            if (!invitedClientUserName)
+                return { status: 'error', reason: 'NotFoundInvited' }
+            client.data.status = {
+                type: 'INVITING',
+                username: invitedClientUserName,
+                startTimeoutMs: Date.now()
+            }
+            this.server.in(client.data.intraUserName)
+                .emit('updatedGameStatus', {
+                    status: 'INVITING',
+                    username: invitedClientUserName,
+                    timeout: 5000
+                })
+            return new Promise(
+                (res) => setTimeout((client: EnrichedSocket) => {
+                    client.data.status = { type: 'IDLE' }
+                    this.server.in(client.data.intraUserName)
+                        .emit('updatedGameStatus', { status: 'IDLE' })
+                    res({ status: 'timedOut', reason: null })
+                }, 5000, client)
+            )
+        }
         try {
-            const res: unknown = await invitedClient.timeout(5000).emitWithAck('invited', { username: client.data.username })
-            this.gameService.createGame(client, invitedClient)
-            return { status: InvitationClientResponseSchema.parse(res), reason: null }
-        } catch {}
+            client.data.status = {
+                type: 'INVITING',
+                username: invitedClient.data.username,
+                startTimeoutMs: Date.now()
+            }
+            invitedClient.data.status = {
+                type: 'INVITED',
+                username: client.data.username,
+                startTimeoutMs: Date.now()
+            }
+            this.server.in(client.data.intraUserName)
+                .emit('updatedGameStatus', {
+                    status: 'INVITING',
+                    username: invitedClient.data.username,
+                    timeout: 5000
+                })
+            const payload: unknown = await Promise.race(
+            (await this.server.in(invitedClient.data.intraUserName).fetchSockets())
+                .map(socket => socket
+                    .timeout(5000)
+                    .emitWithAck('invited', { username: client.data.username })
+                ))
+            const status = InvitationClientResponseSchema.parse(payload)
+            if (status == 'accepted')
+                await this.gameService.createGame(client, invitedClient)
+            else {
+                this.server
+                    .in([
+                        client.data.intraUserName,
+                        invitedClient.data.intraUserName
+                    ])
+                    .emit('updatedGameStatus', { status: 'IDLE' })
+                client.data.status = { type: 'IDLE' }
+                invitedClient.data.status = { type: 'IDLE' }
+            }
+            return { status: status, reason: null }
+        }
+        catch {}
+        this.server
+            .in([
+                client.data.intraUserName,
+                invitedClient.data.intraUserName
+            ])
+            .emit('updatedGameStatus', { status: 'IDLE' })
+        client.data.status = { type: 'IDLE' }
+        invitedClient.data.status = { type: 'IDLE' }
         return { status: 'timedOut', reason: null }
     }
 
@@ -158,10 +247,10 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     ) {
         console.log(`client ${client.data.intraUserName} is trying to queue.`)
         console.log(`status is : ${client.data.status}`)
-        if (client.data.status !== 'IDLE')
+        if (client.data.status.type !== 'IDLE')
             return
         console.log("queue :", client.data.intraUserName)
-        client.data.status = 'QUEUE'
+        client.data.status = { type: 'QUEUE' }
         this.server.sockets.to(client.data.intraUserName)
             .emit("updatedGameStatus", { status: "QUEUE" })
         this.gameService.queueUser(client)
@@ -172,7 +261,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         @ConnectedSocket()client: EnrichedSocket,
         @MessageBody(EmptyValidation)payload: never
     ) {
-        if (client.data.status !== 'GAME')
+        if (client.data.status.type !== 'GAME')
             return
         this.gameService.surrend(client.data.intraUserName)
     }
@@ -182,10 +271,10 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         @ConnectedSocket()client: EnrichedSocket,
         @MessageBody(EmptyValidation)payload: never
     ) {
-        if (client.data.status !== 'QUEUE')
+        if (client.data.status.type !== 'QUEUE')
             return
         console.log("deQueue :", client.data.intraUserName)
-        client.data.status = 'IDLE'
+        client.data.status = { type: 'IDLE' }
         this.server.sockets.to(client.data.intraUserName)
             .emit("updatedGameStatus", { status: "IDLE" })
         this.gameService.deQueueUser(client.data.intraUserName)
@@ -210,7 +299,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         @ConnectedSocket()client: EnrichedSocket,
         @MessageBody(new ZodValidationPipe(GameMovementSchema))payload: GameMovement
     ) {
-        if (client.data.status !== 'GAME')
+        if (client.data.status.type !== 'GAME')
             return
         this.gameService.movement(client.data.intraUserName, payload)
     }
@@ -219,7 +308,20 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     getGameStatus(
         @ConnectedSocket()client: EnrichedSocket,
         @MessageBody(EmptyValidation)payload: never
-    ) { return client.data.status }
+    ) {
+        if (client.data.status.type === 'GAME')
+            return { status: 'RECONNECT' }
+        if (client.data.status.type === 'INVITING' ||
+            client.data.status.type === 'INVITED'
+        ) {
+            return {
+                status: client.data.status.type,
+                timeout: client.data.status.startTimeoutMs - Date.now(),
+                username: client.data.status.username
+            }
+        }
+        return { status: client.data.status.type }
+    }
 
     // @UseGuards(WsJwtAuthGuard)
     // @SubscribeMessage("joinRoomOne")

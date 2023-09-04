@@ -186,7 +186,7 @@ class Player {
         userConnnect: ['connect', (client: EnrichedSocket) => {
             if (client.data.intraUserName != this.user.intraUserName)
                 return
-            client.data.status = 'GAME'
+            client.data.status = { type: 'GAME' }
             client.join(this.game.id)
             client.emit('updatedGameStatus', {
                 status: 'RECONNECT',
@@ -492,8 +492,8 @@ class Game {
             y: GameDim.court.height / 2
         }, this))
 
-        clientA.data.status = 'GAME'
-        clientB.data.status = 'GAME'
+        clientA.data.status = { type: 'GAME' }
+        clientB.data.status = { type: 'GAME' }
 
         this.webSocket.server.sockets.in([
             clientA.data.intraUserName,

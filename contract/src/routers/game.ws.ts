@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { zUserName } from "../zod/user.zod"
+import { FlattenUnionObjectByDiscriminator } from "../contract"
 
 export const InGameMessageSchema = z.string().nonempty().max(150)
 export type InGameMessage = z.infer<typeof InGameMessageSchema>
@@ -10,12 +11,14 @@ export type GameMovement = z.infer<typeof GameMovementSchema>
 export const ScoreSchema = z.number().positive().int()
 export type Score = z.infer<typeof ScoreSchema>
 
+const zTimeOut = z.number().positive().int()
+
 // use timeout only to show a cooldown to the user
 export const GameStatusSchema = z.discriminatedUnion("status", [
     z.strictObject({
         // INIT = décompte au début de la partie
         status: z.literal("INIT"),
-        timeout: z.number().positive().int(),
+        timeout: zTimeOut,
         paddleLeftUserName: zUserName,
         paddleRightUserName: zUserName,
         paddleLeftScore: ScoreSchema,
@@ -32,7 +35,7 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
     z.strictObject({
         // BREAK = décompte entre les manches
         status: z.literal("BREAK"),
-        timeout: z.number().positive().int(),
+        timeout: zTimeOut,
         paddleLeftScore: ScoreSchema,
         paddleRightScore: ScoreSchema
     }),
@@ -53,10 +56,12 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
         paddleRightScore: ScoreSchema
     }),
     z.strictObject({
-        status: z.literal("QUEUE")
+        status: z.enum(["QUEUE", "IDLE"])
     }),
     z.strictObject({
-        status: z.literal("IDLE")
+        status: z.enum(["INVITED", "INVITING"]),
+        username: zUserName,
+        timeout: zTimeOut
     })
 ])
 export type GameStatus = z.infer<typeof GameStatusSchema>
@@ -91,7 +96,7 @@ export type InvitationServerResponse =
     }
     | {
         status: 'error',
-        reason: 'selfInvitation' | 'invitingNotAvailable'
+        reason: 'SelfInvitation' | 'InvitingNotAvailable' | 'NotFoundInvited'
     }
 
 export interface ClientToServerEvents {
@@ -101,7 +106,10 @@ export interface ClientToServerEvents {
     newInGameMessage: (e: InGameMessage) => void
     gameMovement: (e: GameMovement) => void
     invite: (e: Invitation, callback: (e: InvitationServerResponse) => void) => void,
-    getGameStatus: (e: "", callback: (e: GameStatus['status']) => void) => void
+    getGameStatus: (
+        e: "",
+        callback: (e: Extract<GameStatus, { status: 'IDLE' | 'QUEUE' | 'INVITING' | 'INVITED'}> | { status: 'RECONNECT' }) => void
+    ) => void
 }
 
 export interface ServerToClientEvents {

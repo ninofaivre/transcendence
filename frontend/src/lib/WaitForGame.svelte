@@ -17,8 +17,7 @@
 
 	$game_socket.emit("invite", { intraUserName: username }, (res) => {
 		state = res.status
-        if (res.status === "error")
-            error_reason = res.reason
+		if (res.status === "error") error_reason = res.reason
 		if (state === "accepted") {
 			if ($modalStore[0].response) {
 				$modalStore[0].response(true)
@@ -38,7 +37,6 @@
 			$modalStore[0].response(undefined)
 		}
 	}
-
 </script>
 
 <div class="card grid grid-rows-3 p-8">
@@ -49,12 +47,6 @@
 				{value}
 			</ProgressRadial>
 		</div>
-		<!-- <button -->
-		<!-- 	on:click={onClose} -->
-		<!-- 	class="variant-ghost-error btn btn-sm mt-4 h-fit w-fit self-center justify-self-center" -->
-		<!-- > -->
-		<!-- 	Cancel -->
-		<!-- </button> -->
 	{:else if state === "accepted"}
 		<p class="">Challenge accepted!</p>
 		<button

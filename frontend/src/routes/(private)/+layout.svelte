@@ -13,6 +13,13 @@
 	console.log("private layout init")
 	const modalStore = getModalStore()
 
+	const banner = {
+        message: "",
+        pending: false
+    }
+	let banner_store = writable(banner)
+	setContext("banner_store", banner_store)
+
 	// Sse
 	let sse_store: Writable<EventSource> = writable(
 		new EventSource(PUBLIC_BACKEND_URL + "/api/sse", { withCredentials: true }),
@@ -33,16 +40,6 @@
 	)
 	applyCallbacks()
 	function applyCallbacks() {
-		console.log("Applying layout callbacks on $game_socket:", $game_socket.id)
-		$game_socket.on("connect", () => {
-			console.log("connect!")
-		})
-		$game_socket.io.on("reconnect", () => {
-			console.log("reconnect!")
-		})
-		$game_socket.io.on("reconnect_attempt", () => {
-			console.log("reconnect_attempt!")
-		})
 		$game_socket.on("disconnect", (data) => {
 			console.log(data)
 			if (data === "io server disconnect") {
@@ -51,11 +48,6 @@
 				})
 				applyCallbacks()
 			}
-			console.log("applying callbacks for layout !")
-		})
-		$game_socket.on("connect_error", (data) => {
-			// console.log("connect_error", data)
-			console.log("connect_error")
 		})
 		$game_socket.on("invited", async (invitation, callback) => {
 			console.log("Am being invited!")
@@ -78,6 +70,20 @@
 				goto("/pong")
 			}
 		})
+		$game_socket.on("updatedGameStatus", (new_data) => {
+			if (new_data.status === "INVITING") {
+                $banner_store.message == "Game invitation pending"
+                $banner_store.pending = true
+			}
+            else if (new_data.status === "INVITED") {
+                $banner_store.message == "You are being invited"
+                $banner_store.pending = true
+			}
+            else {
+                $banner_store.message == ""
+                $banner_store.pending = false
+            }
+		})
 	}
 
 	onDestroy(() => {
@@ -89,9 +95,11 @@
 	setContext("game_socket", game_socket)
 </script>
 
-<div class="relative">
-	<span class="variant-filled-warning px-20 py-1 text-lg">Game Status</span>
-</div>
+{#if $banner_store}
+	<div class="relative">
+		<span class="variant-filled-warning px-20 py-1 text-lg">Game Status</span>
+	</div>
+{/if}
 <slot />
 
 <!-- <button -->

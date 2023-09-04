@@ -52,7 +52,7 @@ export class UserController {
     @UseInterceptors(FileInterceptor('profilePicture',
         {
             limits: {
-                fileSize: EnvService.env.PROFILE_PICTURE_MAX_SIZE_MB * 1000000,
+                fileSize: EnvService.env.PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB * 1000000,
             }
         }
     ))

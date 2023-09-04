@@ -16,7 +16,7 @@
 	export let data: PageData
 
 	let my_paddle_is_left: boolean = false
-	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "QUEUE" | "END" = "IDLE"
+	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "QUEUE" | "END" | "RECONNECT" 
 
 	// Fixed sizings
 	let court: (typeof GameDim)["court"] = GameDim.court
@@ -43,14 +43,11 @@
 	let progress: number
 	$: progress = (value * 100) / timeout
 
-	// let game_socket: GameSocket & { test?: number } = io(PUBLIC_BACKEND_URL, {
-	// 	withCredentials: true,
-	// })
-
 	let game_socket: Writable<GameSocket> = getContext("game_socket")
 
 	$game_socket.emit("getGameStatus", "", (new_data) => {
 		state = new_data
+		console.log(new_data)
 	})
 
 	// game_socket.test = 42
@@ -68,18 +65,21 @@
 		$game_socket.on("updatedGameStatus", (new_data) => {
 			console.log(new_data)
 			state = new_data.status
-			if (new_data.status === "INIT") {
+			if (new_data.status === "INIT" || new_data.status === "RECONNECT") {
 				my_paddle_is_left = new_data.paddleLeftUserName === data.me.userName
 				;({ paddleLeftUserName, paddleRightUserName } = new_data)
-				timeout = new_data.timeout / 1000
-				value = timeout
-				button_disabled = false
-				for (let i = 0; i < timeout; ++i) {
-					setTimeout(() => {
-						value -= 1
-					}, 1000 * i)
-				}
 				;({ paddleLeftScore, paddleRightScore } = new_data)
+				if (new_data.status === "INIT") {
+					new_data
+					timeout = new_data.timeout / 1000
+					value = timeout
+					button_disabled = false
+					for (let i = 0; i < timeout; ++i) {
+						setTimeout(() => {
+							value -= 1
+						}, 1000 * i)
+					}
+				}
 			} else if (new_data.status === "BREAK") {
 				;({ paddleLeftScore, paddleRightScore } = new_data)
 				timeout = new_data.timeout / 1000

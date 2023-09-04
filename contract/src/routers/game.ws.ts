@@ -15,7 +15,10 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
     z.strictObject({
         // INIT = décompte au début de la partie
         status: z.literal("INIT"),
-        timeout: z.number().positive().int(),
+        timeout: z.union([
+            z.number().positive().int(),
+            z.literal(-1)
+        ]),
         paddleLeftUserName: zUserName,
         paddleRightUserName: zUserName,
         paddleLeftScore: ScoreSchema,

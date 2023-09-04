@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { GameSocket } from "$types"
-	import type { ModalSettings } from "@skeletonlabs/skeleton"
+	import { ProgressRadial, type ModalSettings } from "@skeletonlabs/skeleton"
 	import type { Writable } from "svelte/store"
 
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
@@ -14,9 +14,9 @@
 	const modalStore = getModalStore()
 
 	const banner = {
-        message: "",
-        pending: false
-    }
+		message: "coucou",
+		pending: true,
+	}
 	let banner_store = writable(banner)
 	setContext("banner_store", banner_store)
 
@@ -72,17 +72,15 @@
 		})
 		$game_socket.on("updatedGameStatus", (new_data) => {
 			if (new_data.status === "INVITING") {
-                $banner_store.message == "Game invitation pending"
-                $banner_store.pending = true
+				$banner_store.message == "Game invitation pending"
+				$banner_store.pending = true
+			} else if (new_data.status === "INVITED") {
+				$banner_store.message == "You are being invited"
+				$banner_store.pending = true
+			} else {
+				$banner_store.message == ""
+				$banner_store.pending = false
 			}
-            else if (new_data.status === "INVITED") {
-                $banner_store.message == "You are being invited"
-                $banner_store.pending = true
-			}
-            else {
-                $banner_store.message == ""
-                $banner_store.pending = false
-            }
 		})
 	}
 
@@ -95,9 +93,16 @@
 	setContext("game_socket", game_socket)
 </script>
 
-{#if $banner_store}
+{#if $banner_store.message}
 	<div class="relative">
-		<span class="variant-filled-warning px-20 py-1 text-lg">Game Status</span>
+		<span class="variant-filled-warning flex justify-between  py-1 text-lg">
+			<div class="px-2">Game Status</div>
+			{#if $banner_store.pending}
+				<div class="px-2 self-center">
+					<ProgressRadial width="w-4"  />
+				</div>
+			{/if}
+		</span>
 	</div>
 {/if}
 <slot />

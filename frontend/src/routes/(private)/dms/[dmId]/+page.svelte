@@ -189,9 +189,6 @@
                     disabled = false
                 }
 			}),
-			addListenerToEventSource($sse_store, "CREATED_DM", (new_data) => {
-                data.dmList.push(new_data)
-			}),
 		)
 		return () => {
 			destroyer.forEach((func) => void func())

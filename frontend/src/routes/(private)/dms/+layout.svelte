@@ -4,16 +4,18 @@
 
 	/* Components */
 	import DiscussionList from "./DiscussionList.svelte"
-	import { onMount } from "svelte"
+	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
-	import { checkError, listenOutsideClick } from "$lib/global"
+	import { addListenerToEventSource, checkError, listenOutsideClick } from "$lib/global"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { invalidate } from "$app/navigation"
+	import type { Writable } from "svelte/store"
 
 	// Get our discussions
-	// export let data: LayoutData // TODO wtf
+	export let data: LayoutData 
+    const sse_store: Writable<EventSource> = getContext("sse_store")
 
 	const modalStore = getModalStore()
 	let header: HTMLElement | null
@@ -21,20 +23,33 @@
 
 	onMount(() => {
 		header = document.getElementById("shell-header")
+		let resizeObserver: ResizeObserver
 		if (header) {
 			header_height = header.offsetHeight || 0
-
-			const resizeObserver = new ResizeObserver((entries) => {
+			resizeObserver = new ResizeObserver((entries) => {
 				// We're only watching one element
 				const new_height = entries.at(0)?.contentRect.height
 				if (new_height && new_height !== header_height) {
 					header_height = new_height
 				}
 			})
-
 			resizeObserver.observe(header)
 			// This callback cleans up the observer
-			return () => resizeObserver.unobserve(header as HTMLElement)
+		}
+		const destroyer: (() => void)[] = new Array(
+			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (data) => {
+				if (data.chanId === $page.params.chanId) {
+					invalidate(":chans")
+				}
+			}),
+			addListenerToEventSource($sse_store, "CREATED_DM", (new_data) => {
+                data.dmList = [new_data, ...data.dmList]
+			}),
+
+		)
+		return () => {
+			if (header) resizeObserver.unobserve(header as HTMLElement)
+			destroyer.forEach((func) => void func())
 		}
 	})
 
@@ -64,7 +79,7 @@
 	}
 </script>
 
-{#if $page.data.dmList.length}
+{#if data.dmList.length}
 	<!--Column layout -->
 	<div
 		class="grid grid-cols-[auto_1fr]"
@@ -87,7 +102,7 @@
 			</section>
 			<section id="discussions" class="overflow-y-auto">
 				<DiscussionList
-					discussions={$page.data.dmList}
+					discussions={data.dmList}
 					currentDiscussionId={$page.params.dmId}
 				/>
 			</section>

@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte"
 
+    console.log("load ChatBox")
+
 	export let outline = false
 	export let min_rows = 1
 	export let max_rows: number | undefined = undefined
 	export let line_height = 1.2
-	export let placeholder = "Shift + Enter for a new line"
+	export let enabled_placeholder = "Shift + Enter for a new line"
 	export let disabled = false
 	export let disabled_placeholder = "The sending of messages is disabled for the moment"
 	export let value: string = ""
-	$: placeholder = disabled ? disabled_placeholder : placeholder
+
+	$: placeholder = disabled ? disabled_placeholder : enabled_placeholder
 
 	let focus_within_outline = outline
 		? "focus-within:outline focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-[rgba(var(--color-primary-600))] "

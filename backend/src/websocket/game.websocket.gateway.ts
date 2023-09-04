@@ -316,7 +316,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         ) {
             return {
                 status: client.data.status.type,
-                timeout: client.data.status.startTimeoutMs - Date.now(),
+                timeout: Date.now() - client.data.status.startTimeoutMs,
                 username: client.data.status.username
             }
         }

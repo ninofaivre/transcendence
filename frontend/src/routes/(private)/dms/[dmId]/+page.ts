@@ -1,23 +1,19 @@
 import type { PageLoadEvent } from "./$types"
 import type { PageLoad } from "./$types"
-import { client } from "$lib/clients"
+import { client } from "$clients"
+import { checkError } from "$lib/global"
 
 export const load = async ({ depends, params }: PageLoadEvent) => {
-	console.log("dms/[dmId]/ page load")
+
 	depends(`:dms${params.dmId}`)
-	const { status, body: messages } = await client.dms.getDmElements({
+	const ret = await client.dms.getDmElements({
 		params: {
-			dmId: params.dmId as string,
+			dmId: params.dmId 
 		},
 	})
-	if (status !== 200) {
-		console.log(
-			`Failed to load channel list. Server returned code ${status} with message \"${
-				(messages as any)?.message
-			}\"`,
-		)
-	}
-
-	// console.log("Your messages:", messages)
-	return { messages }
+	if (ret.status !== 200) checkError(ret, "load direct conversation messages") 
+    else {
+        return { messages: ret.body }
+    }
+    return { messages: [] }
 }

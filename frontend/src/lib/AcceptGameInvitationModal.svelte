@@ -3,13 +3,12 @@
 	import { timeReplyToInvitation } from "contract"
 
 	const modalStore = getModalStore()
-	let value = timeReplyToInvitation
 	const username = $modalStore[0].meta.username
 
-	let i = timeReplyToInvitation
-	while (i--) {
+	let value = timeReplyToInvitation
+	for (let i = timeReplyToInvitation / 1000; i > 0; i--) {
 		setTimeout(() => {
-			value -= 1
+			value -= 1000
 		}, 1000 * i)
 	}
 
@@ -36,7 +35,7 @@
 	<p>{username} invited you to a game of Pong!</p>
 	<div class="self-center justify-self-center">
 		<ProgressRadial value={(value * 100) / timeReplyToInvitation} width="w-16">
-			{value}
+			{value / 1000}
 		</ProgressRadial>
 	</div>
 	<button

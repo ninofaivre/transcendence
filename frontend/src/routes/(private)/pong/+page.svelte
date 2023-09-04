@@ -8,7 +8,7 @@
 	import { Canvas } from "@threlte/core"
 	import { Text, HTML } from "@threlte/extras"
 	import Pong from "./Pong.svelte"
-	import { getContext, onMount } from "svelte"
+	import { getContext  } from "svelte"
 	import { GameDim } from "contract"
 	import { injectLookAtPlugin } from "./lookAtPlugin"
 
@@ -16,7 +16,7 @@
 	export let data: PageData
 
 	let my_paddle_is_left: boolean = false
-	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "QUEUE" | "END" | "RECONNECT" 
+	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "QUEUE" | "END" | "RECONNECT" | "INVITING" | "INVITED"
 
 	// Fixed sizings
 	let court: (typeof GameDim)["court"] = GameDim.court
@@ -46,7 +46,7 @@
 	let game_socket: Writable<GameSocket> = getContext("game_socket")
 
 	$game_socket.emit("getGameStatus", "", (new_data) => {
-		state = new_data
+		state = new_data.status
 		console.log(new_data)
 	})
 

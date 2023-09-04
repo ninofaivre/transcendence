@@ -8,7 +8,6 @@
 	const modalStore = getModalStore()
 	let state: "accepted" | "refused" | "timedOut" | "waiting" | "error" = "waiting"
 	let error_reason: string | undefined
-	let value = timeReplyToInvitation
 	const username: string = $modalStore[0].meta.username
 	const game_socket: Writable<GameSocket> = $modalStore[0].meta.game_socket
 
@@ -17,7 +16,14 @@
 
 	$game_socket.emit("invite", { intraUserName: username }, (res) => {
 		state = res.status
-		if (res.status === "error") error_reason = res.reason
+		if (res.status === "error") {
+			error_reason = res.reason
+			setTimeout(() => {
+				if ($modalStore[0].response) {
+					$modalStore[0].response(undefined)
+				}
+			}, 1000)
+		}
 		if (state === "accepted") {
 			if ($modalStore[0].response) {
 				$modalStore[0].response(true)
@@ -25,10 +31,10 @@
 		}
 	})
 
-	let i = timeReplyToInvitation
-	while (i--) {
+	let value = timeReplyToInvitation
+	for (let i = timeReplyToInvitation / 1000; i > 0; i--) {
 		setTimeout(() => {
-			value -= 1
+			value -= 1000
 		}, 1000 * i)
 	}
 
@@ -44,7 +50,7 @@
 		<p class="">Waiting for challenge to be accepted</p>
 		<div class="self-center justify-self-center">
 			<ProgressRadial value={(value * 100) / timeReplyToInvitation} width="w-16">
-				{value}
+				{value / 1000}
 			</ProgressRadial>
 		</div>
 	{:else if state === "accepted"}

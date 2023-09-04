@@ -14,7 +14,7 @@
 	const modalStore = getModalStore()
 
 	const banner = {
-		message: "coucou",
+		message: "",
 		pending: true,
 	}
 	let banner_store = writable(banner)
@@ -71,6 +71,7 @@
 			}
 		})
 		$game_socket.on("updatedGameStatus", (new_data) => {
+            console.log(new_data)
 			if (new_data.status === "INVITING") {
 				$banner_store.message == "Game invitation pending"
 				$banner_store.pending = true
@@ -96,7 +97,7 @@
 {#if $banner_store.message}
 	<div class="relative">
 		<span class="variant-filled-warning flex justify-between  py-1 text-lg">
-			<div class="px-2">Game Status</div>
+			<div class="px-2"> $banner_store.message </div>
 			{#if $banner_store.pending}
 				<div class="px-2 self-center">
 					<ProgressRadial width="w-4"  />

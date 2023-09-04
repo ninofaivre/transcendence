@@ -26,9 +26,9 @@
 	const sse_store: Writable<EventSource> = getContext("sse_store")
 
 	// Important, resets variable on route parameter change
-	$: messages = $page.data.messages
+	$: messages = data.messages
 	$: {
-		dm = $page.data.dmList.find((el: DirectConversation) => el.id === $page.params.dmId)
+		dm = data.dmList.find((el: DirectConversation) => el.id === $page.params.dmId)!
 		sendLoadEvents = true
 	}
 
@@ -190,7 +190,7 @@
                 }
 			}),
 			addListenerToEventSource($sse_store, "CREATED_DM", (new_data) => {
-                alert("New dm created")
+                data.dmList.push(new_data)
 			}),
 		)
 		return () => {

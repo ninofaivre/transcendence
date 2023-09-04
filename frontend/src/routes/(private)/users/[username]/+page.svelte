@@ -188,11 +188,11 @@
 	}
 
 	$: nPlayed = data.user.nWin + data.user.nLoose
-	$: winRate = (data.user.nWin / nPlayed) * 100
+	// $: winRate = (data.user.nWin / nPlayed) * 100
 </script>
 
 <!-- Container -->
-<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-xl">
+<div class="my-6 sm:mx-auto sm:w-full sm:max-w-xl">
 	<!-- Card -->
 	<div class="flex flex-row gap-2 rounded-lg bg-gray-100 p-8 sm:px-10">
 		<!-- User basic info -->
@@ -259,23 +259,21 @@
 				<div class="flex flex-1 flex-col items-center">
 					<div class="">Played</div>
 					<div class="flex-1">
-						<ProgressRadial font={160} width="w-20" value={100} fill="">
+						<ProgressRadial font={140} width="w-24" value={100} fill="">
 							{nPlayed}
 						</ProgressRadial>
 					</div>
 				</div>
 				<div class="flex flex-1 flex-col items-center">
-					<p class="">Win ratio</p>
-					<div class="flex-1">
+                        <p style:word-spacing={"0.2em"}>Win ratio</p>
 						<ProgressRadial
-							font={160}
-							width="w-20"
-							value={winRate}
+							font={140}
+							width="w-24"
+							value={data.user.winRatePercentage}
 							fill="variant-filled-primary"
 						>
-							{`${winRate}/100`}
+							{`${data.user.winRatePercentage}/100`}
 						</ProgressRadial>
-					</div>
 				</div>
 			</div>
 		</div>

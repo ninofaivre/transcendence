@@ -84,13 +84,22 @@ export type InvitationClientResponse = z.infer<typeof InvitationClientResponseSc
 
 export const timeReplyToInvitation = 5
 
+export type InvitationServerResponse =
+    | {
+        status: 'accepted' | 'refused' | 'timedOut'
+    }
+    | {
+        status: 'error',
+        reason: 'selfInvitation' | 'invitingNotAvailable'
+    }
+
 export interface ClientToServerEvents {
     queue: (e: "") => void
     deQueue: (e: "") => void
     surrend: (e: "") => void
     newInGameMessage: (e: InGameMessage) => void
     gameMovement: (e: GameMovement) => void
-    invite: (e: Invitation, callback: (e: 'accepted' | 'refused' | 'badRequest') => void) => void,
+    invite: (e: Invitation, callback: (e: InvitationServerResponse) => void) => void,
     getGameStatus: (e: "", callback: (e: GameStatus['status']) => void) => void
 }
 

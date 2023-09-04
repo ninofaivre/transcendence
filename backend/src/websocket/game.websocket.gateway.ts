@@ -8,7 +8,7 @@ import { Schema, z } from "zod";
 import { EnvService } from "src/env/env.service";
 import { ClientToServerEvents, GameMovement, GameMovementSchema, Invitation, InvitationClientResponseSchema, InvitationSchema, ServerToClientEvents } from "contract";
 import { InGameMessageSchema } from "contract";
-import { InGameMessage } from "contract";
+import { InGameMessage, InvitationServerResponse } from "contract";
 import { UserService } from "src/user/user.service";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { InternalEvents } from "src/internalEvents";
@@ -134,18 +134,20 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     async invite(
         @ConnectedSocket()client: EnrichedSocket,
         @MessageBody(new ZodValidationPipe(InvitationSchema))payload: Invitation,
-    ): Promise<'accepted' | 'refused' | 'badRequest'> {
+    ): Promise<InvitationServerResponse> {
         if (payload.intraUserName === client.data.intraUserName)
-            return 'badRequest'
+            return { status: 'error', reason: 'selfInvitation' }
+        if (client.data.status !== 'IDLE')
+            return { status: 'error', reason: 'invitingNotAvailable' }
         const invitedClient = (await this.server.sockets.to(payload.intraUserName).fetchSockets()).at(0)
         if (!invitedClient || invitedClient.data.status !== 'IDLE')
-            return (new Promise((res) => setTimeout(() => { res('refused') }, 5000)))
+            return (new Promise((res) => setTimeout(() => { res({ status: 'timedOut' }) }, 5000)))
         try {
             const res: unknown = await invitedClient.timeout(5000).emitWithAck('invited', { username: client.data.username })
             this.gameService.createGame(client, invitedClient)
-            return InvitationClientResponseSchema.parse(res)
+            return { status: InvitationClientResponseSchema.parse(res) }
         } catch {}
-        return "refused"
+        return { status: 'timedOut' }
     }
 
 

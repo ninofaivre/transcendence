@@ -48,7 +48,7 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
         status: z.literal("QUEUE")
     }),
     z.strictObject({
-        status: z.literal("DEQUEUE")
+        status: z.literal("IDLE")
     })
 ])
 export type GameStatus = z.infer<typeof GameStatusSchema>

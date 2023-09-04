@@ -185,7 +185,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         console.log("deQueue :", client.data.intraUserName)
         client.data.status = 'IDLE'
         this.server.sockets.to(client.data.intraUserName)
-            .emit("updatedGameStatus", { status: "DEQUEUE" })
+            .emit("updatedGameStatus", { status: "IDLE" })
         this.gameService.deQueueUser(client.data.intraUserName)
     }
 

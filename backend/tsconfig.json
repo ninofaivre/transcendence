@@ -13,11 +13,10 @@
 		"baseUrl": "./",
 		"incremental": true,
 		"skipLibCheck": true,
-		"strictBindCallApply": false,
+		"strictBindCallApply": true,
 		"forceConsistentCasingInFileNames": false,
-		"noFallthroughCasesInSwitch": false,
-        //TODO: make backend transpiles with that flag
-        //"noUncheckedIndexedAccess": true,
+		"noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
 		"strict": true,
         "noImplicitAny": true
 	}

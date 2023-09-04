@@ -58,7 +58,6 @@ async function bootstrap() {
 	await app.listen(EnvService.env.PRIVATE_BACKEND_PORT)
 }
 
-// TODO: make this function a bit cleaner and put it somewhere else
 function overrideTsRestGeneratedTags(document: OpenAPIObject) {
 	for (const path of Object.values(document.paths)) {
 		for (const subpath of Object.values(path)) {

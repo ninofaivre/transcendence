@@ -48,7 +48,7 @@ export class AuthService {
         const access_token = cookie
             .parse(client.handshake?.headers?.cookie || '')
             .access_token
-        return this.jwtService.verify<JwtPayload>(access_token, {
+        return this.jwtService.verify<JwtPayload>(access_token || '', {
             secret: EnvService.env.JWT_SECRET
         })
     }
@@ -76,7 +76,6 @@ export class AuthService {
                 expiresIn: EnvService.env.PUBLIC_MODE === 'DEV' ? '1h' : '15m'
             }),
             this.jwtService.signAsync(payload, {
-                // TODO mb use a different password for refresh and access tokens ?
                 secret: EnvService.env.JWT_SECRET,
                 expiresIn: '7d'
             })

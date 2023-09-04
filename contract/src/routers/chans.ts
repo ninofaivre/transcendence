@@ -166,8 +166,7 @@ export const chansContract = c.router(
 						passwordProtected: z.boolean(),
 						nUsers: z.number().positive().int(),
 						id: z.string().uuid(),
-						title: zChanTitle,
-						bannedMe: z.boolean(),
+						title: zChanTitle
 					}),
 				),
 			},

@@ -100,7 +100,6 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             .on('delete-room', this.handleDeleteRoom.bind(this))
     }
 
-    // TODO do a typed decorator ?
     @OnEvent('game.end')
     endedGame(payload: InternalEvents['game.end']) {
         this.server.sockets.in([
@@ -143,14 +142,6 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         }
         return userData.status.type
     }
-
-    // getAllLocalSocketForIntraUserName(intraUserName: IntraUserName): EnrichedSocket[] {
-        // const res: EnrichedSocket[] = []
-        // this.server.sockets.sockets.forEach(socket => {
-        //     if (socket.data.intraUserName === intraUserName)
-        //         res.push(socket)
-        // })
-    // }
 
     @SubscribeMessage('invite')
     async invite(

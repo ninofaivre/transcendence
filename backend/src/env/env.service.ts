@@ -10,7 +10,7 @@ const envSchema = z.object({
     PUBLIC_MODE: z.union([z.literal("DEV"), z.literal("PROD")]).default("PROD"),
     JWT_SECRET: zPassword,
     PROFILE_PICTURE_DIR: z.string(),
-    PROFILE_PICTURE_MAX_SIZE_MB: z.coerce.number().min(0.5).max(50).default(8),
+    PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB: z.coerce.number().min(0.5).max(50).default(8),
     API42_CLIENT_SECRET: z.string(),
 
     PUBLIC_BACKEND_SCHEME: zScheme,

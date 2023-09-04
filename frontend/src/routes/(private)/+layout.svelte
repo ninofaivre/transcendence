@@ -13,12 +13,10 @@
 	console.log("private layout init")
 	const modalStore = getModalStore()
 
-	const banner = {
-		message: "",
-		pending: true,
-	}
-	let banner_store = writable(banner)
-	setContext("banner_store", banner_store)
+	let banner_message = ""
+	let banner_pending = false
+	let banner_message_store = writable(banner_message)
+	let banner_pending_store = writable(banner_pending)
 
 	// Sse
 	let sse_store: Writable<EventSource> = writable(
@@ -71,16 +69,15 @@
 			}
 		})
 		$game_socket.on("updatedGameStatus", (new_data) => {
-            console.log(new_data)
 			if (new_data.status === "INVITING") {
-				$banner_store.message == "Game invitation pending"
-				$banner_store.pending = true
+				banner_message_store.set("Game invitation pending")
+				$banner_pending_store = true
 			} else if (new_data.status === "INVITED") {
-				$banner_store.message == "You are being invited"
-				$banner_store.pending = true
+				banner_message_store.set("You are being invited")
+				$banner_pending_store = true
 			} else {
-				$banner_store.message == ""
-				$banner_store.pending = false
+				banner_message_store.set("")
+				$banner_pending_store = false
 			}
 		})
 	}
@@ -94,13 +91,13 @@
 	setContext("game_socket", game_socket)
 </script>
 
-{#if $banner_store.message}
+{#if $banner_message_store}
 	<div class="relative">
-		<span class="variant-filled-warning flex justify-between  py-1 text-lg">
-			<div class="px-2"> $banner_store.message </div>
-			{#if $banner_store.pending}
-				<div class="px-2 self-center">
-					<ProgressRadial width="w-4"  />
+		<span class="variant-filled-warning flex justify-between py-1 text-lg">
+			<div class="px-2">{$banner_message_store}</div>
+			{#if $banner_pending_store}
+				<div class="self-center px-2">
+					<ProgressRadial width="w-4" />
 				</div>
 			{/if}
 		</span>

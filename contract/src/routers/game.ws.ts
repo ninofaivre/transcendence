@@ -43,6 +43,12 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
         winner: zUserName,
         paddleLeftScore: ScoreSchema,
         paddleRightScore: ScoreSchema
+    }),
+    z.strictObject({
+        status: z.literal("QUEUE")
+    }),
+    z.strictObject({
+        status: z.literal("DEQUEUE")
     })
 ])
 export type GameStatus = z.infer<typeof GameStatusSchema>
@@ -81,7 +87,7 @@ export interface ClientToServerEvents {
 
 export interface ServerToClientEvents {
     newInGameMessage: (e: {
-        player: z.infer<typeof zUserName>,
+        player: z.infer<typeof zUserName>
         message: InGameMessage
     }) => void,
     updatedGameStatus: (e: GameStatus) => void,

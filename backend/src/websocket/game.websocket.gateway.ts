@@ -160,6 +160,8 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             return
         console.log("queue :", client.data.intraUserName)
         client.data.status = 'QUEUE'
+        this.server.sockets.to(client.data.intraUserName)
+            .emit("updatedGameStatus", { status: "QUEUE" })
         this.gameService.queueUser(client)
     }
 
@@ -182,6 +184,8 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             return
         console.log("deQueue :", client.data.intraUserName)
         client.data.status = 'IDLE'
+        this.server.sockets.to(client.data.intraUserName)
+            .emit("updatedGameStatus", { status: "DEQUEUE" })
         this.gameService.deQueueUser(client.data.intraUserName)
     }
 

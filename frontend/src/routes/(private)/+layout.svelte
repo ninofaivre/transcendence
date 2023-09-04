@@ -86,18 +86,19 @@
 				$banner_pending_store = true
 			} else if (new_data.status === "INVITED") {
 				banner_message_store.set("You are being invited")
-				$banner_pending_store = true
-			} else if (new_data.status === "IDLE") {
-                modalStore.close()
-			} else {
-				banner_message_store.set("")
-				$banner_pending_store = false
+                $banner_pending_store = true
+            } else {
+                if (new_data.status === "IDLE") {
+                    modalStore.close()
+                }
+                banner_message_store.set("")
+                $banner_pending_store = false
             }
-		})
-	}
+        })
+    }
 
-	onDestroy(() => {
-		$game_socket.removeAllListeners()
+    onDestroy(() => {
+        $game_socket.removeAllListeners()
 		$game_socket.close()
 		$sse_store.close()
 	})

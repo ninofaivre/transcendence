@@ -88,9 +88,7 @@
 				banner_message_store.set("You are being invited")
                 $banner_pending_store = true
             } else {
-                if (new_data.status === "IDLE") {
-                    modalStore.close()
-                }
+                modalStore.close()
                 banner_message_store.set("")
                 $banner_pending_store = false
             }

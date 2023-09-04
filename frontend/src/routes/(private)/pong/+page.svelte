@@ -16,7 +16,7 @@
 	export let data: PageData
 
 	let my_paddle_is_left: boolean = false
-	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "WAITING" | "END" = "IDLE"
+	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "QUEUE" | "END" = "IDLE"
 
 	// Fixed sizings
 	let court: (typeof GameDim)["court"] = GameDim.court
@@ -46,7 +46,12 @@
 	// let game_socket: GameSocket & { test?: number } = io(PUBLIC_BACKEND_URL, {
 	// 	withCredentials: true,
 	// })
+
 	let game_socket: Writable<GameSocket> = getContext("game_socket")
+
+	$game_socket.emit("getGameStatus", "", (new_data) => {
+		state = new_data
+	})
 
 	// game_socket.test = 42
 	applyCallback()
@@ -57,13 +62,7 @@
 		console.log("Applying pong callback to socket:", $game_socket.id) //, $game_socket.test)
 		//Receive data
 		$game_socket.on("updatedGamePositions", (data) => {
-			;({
-				ball: ball_pos,
-				paddleLeft: lpaddle_pos,
-				paddleRight: rpaddle_pos,
-				// paddleLeftScore,
-				// paddleRightScore,
-			} = data)
+			;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
 		})
 		$game_socket.on("newInGameMessage", (data) => {})
 		$game_socket.on("updatedGameStatus", (new_data) => {
@@ -110,13 +109,11 @@
 		console.log("Clicked to create")
 		$game_socket.emit("queue", "")
 		button_disabled = true
-		state = "WAITING"
 	}
 	function cancelGame() {
 		console.log("Cancelled game")
 		$game_socket.emit("deQueue", "")
 		button_disabled = false
-		state = "IDLE"
 	}
 	function onUP() {
 		console.log("UP")
@@ -162,7 +159,7 @@
 		>
 			PLAY
 		</button>
-	{:else if state === "WAITING"}
+	{:else if state === "QUEUE"}
 		<div class="card grid grid-rows-2 gap-2 p-8">
 			<button class="variant-ringed-error btn rounded" on:click={cancelGame}>CANCEL</button>
 			<div class="spinner justify-self-center" />

@@ -25,7 +25,7 @@
 	}
 
 	$: {
-		if (value <= 0 && $modalStore[0].response) {
+		if (value <= 0 && $modalStore[0]?.response) {
 			$modalStore[0].response(undefined)
 		}
 	}

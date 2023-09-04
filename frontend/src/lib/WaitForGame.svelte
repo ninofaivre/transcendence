@@ -6,25 +6,25 @@
 	import { timeReplyToInvitation } from "contract"
 
 	const modalStore = getModalStore()
-	let state: "accepted" | "refused" | "timedOut" | "waiting" | "badRequest" = "waiting"
+	let state: "accepted" | "refused" | "timedOut" | "waiting" | "error" = "waiting"
+	let error_reason: string | undefined
 	let value = timeReplyToInvitation
 	const username: string = $modalStore[0].meta.username
 	const game_socket: Writable<GameSocket> = $modalStore[0].meta.game_socket
 
 	// let game_socket: Writable<GameSocket> = getContext("game_socket")
 	console.log("Got game_socket from context:", game_socket)
-	$game_socket.emit(
-		"invite",
-		{ intraUserName: username },
-		(res: "accepted" | "refused" | "badRequest") => {
-			state = res
-			if (state === "accepted") {
-				if ($modalStore[0].response) {
-					$modalStore[0].response(true)
-				}
+
+	$game_socket.emit("invite", { intraUserName: username }, (res) => {
+		state = res.status
+        if (res.status === "error")
+            error_reason = res.reason
+		if (state === "accepted") {
+			if ($modalStore[0].response) {
+				$modalStore[0].response(true)
 			}
-		},
-	)
+		}
+	})
 
 	let i = timeReplyToInvitation
 	while (i--) {
@@ -39,11 +39,6 @@
 		}
 	}
 
-	$: {
-		if (value <= 0) {
-			if (state === "waiting") state = "timedOut"
-		}
-	}
 </script>
 
 <div class="card grid grid-rows-3 p-8">
@@ -84,8 +79,13 @@
 		>
 			Close
 		</button>
-	{:else if state === "badRequest"}
+	{:else if state === "error"}
 		<p class="">Invitation timed out</p>
+		{#if error_reason === "selfInvitation"}
+			<p class="">You can't invite yourself!</p>
+		{:else if error_reason === "invitingNotAvailable"}
+			<p class="">You are already in game!</p>
+		{/if}
 		<button
 			on:click={onClose}
 			class="variant-ghost-error btn btn-sm mt-4 h-fit w-fit self-center justify-self-center"

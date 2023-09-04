@@ -233,7 +233,7 @@
 	<HTML position.x={court.width} position.y={200}>
 		<button
 			on:click={surrend}
-			class="btn bg-orange-500 px-2 hover:opacity-90 active:opacity-70"
+			class="btn bg-orange-500 text-xs px-2 "
 		>
 			Surrend
 		</button>

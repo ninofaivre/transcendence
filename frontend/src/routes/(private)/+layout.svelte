@@ -36,6 +36,17 @@
 			withCredentials: true,
 		}),
 	)
+	$game_socket.emit("getGameStatus", "", (new_data) => {
+			if (new_data.status === "INVITING") {
+				banner_message_store.set("Game invitation pending")
+				$banner_pending_store = true
+			} else if (new_data.status === "INVITED") {
+				banner_message_store.set("You are being invited")
+				$banner_pending_store = true
+			} else if (new_data.status === "RECONNECT") {
+                goto("/pong")
+			} 
+	})
 	applyCallbacks()
 	function applyCallbacks() {
 		$game_socket.on("disconnect", (data) => {

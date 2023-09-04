@@ -76,7 +76,8 @@
 			})
 			if (r) {
 				callback(r)
-				goto("/pong")
+                if (r === "accepted")
+                    goto('/pong')
 			}
 		})
 		$game_socket.on("updatedGameStatus", (new_data) => {

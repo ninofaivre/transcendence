@@ -59,7 +59,8 @@
 			}
 		})
 		$game_socket.on("invited", async (invitation, callback) => {
-			console.log("Am being invited!")
+            banner_message_store.set("You are being invited")
+            banner_pending_store.set(true)
 			const r = await new Promise<"accepted" | "refused" | undefined>((resolve) => {
 				const modal: ModalSettings = {
 					type: "component",
@@ -84,14 +85,14 @@
             console.log("updatedGameStatus layout", new_data)
 			if (new_data.status === "INVITING") {
 				banner_message_store.set("Game invitation pending")
-				$banner_pending_store = true
+				banner_pending_store.set(true)
 			} else if (new_data.status === "INVITED") {
 				banner_message_store.set("You are being invited")
-                $banner_pending_store = true
+				banner_pending_store.set(true)
             } else {
                 modalStore.close()
                 banner_message_store.set("")
-                $banner_pending_store = false
+				banner_pending_store.set(true)
             }
         })
     }

@@ -197,7 +197,10 @@
                 data.chanList = data.chanList
 			}),
 			addListenerToEventSource($sse_store!, "FLUSH_BANNED_USERS", (new_data) => {
-                data.chanList.find((el) => el.id === new_data.chanId)?.users = []
+                let to_flush = data.chanList.find((el) => el.id === new_data.chanId)?.users
+                if (to_flush)
+                    to_flush = []
+                data.chanList = data.chanList
 			}),
 		)
 		return () => {

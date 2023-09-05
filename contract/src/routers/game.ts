@@ -8,7 +8,7 @@ const c = initContract()
 
 export const GameDim = {
 	court: { width: 1600, height: 900 },
-	paddle: { width: 25, height: 50 },
+	paddle: { width: 25, height: 120 },
 	ballSideLength: 25, // ball is a square
 }
 
@@ -56,32 +56,32 @@ export const GameSpeed = {
 // })
 
 const zMatch = z.strictObject({
-    id: z.string().uuid(),
-    creationDate: z.date(),
-    win: z.boolean(),
-    looserName: zUserName,
-    winnerName: zUserName,
-    looserScore: z.number().positive().int(),
-    winnerScore: z.number().positive().int()
+	id: z.string().uuid(),
+	creationDate: z.date(),
+	win: z.boolean(),
+	looserName: zUserName,
+	winnerName: zUserName,
+	looserScore: z.number().positive().int(),
+	winnerScore: z.number().positive().int(),
 })
 
 export const gameContract = c.router(
 	{
-        getMatchHistory: {
-            method: "GET",
-            path:"/:username/match-history",
-            summary: "get match history",
-            pathParams: z.strictObject({
-                username: zUserName
-            }),
-            query: z.strictObject({
-                nMatches: z.number().positive().int().max(50).default(20),
-                cursor: z.string().uuid().optional()
-            }),
-            responses: {
-                200: z.array(zMatch)
-            }
-        },
+		getMatchHistory: {
+			method: "GET",
+			path: "/:username/match-history",
+			summary: "get match history",
+			pathParams: z.strictObject({
+				username: zUserName,
+			}),
+			query: z.strictObject({
+				nMatches: z.number().positive().int().max(50).default(20),
+				cursor: z.string().uuid().optional(),
+			}),
+			responses: {
+				200: z.array(zMatch),
+			},
+		},
 	},
 	{
 		pathPrefix: "/game",

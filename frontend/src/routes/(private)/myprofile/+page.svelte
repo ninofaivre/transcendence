@@ -259,16 +259,21 @@
 </script>
 
 <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-	<div class="flex flex-col gap-2 rounded-lg bg-gray-50 p-8 sm:px-10">
+	<div class="flex flex-col gap-3 rounded-lg bg-gray-50 p-8 sm:px-10">
 		<!-- Avatar -->
 		<div class="grid flex-1 grid-cols-2">
 			<!-- col1 -->
-			<Avatar
-				src="{PUBLIC_BACKEND_URL}/api/users/{data.me
-					.userName}/profilePicture?reload={$reload_img}"
-				fallback="https://i.pravatar.cc/?u={data.me.userName}"
-				alt="profile"
-			/>
+			<button
+				class="btn w-fit p-0 hover:outline hover:outline-secondary-400"
+				on:click={triggerCropperModal}
+			>
+				<Avatar
+					src="{PUBLIC_BACKEND_URL}/api/users/{data.me
+						.userName}/profilePicture?reload={$reload_img}"
+					fallback="https://i.pravatar.cc/?u={data.me.userName}"
+					alt="profile"
+				/>
+			</button>
 			<!-- col2 -->
 			<h1 class="self-center text-black">{data.me.userName}</h1>
 		</div>
@@ -293,47 +298,3 @@
 		<div class="py-20 text-center text-3xl font-bold text-gray-500">No games to show yet</div>
 	{/if}
 </div>
-
-<Toggle let:toggle>
-	<svelte:fragment let:toggle slot="active">
-		<div use:listenOutsideClick on:outsideclick={toggle}>
-			<Stepper
-				on:next={onNextHandler}
-				on:step={onStepHandler}
-				on:back={onBackHandler}
-				on:complete={onComplete}
-				buttonCompleteLabel="Upload"
-				{buttonBackLabel}
-				{buttonNextLabel}
-			>
-				<Step locked={picker_lock}>
-					<svelte:fragment slot="header">Choose a new profile picture</svelte:fragment>
-					<FileDropzone
-						bind:files
-						name="pp"
-						accept=".jpg, .jpeg, .png"
-						on:change={onFileSelected}
-					>
-						<div slot="lead" class="text-3xl">📁</div>
-						<svelte:fragment slot="message">Upload your profile picture</svelte:fragment
-						>
-						<svelte:fragment slot="meta">PNG and JPEG files only</svelte:fragment>
-					</FileDropzone>
-					<img src={img_src} alt="preview" />
-				</Step>
-				<!-- <Step locked={cropper_lock}> -->
-				<Step>
-					<svelte:fragment slot="header">Square it</svelte:fragment>
-					<Cropper image={img_src} aspect={1} zoom={1} on:cropcomplete={reportCrop} />
-				</Step>
-				<Step>
-					<svelte:fragment slot="header">Do you like it ?</svelte:fragment>
-					<img src={cropped_image_src} alt="cropped preview" />
-				</Step>
-			</Stepper>
-		</div>
-	</svelte:fragment>
-	<button class="variant-filled btn btn-sm" on:click={triggerCropperModal}
-		>Change profile picture</button
-	>
-</Toggle>

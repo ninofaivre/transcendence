@@ -109,34 +109,41 @@
 	_init = false
 </script>
 
-<Stepper
-	on:next={onNextHandler}
-	on:step={onStepHandler}
-	on:back={onBackHandler}
-	on:complete={onComplete}
-	buttonCompleteLabel="Upload"
-	{buttonBackLabel}
-	{buttonNextLabel}
->
-	<Step locked={picker_lock}>
-		<svelte:fragment slot="header">Choose a new profile picture</svelte:fragment>
-		<FileDropzone bind:files name="pp" accept=".jpg, .jpeg, .png" on:change={onFileSelected}>
-			<div slot="lead" class="text-3xl">📁</div>
-			<svelte:fragment slot="message">Upload your profile picture</svelte:fragment>
-			<svelte:fragment slot="meta">PNG and JPEG files only</svelte:fragment>
-		</FileDropzone>
-		<img src={img_src} alt="preview" />
-	</Step>
-	<!-- <Step locked={cropper_lock}> -->
-	<Step>
-		<svelte:fragment slot="header">Square it</svelte:fragment>
-		<Cropper image={img_src} aspect={1} zoom={1} on:cropcomplete={reportCrop} />
-	</Step>
-	<Step>
-		<svelte:fragment slot="header">Do you like it ?</svelte:fragment>
-		<img src={cropped_image_src} alt="cropped preview" />
-	</Step>
-</Stepper>
+<div class="w-2/3">
+	<Stepper
+		on:next={onNextHandler}
+		on:step={onStepHandler}
+		on:back={onBackHandler}
+		on:complete={onComplete}
+		buttonCompleteLabel="Upload"
+		{buttonBackLabel}
+		{buttonNextLabel}
+	>
+		<Step locked={picker_lock}>
+			<svelte:fragment slot="header">Choose a new profile picture</svelte:fragment>
+			<FileDropzone
+				bind:files
+				name="pp"
+				accept=".jpg, .jpeg, .png"
+				on:change={onFileSelected}
+			>
+				<div slot="lead" class="text-3xl">📁</div>
+				<svelte:fragment slot="message">Upload your profile picture</svelte:fragment>
+				<svelte:fragment slot="meta">PNG and JPEG files only</svelte:fragment>
+			</FileDropzone>
+			<img src={img_src} alt="preview" class="w-7" />
+		</Step>
+		<!-- <Step locked={cropper_lock}> -->
+		<Step>
+			<svelte:fragment slot="header">Square it</svelte:fragment>
+			<Cropper image={img_src} aspect={1} zoom={1} on:cropcomplete={reportCrop} />
+		</Step>
+		<Step>
+			<svelte:fragment slot="header">Do you like it ?</svelte:fragment>
+			<img src={cropped_image_src} alt="cropped preview" class="w-7" />
+		</Step>
+	</Stepper>
+</div>
 
 <!-- <footer class="modal-footer"> -->
 <!-- 	<button type="button" class="variant-ghost-surface btn" on:click={onClose}>Cancel</button> -->

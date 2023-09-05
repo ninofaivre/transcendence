@@ -242,7 +242,7 @@
 				const modalSettings: ModalSettings = {
 					type: "component",
 					component: "CropperModal",
-					response: () => {
+					response: (r) => {
 						modalStore.close()
 						resolve(r)
 					},

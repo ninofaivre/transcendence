@@ -29,20 +29,24 @@
 
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
-	let chan: Chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
 	let disabled: boolean = false
 	let disabled_placeholder = "You have been muted" // ChatBox placeholder
+	let chan: Chan = getContext("chan")
 
 	// Important, resets variable on route parameter change
-	$: messages = $page.data.messages // Need this becaus I can't mody the store directly
-	$: {
-        if (chan){
-            chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
-            sendLoadEvents = true
-            disabled = !chan.selfPerms.includes("SEND_MESSAGE")
-            console.log("from page reactive block: ", disabled)
-        }
-	}
+	$: messages = data.messages
+
+	// let chan: Chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
+	// console.log("init", $page.data.chanList)
+
+	// $: {
+	// 	if (chan) {
+	// 		chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
+	// 		console.log("reactive", $page.data.chanList)
+	// 		sendLoadEvents = true
+	// 		disabled = !chan.selfPerms.includes("SEND_MESSAGE")
+	// 	}
+	// }
 
 	function updateSomeMessage(to_update_id: string, new_message: string, isDeleted: boolean) {
 		const to_update_idx: number = messages.findLastIndex((message: MessageOrEvent) => {
@@ -194,15 +198,14 @@
 				}
 			}),
 			addListenerToEventSource($sse_store!, "BANNED_CHAN_USER", (new_data) => {
-                const chan = data.chanList.find((el) => el.id === new_data.chanId)
-                if (chan) chan.users = chan.users.filter((el) => el.name === new_data.username)
-                data.chanList = data.chanList
+				const chan = data.chanList.find((el) => el.id === new_data.chanId)
+				if (chan) chan.users = chan.users.filter((el) => el.name === new_data.username)
+				data.chanList = data.chanList
 			}),
 			addListenerToEventSource($sse_store!, "FLUSH_BANNED_USERS", (new_data) => {
-                let to_flush = data.chanList.find((el) => el.id === new_data.chanId)?.users
-                if (to_flush)
-                    to_flush = []
-                data.chanList = data.chanList
+				let to_flush = data.chanList.find((el) => el.id === new_data.chanId)?.users
+				if (to_flush) to_flush = []
+				data.chanList = data.chanList
 			}),
 		)
 		return () => {

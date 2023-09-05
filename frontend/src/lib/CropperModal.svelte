@@ -118,7 +118,9 @@
 		</Step>
 		<Step>
 			<svelte:fragment slot="header">Do you like it ?</svelte:fragment>
-			<img src={cropped_image_src} alt="cropped preview" class="h-[30rem] rounded-full" />
+			<div class="flex items-center justify-center">
+				<img src={cropped_image_src} alt="cropped preview" class="h-[30rem] rounded-full" />
+			</div>
 		</Step>
 	</Stepper>
 </div>

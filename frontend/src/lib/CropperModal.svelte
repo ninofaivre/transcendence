@@ -81,28 +81,9 @@
 		}
 	}
 
-	async function triggerCropperModal() {
-		const r = await new Promise<{ step: number; state: StepperState } | undefined>(
-			(resolve) => {
-				const modalSettings: ModalSettings = {
-					type: "component",
-					component: "CropperModal",
-					response: () => {
-						modalStore.close()
-						resolve(r)
-					},
-				}
-				modalStore.trigger(modalSettings)
-			},
-		)
-		if (r) {
-			alert("Got cropped image !")
-		}
-	}
-
 	function onComplete() {
 		if ($modalStore[0].response) {
-			$modalStore[0].response("coucou")
+			$modalStore[0].response(cropped_image_file)
 		}
 	}
 

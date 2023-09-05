@@ -1,33 +1,18 @@
 <script lang="ts">
-	import type { StepperState } from "@skeletonlabs/skeleton/dist/components/Stepper/types"
 	import type { PaginationSettings } from "@skeletonlabs/skeleton"
 	import type { MatchHistory } from "$types"
 	import type { PageData } from "./$types"
 	import type { TableSource } from "@skeletonlabs/skeleton"
-	import type { ModalSettings, ModalComponent, ModalStore } from "@skeletonlabs/skeleton"
+	import type { ModalSettings } from "@skeletonlabs/skeleton"
 
-	import { Modal, getModalStore } from "@skeletonlabs/skeleton"
-	import {
-		Avatar,
-		FileDropzone,
-		Paginator,
-		SlideToggle,
-		Table,
-		getToastStore,
-	} from "@skeletonlabs/skeleton"
+	import { ProgressRadial, getModalStore } from "@skeletonlabs/skeleton"
+	import { Avatar, Paginator, SlideToggle, Table, getToastStore } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { checkError, makeToast } from "$lib/global"
-	import { Stepper, Step } from "@skeletonlabs/skeleton"
-	import Toggle from "$lib/Toggle.svelte"
-	import { listenOutsideClick } from "$lib/global"
-	import Cropper from "svelte-easy-crop"
-	import { getCroppedImg } from "$lib/canvas_utils"
 	import { isContractError } from "contract"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL, PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB } from "$env/static/public"
-	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
 
-	import { page } from "$app/stores"
 	import { reload_img } from "$stores"
 
 	let _init = true
@@ -147,71 +132,6 @@
 	// PP Upload
 	let files: FileList
 	$: files, console.log(files)
-	let cropped_image_src: string | null = null
-	let cropped_image_file: File
-	let img_src: string | "" = ""
-	let buttonBackLabel = "← Back"
-	let buttonNextLabel = "Next →"
-	let crop: {
-		x: number
-		y: number
-		width: number
-		height: number
-	} = {
-		x: 0,
-		y: 0,
-		width: 0,
-		height: 0,
-	}
-	let picker_lock = true
-
-	function onFileSelected() {
-		if (files && files[0]) {
-			const imageFile = files[0]
-			const reader = new FileReader()
-			reader.addEventListener("load", ({ target }) => {
-				if (target?.result && typeof target.result === "string") img_src = target.result
-			})
-			reader.readAsDataURL(imageFile)
-			picker_lock = false
-		}
-	}
-
-	function reportCrop(e: CustomEvent<{ pixels: typeof crop }>) {
-		crop = e.detail.pixels
-	}
-
-	function onStepHandler(e: {
-		detail: { state: { current: number; total: number }; step: number }
-	}) {
-		// Doesn't work
-		if (e.detail.state.current == 0) {
-			buttonNextLabel = "Edit →"
-		}
-		if (e.detail.state.current == 1) {
-			buttonNextLabel = "Crop"
-		}
-	}
-
-	function onBackHandler() {}
-
-	async function onNextHandler(e: {
-		detail: { state: { current: number; total: number }; step: number }
-	}) {
-		console.log(e.detail.step)
-		console.log(e.detail.state.current)
-		// File picking
-		if (e.detail.state.current == 0) {
-		}
-		// Just cropped
-		if (e.detail.state.current == 2) {
-			const cropped_image_blob = await getCroppedImg(img_src, crop)
-			cropped_image_src = URL.createObjectURL(cropped_image_blob)
-			cropped_image_file = new File([cropped_image_blob], cropped_image_src, {
-				type: files[0].type,
-			})
-		}
-	}
 
 	async function onComplete(cropped_image_file: File) {
 		const ret = await client.users.setMyProfilePicture({
@@ -271,8 +191,10 @@
 					alt="profile"
 				/>
 			</button>
-			<!-- col2 -->
-			<h1 class="self-center text-black">{data.me.userName}</h1>
+			<!-- Name  -->
+			<h1 class="self-center text-4xl text-black" style:font-family="ArcadeClassic">
+				{data.user.userName}
+			</h1>
 		</div>
 
 		<div class="flex-1">
@@ -285,6 +207,32 @@
 				2FA Authentication
 			</SlideToggle>
 		</div>
+
+		<!--  Name + stats-->
+		<div class="flex flex-1 flex-col" style:font-family="ArcadeClassic">
+			<!-- Stats  -->
+			<div class="flex flex-1 items-center text-black">
+				<div class="flex flex-1 flex-col items-center">
+					<div class="">Played</div>
+					<div class="flex-1">
+						<ProgressRadial font={140} width="w-24" value={100} fill="">
+							{data.user.nWin + data.user.nLoose}
+						</ProgressRadial>
+					</div>
+				</div>
+				<div class="flex flex-1 flex-col items-center">
+					<p style:word-spacing={"0.2em"}>Win ratio</p>
+					<ProgressRadial
+						font={140}
+						width="w-24"
+						value={data.user.winRatePercentage}
+						fill="variant-filled-primary"
+					>
+						{`${data.user.winRatePercentage}/100`}
+					</ProgressRadial>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 <div class="p-3">
@@ -292,6 +240,6 @@
 		<Table source={table_source} />
 		<Paginator bind:settings showNumerals on:page={onPageChange} />
 	{:else}
-		<div class="py-20 text-center text-3xl font-bold text-gray-500">No games to show yet</div>
+		<div class="py-8 text-center text-3xl font-bold text-gray-500">No games to show yet</div>
 	{/if}
 </div>

@@ -11,13 +11,22 @@ export const load: PageLoad = async ({ parent }) => {
 		},
 	})
 
-	if (match_history.status !== 200)
-		checkError(match_history, "load user's match_history information")
-	else {
-		const ret = {
+	const user = await client.users.getUser({
+		params: {
+			userName: me.userName,
+		},
+	})
+
+	if (user.status !== 200 || match_history.status !== 200) {
+		checkError(
+			user.status !== 200 ? user : match_history,
+			"load user's match_history information",
+		)
+	} else {
+		return {
 			match_history: match_history.body,
+			user: user.body,
 		}
-		return ret
 	}
 	return { user: {} as Record<string, any>, match_history: [] }
 }

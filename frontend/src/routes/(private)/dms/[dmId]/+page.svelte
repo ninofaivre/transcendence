@@ -151,7 +151,7 @@
 	let header_height: number
 	let disabled: boolean = false
     $: disabled = data.dmList.find((el) => el.id === $page.params.dmId)?.status === "DISABLED"
-	let disabled_placeholder = "This user blocked you"
+	let disabled_placeholder = "Disabled"
 
 	// Calculate the NavBar height in order to adapt the layout
 	onMount(() => {

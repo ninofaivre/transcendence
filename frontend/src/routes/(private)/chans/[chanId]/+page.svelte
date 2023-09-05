@@ -42,12 +42,13 @@
 		console.log("from page reactive block: ", disabled)
 	}
 
-	function updateSomeMessage(to_update_id: string, new_message: string) {
+	function updateSomeMessage(to_update_id: string, new_message: string, isDeleted: boolean) {
 		const to_update_idx: number = messages.findLastIndex((message: MessageOrEvent) => {
 			return message.id === to_update_id
 		})
 		// We needed the index to operate directly on messages so that reactivity is triggered
 		;(messages[to_update_idx] as Message).content = new_message
+		;(messages[to_update_idx] as Message).isDeleted = isDeleted
 		return to_update_idx
 	}
 
@@ -120,7 +121,7 @@
 			},
 		})
 		if (ret.status === 200) {
-			updateSomeMessage(elementId, new_message)
+			updateSomeMessage(elementId, new_message, false)
 		} else if (isContractError(ret)) {
 			makeToast(
 				`Server refused to edit message, returned code ${ret.status}\n with message \"${ret.body.message}\"`,
@@ -178,7 +179,7 @@
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_MESSAGE", (data) => {
 				console.log("Server message: Message was modified", data)
 				if (data.chanId === $page.params.chanId) {
-					updateSomeMessage(data.message.id, data.message.content)
+					updateSomeMessage(data.message.id, data.message.content, data.message.isDeleted)
 				}
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (data) => {

@@ -42,6 +42,8 @@
 			})
 			reader.readAsDataURL(imageFile)
 			picker_lock = false
+			const next_button = document.querySelector(`div.step-navigation > button > span`)
+			next_button?.click()
 		}
 	}
 
@@ -112,7 +114,7 @@
 				<svelte:fragment slot="message">Upload your profile picture</svelte:fragment>
 				<svelte:fragment slot="meta">PNG and JPEG files only</svelte:fragment>
 			</FileDropzone>
-			<img src={img_src} alt="preview" class="w-7" />
+			<!-- <img src={img_src} alt="preview" class="w-16" /> -->
 		</Step>
 		<!-- <Step locked={cropper_lock}> -->
 		<Step>
@@ -123,7 +125,7 @@
 		</Step>
 		<Step>
 			<svelte:fragment slot="header">Do you like it ?</svelte:fragment>
-			<img src={cropped_image_src} alt="cropped preview" class="w-7" />
+			<img src={cropped_image_src} alt="cropped preview" class="" />
 		</Step>
 	</Stepper>
 </div>

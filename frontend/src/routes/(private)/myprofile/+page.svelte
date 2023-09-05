@@ -236,6 +236,25 @@
 			)
 	}
 
+	async function triggerCropperModal() {
+		const r = await new Promise<{ step: number; state: StepperState } | undefined>(
+			(resolve) => {
+				const modalSettings: ModalSettings = {
+					type: "component",
+					component: "CropperModal",
+					response: () => {
+						modalStore.close()
+						resolve(r)
+					},
+				}
+				modalStore.trigger(modalSettings)
+			},
+		)
+		if (r) {
+			alert("Got cropped image !")
+		}
+	}
+
 	_init = false
 </script>
 
@@ -314,5 +333,7 @@
 			</Stepper>
 		</div>
 	</svelte:fragment>
-	<button class="variant-filled btn btn-sm" on:click={toggle}>Change profile picture</button>
+	<button class="variant-filled btn btn-sm" on:click={triggerCropperModal}
+		>Change profile picture</button
+	>
 </Toggle>

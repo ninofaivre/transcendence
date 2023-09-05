@@ -17,7 +17,7 @@
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { page } from "$app/stores"
 	import { client } from "$clients"
-    import { reload_img } from "$lib/stores"
+	import { reload_img } from "$lib/stores"
 
 	// Modals
 	import TimeChooser from "$lib/TimeChooser.svelte"
@@ -28,6 +28,7 @@
 	import AcceptGameInvitationModal from "$lib/AcceptGameInvitationModal.svelte"
 	import TwoFAModal from "$lib/TwoFAModal.svelte"
 	import JoinRoom from "$lib/JoinRoom.svelte"
+	import CropperModal from "$lib/CropperModal.svelte"
 
 	initializeStores()
 	const modalStore = getModalStore()
@@ -51,6 +52,7 @@
 		SendFriendRequestModal: { ref: SendFriendRequestModal },
 		AcceptGameInvitationModal: { ref: AcceptGameInvitationModal },
 		TwoFAModal: { ref: TwoFAModal },
+		CropperModal: { ref: CropperModal },
 	}
 
 	onMount(() => console.log("Layout mounted"))
@@ -122,7 +124,8 @@
 					</button>
 					<a href="/myprofile" class="variant-ghost chip ml-1 flex">
 						<Avatar
-							src="{PUBLIC_BACKEND_URL}/api/users/{$page.data.me.userName}/profilePicture?reload={$reload_img}"
+							src="{PUBLIC_BACKEND_URL}/api/users/{$page.data.me
+								.userName}/profilePicture?reload={$reload_img}"
 							fallback="https://i.pravatar.cc/?u={$page.data.me.userName}"
 							class="h-8 w-8"
 							rounded="rounded-full"

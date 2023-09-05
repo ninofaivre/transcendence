@@ -80,7 +80,7 @@
 			})
 			if (ret.status != 201) checkError(ret, "create a new room")
 			else {
-				makeToast(`Created a new ${type.toLowerCase()} room: ${r}`, toastStore)
+				makeToast(`Created a new ${type.toLowerCase()} room: ${ret.body.title}`, toastStore)
 				invalidate(":chans")
 			}
 		}

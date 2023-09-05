@@ -1,28 +1,27 @@
 <script lang="ts">
 	import type { TableSource } from "@skeletonlabs/skeleton"
 
-	import { page } from "$app/stores"
 	import { Table } from "@skeletonlabs/skeleton"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
-	import { invalidate } from "$app/navigation"
+	import { invalidate, invalidateAll } from "$app/navigation"
 	import { addListenerToEventSource, makeToast } from "$lib/global"
 	import { getContext, onMount } from "svelte"
 	import type { Writable } from "svelte/store"
+	import type { PageData } from "./$types"
 
 	// For some reason invalidate seems to work in this file, go figure
+	export let data: PageData
 	const sse_store: Writable<EventSource> = getContext("sse_store")
 
 	onMount(() => {
 		const destroyer = new Array(
 			addListenerToEventSource($sse_store, "UPDATED_FRIEND_INVITATION_STATUS", (new_data) => {
-				console.log("UPDATED_FRIEND_INVITATION_STATUS", new_data)
-				invalidate(":friends:invitations")
+				invalidateAll()
 			}),
 			addListenerToEventSource($sse_store, "UPDATED_CHAN_INVITATION_STATUS", (new_data) => {
-				console.log("UPDATED_CHAN_INVITATION_STATUS", new_data)
-				invalidate(":chans:invitations")
+				invalidateAll()
 			}),
 		)
 
@@ -103,24 +102,24 @@
 		// client.dms.getDmIdWithName(e.detail)
 	}
 
-	console.log("Your friendships are:", $page.data.friendships)
-	console.log(tableMapperValues($page.data.friendships, ["friendName"]))
+	console.log("Your friendships are:", data.friendships)
+	console.log(tableMapperValues(data.friendships, ["friendName"]))
 
 	let friendTableSource: TableSource
 	$: friendTableSource = {
 		// A list of heading labels.
 		head: ["Friends"],
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues($page.data.friendships, ["friendName"]),
+		body: tableMapperValues(data.friendships, ["friendName"]),
 	}
 </script>
 
 <SendFriendRequest />
 
 <ul class="m-3">
-	{#if $page.data.chan_invites.incoming.length != 0}
+	{#if data.chan_invites.incoming.length != 0}
 		Pending chan invitations:
-		{#each $page.data.chan_invites.incoming as request}
+		{#each data.chan_invites.incoming as request}
 			<li class="variant-soft chip m-2">
 				<span>
 					{request.invitingUserName} invited you to the {request.chanTitle} channel :
@@ -143,9 +142,9 @@
 </ul>
 
 <ul class="m-3">
-	{#if $page.data.friend_requests.incoming.length != 0}
+	{#if data.friend_requests.incoming.length != 0}
 		Pending friend invitations:
-		{#each $page.data.friend_requests.incoming as request}
+		{#each data.friend_requests.incoming as request}
 			<li class="variant-soft chip m-2">
 				<span>
 					{request.invitingUserName}

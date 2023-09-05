@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { getModalStore } from "@skeletonlabs/skeleton"
-	import type { StepperState } from "@skeletonlabs/skeleton/dist/components/Stepper/types"
-	import type { ModalSettings, ModalComponent, ModalStore } from "@skeletonlabs/skeleton"
 
 	import { FileDropzone } from "@skeletonlabs/skeleton"
 	import { Stepper, Step } from "@skeletonlabs/skeleton"
@@ -42,7 +40,9 @@
 			})
 			reader.readAsDataURL(imageFile)
 			picker_lock = false
-			const next_button = document.querySelector(`div.step-navigation > button > span`)
+			const next_button = document.querySelector(
+				`div.step-navigation > button > span`,
+			) as HTMLSpanElement | null
 			next_button?.click()
 		}
 	}
@@ -68,12 +68,6 @@
 	async function onNextHandler(e: {
 		detail: { state: { current: number; total: number }; step: number }
 	}) {
-		console.log(e.detail.step)
-		console.log(e.detail.state.current)
-		// File picking
-		if (e.detail.state.current == 0) {
-		}
-		// Just cropped
 		if (e.detail.state.current == 2) {
 			const cropped_image_blob = await getCroppedImg(img_src, crop)
 			cropped_image_src = URL.createObjectURL(cropped_image_blob)
@@ -114,23 +108,17 @@
 				<svelte:fragment slot="message">Upload your profile picture</svelte:fragment>
 				<svelte:fragment slot="meta">PNG and JPEG files only</svelte:fragment>
 			</FileDropzone>
-			<!-- <img src={img_src} alt="preview" class="w-16" /> -->
 		</Step>
 		<!-- <Step locked={cropper_lock}> -->
 		<Step>
 			<svelte:fragment slot="header">Square it</svelte:fragment>
-			<div class="relative h-[35rem]">
+			<div class="relative h-[30rem]">
 				<Cropper image={img_src} aspect={1} zoom={1} on:cropcomplete={reportCrop} />
 			</div>
 		</Step>
 		<Step>
 			<svelte:fragment slot="header">Do you like it ?</svelte:fragment>
-			<img src={cropped_image_src} alt="cropped preview" class="" />
+			<img src={cropped_image_src} alt="cropped preview" class="h-[30rem] rounded-full" />
 		</Step>
 	</Stepper>
 </div>
-
-<!-- <footer class="modal-footer"> -->
-<!-- 	<button type="button" class="variant-ghost-surface btn" on:click={onClose}>Cancel</button> -->
-<!-- 	<button type="submit" class="variant-filled btn">Mute</button> -->
-<!-- </footer> -->

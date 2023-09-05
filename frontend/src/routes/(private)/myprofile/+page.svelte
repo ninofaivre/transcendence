@@ -137,7 +137,6 @@
 			if (ret.status !== 200) checkError(ret, "load match history", getToastStore())
 			else {
 				if (ret.body.length < settings.limit) {
-					// alert("After this one, no more data")
 					keep_loading = false
 				}
 				match_history = [...match_history, ...remap(ret.body)]
@@ -249,7 +248,6 @@
 			modalStore.trigger(modalSettings)
 		})
 		if (r) {
-			alert("Got cropped image !")
 			onComplete(r)
 		}
 	}

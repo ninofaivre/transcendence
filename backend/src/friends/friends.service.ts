@@ -153,7 +153,7 @@ export class FriendsService {
         if (!newEvent)
             return
         await this.prisma.directMessage.update({
-            where: { id: friendShipId },
+            where: { id: dmId },
             data: { status: 'DISABLED' }
         })
         await this.dmsService.formatAndNotifyDmElement(

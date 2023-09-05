@@ -21,11 +21,13 @@
 		shallowCopyPartialToNotPartial,
 	} from "$lib/global"
 	import { isContractError } from "contract"
+	import { getToastStore } from "@skeletonlabs/skeleton"
 
 	console.log($page.route.id, " init")
 
 	export let data: PageData
 	const sse_store: Writable<EventSource> = getContext("sse_store")
+	const toastStore = getToastStore()
 
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
@@ -109,6 +111,7 @@
 		} else if (isContractError(ret)) {
 			makeToast(
 				`Message deletion denied. Server returned code ${ret.status}\n with message \"${ret.body.message}\"`,
+				toastStore,
 			)
 			console.warn(ret.body.code)
 		} else {
@@ -131,6 +134,7 @@
 		} else if (isContractError(ret)) {
 			makeToast(
 				`Server refused to edit message, returned code ${ret.status}\n with message \"${ret.body.message}\"`,
+				toastStore,
 			)
 			console.warn(ret.body.code)
 		}

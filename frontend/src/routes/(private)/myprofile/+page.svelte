@@ -221,12 +221,15 @@
 			},
 		})
 		if (ret.status === 204) {
-			makeToast("Upload successful")
-            $reload_img = $reload_img + 1
+			makeToast("Upload successful", toastStore)
+			$reload_img = $reload_img + 1
 		} else if (ret.status === 413) {
-			makeToast(`Image is too big. Upload must be under ${PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB}MB`)
+			makeToast(
+				`Image is too big. Upload must be under ${PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB}MB`,
+				toastStore,
+			)
 		} else if (isContractError(ret)) {
-			makeToast(`Upload failed: ${ret.body.message}`)
+			makeToast(`Upload failed: ${ret.body.message}`, toastStore)
 		} else
 			throw new Error(
 				`Coulnd't upload profile picture. Unexpected return from the server: ${ret.status}`,
@@ -242,7 +245,8 @@
 		<div class="grid flex-1 grid-cols-2">
 			<!-- col1 -->
 			<Avatar
-                src="{PUBLIC_BACKEND_URL}/api/users/{data.me.userName}/profilePicture?reload={$reload_img}"
+				src="{PUBLIC_BACKEND_URL}/api/users/{data.me
+					.userName}/profilePicture?reload={$reload_img}"
 				fallback="https://i.pravatar.cc/?u={data.me.userName}"
 				alt="profile"
 			/>

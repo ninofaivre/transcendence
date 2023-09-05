@@ -4,13 +4,14 @@
 	import { addListenerToEventSource } from "$lib/global"
 	import { invalidate } from "$app/navigation"
 	import { makeToast } from "$lib/global"
-	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { checkError } from "$lib/global"
 	import type { Writable } from "svelte/store"
 
 	const modalStore = getModalStore()
 	const sse_store: Writable<EventSource> = getContext("sse_store")
+	const toastStore = getToastStore()
 
 	export let currentDiscussionId: string
 	export let discussions: Chan[]
@@ -40,7 +41,7 @@
 					modalStore.close()
 					resolve(r)
 				},
-                meta: { chanId, }
+				meta: { chanId },
 			}
 			modalStore.trigger(modal)
 		})
@@ -53,7 +54,7 @@
 			})
 			if (ret.status != 201) checkError(ret, `invite ${r} to this channel`)
 			else {
-				makeToast(`Invited ${r} to this channel`)
+				makeToast(`Invited ${r} to this channel`, toastStore)
 				invalidate(":chans:invitations") // Does this work ? TODO
 			}
 		}

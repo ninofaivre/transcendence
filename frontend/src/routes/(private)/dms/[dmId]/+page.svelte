@@ -32,12 +32,13 @@
 		sendLoadEvents = true
 	}
 
-	function updateSomeMessage(to_update_id: string, new_message: string) {
+	function updateSomeMessage(to_update_id: string, new_message: string, isDeleted: boolean) {
 		const to_update_idx: number = messages.findLastIndex((message: MessageOrEvent) => {
 			return message.id === to_update_id
 		})
 		// We needed the index to operate directly on messages so that reactivity is triggered
 		;(messages[to_update_idx] as Message).content = new_message
+		;(messages[to_update_idx] as Message).isDeleted = isDeleted
 		return to_update_idx
 	}
 
@@ -113,7 +114,7 @@
 			},
 		})
 		if (status === 200) {
-			updateSomeMessage(elementId, new_message)
+			updateSomeMessage(elementId, new_message, false)
 		} else {
 			console.error(
 				`Server refused to edit message, returned code ${status}\n with message \"${
@@ -176,7 +177,7 @@
 			addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (new_data) => {
 				console.log("Server message: Message was modified", new_data)
 				if (new_data.dmId === $page.params.dmId) {
-					updateSomeMessage(new_data.message.id, new_data.message.content)
+					updateSomeMessage(new_data.message.id, new_data.message.content, new_data.message.isDeleted)
 				}
 			}),
 			addListenerToEventSource($sse_store, "BLOCKED_BY_USER", (new_data) => {

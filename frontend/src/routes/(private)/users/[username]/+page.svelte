@@ -25,8 +25,10 @@
 
 	const modalStore = getModalStore()
 	const toastStore = getToastStore()
-	let invite_state: null | "pending" | "accepted"
-	let already_friend: boolean = data.friendList.includes($page.params.username)
+	let friend_invite_state: null | "pending" | "accepted"
+	let already_friend: boolean
+	$: already_friend = data.friendList.includes($page.params.username)
+
 	console.log(data.friendList)
 	console.log(data.friendships)
 	let spin = false
@@ -210,7 +212,7 @@
 					<button class="variant-filled-error btn btn-sm h-fit" on:click={unblockUser}>
 						Remove Block
 					</button>
-				{:else if invite_state !== "pending" || !already_friend}
+				{:else if friend_invite_state !== "pending" || !already_friend}
 					<button
 						class="variant-filled-error btn btn-sm h-fit"
 						on:click={blockUser}
@@ -232,9 +234,9 @@
 			</div>
 			<!-- Send friend request -->
 			<div class="flex-1">
-				{#if invite_state}
+				{#if friend_invite_state}
 					<p>
-						{`You friend request has been ${invite_state}`}
+						{`You friend request has been ${friend_invite_state}`}
 					</p>
 				{:else if already_friend}
 					<button class="variant-filled-error btn btn-sm h-fit" on:click={revokeFriend}

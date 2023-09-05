@@ -7,9 +7,27 @@
 	import { client } from "$clients"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { invalidate } from "$app/navigation"
-	import { makeToast } from "$lib/global"
+	import { addListenerToEventSource, makeToast } from "$lib/global"
+	import { getContext, onMount } from "svelte"
+	import type { Writable } from "svelte/store"
 
 	// For some reason invalidate seems to work in this file, go figure
+	const sse_store: Writable<EventSource> = getContext("sse_store")
+
+	onMount(() => {
+		const destroyer = new Array(
+			addListenerToEventSource($sse_store, "UPDATED_FRIEND_INVITATION_STATUS", (new_data) => {
+				invalidate(":friends:invitations")
+			}),
+			addListenerToEventSource($sse_store, "UPDATED_CHAN_INVITATION_STATUS", (new_data) => {
+				invalidate(":chans:invitations")
+			}),
+		)
+
+		return () => {
+			destroyer.forEach((func) => func())
+		}
+	})
 
 	async function acceptFriendInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
 		const id = e.currentTarget.dataset.id
@@ -35,8 +53,8 @@
 				params: { id },
 				body: { status: "REFUSED" },
 			})
-			if (status != 201) {
-				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
+			if (status != 200) {
+				const message = `Could not decline friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
 				makeToast(message)

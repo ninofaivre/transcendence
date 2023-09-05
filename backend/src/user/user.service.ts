@@ -55,8 +55,20 @@ export class UserService {
 				select: { title: true, id: true, type: true },
 			},
 			dmPolicyLevel: true,
-            incomingFriendInvitation: { where: { invitingUserName: username }, select: { id: true } },
-            outcomingFriendInvitation: { where: { invitedUserName: username }, select: { id: true } },
+            incomingFriendInvitation: {
+                where: {
+                    status: "PENDING",
+                    invitingUserName: username
+                },
+                select: { id: true },
+            },
+            outcomingFriendInvitation: {
+                where: {
+                    status: "PENDING", 
+                    invitedUserName: username
+                },
+                select: { id: true }
+            },
             friend: { where: { requestedUserName: username }, select: { id: true } },
             friendOf: { where: { requestingUserName: username}, select: { id: true } },
 			blockedUser: { where: { blockedUserName: username }, select: { id: true } },
@@ -762,8 +774,10 @@ export class UserService {
                 }
             },
             outcomingFriendInvitation: {
-                status: 'PENDING',
-                none: { invitedUserName: username }
+                none: {
+                    status: 'PENDING',
+                    invitedUserName: username
+                }
             }
         }),
     }

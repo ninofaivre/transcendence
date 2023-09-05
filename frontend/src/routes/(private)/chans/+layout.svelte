@@ -4,7 +4,7 @@
 
 	/* Components */
 	import ChanList from "./ChanList.svelte"
-	import { getContext, onMount } from "svelte"
+	import { getContext, onMount, setContext } from "svelte"
 	import { page } from "$app/stores"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { addListenerToEventSource } from "$lib/global"
@@ -22,6 +22,11 @@
 	let header: HTMLElement | null
 	let header_height: number
 	const sse_store: Writable<EventSource> = getContext("sse_store")
+
+	setContext(
+		"chan",
+		data.chanList.find((el) => el.id === $page.params.chanId),
+	)
 
 	onMount(() => {
 		header = document.getElementById("shell-header")
@@ -89,8 +94,9 @@
 			else {
 				makeToast(`Created a new ${type.toLowerCase()} room: ${ret.body.title}`, toastStore)
 				data.chanList = [ret.body, ...data.chanList]
-                alert("Created chan id is" + ret.body.id)
-                goto("/chans/" + ret.body.id)
+				console.log("post insert", data.chanList)
+				alert("Created chan id is " + ret.body.id)
+				goto("/chans/" + ret.body.id)
 			}
 		}
 	}

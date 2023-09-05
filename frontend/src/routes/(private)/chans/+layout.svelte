@@ -8,15 +8,13 @@
 	import { page } from "$app/stores"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { addListenerToEventSource } from "$lib/global"
-	import { invalidate } from "$app/navigation"
 	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { checkError } from "$lib/global"
 	import { client } from "$clients"
 	import { makeToast } from "$lib/global"
 	import type { Writable } from "svelte/store"
 
-	// Get our discussions
-	// export let data: LayoutData // TODO wtf
+	export let data: LayoutData
 
 	const modalStore = getModalStore()
 	const toastStore = getToastStore()
@@ -42,9 +40,11 @@
 			// This callback cleans up the observer
 		}
 		const destroyer: (() => void)[] = new Array(
-			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (data) => {
-				if (data.chanId === $page.params.chanId) {
-					invalidate(":chans")
+			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (new_data) => {
+				if (new_data.chanId === $page.params.chanId) {
+					const to_rm_idx = data.chanList.findLastIndex((el) => el.id === new_data.chanId)
+					data.chanList.splice(to_rm_idx, 1)
+					data.chanList = data.chanList
 				}
 			}),
 		)
@@ -81,7 +81,7 @@
 			if (ret.status != 201) checkError(ret, "create a new room")
 			else {
 				makeToast(`Created a new ${type.toLowerCase()} room: ${ret.body.title}`, toastStore)
-				invalidate(":chans")
+				data.chanList = [ret.body, ...data.chanList]
 			}
 		}
 	}
@@ -111,14 +111,15 @@
 			})
 			if (ret.status != 200) checkError(ret, `join ${title}`)
 			else {
+				ret.body
 				makeToast(`Joined ${title}`, toastStore)
-				invalidate(":chans")
+				data.chanList = [ret.body, ...data.chanList]
 			}
 		}
 	}
 </script>
 
-{#if $page.data.chanList.length}
+{#if data.chanList.length}
 	<!--Column layout -->
 	<div
 		class="grid grid-cols-[auto_1fr]"
@@ -146,10 +147,7 @@
 				</button>
 			</section>
 			<section id="discussions" class="overflow-y-auto">
-				<ChanList
-					discussions={$page.data.chanList}
-					currentDiscussionId={$page.params.chanId}
-				/>
+				<ChanList discussions={data.chanList} currentDiscussionId={$page.params.chanId} />
 			</section>
 		</div>
 

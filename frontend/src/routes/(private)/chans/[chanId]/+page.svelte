@@ -36,10 +36,12 @@
 	// Important, resets variable on route parameter change
 	$: messages = $page.data.messages // Need this becaus I can't mody the store directly
 	$: {
-		chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
-		sendLoadEvents = true
-		disabled = !chan.selfPerms.includes("SEND_MESSAGE")
-		console.log("from page reactive block: ", disabled)
+        if (chan){
+            chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
+            sendLoadEvents = true
+            disabled = !chan.selfPerms.includes("SEND_MESSAGE")
+            console.log("from page reactive block: ", disabled)
+        }
 	}
 
 	function updateSomeMessage(to_update_id: string, new_message: string, isDeleted: boolean) {

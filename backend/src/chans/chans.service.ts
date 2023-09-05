@@ -1114,6 +1114,12 @@ export class ChansService {
             })
         if (!updatedChan)
             return
+        if (!state) {
+            this.sse.pushEvent(otherUserName, {
+                type: "FLUSH_BANNED_USERS",
+                data: { chanId }
+            })
+        }
         this.notifyUpdatedSelfPerm(otherUserName, updatedChan)
         this.notifyUpdatedChanUser(otherUserName,
             this.usersToNames(chan.users),

@@ -468,6 +468,12 @@ export type ChanEvent =
 			type: "UPDATED_CHAN_INFO"
 			data: z.infer<typeof zUpdatedChan>
 	  }
+    | {
+            type: "FLUSH_BANNED_USERS"
+            data: {
+                chanId: string
+            }
+    }
 	| {
 			type: "CREATED_CHAN_USER"
 			data: {

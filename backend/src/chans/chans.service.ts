@@ -431,7 +431,7 @@ export class ChansService {
 					users: { some: { name: username } },
 				},
 				select: this.getChansSelect(username),
-				orderBy: { type: "desc" },
+                orderBy: { creationDate: 'desc' }
 			}),
 		)
 	}

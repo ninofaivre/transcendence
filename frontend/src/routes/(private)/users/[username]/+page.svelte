@@ -25,7 +25,6 @@
 
 	const modalStore = getModalStore()
 	const toastStore = getToastStore()
-	let friend_invite_state: null | "pending" | "accepted"
 
 	let already_friend: boolean
 	$: already_friend = data.friendList.includes($page.params.username)
@@ -192,6 +191,22 @@
 	}
 
 	$: nPlayed = data.user.nWin + data.user.nLoose
+
+	async function acceptFriendRequest(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
+		if (data.user.invitedId) {
+			const { status, body } = await client.invitations.friend.updateFriendInvitation({
+				params: { id: data.user.invitedId },
+				body: { status: "ACCEPTED" },
+			})
+			if (status >= 400) {
+				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
+					(body as any)?.message
+				}\"`
+				makeToast(message)
+				console.error(message)
+			} else invalidate(":friends:invitations")
+		}
+	}
 </script>
 
 <!-- Container -->
@@ -207,22 +222,23 @@
 				fallback="https://i.pravatar.cc/?u={data.user.userName}"
 				alt="profile"
 			/>
-			<!-- Block -->
+			<!-- Block | Remove block -->
 			<div class="flex-1">
 				{#if data.user.blockedId}
-					<button class="variant-filled-error btn btn-sm h-fit" on:click={unblockUser}>
+					<button class="variant-filled-warning btn btn-sm h-fit" on:click={unblockUser}>
 						Remove Block
 					</button>
-				{:else if friend_invite_state !== "pending" || !already_friend}
+				{:else if data.user.invitingId || !already_friend}
 					<button
-						class="variant-filled-error btn btn-sm h-fit"
+						class="variant-filled-warning btn btn-sm h-fit"
 						on:click={blockUser}
 						disabled={already_friend}
 					>
-						Block
+						🚫 Block
 					</button>
 				{/if}
 			</div>
+
 			<!-- Game invite -->
 			<div class="flex-1">
 				<button
@@ -230,25 +246,33 @@
 					on:click={inviteToGame}
 					disabled={data.user.blockedId || data.user.blockedById ? true : false}
 				>
-					Invite to a Game
+					🎮 Invite to a Game
 				</button>
 			</div>
-			<!-- Send friend request -->
+
+			<!-- Send friend request | Accept Invitation | Invitation sent | Revoke Friendship -->
 			<div class="flex-1">
-				{#if friend_invite_state}
-					<p>
-						{`You friend request has been ${friend_invite_state}`}
+				{#if data.user.invitingId}
+					<p class="variant-filled-warning w-fit rounded-full px-2 py-1 text-sm">
+						🤝 Friend request sent
 					</p>
+				{:else if data.user.invitedId}
+					<button
+						class="variant-filled-error btn btn-sm h-fit"
+						on:click={acceptFriendRequest}
+					>
+						🤝 Accept friend request
+					</button>
 				{:else if already_friend}
-					<button class="variant-filled-error btn btn-sm h-fit" on:click={revokeFriend}
-						>Revoke Friendship
+					<button class="variant-filled-error btn btn-sm h-fit" on:click={revokeFriend}>
+						Revoke Friendship
 					</button>
 				{:else}
 					<button
 						class="variant-filled-primary btn btn-sm h-fit"
 						disabled={data.user.blockedId || data.user.blockedById ? true : false}
 						on:click={askFriend}
-						>Send Friend Request
+						>🤝 Send Friend Request
 					</button>
 				{/if}
 			</div>

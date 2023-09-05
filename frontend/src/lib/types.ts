@@ -44,4 +44,7 @@ export type CreateMessageFunction =
 export type Friendships = ClientInferResponseBody<typeof contract.friends.getFriends, 200>
 export type Friendship = Flatten<Friendships>
 
+export type FriendInvitations = ClientInferResponseBody<typeof contract.invitations.friend.getFriendInvitations, 200>
+export type FriendInvitation = Flatten<FriendInvitations>
+
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>

@@ -37,11 +37,6 @@
 			// This callback cleans up the observer
 		}
 		const destroyer: (() => void)[] = new Array(
-			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (new_data) => {
-				if (new_data.chanId === $page.params.chanId) {
-					data.dmList = data.dmList.filter((el) => el.id === new_data.chanId)
-				}
-			}),
 			addListenerToEventSource($sse_store, "CREATED_DM", (new_data) => {
 				data.dmList = [new_data, ...data.dmList]
 			}),

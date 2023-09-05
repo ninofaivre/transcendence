@@ -29,15 +29,18 @@
 
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
-	let chan: Chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
 	let disabled: boolean = false
 	let disabled_placeholder = "You have been muted" // ChatBox placeholder
 
 	// Important, resets variable on route parameter change
-	$: messages = $page.data.messages // Need this becaus I can't mody the store directly
+	$: messages = data.messages 
+
+	let chan: Chan = data.chanList.find((el: Chan) => el.id === $page.params.chanId)
+    console.log(data.chanList)
 	$: {
-        if (chan){
-            chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
+        if ( chan ) {
+            chan = data.chanList.find((el: Chan) => el.id === $page.params.chanId)
+            console.log(data.chanList)
             sendLoadEvents = true
             disabled = !chan.selfPerms.includes("SEND_MESSAGE")
             console.log("from page reactive block: ", disabled)

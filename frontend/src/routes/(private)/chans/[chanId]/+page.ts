@@ -16,6 +16,7 @@ export const load = async ({ depends, params }: PageLoadEvent) => {
 				(messages as any)?.message
 			}\"`,
 		)
+        return { messages: [] }
 	}
 
 	// console.log("Your messages:", messages)

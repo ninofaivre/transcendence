@@ -10,7 +10,7 @@
 
 	console.log("DiscussionDisplay init")
 
-	export let discussion: Chan | DirectConversation
+	export let discussion: Chan | DirectConversation 
 	export let messages: MessageOrEvent[] = []
 	export let sendLoadEvents: boolean
 	export let my_name: string

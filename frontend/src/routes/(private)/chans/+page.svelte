@@ -5,5 +5,9 @@
 
     export let data: LayoutData
 
-	goto($page.url + "/" + data.chanList[0]?.id)
+	// goto($page.url + "/" + data.chanList[0]?.id)
 </script>
+
+<p>
+    No redir
+</p>

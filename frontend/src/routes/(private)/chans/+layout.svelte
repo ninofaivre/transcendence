@@ -51,6 +51,9 @@
 					data.chanList = data.chanList.filter((el) => el.id === new_data.chanId)
 				}
 			}),
+			addListenerToEventSource($sse_store, "CREATED_CHAN", (new_data) => {
+				data.chanList = [new_data, ...data.chanList]
+			}),
 		)
 		return () => {
 			if (header) resizeObserver.unobserve(header as HTMLElement)
@@ -86,6 +89,7 @@
 			else {
 				makeToast(`Created a new ${type.toLowerCase()} room: ${ret.body.title}`, toastStore)
 				data.chanList = [ret.body, ...data.chanList]
+                alert("Created chan id is" + ret.body.id)
                 goto("/chans/" + ret.body.id)
 			}
 		}

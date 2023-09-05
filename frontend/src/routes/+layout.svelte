@@ -101,10 +101,14 @@
 				<strong
 					class="origin-center -rotate-45 py-8 text-xs uppercase md:rotate-0 md:text-lg lg:text-xl xl:text-2xl"
 				>
-					<a href="/"
-                            style:font-family="ArcadeClassic"
-                            style:font-size="2rem"
-                    >Transcendance</a>
+					<a
+						href="/"
+						class="tracking-wide"
+						style:font-family="ArcadeClassic"
+						style:font-size="1.5rem"
+					>
+						TRANSCENDENCE
+					</a>
 				</strong>
 			</svelte:fragment>
 			{#if $logged_in}
@@ -146,3 +150,9 @@
 	<!-- Page Route Content -->
 	<slot />
 </AppShell>
+
+<style>
+	a::first-letter {
+        initial-letter: 2;
+	}
+</style>

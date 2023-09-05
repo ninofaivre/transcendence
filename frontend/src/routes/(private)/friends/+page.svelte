@@ -17,9 +17,11 @@
 	onMount(() => {
 		const destroyer = new Array(
 			addListenerToEventSource($sse_store, "UPDATED_FRIEND_INVITATION_STATUS", (new_data) => {
+				console.log("UPDATED_FRIEND_INVITATION_STATUS", new_data)
 				invalidate(":friends:invitations")
 			}),
 			addListenerToEventSource($sse_store, "UPDATED_CHAN_INVITATION_STATUS", (new_data) => {
+				console.log("UPDATED_CHAN_INVITATION_STATUS", new_data)
 				invalidate(":chans:invitations")
 			}),
 		)

@@ -61,9 +61,9 @@
 				},
 				body: null,
 			})
-			if (ret.status != 201) checkError(ret, "send friend request", toastStore)
+			if (ret.status != 204) checkError(ret, "send friend request", toastStore)
 			else {
-				makeToast("Sent friend request to " + data.user.userName, toastStore)
+				makeToast("Revoked friendship with " + data.user.userName, toastStore)
 				invalidate(":friends")
 			}
 		} else throw new Error("There is no friendShipId for this user")

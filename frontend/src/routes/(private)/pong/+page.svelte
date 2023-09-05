@@ -233,7 +233,9 @@
 	<HTML position.x={court.width} position.y={200}>
 		<button
 			on:click={surrend}
-			class="btn bg-orange-500 text-xs px-2 "
+			class="btn bg-orange-500 text-xs px-2 w-fit"
+            style:font-family="ArcadeClassic"
+            style:font-size="2rem"
 		>
 			Surrend
 		</button>
@@ -263,8 +265,8 @@
 	.menu-container > div,
 	button {
 		align-self: center;
-		justify-self: center;
-		font-family: "ArcadeClassic", "VT323", serif;
+		font-family: "ArcadeClassic", monospace;
+        justify-self: center;
 		font-size: 3rem;
 	}
 

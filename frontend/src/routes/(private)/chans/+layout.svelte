@@ -13,6 +13,7 @@
 	import { client } from "$clients"
 	import { makeToast } from "$lib/global"
 	import type { Writable } from "svelte/store"
+	import { goto } from "$app/navigation"
 
 	export let data: LayoutData
 
@@ -85,6 +86,7 @@
 			else {
 				makeToast(`Created a new ${type.toLowerCase()} room: ${ret.body.title}`, toastStore)
 				data.chanList = [ret.body, ...data.chanList]
+                goto("/chans/" + ret.body.id)
 			}
 		}
 	}

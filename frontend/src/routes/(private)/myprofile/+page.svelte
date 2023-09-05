@@ -214,7 +214,7 @@
 		}
 	}
 
-	async function onComplete(e: CustomEvent<{ step: number; state: StepperState }>) {
+	async function onComplete(cropped_image_file: File) {
 		const ret = await client.users.setMyProfilePicture({
 			body: {
 				profilePicture: cropped_image_file,
@@ -237,21 +237,20 @@
 	}
 
 	async function triggerCropperModal() {
-		const r = await new Promise<{ step: number; state: StepperState } | undefined>(
-			(resolve) => {
-				const modalSettings: ModalSettings = {
-					type: "component",
-					component: "CropperModal",
-					response: (r) => {
-						modalStore.close()
-						resolve(r)
-					},
-				}
-				modalStore.trigger(modalSettings)
-			},
-		)
+		const r = await new Promise<File | undefined>((resolve) => {
+			const modalSettings: ModalSettings = {
+				type: "component",
+				component: "CropperModal",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+			}
+			modalStore.trigger(modalSettings)
+		})
 		if (r) {
 			alert("Got cropped image !")
+			onComplete(r)
 		}
 	}
 

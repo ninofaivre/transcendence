@@ -136,7 +136,9 @@
 		<!-- <Step locked={cropper_lock}> -->
 		<Step>
 			<svelte:fragment slot="header">Square it</svelte:fragment>
-			<Cropper image={img_src} aspect={1} zoom={1} on:cropcomplete={reportCrop} />
+			<div class="relative h-[35rem]">
+				<Cropper image={img_src} aspect={1} zoom={1} on:cropcomplete={reportCrop} />
+			</div>
 		</Step>
 		<Step>
 			<svelte:fragment slot="header">Do you like it ?</svelte:fragment>

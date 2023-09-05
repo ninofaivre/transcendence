@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { TableSource } from "@skeletonlabs/skeleton"
 
-	import { Table } from "@skeletonlabs/skeleton"
+	import { Table, getToastStore } from "@skeletonlabs/skeleton"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
@@ -14,6 +14,7 @@
 	// For some reason invalidate seems to work in this file, go figure
 	export let data: PageData
 	const sse_store: Writable<EventSource> = getContext("sse_store")
+	const toastStore = getToastStore()
 
 	onMount(() => {
 		const destroyer = new Array(
@@ -43,7 +44,7 @@
 				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
-				makeToast(message)
+				makeToast(message, toastStore)
 				console.error(message)
 			} else invalidate(":friends:invitations")
 		}
@@ -60,7 +61,7 @@
 				const message = `Could not decline friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
-				makeToast(message)
+				makeToast(message, toastStore)
 				console.error(message)
 			} else invalidate(":friends:invitations")
 		}
@@ -74,10 +75,10 @@
 				body: { status: "ACCEPTED" },
 			})
 			if (status >= 400) {
-				const message = `Could not accept chan invite. Server returned code ${status}\n with message \"${
+				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
-				makeToast(message)
+				makeToast(message, toastStore)
 				console.error(message)
 			} else invalidate(":chans:invitations")
 		}
@@ -94,7 +95,7 @@
 				const message = `Could not decline chan invite. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
-				makeToast(message)
+				makeToast(message, toastStore)
 				console.error(message)
 			} else invalidate(":chans:invitations")
 		}

@@ -202,7 +202,7 @@
 				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
-				makeToast(message)
+				makeToast(message, toastStore)
 				console.error(message)
 			} else invalidate(":friends:invitations")
 		}

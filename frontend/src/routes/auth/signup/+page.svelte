@@ -5,7 +5,9 @@
 	import { PUBLIC_RANDOM_PHRASE, PUBLIC_FRONTEND_URL } from "$env/static/public"
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
+	import { getToastStore } from "@skeletonlabs/skeleton"
 
+	const toastStore = getToastStore()
 	let username = ""
 	const code = $page.url.searchParams.get("code") ?? ""
 	const state = $page.url.searchParams.get("state")
@@ -31,7 +33,7 @@
 		if (ret.status !== 201) {
 			checkError(ret, "sign up")
 		} else {
-			makeToast("Successfully signed up")
+			makeToast("Successfully signed up", toastStore)
 			logged_in.set(true)
 			const ret = await client.users.getMe()
 			if (ret.status === 200) {

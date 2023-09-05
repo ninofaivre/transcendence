@@ -4,7 +4,7 @@
 	import type { Chan, ChanMessage, DirectConversation, GameSocket, Message } from "$types"
 
 	//Components
-	import { Avatar } from "@skeletonlabs/skeleton"
+	import { Avatar, getToastStore } from "@skeletonlabs/skeleton"
 	import ChatBox from "$lib/ChatBox.svelte"
 
 	//Utils
@@ -20,6 +20,7 @@
 	import { reload_img } from "$stores"
 
 	const modalStore = getModalStore()
+	const toastStore = getToastStore()
 
 	export let message: Message
 	export let from_me: boolean
@@ -101,7 +102,7 @@
 			body: null,
 		})
 		if (ret.status != 204) checkError(ret, `kick ${message.author}`)
-		else makeToast("Kicked " + message.author)
+		else makeToast("Kicked " + message.author, toastStore)
 	}
 
 	async function mute() {
@@ -127,7 +128,7 @@
 				},
 			})
 			if (ret.status != 204) checkError(ret, `mute ${message.author}`)
-			else makeToast("Muted " + message.author)
+			else makeToast("Muted " + message.author, toastStore)
 		}
 	}
 
@@ -140,7 +141,7 @@
 			body: null,
 		})
 		if (ret.status != 204) checkError(ret, `unmute ${message.author}`)
-		else makeToast("Unmuted " + message.author)
+		else makeToast("Unmuted " + message.author, toastStore)
 	}
 
 	async function ban() {
@@ -154,7 +155,7 @@
 			},
 		})
 		if (ret.status != 204) checkError(ret, `ban ${message.author}`)
-		else makeToast("Banned " + message.author)
+		else makeToast("Banned " + message.author, toastStore)
 	}
 
 	async function unban() {
@@ -166,7 +167,7 @@
 			body: null,
 		})
 		if (ret.status != 204) checkError(ret, `unban ${message.author}`)
-		else makeToast("Unbanned " + message.author)
+		else makeToast("Unbanned " + message.author, toastStore)
 	}
 
 	async function toggleAdmin() {
@@ -183,9 +184,9 @@
 		if (ret.status != 204) checkError(ret, `unban ${message.author}`)
 		else if (ret.status === 204) {
 			if (state) {
-				makeToast(message.author + " was granted Admin status")
+				makeToast(message.author + " was granted Admin status", toastStore)
 			} else {
-				makeToast(message.author + " lost Admin status")
+				makeToast(message.author + " lost Admin status", toastStore)
 			}
 		}
 	}

@@ -149,10 +149,6 @@
 		}
 	}
 
-	// Get our discussions
-	// export let data: PageData // This almost always complains about data being "unknown"
-	// const messages = $page.data.messages
-
 	let header: HTMLElement | null
 	let header_height: number
 	onMount(() => {
@@ -191,11 +187,17 @@
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_USER", ({ chanId, user }) => {
 				if (chanId === $page.params.chanId) {
 					let index = chan.users.findIndex((o) => o.name == user.name)
-					// console.log("old user:", chan.users[index])
-					// console.log("new user:", user)
 					shallowCopyPartialToNotPartial(user, chan.users[index])
 					chan = chan
 				}
+			}),
+			addListenerToEventSource($sse_store!, "BANNED_CHAN_USER", (new_data) => {
+                const chan = data.chanList.find((el) => el.id === new_data.chanId)
+                if (chan) chan.users = chan.users.filter((el) => el.name === new_data.username)
+                data.chanList = data.chanList
+			}),
+			addListenerToEventSource($sse_store!, "FLUSH_BANNED_USERS", (new_data) => {
+                data.chanList.find((el) => el.id === new_data.chanId)?.users = []
 			}),
 		)
 		return () => {

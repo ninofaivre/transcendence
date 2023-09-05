@@ -48,3 +48,6 @@ REMEMBER.md
 
 .vite
 cookies.*.txt
+*.txt
+*.env*
+*.sh

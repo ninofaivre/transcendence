@@ -95,7 +95,6 @@
 				makeToast(`Created a new ${type.toLowerCase()} room: ${ret.body.title}`, toastStore)
 				data.chanList = [ret.body, ...data.chanList]
 				console.log("post insert", data.chanList)
-				alert("Created chan id is " + ret.body.id)
 				goto("/chans/" + ret.body.id)
 			}
 		}

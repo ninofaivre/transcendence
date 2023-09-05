@@ -26,6 +26,7 @@
 	const modalStore = getModalStore()
 	const toastStore = getToastStore()
 	let friend_invite_state: null | "pending" | "accepted"
+
 	let already_friend: boolean
 	$: already_friend = data.friendList.includes($page.params.username)
 

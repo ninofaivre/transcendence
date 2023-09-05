@@ -230,7 +230,7 @@
 		anchorY={court.height / 2 - 300}
 		font="/arcadeclassic.regular.ttf"
 	/>
-	<HTML position.x={court.width} position.y={200}>
+	<HTML position.x={court.width + 50} position.y={230}>
 		<button
 			on:click={surrend}
 			class="btn bg-orange-500 text-xs px-2 w-fit"

@@ -55,6 +55,7 @@
 <style>
 	p,
 	button {
-		font-family: "Press Start 2P", "ArcadeClassic", serif;
+		font-family: "ArcadeClassic", monospace;
+		/* font-family: "ArcadeClassic", monospace, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
 	}
 </style>

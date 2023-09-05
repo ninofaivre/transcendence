@@ -96,6 +96,6 @@
 <style>
 	p,
 	button {
-		font-family: "Press Start 2P", "ArcadeClassic", serif;
+		font-family: "ArcadeClassic", monospace;
 	}
 </style>

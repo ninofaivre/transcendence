@@ -29,7 +29,7 @@ export const friendsContract = c.router(
 			}),
 			body: c.type<null>(),
 			responses: {
-				200: c.type<null>(),
+				204: c.type<null>(),
 			},
 		},
 	},

@@ -31,7 +31,7 @@ export class FriendsController {
             },
             deleteFriend: async ({ params: { friendShipId } }) => {
                 const res = await this.friendsService.deleteFriend(username, friendShipId)
-                return isContractError(res) ? res : { status: 202, body: null }
+                return isContractError(res) ? res : { status: 204, body: null }
             }
         })
     }

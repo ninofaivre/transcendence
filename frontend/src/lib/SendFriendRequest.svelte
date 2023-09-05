@@ -34,15 +34,13 @@
 	}
 
 	async function getUsernames(input: string) {
-		const ret = await client.users.searchUsersV1({
-			query: {
-				userNameContains: input,
-				filter: {
-					type: "inc",
-					friends: false,
+		const ret = await client.users.searchUsersV2({
+				query: {
+                    params: {},
+					userNameContains: input,
+                    action: "CREATE_FRIEND_INVITE",
 				},
-			},
-		})
+			})
 		if (ret.status !== 200) checkError(ret, "get user names", getToastStore())
 		else users = ret.body.map((obj) => ({ label: obj.userName, value: obj.userName }))
 	}

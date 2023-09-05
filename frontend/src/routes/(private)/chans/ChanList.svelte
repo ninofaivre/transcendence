@@ -40,6 +40,7 @@
 					modalStore.close()
 					resolve(r)
 				},
+                meta: { chanId, }
 			}
 			modalStore.trigger(modal)
 		})

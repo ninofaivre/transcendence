@@ -29,13 +29,11 @@
 
 	async function getUsernames(input: string) {
 		return client.users
-			.searchUsersV1({
+			.searchUsersV2({
 				query: {
+                    params: {},
 					userNameContains: input,
-					filter: {
-						type: "inc",
-						friends: false,
-					},
+                    action: "CREATE_FRIEND_INVITE",
 				},
 			})
 			.then((ret) => {

@@ -13,6 +13,7 @@
 	let input_element: HTMLElement
 	let send_button: HTMLButtonElement
 	let input_focused = false
+    let chanId: string = $modalStore[0].meta?.chanId
 
 	function onModalSubmit(str: string) {
 		if ($modalStore[0].response) {
@@ -33,13 +34,13 @@
 	}
 
 	async function getUsernames(input: string) {
-		const ret = await client.users.searchUsersV1({
+		const ret = await client.users.searchUsersV2({
 			query: {
+                action: "CREATE_CHAN_INVITE",
+                params: {
+                    chanId, 
+                },
 				userNameContains: input,
-				filter: {
-					type: "only",
-					friends: true,
-				},
 			},
 		})
 		if (ret.status != 200)

@@ -17,11 +17,13 @@
 
 	onMount(() => {
 		const destroyer = new Array(
-			addListenerToEventSource($sse_store, "CREATED_CHAN_ELEMENT", (data) => {
+			addListenerToEventSource($sse_store, "CREATED_CHAN_ELEMENT", (new_data) => {
 				invalidate(":chans") // Does this work ?
+				// TODO: mark chan unread on new message ?
 			}),
-			addListenerToEventSource($sse_store, "UPDATED_CHAN_MESSAGE", (data) => {
+			addListenerToEventSource($sse_store, "UPDATED_CHAN_MESSAGE", (new_data) => {
 				invalidate(":chans") // Does this work ?
+				// TODO: mark chan unread on new message ?
 			}),
 		)
 		return () => {
@@ -51,7 +53,7 @@
 			if (ret.status != 201) checkError(ret, `invite ${r} to this channel`)
 			else {
 				makeToast(`Invited ${r} to this channel`)
-				invalidate(":chans:invitations")
+				invalidate(":chans:invitations") // Does this work ? TODO
 			}
 		}
 	}

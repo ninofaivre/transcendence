@@ -21,19 +21,15 @@
 		shallowCopyPartialToNotPartial,
 	} from "$lib/global"
 	import { isContractError } from "contract"
-	import { invalidate, invalidateAll } from "$app/navigation"
-	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 
 	console.log($page.route.id, " init")
 
 	export let data: PageData
-	const modalStore = getModalStore()
 	const sse_store: Writable<EventSource> = getContext("sse_store")
 
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
 	let chan: Chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
-	// let disabled: boolean = !$page?.data?.chanList?.selfPerms.includes("SEND_MESSAGE") ?? false
 	let disabled: boolean = false
 	let disabled_placeholder = "You have been muted" // ChatBox placeholder
 
@@ -45,7 +41,6 @@
 		disabled = !chan.selfPerms.includes("SEND_MESSAGE")
 		console.log("from page reactive block: ", disabled)
 	}
-	// $: disabled, console.log(disabled)
 
 	function updateSomeMessage(to_update_id: string, new_message: string) {
 		const to_update_idx: number = messages.findLastIndex((message: MessageOrEvent) => {
@@ -200,12 +195,6 @@
 					shallowCopyPartialToNotPartial(user, chan.users[index])
 					chan = chan
 				}
-			}),
-			addListenerToEventSource($sse_store!, "KICKED_FROM_CHAN", () => {
-				invalidateAll()
-			}),
-			addListenerToEventSource($sse_store!, "BANNED_FROM_CHAN", () => {
-				invalidateAll()
 			}),
 		)
 		return () => {

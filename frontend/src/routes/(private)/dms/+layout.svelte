@@ -14,8 +14,8 @@
 	import type { Writable } from "svelte/store"
 
 	// Get our discussions
-	export let data: LayoutData 
-    const sse_store: Writable<EventSource> = getContext("sse_store")
+	export let data: LayoutData
+	const sse_store: Writable<EventSource> = getContext("sse_store")
 
 	const modalStore = getModalStore()
 	let header: HTMLElement | null
@@ -37,15 +37,14 @@
 			// This callback cleans up the observer
 		}
 		const destroyer: (() => void)[] = new Array(
-			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (data) => {
-				if (data.chanId === $page.params.chanId) {
-					invalidate(":chans")
+			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (new_data) => {
+				if (new_data.chanId === $page.params.chanId) {
+					data.dmList = data.dmList.filter((el) => el.id === new_data.chanId)
 				}
 			}),
 			addListenerToEventSource($sse_store, "CREATED_DM", (new_data) => {
-                data.dmList = [new_data, ...data.dmList]
+				data.dmList = [new_data, ...data.dmList]
 			}),
-
 		)
 		return () => {
 			if (header) resizeObserver.unobserve(header as HTMLElement)
@@ -72,6 +71,11 @@
 			if (ret.status != 201) {
 				checkError(ret, "create friend request")
 			} else {
+				//TODO
+				// data.friendships = [
+				// 	...data.friendships,
+				// 	ret.body.map((el: (typeof ret.body)["number"]) => {}),
+				// ]
 				invalidate(":friendships")
 				console.log("Sent friendship request to " + username)
 			}
@@ -101,10 +105,7 @@
 				</button>
 			</section>
 			<section id="discussions" class="overflow-y-auto">
-				<DiscussionList
-					discussions={data.dmList}
-					currentDiscussionId={$page.params.dmId}
-				/>
+				<DiscussionList discussions={data.dmList} currentDiscussionId={$page.params.dmId} />
 			</section>
 		</div>
 

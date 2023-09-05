@@ -42,9 +42,12 @@
 		const destroyer: (() => void)[] = new Array(
 			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (new_data) => {
 				if (new_data.chanId === $page.params.chanId) {
-					const to_rm_idx = data.chanList.findLastIndex((el) => el.id === new_data.chanId)
-					data.chanList.splice(to_rm_idx, 1)
-					data.chanList = data.chanList
+					data.chanList = data.chanList.filter((el) => el.id === new_data.chanId)
+				}
+			}),
+			addListenerToEventSource($sse_store!, "BANNED_FROM_CHAN", (new_data) => {
+				if (new_data.chanId === $page.params.chanId) {
+					data.chanList = data.chanList.filter((el) => el.id === new_data.chanId)
 				}
 			}),
 		)

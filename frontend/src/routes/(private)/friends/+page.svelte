@@ -5,10 +5,11 @@
 	import { Table } from "@skeletonlabs/skeleton"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import { getToastStore } from "@skeletonlabs/skeleton"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { invalidate } from "$app/navigation"
 	import { makeToast } from "$lib/global"
+
+	// For some reason invalidate seems to work in this file, go figure
 
 	async function acceptFriendInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
 		const id = e.currentTarget.dataset.id

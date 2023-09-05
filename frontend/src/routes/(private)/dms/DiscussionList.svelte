@@ -4,10 +4,10 @@
 
 	import { getContext, onMount } from "svelte"
 	import { addListenerToEventSource } from "$lib/global"
-	import { goto, invalidate } from "$app/navigation"
+	import { goto } from "$app/navigation"
 	import { Avatar } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
-    import { reload_img } from "$stores"
+	import { reload_img } from "$stores"
 
 	export let currentDiscussionId: string
 	export let discussions: DirectConversation[]
@@ -16,10 +16,6 @@
 
 	onMount(() => {
 		const destroyer = new Array(
-			addListenerToEventSource($sse_store, "CREATED_DM", (data) => {
-				console.log("A new dm was created!")
-				invalidate(":dms") // Does this work ?
-			}),
 			addListenerToEventSource($sse_store, "UPDATED_USER_STATUS", (data) => {
 				console.log("Got a event about a dm")
 				const dot_to_update = document.querySelector(
@@ -39,10 +35,6 @@
 						}
 					}
 				} else console.log("IT WAS NULL !")
-			}),
-			addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (data) => {
-				// Mark unread the discussion that corresponds to the discussion who got a new message
-				// How to I differentiate a modified message from a new message
 			}),
 		)
 		return () => {

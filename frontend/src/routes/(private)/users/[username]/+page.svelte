@@ -18,7 +18,7 @@
 	import { page } from "$app/stores"
 	import { Paginator } from "@skeletonlabs/skeleton"
 	import { goto, invalidate } from "$app/navigation"
-    import { reload_img } from "$stores"
+	import { reload_img } from "$stores"
 	import { getContext } from "svelte"
 
 	export let data: PageData
@@ -33,7 +33,7 @@
 	let keep_loading = true
 	let my_profile: boolean
 	$: my_profile = data.me.userName === data.user.userName
-    const game_socket = getContext("game_socket")
+	const game_socket = getContext("game_socket")
 
 	if (my_profile) goto("/myprofile")
 
@@ -44,6 +44,7 @@
 		if (ret.status != 201) checkError(ret, "send friend request", toastStore)
 		else {
 			makeToast("Sent friend request to " + data.user.userName, toastStore)
+			//TODO either this works or I need another object back
 			invalidate(":friends")
 		}
 	}
@@ -73,7 +74,7 @@
 			response: () => {
 				modalStore.close()
 			},
-            meta: { username: $page.params.username, game_socket: game_socket },
+			meta: { username: $page.params.username, game_socket: game_socket },
 		}
 		modalStore.trigger(modal)
 	}
@@ -188,7 +189,6 @@
 	}
 
 	$: nPlayed = data.user.nWin + data.user.nLoose
-	// $: winRate = (data.user.nWin / nPlayed) * 100
 </script>
 
 <!-- Container -->
@@ -199,7 +199,8 @@
 		<div class="flex flex-1 flex-col gap-2">
 			<!-- col1: Avatar + menu -->
 			<Avatar
-                src="{PUBLIC_BACKEND_URL}/api/users/{data.user.userName}/profilePicture?reload={$reload_img}"
+				src="{PUBLIC_BACKEND_URL}/api/users/{data.user
+					.userName}/profilePicture?reload={$reload_img}"
 				fallback="https://i.pravatar.cc/?u={data.user.userName}"
 				alt="profile"
 			/>
@@ -265,15 +266,15 @@
 					</div>
 				</div>
 				<div class="flex flex-1 flex-col items-center">
-                        <p style:word-spacing={"0.2em"}>Win ratio</p>
-						<ProgressRadial
-							font={140}
-							width="w-24"
-							value={data.user.winRatePercentage}
-							fill="variant-filled-primary"
-						>
-							{`${data.user.winRatePercentage}/100`}
-						</ProgressRadial>
+					<p style:word-spacing={"0.2em"}>Win ratio</p>
+					<ProgressRadial
+						font={140}
+						width="w-24"
+						value={data.user.winRatePercentage}
+						fill="variant-filled-primary"
+					>
+						{`${data.user.winRatePercentage}/100`}
+					</ProgressRadial>
 				</div>
 			</div>
 		</div>

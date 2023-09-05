@@ -21,6 +21,7 @@
 		if (ret.status != 201) {
 			checkError(ret, "send friend request", getToastStore())
 		} else {
+			// TODO either this works or I need the same object back
 			invalidate(":friendships")
 			console.log("Sent friendship request to " + username)
 		}

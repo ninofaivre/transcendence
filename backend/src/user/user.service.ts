@@ -742,7 +742,11 @@ export class UserService {
             chans: { none: { id: chanId } },
             timedUserChan: { none: { chanId } },
             incomingChanInvitation: {
-                none: { chanId, invitingUserName: username }
+                none: {
+                    chanId,
+                    invitingUserName: username,
+                    status: 'PENDING'
+                }
             }
         }),
         "CREATE_FRIEND_INVITE": (username: string) => ({
@@ -752,9 +756,13 @@ export class UserService {
             friend: { none: { requestedUserName: username } },
             friendOf: { none: { requestingUserName: username } },
             incomingFriendInvitation: {
-                none: { invitingUserName: username }
+                none: {
+                    status: 'PENDING',
+                    invitingUserName: username
+                }
             },
             outcomingFriendInvitation: {
+                status: 'PENDING',
                 none: { invitedUserName: username }
             }
         }),

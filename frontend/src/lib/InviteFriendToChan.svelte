@@ -40,7 +40,7 @@
                 params: {
                     chanId, 
                 },
-				userNameContains: input,
+				displayNameContains: input,
 			},
 		})
 		if (ret.status != 200)

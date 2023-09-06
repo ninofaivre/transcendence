@@ -32,7 +32,7 @@
 			.searchUsersV2({
 				query: {
                     params: {},
-					userNameContains: input,
+					displayNameContains: input,
                     action: "CREATE_FRIEND_INVITE",
 				},
 			})

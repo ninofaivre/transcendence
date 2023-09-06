@@ -193,7 +193,7 @@
 			</button>
 			<!-- Name  -->
 			<h1 class="self-center text-4xl text-black" style:font-family="ArcadeClassic">
-				{data.user.userName}
+				{data.user.displayName}
 			</h1>
 		</div>
 

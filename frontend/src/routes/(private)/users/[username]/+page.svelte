@@ -45,7 +45,7 @@
 		})
 		if (ret.status != 201) checkError(ret, "send friend request", toastStore)
 		else {
-			makeToast("Sent friend request to " + data.user.userName, toastStore)
+			makeToast("Sent friend request to " + data.user.displayName, toastStore)
 			//TODO either this works or I need another object back
 			invalidate(":friends")
 		}
@@ -63,7 +63,7 @@
 			})
 			if (ret.status != 204) checkError(ret, "send friend request", toastStore)
 			else {
-				makeToast("Revoked friendship with " + data.user.userName, toastStore)
+				makeToast("Revoked friendship with " + data.user.displayName, toastStore)
 				invalidate(":friends")
 			}
 		} else throw new Error("There is no friendShipId for this user")
@@ -93,9 +93,9 @@
 					minute: "numeric",
 					second: "numeric",
 				}),
-				Winner: obj.winnerName,
+				Winner: obj.winnerDisplayName,
 				"Winning Score": obj.winnerScore,
-				Looser: obj.looserName,
+				Looser: obj.looserDisplayName,
 				"Loosing Score": obj.looserScore,
 				id: obj.id,
 			}
@@ -281,7 +281,7 @@
 		<!-- col2 : Name + stats-->
 		<div class="flex flex-1 flex-col" style:font-family="ArcadeClassic">
 			<!-- Name  -->
-			<h1 class="text-4xl text-black">{data.user.userName}</h1>
+			<h1 class="text-4xl text-black">{data.user.displayName}</h1>
 			<!-- Stats  -->
 			<div class="flex flex-1 items-center text-black">
 				<div class="flex flex-1 flex-col items-center">

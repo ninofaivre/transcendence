@@ -22,7 +22,7 @@
 
 
 	const toastStore = getToastStore()
-	let username = ""
+	let displayName = ""
 	const code = $page.url.searchParams.get("code") ?? ""
 	const state = $page.url.searchParams.get("state")
 	if (!code) {
@@ -49,7 +49,7 @@
 	async function signUp() {
 		const ret = await client.users.signUp({
 			body: {
-				username,
+                displayName,
 				redirect_uri: redirect_uri.toString(),
 				code,
 			},
@@ -88,7 +88,7 @@
 		</label>
         <input
             id="username"
-            bind:value={username}
+            bind:value={displayName}
             type="text"
             name="username"
             class="input"

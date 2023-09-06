@@ -7,7 +7,7 @@ export const load = async ({ depends, params }: PageLoadEvent) => {
 	depends(`:chans${params.chanId}`)
 	const { status, body: messages } = await client.chans.getChanElements({
 		params: {
-			chanId: params.chanId as string,
+			chanId: params.chanId,
 		},
 	})
 	if (status !== 200) {
@@ -18,7 +18,5 @@ export const load = async ({ depends, params }: PageLoadEvent) => {
 		)
         return { messages: [] }
 	}
-
-	// console.log("Your messages:", messages)
 	return { messages }
 }

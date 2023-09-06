@@ -111,8 +111,20 @@
 			{d.title}
 		</a>
         {#if d.passwordProtected }
-            <button on:click={() => changePasswordModal(d)} class="variant-ghost-secondary btn btn-sm p-1 mx-[0.10rem]">
-                🔑
+            <button
+                class="variant-ghost-secondary btn btn-sm p-1 mx-[0.10rem]"
+                on:click={() => {
+                if (d.selfPerms.includes("EDIT")) changePasswordModal(d)
+            }}>
+                🔒
+            </button>
+        {:else}
+            <button
+                class="variant-ghost-secondary btn btn-sm p-1 mx-[0.10rem]"
+                on:click={() => {
+                if (d.selfPerms.includes("EDIT")) changePasswordModal(d)
+            }}>
+                🔓
             </button>
         {/if}
 		<button on:click={() => onInviteToChan(d.id)} class="variant-ghost-secondary btn btn-sm p-1 mx-[0.10rem] ">

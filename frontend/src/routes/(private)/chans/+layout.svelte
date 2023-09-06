@@ -23,10 +23,15 @@
 	let header_height: number
 	const sse_store: Writable<EventSource> = getContext("sse_store")
 
-	setContext(
-		"chan",
-		data.chanList.find((el) => el.id === $page.params.chanId),
-	)
+	$: {
+        console.log("Settting context....")
+        console.log(data.chanList)
+        console.log(data.chanList.find((el) => el.id === $page.params.chanId) )
+        setContext(
+            "chan",
+            data.chanList.find((el) => el.id === $page.params.chanId) 
+        )
+    }
 
 	onMount(() => {
 		header = document.getElementById("shell-header")
@@ -131,7 +136,10 @@
 			}
 		}
 	}
+
 </script>
+
+{@debug data}
 
 {#if data.chanList.length}
 	<!--Column layout -->

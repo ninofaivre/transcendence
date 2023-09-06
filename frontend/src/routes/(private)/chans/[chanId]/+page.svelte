@@ -41,15 +41,6 @@
 	// let chan: Chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
 	// console.log("init", $page.data.chanList)
 
-	// $: {
-	// 	if (chan) {
-	// 		chan = $page.data.chanList.find((el: Chan) => el.id === $page.params.chanId)
-	// 		console.log("reactive", $page.data.chanList)
-	// 		sendLoadEvents = true
-	// 		disabled = !chan.selfPerms.includes("SEND_MESSAGE")
-	// 	}
-	// }
-
 	function updateSomeMessage(to_update_id: string, new_message: string, isDeleted: boolean) {
 		const to_update_idx: number = messages.findLastIndex((message: MessageOrEvent) => {
 			return message.id === to_update_id
@@ -219,6 +210,7 @@
 	})
 </script>
 
+{@debug data}
 <!--Column layout -->
 <!-- Rows for Column 2-->
 <div class="grid grid-rows-[1fr_auto]" id="col2" style="height: calc(100vh - {header_height}px);">

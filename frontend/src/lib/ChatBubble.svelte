@@ -13,7 +13,6 @@
 	import { createEventDispatcher } from "svelte"
 	import { makeToast } from "$lib/global"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
-	import { filter, Noir } from "@skeletonlabs/skeleton"
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { goto } from "$app/navigation"
@@ -40,7 +39,7 @@
 	let toggleAdminMenu = () => (is_admin_menu_open = !is_admin_menu_open)
 	let isAdmin: boolean | undefined
 	let isMuted: boolean | undefined
-	let filterType: "#Noir" | "" = ""
+	// let filterType: "#Noir" | "" = ""
 	const menu_admin_init: { label: string; handler: () => void }[] = [
 		{ label: "Show profile", handler: () => goto(`/users/${message.author}`) },
 		{ label: "Invite to a game", handler: inviteToGame },
@@ -67,7 +66,6 @@
 						: { label: "Mute", handler: mute },
 					{ label: "Ban", handler: ban },
 				]
-				filterType = isMuted ? "#Noir" : ""
 				//DEBUG
 				roles = user.roles
 				perms = user.myPermissionOver
@@ -245,7 +243,6 @@
 	}
 </script>
 
-<Noir />
 <div
 	id={message.id}
 	style={`flex-direction: ${from_me ? "row-reverse" : "row"}`}
@@ -264,8 +261,6 @@
 				on:click={() => {
 					menu_admin.length > 1 ? toggleAdminMenu() : menu_admin[0].handler()
 				}}
-				action={filter}
-				actionParams={filterType}
 			/>
 		{/if}
 		{#if is_admin_menu_open}

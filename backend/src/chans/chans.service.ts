@@ -1052,7 +1052,8 @@ export class ChansService {
 			where: {
 				type: ChanType.PUBLIC,
 				title: { contains: titleContains, not: null },
-                timedStatusUsers: { none: { type: 'BAN', timedUserName: username } }
+                timedStatusUsers: { none: { type: 'BAN', timedUserName: username } },
+                users: { none: { name: username } }
 			},
 			select: {
                 id: true,

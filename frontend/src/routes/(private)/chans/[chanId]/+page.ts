@@ -2,9 +2,15 @@ import type { PageLoadEvent } from "./$types"
 import type { PageLoad } from "./$types"
 import { client } from "$lib/clients"
 
-export const load = async ({ depends, params }: PageLoadEvent) => {
+export const load = async ({ depends, params, parent }: PageLoadEvent) => {
+
 	console.log("chans/[chanId]/ page load")
 	depends(`:chans${params.chanId}`)
+
+    let { chanList } = await parent()
+
+    const chan = chanList.find((el) => el.id === params.chanId)
+
 	const { status, body: messages } = await client.chans.getChanElements({
 		params: {
 			chanId: params.chanId,
@@ -16,7 +22,7 @@ export const load = async ({ depends, params }: PageLoadEvent) => {
 				(messages as any)?.message
 			}\"`,
 		)
-        return { messages: [] }
+        return { messages: [],   }
 	}
-	return { messages }
+	return { messages, chan }
 }

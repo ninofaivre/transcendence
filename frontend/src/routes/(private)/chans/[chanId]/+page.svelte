@@ -25,6 +25,7 @@
 
 	console.log($page.route.id, " init")
 
+
 	export let data: PageData
 	const sse_store: Writable<EventSource> = getContext("sse_store")
 	const toastStore = getToastStore()
@@ -33,7 +34,6 @@
 	let sendLoadEvents: boolean = true
 	let disabled: boolean = false
 	let disabled_placeholder = "You have been muted" // ChatBox placeholder
-	let chan: Chan = getContext("chan")
 
 	// Important, resets variable on route parameter change
 	$: messages = data.messages
@@ -167,29 +167,32 @@
 		resizeObserver.observe(header!)
 
 		const destroyer: (() => void)[] = new Array(
-			addListenerToEventSource($sse_store!, "CREATED_CHAN_ELEMENT", (data) => {
-				console.log("Server message: New chan element", data)
-				if (data.chanId === $page.params.chanId) {
-					messages = [...messages, data.element]
+			addListenerToEventSource($sse_store!, "CREATED_CHAN_ELEMENT", (new_data) => {
+				console.log("Server message: New chan element", new_data)
+				if (new_data.chanId === $page.params.chanId) {
+					messages = [...messages, new_data.element]
 				}
 			}),
-			addListenerToEventSource($sse_store!, "UPDATED_CHAN_MESSAGE", (data) => {
-				console.log("Server message: Message was modified", data)
-				if (data.chanId === $page.params.chanId) {
-					updateSomeMessage(data.message.id, data.message.content, data.message.isDeleted)
+			addListenerToEventSource($sse_store!, "UPDATED_CHAN_MESSAGE", (new_data) => {
+				console.log("Server message: Message was modified", new_data)
+				if (new_data.chanId === $page.params.chanId) {
+					updateSomeMessage(new_data.message.id, new_data.message.content, new_data.message.isDeleted)
 				}
 			}),
-			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (data) => {
-				if (data.chanId === $page.params.chanId) {
-					console.log("Self perms updated", data)
-					chan.selfPerms = data.selfPerms
+			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (new_data) => {
+				if (new_data.chanId === $page.params.chanId) {
+					console.log("Self perms updated", new_data)
+                    if (data.chan)
+                        data.chan.selfPerms = new_data.selfPerms
 				}
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_USER", ({ chanId, user }) => {
 				if (chanId === $page.params.chanId) {
-					let index = chan.users.findIndex((o) => o.name == user.name)
-					shallowCopyPartialToNotPartial(user, chan.users[index])
-					chan = chan
+                    if (data.chan) {
+                        let index = data.chan.users.findIndex((o) => o.name == user.name)
+                        shallowCopyPartialToNotPartial(user, data.chan.users[index])
+                        data.chan = data.chan
+                    }
 				}
 			}),
 			addListenerToEventSource($sse_store!, "BANNED_CHAN_USER", (new_data) => {
@@ -210,21 +213,23 @@
 	})
 </script>
 
-{@debug data}
+<!-- {@debug data} -->
 <!--Column layout -->
 <!-- Rows for Column 2-->
 <div class="grid grid-rows-[1fr_auto]" id="col2" style="height: calc(100vh - {header_height}px);">
 	<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
 	<!-- Messages -->
-	<DiscussionDisplay
-		discussion={chan}
-		{messages}
-		{sendLoadEvents}
-		my_name={data.me.userName}
-		on:delete={deletionHandler}
-		on:edit={editHandler}
-		on:loadprevious={loadPreviousMessages}
-	/>
+    {#if data.chan}
+        <DiscussionDisplay
+            discussion={data.chan}
+            {messages}
+            {sendLoadEvents}
+            my_name={data.me.userName}
+            on:delete={deletionHandler}
+            on:edit={editHandler}
+            on:loadprevious={loadPreviousMessages}
+        />
+    {/if}
 	<section id="input-row" class="p-4">
 		<ChatBox
 			outline

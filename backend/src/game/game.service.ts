@@ -313,7 +313,6 @@ class Ball extends GameObject {
     }
 
     private move(dist: number) {
-
         const nextPosWithoutColl: Position = this.getNextPositionWithoutCollision(dist)
         const nextPosRect: Rectangle = super.getRectFromOffsetAndPos(nextPosWithoutColl,
             Ball.offset, Ball.offset)
@@ -355,12 +354,20 @@ class Ball extends GameObject {
             : GameDim.paddle.width + Ball.offset
         let intersectionPos: Position = { x: xPaddle, y: yWall };
 
+        const maxX = GameDim.court.width - GameDim.paddle.width - Ball.offset
+        const minX = Ball.offset + GameDim.paddle.width
         if (collideWithTopBotWalls) {
             intersectionPos.x = this.getIntersectionY(yWall)
+            if (collideWithPaddles) {
+                if (intersectionPos.x > maxX) {
+                    intersectionPos.x = maxX - 1
+                } else if (intersectionPos.x < minX) {
+                    intersectionPos.x = minX + 1
+                }
+            }
             this.direction.y *= -1
         }
-        if (collideWithPaddles) {
-            // console.log("ball collide with paddles")
+        else if (collideWithPaddles) {
             if (this.passedPaddleLine) {
                 const yPaddle = (facingPaddle.getRect().topY >= this.getRect().botY)
                     ? facingPaddle.getRect().topY - Ball.offset

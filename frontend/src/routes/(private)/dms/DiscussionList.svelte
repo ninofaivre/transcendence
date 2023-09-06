@@ -45,13 +45,13 @@
 
 {#each discussions as d}
 	<div
-		class={`grid grid-cols-2 rounded px-2 py-4 ${
+		class={`flex rounded px-2 py-2 place-items-center ${
 			d.id != currentDiscussionId
 				? "font-medium hover:variant-soft-secondary hover:font-semibold"
 				: "variant-ghost-secondary font-semibold"
 		}`}
 	>
-		<a href={`/dms/${d.id}`}>
+		<a href={`/dms/${d.id}`} class="flex-1 justify-self-start">
 			{d.otherName}
 		</a>
 		<div class="flex justify-self-end">

@@ -59,23 +59,46 @@
 			}
 		}
 	}
+
+    async function changePasswordModal(chanId: string) {
+        const r = await new Promise<string | null | undefined>((resolve) => {
+            const modalSettings: ModalSettings = {
+                type: "component",
+                component: 'ChangePasswordModal',
+                response: (r)  => {
+                    modalStore.close(),
+                    resolve(r)
+                },
+                meta: {chanId},
+            }
+            modalStore.trigger(modalSettings)
+        })
+        if (r) {
+            alert("New password:" + r)
+        }
+    }
+
 </script>
 
 {#each discussions as d}
 	<div
-		class={`grid grid-cols-2 rounded p-4 ${
+		class={`flex rounded px-1 py-2 place-items-center ${
 			d.id != currentDiscussionId
 				? "font-medium hover:variant-soft-secondary hover:font-semibold"
 				: "variant-ghost-secondary font-semibold"
 		}`}
 	>
-		<a href={`/chans/${d.id}`}>
+		<a href={`/chans/${d.id}`} class="flex-1 justify-self-start mx-2">
 			{d.title}
 		</a>
-		<button
-			on:click={() => onInviteToChan(d.id)}
-			class="variant-ghost-secondary btn btn-sm justify-self-end">👥+</button
-		>
+        {#if d.passwordProtected }
+            <button on:click={() => changePasswordModal(d.id)} class="variant-ghost-secondary btn btn-sm p-1 mx-[0.10rem]">
+                🔑
+            </button>
+        {/if}
+		<button on:click={() => onInviteToChan(d.id)} class="variant-ghost-secondary btn btn-sm p-1 mx-[0.10rem] ">
+            👥+
+        </button>
 	</div>
 {/each}
 

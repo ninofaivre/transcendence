@@ -29,6 +29,7 @@
 	import TwoFAModal from "$lib/TwoFAModal.svelte"
 	import JoinRoom from "$lib/JoinRoom.svelte"
 	import CropperModal from "$lib/CropperModal.svelte"
+    import ChangePasswordModal from "$lib/ChangePasswordModal.svelte" 
 
 	initializeStores()
 	const modalStore = getModalStore()
@@ -52,6 +53,7 @@
 		SendFriendRequestModal: { ref: SendFriendRequestModal },
 		AcceptGameInvitationModal: { ref: AcceptGameInvitationModal },
 		TwoFAModal: { ref: TwoFAModal },
+        ChangePasswordModal: { ref: ChangePasswordModal },
 		CropperModal: { ref: CropperModal },
 	}
 

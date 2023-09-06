@@ -9,6 +9,7 @@
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { writable } from "svelte/store"
 	import { goto } from "$app/navigation"
+	import { logged_in } from "$stores"
 
 	console.log("private layout init")
 	const modalStore = getModalStore()
@@ -49,6 +50,9 @@
 	})
 	applyCallbacks()
 	function applyCallbacks() {
+        $game_socket.on("connect_error", (data) => {
+            logged_in.set(false)
+        })
 		$game_socket.on("disconnect", (data) => {
 			console.log(data)
 			if (data === "io server disconnect") {

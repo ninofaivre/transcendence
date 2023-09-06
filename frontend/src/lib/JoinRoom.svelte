@@ -17,13 +17,11 @@
 	let password_element: HTMLInputElement
 	let can_send: boolean = false
 	let password_needed: boolean = false
-	let form: HTMLFormElement
 	let id: string
 
 	async function sendBackData() {
-		const formdata = new FormData(form)
-		const title = formdata.get("title")
-		const password = formdata.get("password") ?? undefined
+		const title = search_input
+		const password = password_input ?? undefined
 
 		if ($modalStore[0].response) {
 			$modalStore[0].response({ title, password, id })
@@ -61,7 +59,7 @@
 			})
 	}
 
-	function onSearchEnter(event: KeyboardEvent) {
+	function onSearchEnter() {
 		if (chans.find((el) => el.value === search_input)?.meta) {
 			password_element.focus
 		} //else sendBackData([search_input, password_input])
@@ -83,10 +81,8 @@
 	onMount(() => void input_element.focus())
 </script>
 
-<form
+<div
 	class="card flex flex-col items-center gap-2 p-8"
-	bind:this={form}
-	on:submit|preventDefault={sendBackData}
 >
 	<!-- input container -->
 	<div class="relative min-w-[50vw] flex-1">
@@ -99,6 +95,7 @@
 			placeholder="Search room..."
 			on:focusin={() => void (input_focused = true)}
 			on:keypress={simpleKeypressHandlerFactory(["Enter"], onSearchEnter)}
+            autocomplete="off"
 		/>
 		{#if search_input && input_focused}
 			<div class="card absolute z-10 mt-1 max-h-48 w-full overflow-y-auto p-2" tabindex="-1">
@@ -129,10 +126,11 @@
 		type="submit"
 		class="variant-filled-primary btn w-fit justify-self-center px-12"
 		disabled={!can_send}
+        on:click={sendBackData}
 	>
 		Send
 	</button>
-</form>
+</div>
 
 <style>
 	input {

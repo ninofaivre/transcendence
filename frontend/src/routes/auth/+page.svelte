@@ -13,6 +13,7 @@
 	import { goto } from "$app/navigation"
 	import { getToastStore } from "@skeletonlabs/skeleton"
 	import { isContractError } from "contract"
+	import { onMount } from "svelte"
 
 	let username = ""
 	const isProd = PUBLIC_MODE.toLowerCase() === "prod"
@@ -24,7 +25,6 @@
 	ft_uri.searchParams.append("response_type", "code")
 	ft_uri.searchParams.append("scope", "public")
 	ft_uri.searchParams.append("state", PUBLIC_RANDOM_PHRASE)
-
 	;(async () => {
 		if (code) {
 			if ($page.url.searchParams.get("state") === PUBLIC_RANDOM_PHRASE) {
@@ -55,7 +55,6 @@
 				throw new Error("You are under attack. Close this application as soon as you can")
 			}
 		}
-
 	})()
 
 	async function devLogin() {
@@ -73,12 +72,13 @@
 	}
 
 	let sign_in_42: HTMLAnchorElement
+	let dev_input: HTMLInputElement
+	onMount(() => dev_input.focus())
 </script>
 
 <svelte:window
 	on:keydown={simpleKeypressHandlerFactory(["Enter"], () => {
 		if (isProd) sign_in_42.click()
-		else devLogin()
 	})}
 />
 
@@ -100,11 +100,12 @@
 	</div>
 </div>
 {#if isProd == false}
-	<form class="mt-28 sm:mx-auto sm:w-full sm:max-w-md" on:submit={devLogin}>
+	<form class="mt-28 sm:mx-auto sm:w-full sm:max-w-md" on:submit|preventDefault={devLogin}>
 		<div class="grid grid-rows-2 gap-2 rounded-lg bg-gray-50 p-8 sm:px-10">
 			<label class="label text-black" for="username">
 				Username
 				<input
+					bind:this={dev_input}
 					bind:value={username}
 					type="text"
 					name="username"

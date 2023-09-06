@@ -34,7 +34,7 @@
 	class="card w-full space-y-4 p-6"
 >
 	<label for="title" class="label"> Choose a name for the room </label>
-	<input type="text" name="title" id="title" {minlength} {maxlength} class="input" required />
+	<input type="text" name="title" id="title" {minlength} {maxlength} class="input" required autocomplete="off" />
 	<label for="password" class="label">Password (Optional)</label>
 	<input
 		type="text"

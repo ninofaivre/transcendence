@@ -139,7 +139,7 @@
 							alt="account profile"
 						/>
 						<div>
-							{$page.data.me.userName}
+							{$page.data.me.displayName}
 						</div>
 					</a>
 				{/if}

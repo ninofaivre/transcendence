@@ -42,7 +42,7 @@
 				},
 			})
 		if (ret.status !== 200) checkError(ret, "get user names", getToastStore())
-		else users = ret.body.map((obj) => ({ label: obj.userName, value: obj.userName }))
+		else users = ret.body.map((obj) => ({ label: obj.displayName, value: obj.userName }))
 	}
 
 	async function onKeypress(event: KeyboardEvent) {

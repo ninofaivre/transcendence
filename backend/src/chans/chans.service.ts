@@ -1173,14 +1173,14 @@ export class ChansService {
             return contractErrors.ChanPermissionTooLow(username, chanId, 'EDIT')
         if (body.type === 'PUBLIC' && body.password)
             body.password = await hash(body.password, 10)
-        if (body.title && await this.getChan({ title: body.title }, {}))
+        if (body.title && await this.getChan({ title: body.title }, { id: true }))
             return contractErrors.ChanAlreadyExist(body.title)
         await this.prisma.chan.update({ where: { id: chanId }, data: body })
         const toNotify = this.usersToNames(chan.users, username)
         const { password, ...bodyRest } = (body.type === 'PUBLIC')
             ? body
             : { ...body, password: chan.password }
-        if (body.title !== chan.title) {
+        if (body.title !== undefined && body.title !== chan.title) {
             new ChanElementFactory(chanId, username, this)
                 .createChangedTitleEvent(chan.title, body.title)
                 .then(event => event.notifyByNames(toNotify))

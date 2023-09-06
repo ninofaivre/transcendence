@@ -7,7 +7,7 @@
 	function onPromptSubmit() {
 		if ($modalStore[0].response) {
 			$modalStore[0].response(
-                null
+                first_input === "" ? null : first_input
 			)
 		}
 	}

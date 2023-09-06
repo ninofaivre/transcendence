@@ -60,8 +60,8 @@
 		}
 	}
 
-    async function changePasswordModal(chanId: string) {
-        const r = await new Promise<string | null | undefined>((resolve) => {
+    async function changePasswordModal(d: Chan) {
+        const password = await new Promise<string | null | undefined>((resolve) => {
             const modalSettings: ModalSettings = {
                 type: "component",
                 component: 'ChangePasswordModal',
@@ -69,15 +69,34 @@
                     modalStore.close(),
                     resolve(r)
                 },
-                meta: {chanId},
+                meta: { chanId: d.id },
             }
             modalStore.trigger(modalSettings)
         })
-        if (r) {
-            alert("New password:" + r)
+        if (password !== undefined) {
+            const ret = await client.chans.updateChan(
+            {
+                params: {
+                    chanId: d.id,
+                },
+                body: {
+                   type: "PUBLIC",
+                   password,
+                }
+            })
+            if (ret.status !== 204) {
+                if (password)
+                    checkError(ret, "change password")
+                else
+                    checkError(ret, "remove password")
+            } else {
+                if (password)
+                    makeToast("Changed password on " + d.title, toastStore)
+                else
+                    makeToast("Removed password on" + d.title, toastStore)
+            }
         }
     }
-
 </script>
 
 {#each discussions as d}
@@ -92,7 +111,7 @@
 			{d.title}
 		</a>
         {#if d.passwordProtected }
-            <button on:click={() => changePasswordModal(d.id)} class="variant-ghost-secondary btn btn-sm p-1 mx-[0.10rem]">
+            <button on:click={() => changePasswordModal(d)} class="variant-ghost-secondary btn btn-sm p-1 mx-[0.10rem]">
                 🔑
             </button>
         {/if}

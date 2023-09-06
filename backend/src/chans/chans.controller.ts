@@ -100,7 +100,7 @@ export class ChansController {
             
             updateChan: async ({ params: { chanId }, body }) => {
                 const res = await this.chansService.updateChan(username, chanId, body)
-                return isContractError(res) ? res : { status: 200, body: null }
+                return isContractError(res) ? res : { status: 204, body: null }
             }
         })
     }

@@ -9,7 +9,6 @@
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
 	import {
-		getModalStore,
 		Modal,
 		type ModalComponent,
 		type ModalSettings,
@@ -32,7 +31,6 @@
     import ChangePasswordModal from "$lib/ChangePasswordModal.svelte" 
 
 	initializeStores()
-	const modalStore = getModalStore()
 	const toastStore = getToastStore()
 
 	$: {

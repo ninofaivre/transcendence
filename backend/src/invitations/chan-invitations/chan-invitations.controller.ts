@@ -32,16 +32,6 @@ export class ChanInvitationsController implements NestControllerInterface<typeof
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@TsRest(c.getChanInvitationById)
-	async getChanInvitationById(
-		@Request() req: EnrichedRequest,
-		@TsRestRequest() { params: { id } }: RequestShapes["getChanInvitationById"],
-	) {
-		const body = await this.chanInvitationsService.getChanInvitationById(req.user.username, id)
-		return { status: 200 as const, body }
-	}
-
-	@UseGuards(JwtAuthGuard)
 	@TsRest(c.createChanInvitation)
 	async createChanInvitation(
 		@Request() req: EnrichedRequest,

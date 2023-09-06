@@ -69,17 +69,12 @@ export class UserController {
 			getMe: async () => {
 				const res = await this.userService.getMe(username)
 				return isContractError(res) ? res : { status: 200, body: res }
-			},
 
+            },
 			updateMe: async ({ body }) => {
 				const res = await this.userService.updateMe(username, body)
 				return isContractError(res) ? res : { status: 200, body: res }
 			},
-
-			searchUsersV1: async ({ query }) => ({
-				status: 200,
-				body: await this.userService.searchUsersV1(username, query),
-			}),
 
 			searchUsersV2: async ({ query }) => ({
 				status: 200,
@@ -126,11 +121,6 @@ export class UserController {
                 const res = await this.userService.unblockUser(username, blockedUserName)
                 return isContractError(res) ? res : { status: 204, body: null }
             },
-
-            getBlockedUsers: async () => ({
-                status: 200,
-                body: await this.userService.getBlockedUsers(username)
-            }),
 
 		})
 	}

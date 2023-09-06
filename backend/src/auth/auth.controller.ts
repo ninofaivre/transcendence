@@ -26,7 +26,7 @@ export class AuthController{
             await this.authService.setNewTokensAsCookies(res, { ...rest, twoFA: !enabledTwoFA })
             if (enabledTwoFA)
                 return contractErrors.TwoFATokenNeeded()
-            return { status: 200, body: { username: user.username, intraUserName: user.intraUserName  } }
+            return { status: 200, body: rest }
         })
 	}
     

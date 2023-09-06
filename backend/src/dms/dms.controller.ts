@@ -24,14 +24,6 @@ export class DmsController {
 	@TsRestHandler(c)
 	async handler(@Request() req: EnrichedRequest) {
 		return tsRestHandler(c, {
-			searchDms: async ({ query }) => {
-				const body = await this.dmsService.searchDms(
-					req.user.username,
-					query.nResult,
-					query.otherUserNameContains,
-				)
-				return { status: 200, body }
-			},
 
 			getDms: async () => {
 				const body = await this.dmsService.getDms(req.user.username)
@@ -61,15 +53,6 @@ export class DmsController {
 					relatedTo,
 				)
 				return { status: 201, body }
-			},
-
-			getDmElementById: async ({ params: { dmId, elementId } }) => {
-				const body = await this.dmsService.getDmElementById(
-					req.user.username,
-					dmId,
-					elementId,
-				)
-				return { status: 200, body }
 			},
 
 			updateDmMessage: async ({ body: { content }, params: { elementId, dmId } }) => {

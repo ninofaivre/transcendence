@@ -24,6 +24,7 @@ export const authContract = c.router(
 			responses: {
 				200: z.object({
 					username: zUserName,
+                    displayName: zUserName,
 					intraUserName: z.string(),
 				}),
 				...getErrorsForContract(c,
@@ -54,6 +55,7 @@ export const authContract = c.router(
 			responses: {
 				200: z.object({
 					username: zUserName,
+                    displayName: zUserName,
 					intraUserName: z.string(),
 				}),
 				404: z.object({

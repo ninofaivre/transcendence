@@ -44,6 +44,7 @@ export class UserService {
 	private getUserProfilePreviewSelectForUser(username: string) {
 		return {
 			name: true,
+            displayName: true
 		} satisfies Prisma.UserSelect
 	}
 
@@ -57,14 +58,14 @@ export class UserService {
 			dmPolicyLevel: true,
             incomingFriendInvitation: {
                 where: {
-                    status: "PENDING",
+                    status: 'PENDING',
                     invitingUserName: username
                 },
-                select: { id: true },
+                select: { id: true }
             },
             outcomingFriendInvitation: {
                 where: {
-                    status: "PENDING", 
+                    status: 'PENDING',
                     invitedUserName: username
                 },
                 select: { id: true }
@@ -81,6 +82,7 @@ export class UserService {
 
 	private myProfileSelect = {
 		name: true,
+        displayName: true,
 		dmPolicyLevel: true,
 		statusVisibilityLevel: true,
         enabledTwoFA: true
@@ -190,7 +192,7 @@ export class UserService {
 		username: string,
 		toFormat: Prisma.UserGetPayload<typeof this.userProfileSelectGetPayload>,
 	): Promise<z.infer<typeof zUserProfileReturn>> {
-		const { name, chans, blockedUser, blockedByUser,
+		const { name, displayName, chans, blockedUser, blockedByUser,
             dmPolicyLevel, friend, friendOf,
             incomingFriendInvitation, outcomingFriendInvitation,
             _count, ...rest } = toFormat
@@ -201,7 +203,7 @@ export class UserService {
 			...rest,
             dmPolicyLevel: (dmPolicyLevel === "NO_ONE") ? "ONLY_FRIEND" : dmPolicyLevel,
 			status: await this.formatUserStatusForUser(username, name),
-			...this.formatUserProfilePreviewForUser(username, { name }),
+			...this.formatUserProfilePreviewForUser(username, { name, displayName }),
 			commonChans: chans,
             friendId: friend[0]?.id || friendOf[0]?.id || null,
             invitedId: outcomingFriendInvitation[0]?.id || null,
@@ -215,69 +217,6 @@ export class UserService {
             nLoose: _count.lostMatchHistory,
             nMatches
 		}
-	}
-
-	test(username: string) {
-		return {
-			friends: [
-				{ friend: { some: { requestedUserName: username } } },
-				{ friendOf: { some: { requestingUserName: username } } },
-			],
-			mySelf: [{ name: username }],
-			hasDm: [
-				{ directMessage: { some: { requestedUserName: username } } },
-				{ directMessageOf: { some: { requestingUserName: username } } },
-			],
-			blocked: [
-				{ blockedUser: { some: { blockedUserName: username } } },
-			],
-            blockedBy: [
-				{ blockedByUser: { some: { blockingUserName: username } } },
-            ]
-		} satisfies Record<
-			keyof Omit<
-				Extract<RequestShapes["searchUsersV1"]["query"]["filter"], { type: "inc" }>,
-				"type"
-			>,
-			Prisma.Enumerable<Prisma.UserWhereInput>
-		> &
-			Record<
-				keyof Omit<
-					Extract<RequestShapes["searchUsersV1"]["query"]["filter"], { type: "only" }>,
-					"type"
-				>,
-				Prisma.Enumerable<Prisma.UserWhereInput>
-			>
-	}
-
-	getTest(
-		arg: Omit<RequestShapes["searchUsersV1"]["query"]["filter"], "type">,
-		type: "inc" | "only",
-		username: string,
-	) {
-		let res: Prisma.Enumerable<Prisma.UserWhereInput> = []
-		let k: keyof typeof arg
-		for (k in arg) {
-			if (arg[k] === (type !== "inc")) res.push(...this.test(username)[k])
-		}
-		return (type === "inc" ? { NOT: res } : { OR: res }) satisfies Prisma.UserWhereInput
-	}
-
-	async searchUsersV1(
-		username: string,
-		{ filter, nResult, userNameContains }: RequestShapes["searchUsersV1"]["query"],
-	) {
-		const where = {
-			name: { contains: userNameContains },
-			...this.getTest(filter, filter.type, username),
-		} satisfies Prisma.UserWhereInput
-		const res = await this.prisma.user.findMany({
-			where,
-			take: nResult,
-			orderBy: { name: "asc" },
-			select: this.getUserProfilePreviewSelectForUser(username),
-		})
-		return this.formatUserProfilePreviewForUserArray(username, res)
 	}
 
 	formatMe(
@@ -369,7 +308,7 @@ export class UserService {
 		return user
 	}
 
-	async createUser({ code, username, redirect_uri }: RequestShapes["signUp"]["body"]) {
+	async createUser({ code, displayName, redirect_uri }: RequestShapes["signUp"]["body"]) {
         const intraUserName = await this.oauth.getIntraUserName(code, redirect_uri)
         if (!intraUserName)
             return contractErrors.Invalid42ApiCode(code)
@@ -377,7 +316,8 @@ export class UserService {
             where: {
                 OR: [
                     { intraUserName },
-                    { name: username }
+                    { name: intraUserName },
+                    { displayName }
                 ]
             },
             select: {
@@ -387,14 +327,15 @@ export class UserService {
             take: 1
         })
         if (user.length)
-            return contractErrors.UserAlreadyExist(`${intraUserName} || ${username}`)
+            return contractErrors.UserAlreadyExist(`${intraUserName} || ${displayName}`)
         await this.prisma.user.create({
             data: {
-                name: username,
-                intraUserName
+                intraUserName,
+                name: intraUserName,
+                displayName
             }
         })
-		return { username, intraUserName }
+		return { displayName, username: intraUserName, intraUserName }
 	}
 
 	private async getNotifyStatusData(username: string) {
@@ -792,9 +733,9 @@ export class UserService {
         const users = await this.prisma.user.findMany({
             where: {
                 AND: [
-                    { name: { contains: dto.userNameContains } },
-                    whereSearch
-                ]
+                    { displayName: { contains: dto.displayNameContains } },
+                    whereSearch,
+                ],
             },
             take: dto.nResult,
             select: this.getUserProfilePreviewSelectForUser(username)

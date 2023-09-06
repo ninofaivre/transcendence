@@ -28,8 +28,18 @@ export class FriendsService {
 		creationDate: true,
 		requestingUserName: true,
 		requestedUserName: true,
-		requestingUser: { select: { statusVisibilityLevel: true } },
-		requestedUser: { select: { statusVisibilityLevel: true } },
+		requestingUser: {
+            select: {
+                statusVisibilityLevel: true,
+                displayName: true
+            }
+        },
+		requestedUser: {
+            select: {
+                statusVisibilityLevel: true,
+                displayName: true
+            }
+        },
 	} satisfies Prisma.FriendShipSelect
 
 	private friendShipGetPayload = {
@@ -44,20 +54,21 @@ export class FriendsService {
 		const {
 			requestedUserName,
 			requestingUserName,
-			requestingUser: { statusVisibilityLevel: requestingVisi },
-			requestedUser: { statusVisibilityLevel: requestedVisi },
+			requestingUser,
+			requestedUser,
 			...rest
 		} = friendShip
 		const friend =
 			requestedUserName === username
-				? { name: requestingUserName, visibility: requestingVisi }
-				: { name: requestedUserName, visibility: requestedVisi }
+				? { name: requestingUserName, ...requestingUser }
+				: { name: requestedUserName, ...requestedUser }
 		const formattedFriendShip: z.infer<typeof zFriendShipReturn> = {
 			...rest,
 			friendName: friend.name,
+            friendDisplayName: friend.displayName,
 			friendStatus: this.usersService.getUserStatusByProximity(friend.name,
                 "FRIEND",
-                friend.visibility),
+                friend.statusVisibilityLevel),
 		}
 		return formattedFriendShip
 	}

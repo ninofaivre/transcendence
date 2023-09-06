@@ -88,18 +88,20 @@ export class AuthService {
         if (!intraUserName)
             return contractErrors.Invalid42ApiCode(code)
         const user = await this.prisma.user.findUnique({ where: { intraUserName },
-            select: { name: true, enabledTwoFA: true }}) 
+            select: { name: true, enabledTwoFA: true, displayName: true }}) 
         if (!user)
             return contractErrors.NotRegisteredUser(intraUserName)
-        return { username: user.name, intraUserName, enabledTwoFA: user.enabledTwoFA }
+        const { name, ...rest } = user
+        return { ...rest, username: name, intraUserName }
 	}
 
     public async validateUserDev(username: string) {
         const user = await this.prisma.user.findUnique({ where: { name: username },
-            select: { name: true, intraUserName: true } })
+            select: { name: true, intraUserName: true, displayName: true } })
         if (!user)
             return null
-        return { username, intraUserName: user.intraUserName }
+        const { name, ...rest } = user
+        return { ...rest, username: name }
     }
 
     public async updateRefreshToken(username: string, refreshToken: string) {

@@ -56,13 +56,13 @@ export const GameSpeed = {
 // })
 
 const zMatch = z.strictObject({
-	id: z.string().uuid(),
-	creationDate: z.date(),
-	win: z.boolean(),
-	looserName: zUserName,
-	winnerName: zUserName,
-	looserScore: z.number().positive().int(),
-	winnerScore: z.number().positive().int(),
+    id: z.string().uuid(),
+    creationDate: z.date(),
+    win: z.boolean(),
+    looserDisplayName: zUserName,
+    winnerDisplayName: zUserName,
+    looserScore: z.number().positive().int(),
+    winnerScore: z.number().positive().int()
 })
 
 export const gameContract = c.router(

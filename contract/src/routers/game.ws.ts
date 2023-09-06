@@ -19,16 +19,16 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
 		// INIT = décompte au début de la partie
 		status: z.literal("INIT"),
 		timeout: zTimeOut,
-		paddleLeftUserName: zUserName,
-		paddleRightUserName: zUserName,
+		paddleLeftDisplayName: zUserName,
+		paddleRightDisplayName: zUserName,
 		paddleLeftScore: ScoreSchema,
 		paddleRightScore: ScoreSchema,
 	}),
 	z.strictObject({
 		// INIT = décompte au début de la partie
 		status: z.literal("RECONNECT"),
-		paddleLeftUserName: zUserName,
-		paddleRightUserName: zUserName,
+		paddleLeftDisplayName: zUserName,
+		paddleRightDisplayName: zUserName,
 		paddleLeftScore: ScoreSchema,
 		paddleRightScore: ScoreSchema,
 	}),
@@ -43,6 +43,7 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
 		status: z.literal("PAUSE"),
 		timeout: z.number().positive().int(),
 		username: zUserName,
+        displayName: zUserName,
 	}),
 	z.strictObject({
 		status: z.literal("PLAY"),
@@ -51,7 +52,7 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
 	}),
 	z.strictObject({
 		status: z.literal("END"),
-		winner: zUserName,
+		winnerDisplayName: zUserName,
 		paddleLeftScore: ScoreSchema,
 		paddleRightScore: ScoreSchema,
 	}),
@@ -61,6 +62,7 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
 	z.strictObject({
 		status: z.enum(["INVITED", "INVITING"]),
 		username: zUserName,
+        displayName: zUserName,
 		timeout: zTimeOut,
 	}),
 ])
@@ -120,5 +122,5 @@ export interface ServerToClientEvents {
 	newInGameMessage: (e: { player: z.infer<typeof zUserName>; message: InGameMessage }) => void
 	updatedGameStatus: (e: GameStatus) => void
 	updatedGamePositions: (e: GamePositions) => void
-	invited: (e: { username: string }, callback: (e: InvitationClientResponse) => void) => void
+	invited: (e: { displayName: string }, callback: (e: InvitationClientResponse) => void) => void
 }

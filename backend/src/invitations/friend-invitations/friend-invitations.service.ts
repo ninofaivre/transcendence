@@ -5,6 +5,10 @@ import { PrismaService } from "src/prisma/prisma.service"
 import { SseService } from "src/sse/sse.service"
 import { UserService } from "src/user/user.service"
 
+type FriendInvitationPayload = Prisma.FriendInvitationGetPayload<
+    { select: FriendInvitationsService['friendInvitationSelect'] }
+>
+
 @Injectable()
 export class FriendInvitationsService {
 	constructor(
@@ -18,9 +22,24 @@ export class FriendInvitationsService {
 		id: true,
 		creationDate: true,
 		invitingUserName: true,
+        invitingUser: { select: { displayName: true } },
 		invitedUserName: true,
+        invitedUser: { select: { displayName: true } },
 		status: true,
 	} satisfies Prisma.FriendInvitationSelect
+
+    private formatFriendInvitation(payload: FriendInvitationPayload) {
+        const { invitingUser: { displayName: invitingDisplayName }, invitedUser: { displayName: invitedDisplayName }, ...rest } =  payload
+        return {
+            ...rest,
+            invitingDisplayName,
+            invitedDisplayName
+        }
+    }
+
+    private formatFriendInvitationArray(payloads: FriendInvitationPayload[]) {
+        return payloads.map(payload => this.formatFriendInvitation(payload))
+    }
 
 	private getFriendInvitationArgViaUser(
 		status: (typeof FriendInvitationStatus)[keyof typeof FriendInvitationStatus][],
@@ -41,7 +60,10 @@ export class FriendInvitationsService {
 			incomingFriendInvitation: this.getFriendInvitationArgViaUser(status),
 			outcomingFriendInvitation: this.getFriendInvitationArgViaUser(status),
 		})
-		return { incoming: res.incomingFriendInvitation, outcoming: res.outcomingFriendInvitation }
+		return {
+            incoming: this.formatFriendInvitationArray(res.incomingFriendInvitation),
+            outcoming: this.formatFriendInvitationArray(res.outcomingFriendInvitation)
+        }
 	}
 
 	private async getFriendInvitationOrThrow<T extends Prisma.FriendInvitationSelect>(
@@ -58,10 +80,6 @@ export class FriendInvitationsService {
 		})
 		if (!res) throw new NotFoundException(`not found friend invitation ${id}`)
 		return res
-	}
-
-	async getFriendInvitationById(username: string, id: string) {
-		return this.getFriendInvitationOrThrow(username, id, this.friendInvitationSelect)
 	}
 
 	async createFriendInvitation(invitingUserName: string, invitedUserName: string) {
@@ -120,17 +138,17 @@ export class FriendInvitationsService {
 			throw new ForbiddenException(
 				`${invitingUserName} has already a PENDING invitation for ${invitedUserName} (${outcomingFriendInvitation[0]?.id})`,
 			)
-		const newFriendInvitation = await this.prisma.friendInvitation.create({
+		const newFriendInvitation = this.formatFriendInvitation(await this.prisma.friendInvitation.create({
 			data: {
 				invitingUserName: invitingUserName,
 				invitedUserName: invitedUserName,
 			},
 			select: this.friendInvitationSelect,
-		})
+		}))
 		await this.sse.pushEvent(invitedUserName, {
 			type: "CREATED_FRIEND_INVITATION",
 			data: newFriendInvitation,
-		})
+        })
 		return newFriendInvitation
 	}
 
@@ -158,11 +176,11 @@ export class FriendInvitationsService {
 			throw new ForbiddenException(`can't cancel incoming friend invitation`)
 		if (newStatus === FriendInvitationStatus.ACCEPTED)
 			await this.friendService.createFriend(invitingUserName, invitedUserName)
-		const updatedFriendInvitation = await this.prisma.friendInvitation.update({
+		const updatedFriendInvitation = this.formatFriendInvitation(await this.prisma.friendInvitation.update({
 			where: { id },
 			data: { status: newStatus },
 			select: this.friendInvitationSelect,
-		})
+		}))
 		this.sse.pushEvent(invitingUserName !== username ? invitingUserName : invitedUserName, {
 			type: "UPDATED_FRIEND_INVITATION_STATUS",
 			data: { friendInvitationId: id, status: newStatus },

@@ -134,6 +134,7 @@ export class ChansService {
                 ...this.usersService.getProximityLevelSelect(username),
                 statusVisibilityLevel: true,
                 name: true,
+                displayName: true
             }
         },
 		...this.getPermSelect(),
@@ -143,6 +144,7 @@ export class ChansService {
     private timedStatusUserChanSelect = {
         untilDate: true,
         timedUserName: true,
+        timedUser: { select: { displayName: true } },
         type: true
     } satisfies Prisma.TimedStatusUserChanSelect
 
@@ -202,10 +204,11 @@ export class ChansService {
 
 	private chanDiscussionEventsSelect = {
 		concernedUserName: true,
+        concernedUser: { select: { displayName: true } },
 		classicChanDiscussionEvent: { select: { eventType: true } },
-        mutedUserChanDiscussionEvent: { select: { mutedUserName: true, timeoutInMs: true } },
+        mutedUserChanDiscussionEvent: { select: { mutedUserName: true, mutedUser: { select: { displayName: true } }, timeoutInMs: true } },
 		changedTitleChanDiscussionEvent: { select: { oldTitle: true, newTitle: true } },
-		deletedMessageChanDiscussionEvent: { select: { deletingUserName: true } },
+		deletedMessageChanDiscussionEvent: { select: { deletingUserName: true, deletingUsers: { select: { displayName: true } } } },
 	} satisfies Prisma.ChanDiscussionEventSelect
 
 	private chanDiscussionMessagesSelect = {
@@ -224,7 +227,8 @@ export class ChansService {
             select: {
                 blockedByUser: {
                     select: { blockingUserName: true }
-                }
+                },
+                displayName: true
             }
         },
 		authorName: true,
@@ -260,6 +264,7 @@ export class ChansService {
         permPayload: PermPayload
     ) => ({
             name: user.name,
+            displayName: user.name,
             status: this.usersService.getUserStatusByProximity(
                 user.name,
                 this.usersService.getProximityLevel(user),
@@ -311,7 +316,7 @@ export class ChansService {
             bannedUsers: timedStatusUsers
                 .filter(({ type }) => type === 'BAN')
                 .filter(({ timedUserName }) => this.doesUserHasPermOverUserInChan(username, timedUserName, chan, 'BAN'))
-                .map(({ timedUserName }) => timedUserName),
+                .map(({ timedUserName, timedUser: { displayName } }) => ({ username: timedUserName, displayName })),
             users: users.map(user =>
                 this.formatChanUserForUser(username, user, chan),
             )
@@ -326,23 +331,26 @@ export class ChansService {
         element: ChanDiscussionElementMessageWithDeletedPayload
 	) {
         if (element.event) {
-            const { event: { deletedMessageChanDiscussionEvent: { deletingUserName } }, authorName: author, ...elementRest } = element
+            const { event: { deletedMessageChanDiscussionEvent: { deletingUserName, deletingUsers: { displayName: deletingDisplayName } } }, authorName: author, author: { displayName: authorDisplayName }, ...elementRest } = element
             return {
                 ...elementRest,
                 isDeleted: true,
                 isAuthorBlocked: element.author.blockedByUser.some(el => el.blockingUserName === username),
                 author,
+                authorDisplayName,
                 content: "",
                 deletingUserName,
+                deletingDisplayName,
                 type: 'message',
             } as const
         }
-        const { message, authorName: author, ...elementRest } = element
+        const { message, authorName: author, author: { displayName }, ...elementRest } = element
 		const { relatedRoles, relatedUsers, related, ...messageRest } = message
 
         return {
             ...elementRest,
             author,
+            authorDisplayName: displayName,
             isDeleted: false,
             isAuthorBlocked: element.author.blockedByUser.some(el => el.blockingUserName === username),
             relatedTo: related && this.formatChanDiscussionElementForUser(username, (related.message) ? { ...related, message: { ...related['message'], related: null } } : related),
@@ -361,13 +369,14 @@ export class ChansService {
         username: string,
         element: ChanDiscussionElementEventWithoutDeletedPayload
     ) {
-        const { event, authorName: author, ...elementRest } = element
+        const { event, authorName: author, author: { displayName: authorDisplayName }, ...elementRest } = element
         const {
             deletedMessageChanDiscussionEvent,
             changedTitleChanDiscussionEvent,
             mutedUserChanDiscussionEvent,
             classicChanDiscussionEvent,
             concernedUserName,
+            concernedUser,
             ...eventRest
         } = event
         if (changedTitleChanDiscussionEvent) {
@@ -375,18 +384,21 @@ export class ChansService {
                 ...elementRest,
                 ...eventRest,
                 author,
+                authorDisplayName,
                 ...changedTitleChanDiscussionEvent,
                 eventType: "CHANGED_TITLE",
                 type: 'event'
             } as const
         }
         else if (mutedUserChanDiscussionEvent) {
-            const { mutedUserName, timeoutInMs } = mutedUserChanDiscussionEvent
+            const { mutedUserName, mutedUser: { displayName: concernedDisplayName }, timeoutInMs } = mutedUserChanDiscussionEvent
             return {
                 ...elementRest,
                 ...eventRest,
                 author,
+                authorDisplayName,
                 concernedUserName: mutedUserName,
+                concernedDisplayName,
                 concernMe: concernedUserName === username,
                 timeoutInMs: timeoutInMs || 'infinity',
                 eventType: "AUTHOR_MUTED_CONCERNED",
@@ -397,8 +409,10 @@ export class ChansService {
             ...elementRest,
             ...eventRest,
             concernedUserName,
+            concernedDisplayName: concernedUser?.displayName || null,
             concernMe: concernedUserName === username,
             author,
+            authorDisplayName,
             ...classicChanDiscussionEvent,
             type: 'event'
         } as const
@@ -815,12 +829,13 @@ export class ChansService {
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 id: true,
-                users: { select: { name: true } },
+                users: { select: { name: true, displayName: true } },
                 ...this.getPermSelect(),
             })
         if (!chan)
             return contractErrors.NotFoundChan(chanId)
-        if (!chan.users.some(user => user.name === otherUserName))
+        const otherUser = chan.users.find(user => user.name === otherUserName)
+        if (!otherUser)
             return contractErrors.NotFoundChanEntity(chanId, 'user', otherUserName)
         if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, 'MUTE'))
             return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'MUTE')
@@ -829,7 +844,7 @@ export class ChansService {
         this.callbackService.deleteCallback(otherUserName, "UNMUTE")
 
         const timedStatusUser = { timedUserName: otherUserName, type: 'MUTE', untilDate } as const
-        const timedStatusUsers = [timedStatusUser]
+        const timedStatusUsers = [{ ...timedStatusUser, timedUser: { displayName: otherUser.displayName } }]
         const updatedChan = { ...chan, timedStatusUsers }
         if (chan.timedStatusUsers
                 .some(({ timedUserName, type }) => 
@@ -850,7 +865,7 @@ export class ChansService {
                     chanId,
                 }
             })
-            this.notifyUpdatedSelfPerm(otherUserName, updatedChan)
+            this.notifyUpdatedSelfPerm(otherUserName, { ...updatedChan, timedStatusUsers })
         }
         new ChanElementFactory(chanId, username, this)
             .createMutedUserEvent(otherUserName, timeoutInMs)

@@ -11,7 +11,9 @@ export const zFriendInvitationReturn = z.strictObject({
 	id: z.string().uuid(),
 	creationDate: z.date(),
 	invitingUserName: zUserName,
+    invitingDisplayName: zUserName,
 	invitedUserName: zUserName,
+    invitedDisplayName: zUserName,
 	status: zFriendInvitationStatus,
 })
 
@@ -21,7 +23,9 @@ export const zChanInvitationReturn = z.strictObject({
 	chanTitle: zChanTitle.nullable(),
 	status: zChanInvitationStatus,
 	invitedUserName: zUserName,
+    invitedDisplayName: zUserName,
 	invitingUserName: zUserName,
+    invitingDisplayName: zUserName
 })
 
 const friendInvitationsContract = c.router(
@@ -37,16 +41,6 @@ const friendInvitationsContract = c.router(
 					incoming: z.array(zFriendInvitationReturn),
 					outcoming: z.array(zFriendInvitationReturn),
 				}),
-			},
-		},
-		getFriendInvitationById: {
-			method: "GET",
-			path: "/:id",
-			pathParams: z.strictObject({
-				id: z.string().uuid(),
-			}),
-			responses: {
-				200: zFriendInvitationReturn,
 			},
 		},
 		createFriendInvitation: {
@@ -91,16 +85,6 @@ const chanInvitationsContract = c.router(
 					incoming: z.array(zChanInvitationReturn),
 					outcoming: z.array(zChanInvitationReturn),
 				}),
-			},
-		},
-		getChanInvitationById: {
-			method: "GET",
-			path: "/:id",
-			pathParams: z.strictObject({
-				id: z.string().uuid(),
-			}),
-			responses: {
-				200: zChanInvitationReturn,
 			},
 		},
 		createChanInvitation: {

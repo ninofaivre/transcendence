@@ -157,9 +157,12 @@ model BlockedShip {
 }
 
 model User {
+    // same thing :(
   name String @id
-
   intraUserName String @unique
+    // same thing :(
+
+  displayName String @unique
 
   refreshToken String?
 

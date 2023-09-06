@@ -2,10 +2,24 @@
 	import { checkError, makeToast } from "$lib/global"
 	import { logged_in } from "$stores"
 	import { client } from "$clients"
-	import { PUBLIC_RANDOM_PHRASE, PUBLIC_FRONTEND_URL } from "$env/static/public"
+	import { PUBLIC_RANDOM_PHRASE, PUBLIC_FRONTEND_URL, PUBLIC_API42_OAUTH_URI, PUBLIC_API42_CLIENT_ID  } from "$env/static/public"
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
 	import { getToastStore } from "@skeletonlabs/skeleton"
+
+
+	let ft_uri = new URL(PUBLIC_API42_OAUTH_URI)
+	ft_uri.searchParams.append("client_id", PUBLIC_API42_CLIENT_ID)
+	ft_uri.searchParams.append("response_type", "code")
+	ft_uri.searchParams.append("scope", "public")
+	ft_uri.searchParams.append("state", PUBLIC_RANDOM_PHRASE)
+
+    const redirect_uri = new URL("/auth/signup", PUBLIC_FRONTEND_URL)
+    ft_uri.searchParams.set(
+        "redirect_uri",
+        redirect_uri.toString()
+    )
+
 
 	const toastStore = getToastStore()
 	let username = ""
@@ -22,16 +36,37 @@
 		goto("/")
 	}
 
+    const retry = $page.url.searchParams.get("retry")
+    if (retry)
+    {
+        redirect_uri.searchParams.set("retry", "true")
+        ft_uri.searchParams.set(
+            "redirect_uri",
+            redirect_uri.toString()
+        )
+    }
+
 	async function signUp() {
 		const ret = await client.users.signUp({
 			body: {
 				username,
-				redirect_uri: new URL("/auth/signup", PUBLIC_FRONTEND_URL).toString(),
+				redirect_uri: redirect_uri.toString(),
 				code,
 			},
 		})
 		if (ret.status !== 201) {
-			checkError(ret, "sign up")
+            if (ret.status === 409) {
+                redirect_uri.searchParams.set("retry", "true")
+                ft_uri.searchParams.set(
+                    "redirect_uri",
+                    redirect_uri.toString()
+                )
+                window.location.assign(ft_uri)
+            }
+            else if (ret.status === 403) {
+                goto("/auth")
+            }
+			checkError(ret, "sign up", toastStore)
 		} else {
 			makeToast("Successfully signed up", toastStore)
 			logged_in.set(true)
@@ -47,19 +82,25 @@
 </script>
 
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
-	<div class="grid grid-rows-2 gap-2 rounded-lg bg-gray-50 p-8 sm:px-10">
+	<div class="grid grid-rows-2 gap-1 rounded-lg bg-gray-50 p-3 sm:px-10">
 		<label class="label text-black" for="username">
 			Username
-			<input
-				bind:value={username}
-				type="text"
-				name="username"
-				class="input"
-				autocomplete="on"
-				minlength="3"
-			/>
 		</label>
-		<button on:click={signUp} class="variant-filled-primary btn btn-sm rounded-2xl">
+        <input
+            id="username"
+            bind:value={username}
+            type="text"
+            name="username"
+            class="input"
+            autocomplete="on"
+            minlength="3"
+        />
+        {#if $page.url.searchParams.get("retry")}
+            <sub class="text-red-500 p-1">
+                This user is already taken
+            </sub>
+        {/if}
+		<button on:click={signUp} class="py-2 variant-filled-primary btn btn-sm rounded-2xl">
 			<div>Confirm</div>
 		</button>
 	</div>

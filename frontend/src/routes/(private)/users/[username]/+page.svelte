@@ -29,8 +29,6 @@
 	let already_friend: boolean
 	$: already_friend = data.friendList.includes($page.params.username)
 
-	console.log(data.friendList)
-	console.log(data.friendships)
 	let spin = false
 	let keep_loading = true
 	let my_profile: boolean

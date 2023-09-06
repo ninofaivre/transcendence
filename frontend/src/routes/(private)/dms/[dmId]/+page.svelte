@@ -57,6 +57,7 @@
 			...messages,
 			{
 				type: "message",
+                authorDisplayName: data.me.displayName,
 				id: "",
 				content: e.detail,
 				creationDate: new Date(),

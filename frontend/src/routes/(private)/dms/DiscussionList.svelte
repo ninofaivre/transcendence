@@ -52,7 +52,7 @@
 		}`}
 	>
 		<a href={`/dms/${d.id}`} class="flex-1 justify-self-start">
-			{d.otherName}
+			{d.otherDisplayName}
 		</a>
 		<div class="flex justify-self-end">
 			<Avatar

@@ -99,8 +99,8 @@
 			},
 			body: null,
 		})
-		if (ret.status != 204) checkError(ret, `kick ${message.author}`)
-		else makeToast("Kicked " + message.author, toastStore)
+		if (ret.status != 204) checkError(ret, `kick ${message.authorDisplayName}`)
+		else makeToast("Kicked " + message.authorDisplayName, toastStore)
 	}
 
 	async function mute() {
@@ -125,8 +125,8 @@
 					timeoutInMs: Number(r),
 				},
 			})
-			if (ret.status != 204) checkError(ret, `mute ${message.author}`)
-			else makeToast("Muted " + message.author, toastStore)
+			if (ret.status != 204) checkError(ret, `mute ${message.authorDisplayName}`)
+			else makeToast("Muted " + message.authorDisplayName, toastStore)
 		}
 	}
 
@@ -138,8 +138,8 @@
 			},
 			body: null,
 		})
-		if (ret.status != 204) checkError(ret, `unmute ${message.author}`)
-		else makeToast("Unmuted " + message.author, toastStore)
+		if (ret.status != 204) checkError(ret, `unmute ${message.authorDisplayName}`)
+		else makeToast("Unmuted " + message.authorDisplayName, toastStore)
 	}
 
 	async function ban() {
@@ -152,8 +152,8 @@
 				timeoutInMs: "infinity",
 			},
 		})
-		if (ret.status != 204) checkError(ret, `ban ${message.author}`)
-		else makeToast("Banned " + message.author, toastStore)
+		if (ret.status != 204) checkError(ret, `ban ${message.authorDisplayName}`)
+		else makeToast("Banned " + message.authorDisplayName, toastStore)
 	}
 
 	async function unban() {
@@ -164,8 +164,8 @@
 			},
 			body: null,
 		})
-		if (ret.status != 204) checkError(ret, `unban ${message.author}`)
-		else makeToast("Unbanned " + message.author, toastStore)
+		if (ret.status != 204) checkError(ret, `unban ${message.authorDisplayName}`)
+		else makeToast("Unbanned " + message.authorDisplayName, toastStore)
 	}
 
 	async function toggleAdmin() {
@@ -179,12 +179,12 @@
 				state,
 			},
 		})
-		if (ret.status != 204) checkError(ret, `unban ${message.author}`)
+		if (ret.status != 204) checkError(ret, `unban ${message.authorDisplayName}`, toastStore)
 		else if (ret.status === 204) {
 			if (state) {
-				makeToast(message.author + " was granted Admin status", toastStore)
+				makeToast(message.authorDisplayName + " was granted Admin status", toastStore)
 			} else {
-				makeToast(message.author + " lost Admin status", toastStore)
+				makeToast(message.authorDisplayName + " lost Admin status", toastStore)
 			}
 		}
 	}
@@ -289,7 +289,7 @@
 		role="none"
 	>
 		<!-- {#if !from_me} -->
-		<div class="from-field font-medium">{message.author}</div>
+		<div class="from-field font-medium">{message.authorDisplayName}</div>
 		<!-- {/if} -->
 		<div class="grid grid-cols-[auto_1fr]">
 			{#if !is_sent}

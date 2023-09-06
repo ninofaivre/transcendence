@@ -66,6 +66,7 @@
 		messages = [
 			...messages,
 			{
+                authorDisplayName: data.me.displayName,
 				type: "message",
 				id: "",
 				content: e.detail,

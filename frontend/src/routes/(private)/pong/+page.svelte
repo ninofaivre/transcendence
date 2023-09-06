@@ -34,8 +34,8 @@
 
 	// Utils
 	let button_disabled = false
-	let paddleLeftUserName = ""
-	let paddleRightUserName = ""
+	let paddleLeftDisplayName = ""
+	let paddleRightDisplayName = ""
 	let paddleLeftScore = 0
 	let paddleRightScore = 0
 	let timeout = 0
@@ -66,8 +66,8 @@
 			console.log(new_data)
 			state = new_data.status
 			if (new_data.status === "INIT" || new_data.status === "RECONNECT") {
-				my_paddle_is_left = new_data.paddleLeftUserName === data.me.userName
-				;({ paddleLeftUserName, paddleRightUserName } = new_data)
+				my_paddle_is_left = new_data.paddleLeftDisplayName === data.me.userName
+				;({ paddleLeftDisplayName, paddleRightDisplayName } = new_data)
 				;({ paddleLeftScore, paddleRightScore } = new_data)
 				if (new_data.status === "INIT") {
 					new_data
@@ -94,7 +94,7 @@
 				// Implemeting the timeout
 			} else if (new_data.status === "END") {
 				;({ paddleLeftScore, paddleRightScore } = new_data)
-				winner = new_data.winner
+				winner = new_data.winnerDisplayName
 			}
 		})
 		$game_socket.on("disconnect", (data) => {
@@ -136,9 +136,9 @@
 	{#if state === "PAUSE"}
 		<div class="justify-self self-center">
 			<div>
-				Waiting for {data.me.userName === paddleLeftUserName
-					? paddleRightUserName
-					: paddleLeftUserName}
+				Waiting for {data.me.userName === paddleLeftDisplayName
+					? paddleRightDisplayName
+					: paddleLeftDisplayName}
 			</div>
 			<div class="spinner" />
 		</div>
@@ -195,7 +195,7 @@
 
 <Canvas frameloop="demand" debugFrameloop={false}>
 	<Text
-		text={paddleLeftUserName}
+		text={paddleLeftDisplayName}
 		fontSize={100}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}
@@ -204,7 +204,7 @@
 		anchorY={court.height / 2 - 400}
 	/>
 	<Text
-		text={paddleRightUserName}
+		text={paddleRightDisplayName}
 		fontSize={100}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}

@@ -74,7 +74,7 @@
 						resolve(r)
 					},
 					meta: {
-						username: invitation.username,
+						username: invitation.displayName,
 					},
 				}
 				modalStore.trigger(modal)

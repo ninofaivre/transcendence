@@ -18,8 +18,8 @@ export type IntraUserName = string
 
 export class SocketData {
 
-    public username: string;
-    public intraUserName: string;
+    public readonly username: string;
+    public readonly intraUserName: string;
     private _status:
         | {
             type: "IDLE" | "GAME" | "QUEUE" | "OFFLINE"
@@ -27,12 +27,14 @@ export class SocketData {
         | {
             type: "INVITING" | "INVITED",
             username: string,
+            displayName: string,
             startTimeoutMs: number
         } = { type: "IDLE" }
 
     constructor (
         user: EnrichedRequest['user'],
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        public readonly displayName: string
     ) {
         this.username = user.username
         this.intraUserName = user.intraUserName
@@ -95,7 +97,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
 
     afterInit(server: Socket) {
         server.use(WebSocketAuthMiddleware(this.authService,
-            this.userService, this) as any)
+            this.userService, this, this.prisma) as any)
         this.server.sockets.adapter
             .on('delete-room', this.handleDeleteRoom.bind(this))
     }
@@ -154,21 +156,23 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             return { status: 'error', reason: 'InvitingNotAvailable' }
         const invitedClient = (await this.server.sockets.to(payload.intraUserName).fetchSockets()).at(0)
         if (!invitedClient || invitedClient.data.status.type !== 'IDLE') {
-            const invitedClientUserName = (await this.prisma.user.findUnique({
+            const invitedClient = await this.prisma.user.findUnique({
                 where: { intraUserName: payload.intraUserName },
-                select: { name: true }
-            }))?.name
-            if (!invitedClientUserName)
+                select: { name: true, displayName: true }
+            })
+            if (!invitedClient)
                 return { status: 'error', reason: 'NotFoundInvited' }
             client.data.status = {
                 type: 'INVITING',
-                username: invitedClientUserName,
+                username: invitedClient.name,
+                displayName: invitedClient.displayName,
                 startTimeoutMs: Date.now()
             }
             this.server.in(client.data.intraUserName)
                 .emit('updatedGameStatus', {
                     status: 'INVITING',
-                    username: invitedClientUserName,
+                    username: invitedClient.name,
+                    displayName: invitedClient.displayName,
                     timeout: timeReplyToInvitation
                 })
             return new Promise(
@@ -184,16 +188,19 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             client.data.status = {
                 type: 'INVITING',
                 username: invitedClient.data.username,
+                displayName: invitedClient.data.displayName,
                 startTimeoutMs: Date.now()
             }
             invitedClient.data.status = {
                 type: 'INVITED',
                 username: client.data.username,
+                displayName: client.data.displayName,
                 startTimeoutMs: Date.now()
             }
             this.server.in(client.data.intraUserName)
                 .emit('updatedGameStatus', {
                     status: 'INVITING',
+                    displayName: invitedClient.data.displayName,
                     username: invitedClient.data.username,
                     timeout: timeReplyToInvitation
                 })
@@ -201,7 +208,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             (await this.server.in(invitedClient.data.intraUserName).fetchSockets())
                 .map(socket => socket
                     .timeout(timeReplyToInvitation)
-                    .emitWithAck('invited', { username: client.data.username })
+                    .emitWithAck('invited', { displayName: client.data.displayName })
                 ))
             const status = InvitationClientResponseSchema.parse(payload)
             if (status == 'accepted')
@@ -305,10 +312,11 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         if (client.data.status.type === 'INVITING' ||
             client.data.status.type === 'INVITED'
         ) {
+            const { type: status, startTimeoutMs, ...rest } = client.data.status
             return {
-                status: client.data.status.type,
-                timeout: timeReplyToInvitation - (Date.now() - client.data.status.startTimeoutMs),
-                username: client.data.status.username
+                ...rest,
+                status,
+                timeout: timeReplyToInvitation - (Date.now() - startTimeoutMs),
             }
         }
         return { status: client.data.status.type }

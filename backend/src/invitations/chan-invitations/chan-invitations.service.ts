@@ -34,7 +34,9 @@ export class ChanInvitationsService {
 		chanTitle: true,
 		status: true,
 		invitedUserName: true,
+        invitedUser: { select: { displayName: true } },
 		invitingUserName: true,
+        invitingUser: { select: { displayName: true } }
 	} satisfies Prisma.ChanInvitationSelect
 
 	private chanInvitationGetPayload = {
@@ -47,7 +49,7 @@ export class ChanInvitationsService {
 		const arg = {
 			where: { status: { in: status } },
 			select: this.chanInvitationSelect,
-			orderBy: { creationDate: "asc" },
+			orderBy: { creationDate: "desc" },
 		} satisfies Prisma.ChanInvitationFindManyArgs
 		return arg
 	}
@@ -55,7 +57,12 @@ export class ChanInvitationsService {
 	formatChanInvitation(
 		chanInvitation: Prisma.ChanInvitationGetPayload<typeof this.chanInvitationGetPayload>,
 	): z.infer<typeof zChanInvitationReturn> {
-		return chanInvitation
+        const { invitedUser: { displayName: invitedDisplayName }, invitingUser: { displayName: invitingDisplayName }, ...rest } = chanInvitation
+		return {
+            ...rest,
+            invitedDisplayName,
+            invitingDisplayName
+        }
 	}
 
 	formatChanInvitationArray(
@@ -96,12 +103,6 @@ export class ChanInvitationsService {
 		})
 		if (!res) throw new NotFoundException(`not found chan invitation ${id}`)
 		return res
-	}
-
-	async getChanInvitationById(username: string, id: string) {
-		return this.formatChanInvitation(
-			await this.getChanInvitationOrThrow(username, id, "ANY", this.chanInvitationSelect),
-		)
 	}
 
 	async createChanInvitation(invitingUserName: string, invitedUserName: string, chanId: string) {

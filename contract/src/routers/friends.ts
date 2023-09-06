@@ -9,7 +9,8 @@ export const zFriendShipReturn = z.strictObject({
 	id: z.string().uuid(),
 	creationDate: z.date(),
 	friendName: zUserName,
-	friendStatus: zUserStatus,
+    friendDisplayName: zUserName,
+	friendStatus: zUserStatus
 })
 
 export const friendsContract = c.router(

@@ -58,6 +58,7 @@ export const zPermissionOverList = z.enum([
 
 export const zChanUser = z.object({
 	name: zUserName,
+    displayName: zUserName,
 	status: zUserStatus,
 	roles: z.array(zRoleName),
 	myPermissionOver: z.array(zPermissionOverList),
@@ -71,7 +72,12 @@ export const zChanReturn = z.object({
 	ownerName: zUserName,
 	id: z.string().uuid(),
 	users: z.array(zChanUser).min(1),
-	bannedUsers: z.array(zUserName),
+	bannedUsers: z.array(
+        z.strictObject({
+            username: zUserName,
+            displayName: zUserName
+        })
+    ),
 	passwordProtected: z.boolean(),
 	selfPerms: z.array(zSelfPermissionList),
 })
@@ -79,6 +85,7 @@ export const zChanReturn = z.object({
 const zChanDiscussionBaseElement = z.strictObject({
 	id: z.string().uuid(),
 	author: zUserName,
+    authorDisplayName: zUserName,
 	creationDate: z.date(),
 })
 
@@ -103,12 +110,14 @@ export const zChanDiscussionMessageReturnTest = z.union([
 		isDeleted: z.literal(true),
         isAuthorBlocked: z.boolean(),
 		deletingUserName: zUserName,
+        deletingDisplayName: zUserName
 	}),
 ])
 
 export const zChanDiscussionEventReturn = z.union([
 	zChanDiscussionBaseEvent.extend({
 		concernedUserName: zUserName.nullable(),
+        concernedDisplayName: zUserName.nullable(),
 		concernMe: z.boolean(),
 		eventType: zClassicChanEventType,
 	}),
@@ -120,6 +129,7 @@ export const zChanDiscussionEventReturn = z.union([
 	zChanDiscussionBaseEvent.extend({
 		eventType: z.literal("AUTHOR_MUTED_CONCERNED"),
 		concernedUserName: zUserName,
+        concernedDisplayName: zUserName,
 		concernMe: z.boolean(),
 		timeoutInMs: zTimeOut,
 	}),
@@ -141,6 +151,7 @@ export const zChanDiscussionMessageReturn = z.union([
 		isDeleted: z.literal(true),
         isAuthorBlocked: z.boolean(),
 		deletingUserName: zUserName,
+        deletingDisplayName: zUserName
 	}),
 ])
 
@@ -457,7 +468,7 @@ const zUpdatedChan = zChanReturn.pick({
 	passwordProtected: true,
 	id: true,
 })
-const zUpdatedChanUser = zChanUser.pick({ roles: true, myPermissionOver: true }).partial()
+const zUpdatedChanUser = zChanUser.pick({ displayName: true, roles: true, myPermissionOver: true }).partial()
 
 export type ChanEvent =
 	| {

@@ -43,6 +43,7 @@ export class DmsService {
 				select: {
                     ...this.usersService.getProximityLevelSelect(username),
 					name: true,
+                    displayName: true,
 					statusVisibilityLevel: true,
 				},
 			},
@@ -50,6 +51,7 @@ export class DmsService {
 				select: {
                     ...this.usersService.getProximityLevelSelect(username),
 					name: true,
+                    displayName: true,
 					statusVisibilityLevel: true,
 				},
 			},
@@ -59,7 +61,9 @@ export class DmsService {
 
 	private directMessageContextSelect = {
 		...this.directMessageSelect,
+        requestingUser: { select: { displayName: true } },
 		requestingUserName: true,
+        requestedUser: { select: { displayName: true } },
 		requestedUserName: true,
 	} satisfies Prisma.DirectMessageSelect
 
@@ -74,10 +78,22 @@ export class DmsService {
 	private dmDiscussionEventSelect = {
 		classicDmDiscussionEvent: { select: { eventType: true } },
 		chanInvitationDmDiscussionEvent: {
-			select: { chanInvitation: { select: { invitingUserName: true, chanTitle: true } } },
+			select: {
+                chanInvitation: {
+                    select: {
+                        invitingUserName: true,
+                        invitingUser: {
+                            select: { displayName: true }
+                        },
+                        chanTitle: true,
+                        status: true,
+                        id: true
+                    }
+                }
+            },
 		},
-		deletedMessageDmDiscussionEvent: { select: { author: true } },
-		blockedDmDiscussionEvent: { select: { blockedUserName: true, blockingUserName: true } },
+		deletedMessageDmDiscussionEvent: { select: { author: true, authorRelation: { select: { displayName: true } } } },
+		blockedDmDiscussionEvent: { select: { blockedUserName: true, blockedUser: { select: { displayName: true } }, blockingUserName: true, blockingUser: { select: { displayName: true } } } },
 	} satisfies Prisma.DmDiscussionEventSelect & Record<EventUnion, true | object>
 
 	private dmDiscussionEventGetPayload = {
@@ -88,6 +104,7 @@ export class DmsService {
 		content: true,
 		relatedTo: true,
 		author: true,
+        authorRelation: { select: { displayName: true } },
 		modificationDate: true,
 	} satisfies Prisma.DmDiscussionMessageSelect
 
@@ -117,6 +134,7 @@ export class DmsService {
 		const formattedDirectMessage: z.infer<typeof zDmReturn> = {
 			...rest,
 			otherName: other.name,
+            otherDisplayName: other.displayName,
 			otherStatus: this.usersService.getUserStatusByProximity(other.name,
 				this.usersService.getProximityLevel(other),
 				other.statusVisibilityLevel),
@@ -152,19 +170,25 @@ export class DmsService {
 		} = event
 
 		if (chanInvitationDmDiscussionEvent) {
+            const { chanInvitation: { invitingUser: { displayName: authorDisplayName } } } = chanInvitationDmDiscussionEvent
 			return {
 				...element,
 				type: "event",
 				eventType: "CHAN_INVITATION",
 				author: chanInvitationDmDiscussionEvent.chanInvitation.invitingUserName,
+                authorDisplayName,
 				chanTitle: chanInvitationDmDiscussionEvent.chanInvitation.chanTitle,
+                status: chanInvitationDmDiscussionEvent.chanInvitation.status
 			}
 		} else if (blockedDmDiscussionEvent) {
+            const { blockedUser: { displayName: blockedDisplayName }, blockingUser: { displayName: blockingDisplayName }, ...rest } = blockedDmDiscussionEvent
 			return {
 				...element,
 				type: "event",
 				eventType: "BLOCKED",
-				...blockedDmDiscussionEvent,
+                blockedDisplayName,
+                blockingDisplayName,
+				...rest,
 			}
 		} else {
 			return {
@@ -175,6 +199,10 @@ export class DmsService {
 					username === dm.requestedUserName
 						? dm.requestingUserName
 						: dm.requestedUserName,
+                otherDisplayName:
+                    username === dm.requestedUserName
+                        ? dm.requestingUser.displayName
+                        : dm.requestedUser.displayName
 			}
 		}
 	}
@@ -196,20 +224,22 @@ export class DmsService {
 			  > & { isDeleted: true }),
 	): z.infer<typeof zDmDiscussionMessageReturn> {
 		if (!message.isDeleted) {
-			const { isDeleted, ...rest } = message
+			const { isDeleted, authorRelation: { displayName: authorDisplayName }, ...rest } = message
 			return {
 				...element,
 				...rest,
+                authorDisplayName,
 				type: "message",
 				hasBeenEdited:
 					element.creationDate.getTime() !== message.modificationDate.getTime(),
 				isDeleted: false,
 			}
 		}
-		const { deletedMessageDmDiscussionEvent, isDeleted } = message
+		const { deletedMessageDmDiscussionEvent: { author, authorRelation: { displayName: authorDisplayName } }, isDeleted } = message
 		return {
 			...element,
-			...deletedMessageDmDiscussionEvent,
+			author,
+            authorDisplayName,
 			isDeleted,
 			type: "message",
 			content: "",
@@ -277,31 +307,6 @@ export class DmsService {
 			select: { discussionElement: { select: this.dmDiscussionElementSelect } },
 		} satisfies Prisma.DmDiscussionEventCreateArgs
 		return args
-	}
-
-	public async searchDms(username: string, take: number, contains: string) {
-		return (
-			await this.prisma.directMessage.findMany({
-				where: {
-					OR: [
-						{
-							requestingUserName: username,
-							requestedUserName: { contains },
-						},
-						{
-							requestedUserName: username,
-							requestingUserName: { contains },
-						},
-					],
-				},
-				take,
-				select: { id: true, requestingUserName: true, requestedUserName: true },
-			})
-		).map((dm) => ({
-			dmId: dm.id,
-			otherUserName:
-				username === dm.requestedUserName ? dm.requestingUserName : dm.requestedUserName,
-		}))
 	}
 
 	public async createClassicDmEvent(
@@ -434,16 +439,6 @@ export class DmsService {
 			},
 		})
 		return this.formatDmElementArray(res.elements.reverse(), username)
-	}
-
-	async getDmElementById(username: string, dmId: string, elementId: string) {
-		return this.formatDmElementForUser(
-			await this.getDmElementOrThrow(username, this.dmDiscussionElementSelect, {
-				id: elementId,
-				directMessageId: dmId,
-			}),
-			username,
-		)
 	}
 
     async createDmIfRightTo(username: string, otherUserName: string) {

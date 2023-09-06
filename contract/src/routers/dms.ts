@@ -5,14 +5,15 @@ import { zClassicDmEventType, zDirectMessageStatus } from "../generated-zod"
 import { zChanTitle } from "./chans"
 import { zUserStatus } from "../zod/user.zod"
 import { getErrorsForContract } from "../errors"
+import { zChanInvitationStatus } from "../generated-zod"
 
 const c = initContract()
 
 export const zDmReturn = z.strictObject({
 	id: z.string().uuid(),
 	otherName: zUserName,
+    otherDisplayName: zUserName,
 	otherStatus: zUserStatus,
-	// myDmMutedUntil: z.date().nullable(), // à implémenter si on veux et qu'on a le temps
 	creationDate: z.date(),
 	status: zDirectMessageStatus,
 })
@@ -29,6 +30,7 @@ const zDmDiscussionBaseEvent = zDmDiscussionBaseElement.extend({
 const zDmDiscussionBaseMessage = zDmDiscussionBaseElement.extend({
 	type: z.literal("message"),
 	author: zUserName,
+    authorDisplayName: zUserName
 })
 
 export const zDmDiscussionMessageReturn = z.union([
@@ -48,15 +50,21 @@ export const zDmDiscussionEventReturn = z.union([
 	zDmDiscussionBaseEvent.extend({
 		eventType: zClassicDmEventType,
 		otherName: zUserName, // if we really need it
+        otherDisplayName: zUserName
 	}),
 	zDmDiscussionBaseEvent.extend({
 		eventType: z.literal("BLOCKED"),
 		blockedUserName: zUserName,
+        blockedDisplayName: zUserName,
 		blockingUserName: zUserName,
+        blockingDisplayName: zUserName
 	}),
 	zDmDiscussionBaseEvent.extend({
+        id: z.string().uuid(),
+        status: zChanInvitationStatus,
 		eventType: z.literal("CHAN_INVITATION"),
 		author: zUserName,
+        authorDisplayName: zUserName,
 		chanTitle: zChanTitle.optional(), // peut-être plus tard complexifier avec chan preview
 	}),
 ])
@@ -74,22 +82,6 @@ export const dmsContract = c.router(
 			path: "/",
 			responses: {
 				200: z.array(zDmReturn),
-			},
-		},
-		searchDms: {
-			method: "GET",
-			path: "/search",
-			query: z.strictObject({
-				otherUserNameContains: z.string().nonempty(),
-				nResult: z.number().positive().int().max(15).default(5),
-			}),
-			responses: {
-				200: z
-					.strictObject({
-						otherUserName: zUserName,
-						dmId: z.string().uuid(),
-					})
-					.array(),
 			},
 		},
 		createDm: {
@@ -134,17 +126,6 @@ export const dmsContract = c.router(
 			}),
 			responses: {
 				201: zDmDiscussionMessageReturn,
-			},
-		},
-		getDmElementById: {
-			method: "GET",
-			path: "/:dmId/elements/:elementId",
-			pathParams: z.strictObject({
-				dmId: z.string().uuid(),
-				elementId: z.string().uuid(),
-			}),
-			responses: {
-				200: zDmDiscussionElementReturn,
 			},
 		},
 		updateDmMessage: {

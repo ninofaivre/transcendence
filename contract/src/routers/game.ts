@@ -59,8 +59,8 @@ const zMatch = z.strictObject({
     id: z.string().uuid(),
     creationDate: z.date(),
     win: z.boolean(),
-    looserName: zUserName,
-    winnerName: zUserName,
+    looserDisplayName: zUserName,
+    winnerDisplayName: zUserName,
     looserScore: z.number().positive().int(),
     winnerScore: z.number().positive().int()
 })

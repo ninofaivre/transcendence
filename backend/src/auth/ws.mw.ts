@@ -2,15 +2,27 @@ import { Socket } from "socket.io";
 import { AuthService } from "./auth.service";
 import { EnrichedSocket, GameWebsocketGateway, IntraUserName, SocketData } from "src/websocket/game.websocket.gateway";
 import { UserService } from "src/user/user.service";
+import { PrismaService } from "src/prisma/prisma.service";
+import { contractErrors } from "contract";
 
 export function WebSocketAuthMiddleware(
     authService: AuthService,
     userService: UserService,
-    gameWebsocketGateway: GameWebsocketGateway
+    gameWebsocketGateway: GameWebsocketGateway,
+    prisma: PrismaService
 ) {
     return (async (client: EnrichedSocket, next: (err?: unknown) => void) => {
         try {
-            const data = new SocketData(authService.isValidAccessTokenFromCookie(client), userService)
+            const jwtPayload = authService.isValidAccessTokenFromCookie(client)
+            const displayName = (await prisma.user.findUnique({
+                where: { intraUserName: jwtPayload.intraUserName },
+                select: { displayName: true }
+            }))?.displayName
+            if (!displayName) {
+                next(new Error(JSON.stringify(contractErrors.NotFoundUserForValidToken(jwtPayload.intraUserName))))
+                return ;
+            }
+            const data = new SocketData(jwtPayload, userService, displayName)
             const alreadyExistingClient = (await gameWebsocketGateway.server.sockets.in(data.intraUserName)
                     .fetchSockets()).at(0)
             if (!alreadyExistingClient) {
@@ -21,8 +33,6 @@ export function WebSocketAuthMiddleware(
             }
             client.join([...alreadyExistingClient.rooms])
             client.data = alreadyExistingClient.data
-            // if (clients.has(client.data.intraUserName))
-            //     throw new Error("User already has an opened websocket")
             next()
         } catch (error) {
             next(error)

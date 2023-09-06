@@ -3,7 +3,7 @@ import { initContract } from "@ts-rest/core"
 import { zChanType, zAccessPolicyLevel } from "../generated-zod"
 
 import { zChanTitle } from "./chans"
-import { zUserName, zUserStatus, zUserPassword } from "../zod/user.zod"
+import { zUserName, zUserStatus } from "../zod/user.zod"
 import { z } from "zod"
 import { getErrorsForContract } from "../errors"
 import { StreamableFile } from "@nestjs/common"
@@ -12,6 +12,7 @@ const c = initContract()
 
 export const zUserProfilePreviewReturn = z.strictObject({
 	userName: zUserName,
+    displayName: zUserName
 })
 
 export const zUserProfileReturn = zUserProfilePreviewReturn.extend({
@@ -36,12 +37,13 @@ export const zPartialUserProfileReturn = zUserProfileReturn.partial()
 export const zMyProfileReturn = z.strictObject({
     enabledTwoFA: z.boolean(),
 	userName: zUserName,
+    displayName: zUserName,
 	dmPolicyLevel: zAccessPolicyLevel.exclude(["NO_ONE"]),
 	statusVisibilityLevel: zAccessPolicyLevel,
 })
 
 const zSearchUsersQueryBase = z.strictObject({
-	userNameContains: z.string().nonempty(),
+	displayNameContains: z.string().nonempty(),
 	nResult: z.number().positive().int().max(30).default(10),
 })
 
@@ -54,38 +56,6 @@ const zBlockedUser = z.strictObject({
 
 export const usersContract = c.router(
 	{
-		searchUsersV1: {
-			method: "GET",
-            deprecated: true,
-			path: "/V1/",
-			summary: "search for users",
-			description: "not finished yet (beta)",
-			query: z.union([
-				zSearchUsersQueryBase.extend({
-					filter: z.strictObject({
-						type: z.literal("inc").default("inc"),
-						friends: z.boolean().default(true),
-						mySelf: z.boolean().default(false),
-						blocked: z.boolean().default(true),
-						blockedBy: z.boolean().default(true),
-						// canStartDm: z.boolean().default(true)
-					}),
-				}),
-				zSearchUsersQueryBase.extend({
-					filter: z.strictObject({
-						type: z.literal("only"),
-						friends: z.boolean().default(false),
-						hasDm: z.boolean().default(false),
-						blocked: z.boolean().default(false),
-						blockedBy: z.boolean().default(false),
-						// canStartDm: z.boolean().default(false)
-					}),
-				}),
-			]),
-			responses: {
-				200: z.array(zUserProfilePreviewReturn),
-			},
-		},
         searchUsersV2: {
             method: "GET",
             path: "/",
@@ -141,7 +111,7 @@ export const usersContract = c.router(
 			method: "PATCH",
 			path: "/@me",
 			// TODO after BH add userName
-			body: zMyProfileReturn.omit({ userName: true }).partial(),
+			body: zMyProfileReturn.pick({ displayName: true, statusVisibilityLevel: true }).partial(),
 			responses: {
 				200: zMyProfileReturn,
 				...getErrorsForContract(c, [404, "NotFoundUser"]),
@@ -208,14 +178,14 @@ export const usersContract = c.router(
 			method: "POST",
 			path: "/",
 			body: z.strictObject({
-				username: zUserName,
 				code: z.string(),
+                displayName: zUserName,
                 redirect_uri: z.string().url()
 			}),
 			responses: {
 				201: z.object({
 					username: zUserName,
-                    intraUserName: z.string()
+                    displayName: zUserName
 				}),
 				...getErrorsForContract(c,
                     [409, "UserAlreadyExist"],
@@ -223,13 +193,6 @@ export const usersContract = c.router(
                 ),
 			},
 		},
-        getBlockedUsers: {
-            method: "GET",
-            path: "/@me/blockedUsers",
-            responses: {
-                200: z.array(zBlockedUser)
-            }
-        },
         blockUser: {
             method: "POST",
             path: "/@me/blockedUsers",

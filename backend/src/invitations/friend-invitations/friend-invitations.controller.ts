@@ -33,19 +33,6 @@ export class FriendInvitationsController implements NestControllerInterface<type
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@TsRest(c.getFriendInvitationById)
-	async getFriendInvitationById(
-		@Request() req: EnrichedRequest,
-		@TsRestRequest() { params: { id } }: RequestShapes["getFriendInvitationById"],
-	) {
-		const body = await this.friendInvitationsService.getFriendInvitationById(
-			req.user.username,
-			id,
-		)
-		return { status: 200 as const, body }
-	}
-
-	@UseGuards(JwtAuthGuard)
 	@TsRest(c.createFriendInvitation)
 	async createFriendInvitation(
 		@Request() req: EnrichedRequest,

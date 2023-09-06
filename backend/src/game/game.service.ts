@@ -4,7 +4,7 @@ import { GameDim, GameMovement, GameSpeed, GameStatus, GameTimings } from 'contr
 import { EnrichedRequest } from 'src/auth/auth.service';
 import { InternalEvents, emitInternalEvent } from 'src/internalEvents';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { EnrichedRemoteSocket, EnrichedSocket, GameWebsocketGateway, IntraUserName } from 'src/websocket/game.websocket.gateway';
+import { EnrichedRemoteSocket, EnrichedSocket, GameWebsocketGateway, IntraUserName, SocketData } from 'src/websocket/game.websocket.gateway';
 
 interface Position {
     x: number
@@ -205,7 +205,7 @@ class Player {
     }
 
     constructor(
-        public user: EnrichedRequest['user'],
+        public user: SocketData,
         private readonly game: Game,
         public readonly paddle: Paddle
     ) {
@@ -434,7 +434,8 @@ class Game {
                 this.webSocket.server.to(this.id).emit('updatedGameStatus', {
                     status: 'PAUSE',
                     timeout: pausingPlayer.pauseAmount,
-                    username: pausingPlayer.user.username
+                    username: pausingPlayer.user.username,
+                    displayName: pausingPlayer.user.displayName
                 })
                 break ;
             }
@@ -459,7 +460,7 @@ class Game {
             case 'END': {
                 this.webSocket.server.to(this.id).emit("updatedGameStatus", {
                     status: 'END',
-                    winner: this.getWinner().user.username,
+                    winnerDisplayName: this.getWinner().user.displayName,
                     ...this.getPaddleScores()
                 })
             }
@@ -505,8 +506,8 @@ class Game {
 
     public getPaddlesNames() {
         return {
-            paddleLeftUserName: this.playerA.user.username,
-            paddleRightUserName: this.playerB.user.username
+            paddleLeftDisplayName: this.playerA.user.displayName,
+            paddleRightDisplayName: this.playerB.user.displayName
         }
     }
 
@@ -713,17 +714,20 @@ export class GameService {
             take,
             select: {
                 creationDate: true,
-                looserName: true,
-                winnerName: true,
+                looser: { select: { displayName: true, name: true } },
+                winner: { select: { displayName :true, name: true } },
                 looserScore: true,
                 winnerScore: true,
                 id: true
             }
         })
         return matches.map((match) => {
+            const { looser, winner, ...rest } = match
             return {
-                ...match,
-                win: match.winnerName === username,
+                ...rest,
+                looserDisplayName: looser.displayName,
+                winnerDisplayName: winner.displayName,
+                win: winner.name === username,
             }
         })
     }

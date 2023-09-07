@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { checkError, makeToast, simpleKeypressHandlerFactory } from "$lib/global"
+	import { simpleKeypressHandlerFactory } from "$lib/global"
 	import { logged_in } from "$stores"
 	import { client } from "$clients"
 	import {
@@ -46,7 +46,7 @@
 					}
 					checkError(ret, "log in")
 				} else {
-					makeToast("Logged in successfully", toastStore)
+					makeToast("Logged in successfully")
 					logged_in.set(true)
 					goto("/")
 				}
@@ -65,7 +65,7 @@
 		})
 		if (ret.status !== 200) checkError(ret, "log in")
 		else {
-			makeToast("Logged in successfully", toastStore)
+			makeToast("Logged in successfully")
 			logged_in.set(true)
 			goto("/")
 		}
@@ -74,6 +74,23 @@
 	let sign_in_42: HTMLAnchorElement
 	let dev_input: HTMLInputElement
 	onMount(() => dev_input.focus())
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
+		}
+	}
 </script>
 
 <svelte:window

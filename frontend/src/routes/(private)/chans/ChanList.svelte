@@ -3,11 +3,10 @@
 	import { getContext, onMount } from "svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { invalidate } from "$app/navigation"
-	import { makeToast } from "$lib/global"
 	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import { checkError } from "$lib/global"
 	import type { Writable } from "svelte/store"
+	import { isContractError } from "contract"
 
 	const modalStore = getModalStore()
 	const sse_store: Writable<EventSource> = getContext("sse_store")
@@ -54,7 +53,7 @@
 			})
 			if (ret.status != 201) checkError(ret, `invite ${r} to this channel`)
 			else {
-				makeToast(`Invited ${r} to this channel`, toastStore)
+				makeToast(`Invited ${r} to this channel`)
 				invalidate(":chans:invitations") // Does this work ? TODO
 			}
 		}
@@ -86,8 +85,8 @@
 				if (password) checkError(ret, "change password")
 				else checkError(ret, "remove password")
 			} else {
-				if (password) makeToast("Changed password on " + d.title, toastStore)
-				else makeToast("Removed password on" + d.title, toastStore)
+				if (password) makeToast("Changed password on " + d.title)
+				else makeToast("Removed password on" + d.title)
 			}
 		}
 	}
@@ -101,6 +100,24 @@
 		})
 		if (ret.status !== 204) checkError(ret, "remove chan: " + d.title)
 		else invalidate(":chans")
+	}
+
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
+		}
 	}
 </script>
 

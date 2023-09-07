@@ -9,11 +9,10 @@
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
-	import { checkError } from "$lib/global"
 	import { client } from "$clients"
-	import { makeToast } from "$lib/global"
 	import type { Writable } from "svelte/store"
 	import { goto, invalidate } from "$app/navigation"
+	import { isContractError } from "contract"
 
 	export let data: LayoutData
 
@@ -89,7 +88,7 @@
 			})
 			if (ret.status != 201) checkError(ret, "create a new room")
 			else {
-				makeToast(`Created a new ${type.toLowerCase()} room: ${ret.body.title}`, toastStore)
+				makeToast(`Created a new ${type.toLowerCase()} room: ${ret.body.title}`)
 				data.chanList = [ret.body, ...data.chanList]
 				console.log("post insert", data.chanList)
 				goto("/chans/" + ret.body.id)
@@ -123,9 +122,26 @@
 			if (ret.status != 200) checkError(ret, `join ${title}`)
 			else {
 				ret.body
-				makeToast(`Joined ${title}`, toastStore)
+				makeToast(`Joined ${title}`)
 				data.chanList = [ret.body, ...data.chanList]
 			}
+		}
+	}
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
 		}
 	}
 </script>

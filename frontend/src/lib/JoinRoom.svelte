@@ -4,8 +4,9 @@
 
 	import { onMount } from "svelte"
 	import { client } from "$clients"
-	import { getModalStore } from "@skeletonlabs/skeleton"
-	import { checkError, simpleKeypressHandlerFactory } from "./global"
+	import { getModalStore, getToastStore } from "@skeletonlabs/skeleton"
+	import { simpleKeypressHandlerFactory } from "./global"
+	import { isContractError } from "contract"
 
 	const modalStore = getModalStore()
 	let search_input: string = ""
@@ -79,11 +80,28 @@
 	$: if (password_input) can_send = true
 
 	onMount(() => void input_element.focus())
+
+	const toastStore = getToastStore()
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
+		}
+	}
 </script>
 
-<div
-	class="card flex flex-col items-center gap-2 p-8"
->
+<div class="card flex flex-col items-center gap-2 p-8">
 	<!-- input container -->
 	<div class="relative min-w-[50vw] flex-1">
 		<input
@@ -95,7 +113,7 @@
 			placeholder="Search room..."
 			on:focusin={() => void (input_focused = true)}
 			on:keypress={simpleKeypressHandlerFactory(["Enter"], onSearchEnter)}
-            autocomplete="off"
+			autocomplete="off"
 		/>
 		{#if search_input && input_focused}
 			<div class="card absolute z-10 mt-1 max-h-48 w-full overflow-y-auto p-2" tabindex="-1">
@@ -126,7 +144,7 @@
 		type="submit"
 		class="variant-filled-primary btn w-fit justify-self-center px-12"
 		disabled={!can_send}
-        on:click={sendBackData}
+		on:click={sendBackData}
 	>
 		Send
 	</button>

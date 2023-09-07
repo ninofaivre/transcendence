@@ -8,7 +8,6 @@
 	import { ProgressRadial, getModalStore } from "@skeletonlabs/skeleton"
 	import { Avatar, Paginator, SlideToggle, Table, getToastStore } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import { checkError, makeToast } from "$lib/global"
 	import { isContractError } from "contract"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL, PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB } from "$env/static/public"
@@ -42,7 +41,7 @@
 					body: { twoFAtoken: code },
 				})
 				if (ret.status !== 200) {
-					checkError(ret, `${twoFA ? "enable" : "disable"} 2FA`, toastStore)
+					checkError(ret, `${twoFA ? "enable" : "disable"} 2FA`)
 					twoFA = !twoFA
 				}
 			}
@@ -119,7 +118,7 @@
 					cursor: last_match_history_element_id,
 				},
 			})
-			if (ret.status !== 200) checkError(ret, "load match history", getToastStore())
+			if (ret.status !== 200) checkError(ret, "load match history")
 			else {
 				if (ret.body.length < settings.limit) {
 					keep_loading = false
@@ -140,15 +139,14 @@
 			},
 		})
 		if (ret.status === 204) {
-			makeToast("Upload successful", toastStore)
+			makeToast("Upload successful")
 			$reload_img = $reload_img + 1
 		} else if (ret.status === 413) {
 			makeToast(
 				`Image is too big. Upload must be under ${PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB}MB`,
-				toastStore,
 			)
 		} else if (isContractError(ret)) {
-			makeToast(`Upload failed: ${ret.body.message}`, toastStore)
+			makeToast(`Upload failed: ${ret.body.message}`)
 		} else
 			throw new Error(
 				`Coulnd't upload profile picture. Unexpected return from the server: ${ret.status}`,
@@ -173,6 +171,23 @@
 	}
 
 	_init = false
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
+		}
+	}
 </script>
 
 <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-md">

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
 
-	import { Autocomplete } from "@skeletonlabs/skeleton"
+	import { Autocomplete, getToastStore } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { onMount } from "svelte"
-	import { checkError } from "./global"
+	import { isContractError } from "contract"
 
 	const modalStore = getModalStore()
 	let search_input: string = ""
@@ -13,7 +13,7 @@
 	let input_element: HTMLElement
 	let send_button: HTMLButtonElement
 	let input_focused = false
-    let chanId: string = $modalStore[0].meta?.chanId
+	let chanId: string = $modalStore[0].meta?.chanId
 
 	function onModalSubmit(str: string) {
 		if ($modalStore[0].response) {
@@ -36,10 +36,10 @@
 	async function getUsernames(input: string) {
 		const ret = await client.users.searchUsersV2({
 			query: {
-                action: "CREATE_CHAN_INVITE",
-                params: {
-                    chanId, 
-                },
+				action: "CREATE_CHAN_INVITE",
+				params: {
+					chanId,
+				},
 				displayNameContains: input,
 			},
 		})
@@ -64,6 +64,25 @@
 
 	let tw_rows: string
 	$: tw_rows = input_focused ? "grid-rows-2" : "grid-rows-1"
+
+	const toastStore = getToastStore()
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
+		}
+	}
 </script>
 
 <div class="card grid grid-rows-2 gap-1 p-6">

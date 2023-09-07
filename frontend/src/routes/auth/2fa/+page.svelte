@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { checkError, makeToast } from "$lib/global"
 	import { logged_in } from "$stores"
 	import { client } from "$clients"
 	import { getToastStore } from "@skeletonlabs/skeleton"
 	import { goto } from "$app/navigation"
+	import { isContractError } from "contract"
 
 	const toastStore = getToastStore()
 	let input = ""
@@ -14,11 +14,28 @@
 				twoFAtoken: input,
 			},
 		})
-		if (ret.status !== 200) checkError(ret, "confirm log in", toastStore)
+		if (ret.status !== 200) checkError(ret, "confirm log in")
 		else {
 			logged_in.set(true)
-			makeToast("Logged in successfully", toastStore)
+			makeToast("Logged in successfully")
 			goto("/")
+		}
+	}
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
 		}
 	}
 </script>

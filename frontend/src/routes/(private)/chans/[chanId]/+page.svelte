@@ -5,7 +5,7 @@
 
 	/* types */
 	import type { PageData } from "./$types"
-	import type { Chan, Message, MessageOrEvent } from "$types"
+	import type { Message, MessageOrEvent } from "$types"
 	import type { Writable } from "svelte/store"
 
 	/* Components */
@@ -14,12 +14,7 @@
 	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
 	import { client } from "$clients"
-	import {
-		addListenerToEventSource,
-		checkError,
-		makeToast,
-		shallowCopyPartialToNotPartial,
-	} from "$lib/global"
+	import { addListenerToEventSource, shallowCopyPartialToNotPartial } from "$lib/global"
 	import { isContractError } from "contract"
 	import { getToastStore } from "@skeletonlabs/skeleton"
 
@@ -102,7 +97,6 @@
 		} else if (isContractError(ret)) {
 			makeToast(
 				`Message deletion denied. Server returned code ${ret.status}\n with message \"${ret.body.message}\"`,
-				toastStore,
 			)
 			console.warn(ret.body.code)
 		} else {
@@ -125,7 +119,6 @@
 		} else if (isContractError(ret)) {
 			makeToast(
 				`Server refused to edit message, returned code ${ret.status}\n with message \"${ret.body.message}\"`,
-				toastStore,
 			)
 			console.warn(ret.body.code)
 		}
@@ -214,6 +207,24 @@
 			resizeObserver.unobserve(header as HTMLElement) // Is this necessary ?
 		}
 	})
+
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
+		}
+	}
 </script>
 
 <!-- {@debug data} -->

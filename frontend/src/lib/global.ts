@@ -3,8 +3,6 @@ import type { SseEvent } from "contract"
 import { isContractError } from "contract"
 import type { getToastStore } from "@skeletonlabs/skeleton"
 
-// const toastStore = getToastStore()
-
 export function makeToast(message: string, toastStore?: ReturnType<typeof getToastStore>) {
 	if (toastStore)
 		toastStore.trigger({

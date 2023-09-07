@@ -13,13 +13,13 @@
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { Avatar } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import { checkError, makeToast } from "$lib/global"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { page } from "$app/stores"
 	import { Paginator } from "@skeletonlabs/skeleton"
 	import { goto, invalidate } from "$app/navigation"
 	import { reload_img } from "$stores"
 	import { getContext } from "svelte"
+	import { isContractError } from "contract"
 
 	export let data: PageData
 
@@ -41,9 +41,9 @@
 		const ret = await client.invitations.friend.createFriendInvitation({
 			body: { invitedUserName: data.user.userName },
 		})
-		if (ret.status != 201) checkError(ret, "send friend request", toastStore)
+		if (ret.status != 201) checkError(ret, "send friend request")
 		else {
-			makeToast("Sent friend request to " + data.user.displayName, toastStore)
+			makeToast("Sent friend request to " + data.user.displayName)
 			//TODO either this works or I need another object back
 			invalidate(":friends")
 		}
@@ -59,9 +59,9 @@
 				},
 				body: null,
 			})
-			if (ret.status != 204) checkError(ret, "send friend request", toastStore)
+			if (ret.status != 204) checkError(ret, "send friend request")
 			else {
-				makeToast("Revoked friendship with " + data.user.displayName, toastStore)
+				makeToast("Revoked friendship with " + data.user.displayName)
 				invalidate(":friends")
 			}
 		} else throw new Error("There is no friendShipId for this user")
@@ -148,7 +148,7 @@
 					cursor: last_match_history_element_id,
 				},
 			})
-			if (ret.status !== 200) checkError(ret, "load match history", getToastStore())
+			if (ret.status !== 200) checkError(ret, "load match history")
 			else {
 				if (ret.body.length < settings.limit) {
 					keep_loading = false
@@ -166,9 +166,9 @@
 				username,
 			},
 		})
-		if (ret.status != 201) checkError(ret, "block " + username, toastStore)
+		if (ret.status != 201) checkError(ret, "block " + username)
 		else {
-			makeToast("Blocked " + username, toastStore)
+			makeToast("Blocked " + username)
 			invalidate(":user")
 		}
 	}
@@ -181,9 +181,9 @@
 			},
 			body: null,
 		})
-		if (ret.status != 204) checkError(ret, "remove block over " + username, toastStore)
+		if (ret.status != 204) checkError(ret, "remove block over " + username)
 		else {
-			makeToast("Unblocked " + username, toastStore)
+			makeToast("Unblocked " + username)
 			invalidate(":user")
 		}
 	}
@@ -200,9 +200,26 @@
 				const message = `Could not accept friend request. Server returned code ${status}\n with message \"${
 					(body as any)?.message
 				}\"`
-				makeToast(message, toastStore)
+				makeToast(message)
 				console.error(message)
 			} else invalidate(":friends:invitations")
+		}
+	}
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
 		}
 	}
 </script>

@@ -5,7 +5,8 @@
 	import { onMount } from "svelte"
 	import { client } from "$clients"
 	import { invalidate } from "$app/navigation"
-	import { checkError, listenOutsideClick } from "$lib/global"
+	import { listenOutsideClick } from "$lib/global"
+	import { isContractError } from "contract"
 
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
@@ -19,7 +20,7 @@
 			body: { invitedUserName: username },
 		})
 		if (ret.status != 201) {
-			checkError(ret, "send friend request", getToastStore())
+			checkError(ret, "send friend request")
 		} else {
 			// TODO either this works or I need the same object back
 			invalidate(":friendships")
@@ -35,13 +36,13 @@
 
 	async function getUsernames(input: string) {
 		const ret = await client.users.searchUsersV2({
-				query: {
-                    params: {},
-					displayNameContains: input,
-                    action: "CREATE_FRIEND_INVITE",
-				},
-			})
-		if (ret.status !== 200) checkError(ret, "get user names", getToastStore())
+			query: {
+				params: {},
+				displayNameContains: input,
+				action: "CREATE_FRIEND_INVITE",
+			},
+		})
+		if (ret.status !== 200) checkError(ret, "get user names")
 		else users = ret.body.map((obj) => ({ label: obj.displayName, value: obj.userName }))
 	}
 
@@ -59,6 +60,24 @@
 	$: if (search_input) getUsernames(search_input)
 
 	onMount(() => void input_element.focus())
+	const toastStore = getToastStore()
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
+		}
+	}
 </script>
 
 <div use:listenOutsideClick on:outsideclick={() => void (input_focused = false)}>

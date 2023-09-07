@@ -4,8 +4,8 @@
 
 	import { onMount } from "svelte"
 	import { client } from "$clients"
-	import { getModalStore } from "@skeletonlabs/skeleton"
-	import { checkError } from "./global"
+	import { getModalStore, getToastStore } from "@skeletonlabs/skeleton"
+	import { isContractError } from "contract"
 
 	const modalStore = getModalStore()
 	let search_input: string = ""
@@ -31,9 +31,9 @@
 		return client.users
 			.searchUsersV2({
 				query: {
-                    params: {},
+					params: {},
 					displayNameContains: input,
-                    action: "CREATE_FRIEND_INVITE",
+					action: "CREATE_FRIEND_INVITE",
 				},
 			})
 			.then((ret) => {
@@ -59,6 +59,25 @@
 	$: if (search_input) getUsernames(search_input)
 
 	onMount(() => void input_element.focus())
+
+	const toastStore = getToastStore()
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
+		}
+	}
 </script>
 
 <div class="card grid grid-rows-2 gap-1 p-8">

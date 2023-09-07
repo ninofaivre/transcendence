@@ -1,12 +1,16 @@
 <script lang="ts">
-	import { checkError, makeToast } from "$lib/global"
 	import { logged_in } from "$stores"
 	import { client } from "$clients"
-	import { PUBLIC_RANDOM_PHRASE, PUBLIC_FRONTEND_URL, PUBLIC_API42_OAUTH_URI, PUBLIC_API42_CLIENT_ID  } from "$env/static/public"
+	import {
+		PUBLIC_RANDOM_PHRASE,
+		PUBLIC_FRONTEND_URL,
+		PUBLIC_API42_OAUTH_URI,
+		PUBLIC_API42_CLIENT_ID,
+	} from "$env/static/public"
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
 	import { getToastStore } from "@skeletonlabs/skeleton"
-
+	import { isContractError } from "contract"
 
 	let ft_uri = new URL(PUBLIC_API42_OAUTH_URI)
 	ft_uri.searchParams.append("client_id", PUBLIC_API42_CLIENT_ID)
@@ -14,12 +18,8 @@
 	ft_uri.searchParams.append("scope", "public")
 	ft_uri.searchParams.append("state", PUBLIC_RANDOM_PHRASE)
 
-    const redirect_uri = new URL("/auth/signup", PUBLIC_FRONTEND_URL)
-    ft_uri.searchParams.set(
-        "redirect_uri",
-        redirect_uri.toString()
-    )
-
+	const redirect_uri = new URL("/auth/signup", PUBLIC_FRONTEND_URL)
+	ft_uri.searchParams.set("redirect_uri", redirect_uri.toString())
 
 	const toastStore = getToastStore()
 	let displayName = ""
@@ -36,39 +36,31 @@
 		goto("/")
 	}
 
-    const retry = $page.url.searchParams.get("retry")
-    if (retry)
-    {
-        redirect_uri.searchParams.set("retry", "true")
-        ft_uri.searchParams.set(
-            "redirect_uri",
-            redirect_uri.toString()
-        )
-    }
+	const retry = $page.url.searchParams.get("retry")
+	if (retry) {
+		redirect_uri.searchParams.set("retry", "true")
+		ft_uri.searchParams.set("redirect_uri", redirect_uri.toString())
+	}
 
 	async function signUp() {
 		const ret = await client.users.signUp({
 			body: {
-                displayName,
+				displayName,
 				redirect_uri: redirect_uri.toString(),
 				code,
 			},
 		})
 		if (ret.status !== 201) {
-            if (ret.status === 409) {
-                redirect_uri.searchParams.set("retry", "true")
-                ft_uri.searchParams.set(
-                    "redirect_uri",
-                    redirect_uri.toString()
-                )
-                window.location.assign(ft_uri)
-            }
-            else if (ret.status === 403) {
-                goto("/auth")
-            }
-			checkError(ret, "sign up", toastStore)
+			if (ret.status === 409) {
+				redirect_uri.searchParams.set("retry", "true")
+				ft_uri.searchParams.set("redirect_uri", redirect_uri.toString())
+				window.location.assign(ft_uri)
+			} else if (ret.status === 403) {
+				goto("/auth")
+			}
+			checkError(ret, "sign up")
 		} else {
-			makeToast("Successfully signed up", toastStore)
+			makeToast("Successfully signed up")
 			logged_in.set(true)
 			const ret = await client.users.getMe()
 			if (ret.status === 200) {
@@ -79,28 +71,41 @@
 			}
 		}
 	}
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
+		}
+	}
 </script>
 
 <div class="mt-28 sm:mx-auto sm:w-full sm:max-w-md">
 	<div class="grid grid-rows-2 gap-1 rounded-lg bg-gray-50 p-3 sm:px-10">
-		<label class="label text-black" for="username">
-			Username
-		</label>
-        <input
-            id="username"
-            bind:value={displayName}
-            type="text"
-            name="username"
-            class="input"
-            autocomplete="on"
-            minlength="3"
-        />
-        {#if $page.url.searchParams.get("retry")}
-            <sub class="text-red-500 p-1">
-                This user is already taken
-            </sub>
-        {/if}
-		<button on:click={signUp} class="py-2 variant-filled-primary btn btn-sm rounded-2xl">
+		<label class="label text-black" for="username"> Username </label>
+		<input
+			id="username"
+			bind:value={displayName}
+			type="text"
+			name="username"
+			class="input"
+			autocomplete="on"
+			minlength="3"
+		/>
+		{#if $page.url.searchParams.get("retry")}
+			<sub class="p-1 text-red-500"> This user is already taken </sub>
+		{/if}
+		<button on:click={signUp} class="variant-filled-primary btn btn-sm rounded-2xl py-2">
 			<div>Confirm</div>
 		</button>
 	</div>

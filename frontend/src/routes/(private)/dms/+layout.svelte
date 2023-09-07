@@ -7,11 +7,12 @@
 	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
-	import { addListenerToEventSource, checkError, listenOutsideClick } from "$lib/global"
-	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { addListenerToEventSource } from "$lib/global"
+	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { invalidate } from "$app/navigation"
 	import type { Writable } from "svelte/store"
+	import { isContractError } from "contract"
 
 	// Get our discussions
 	export let data: LayoutData
@@ -74,6 +75,24 @@
 				invalidate(":friendships")
 				console.log("Sent friendship request to " + username)
 			}
+		}
+	}
+	const toastStore = getToastStore()
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
 		}
 	}
 </script>

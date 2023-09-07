@@ -9,14 +9,14 @@
 
 	//Utils
 	import { blur, slide } from "svelte/transition"
-	import { checkError, listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
+	import { listenOutsideClick, simpleKeypressHandlerFactory } from "$lib/global"
 	import { createEventDispatcher } from "svelte"
-	import { makeToast } from "$lib/global"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { goto } from "$app/navigation"
 	import { reload_img } from "$stores"
+	import { isContractError } from "contract"
 
 	const modalStore = getModalStore()
 	const toastStore = getToastStore()
@@ -100,7 +100,7 @@
 			body: null,
 		})
 		if (ret.status != 204) checkError(ret, `kick ${message.authorDisplayName}`)
-		else makeToast("Kicked " + message.authorDisplayName, toastStore)
+		else makeToast("Kicked " + message.authorDisplayName)
 	}
 
 	async function mute() {
@@ -126,7 +126,7 @@
 				},
 			})
 			if (ret.status != 204) checkError(ret, `mute ${message.authorDisplayName}`)
-			else makeToast("Muted " + message.authorDisplayName, toastStore)
+			else makeToast("Muted " + message.authorDisplayName)
 		}
 	}
 
@@ -139,7 +139,7 @@
 			body: null,
 		})
 		if (ret.status != 204) checkError(ret, `unmute ${message.authorDisplayName}`)
-		else makeToast("Unmuted " + message.authorDisplayName, toastStore)
+		else makeToast("Unmuted " + message.authorDisplayName)
 	}
 
 	async function ban() {
@@ -153,7 +153,7 @@
 			},
 		})
 		if (ret.status != 204) checkError(ret, `ban ${message.authorDisplayName}`)
-		else makeToast("Banned " + message.authorDisplayName, toastStore)
+		else makeToast("Banned " + message.authorDisplayName)
 	}
 
 	async function unban() {
@@ -165,7 +165,7 @@
 			body: null,
 		})
 		if (ret.status != 204) checkError(ret, `unban ${message.authorDisplayName}`)
-		else makeToast("Unbanned " + message.authorDisplayName, toastStore)
+		else makeToast("Unbanned " + message.authorDisplayName)
 	}
 
 	async function toggleAdmin() {
@@ -179,12 +179,12 @@
 				state,
 			},
 		})
-		if (ret.status != 204) checkError(ret, `unban ${message.authorDisplayName}`, toastStore)
+		if (ret.status != 204) checkError(ret, `unban ${message.authorDisplayName}`)
 		else if (ret.status === 204) {
 			if (state) {
-				makeToast(message.authorDisplayName + " was granted Admin status", toastStore)
+				makeToast(message.authorDisplayName + " was granted Admin status")
 			} else {
-				makeToast(message.authorDisplayName + " lost Admin status", toastStore)
+				makeToast(message.authorDisplayName + " lost Admin status")
 			}
 		}
 	}
@@ -240,6 +240,23 @@
 		closeMenu()
 		is_sent = false
 		dispatch("delete", { id: message.id })
+	}
+	function makeToast(message: string) {
+		if (toastStore)
+			toastStore.trigger({
+				message,
+			})
+	}
+	function checkError(ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			let msg = "Server return unexpected status " + ret.status
+			if ("message" in ret.body) msg += " with message " + ret.body.message
+			makeToast(msg)
+			console.error(msg)
+		}
 	}
 </script>
 

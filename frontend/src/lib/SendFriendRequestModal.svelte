@@ -101,9 +101,9 @@
 				sendBackUsername(search_input)
 				search_input = ""
 			}}
-			class="variant-filled-primary hover:font-medium"
+			class="variant-filled-primary hover:font-medium disabled:font-normal btn"
 			style="--border-radius-var: {border_radius}"
-			disabled={can_send}
+			disabled={!can_send}
 		>
 			Send
 		</button>
@@ -125,8 +125,8 @@
 	}
 
 	button {
-		border-top-right-radius: var(--border-radius-var);
-		border-bottom-right-radius: var(--border-radius-var);
+		border-top-left-radius: var(--border-radius-var);
+		border-bottom-left-radius: var(--border-radius-var);
 		/* top | right | bottom | left */
 		padding: 0px 8px 0px 5px;
 	}

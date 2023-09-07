@@ -41,11 +41,13 @@
 		}
 		const destroyer: (() => void)[] = new Array(
 			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (new_data) => {
+                console.log("KICKED_FROM_CHAN")
 				if (new_data.chanId === $page.params.chanId) {
 					data.chanList = data.chanList.filter((el) => el.id === new_data.chanId)
 				}
 			}),
 			addListenerToEventSource($sse_store!, "BANNED_FROM_CHAN", (new_data) => {
+                console.log("BANNED_FROM_CHAN")
 				if (new_data.chanId === $page.params.chanId) {
 					data.chanList = data.chanList.filter((el) => el.id === new_data.chanId)
 				}
@@ -53,7 +55,12 @@
 			addListenerToEventSource($sse_store, "CREATED_CHAN", (new_data) => {
 				console.log("CREATED_CHAN")
 				data.chanList = [new_data, ...data.chanList]
-				invalidate(":chans")
+				// invalidate(":chans")
+			}),
+			addListenerToEventSource($sse_store, "DELETED_CHAN", (new_data) => {
+				console.log("DELETED_CHAN")
+                data.chanList = data.chanList.filter((el) => el.id != new_data.chanId)
+				// invalidate(":chans")
 			}),
 		)
 		return () => {
@@ -146,7 +153,7 @@
 	}
 </script>
 
-{#if $page.data.chanList.length}
+{#if data.chanList && data.chanList.length}
 	<!--Column layout -->
 	<div
 		class="grid grid-cols-[auto_1fr]"

@@ -4,9 +4,6 @@ import { initClient, tsRestFetchApi } from "@ts-rest/core"
 
 import { PUBLIC_BACKEND_URL as baseUrl } from "$env/static/public"
 
-// import * as contract_module from "contract/src/index"
-// const { contract } = contract_module
-
 import { contract, isContractError, isErrorCode } from "contract"
 import { logged_in } from "$lib/stores"
 

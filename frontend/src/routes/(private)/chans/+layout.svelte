@@ -126,10 +126,9 @@
 			}
 		}
 	}
-
 </script>
 
-{#if data.chanList.length}
+{#if $page.data.chanList.length}
 	<!--Column layout -->
 	<div
 		class="grid grid-cols-[auto_1fr]"

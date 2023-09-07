@@ -38,21 +38,21 @@
 		}),
 	)
 	$game_socket.emit("getGameStatus", "", (new_data) => {
-			if (new_data.status === "INVITING") {
-				banner_message_store.set("Game invitation pending")
-				$banner_pending_store = true
-			} else if (new_data.status === "INVITED") {
-				banner_message_store.set("You are being invited")
-				$banner_pending_store = true
-			} else if (new_data.status === "RECONNECT") {
-                goto("/pong")
-            }
+		if (new_data.status === "INVITING") {
+			banner_message_store.set("Game invitation pending")
+			$banner_pending_store = true
+		} else if (new_data.status === "INVITED") {
+			banner_message_store.set("You are being invited")
+			$banner_pending_store = true
+		} else if (new_data.status === "RECONNECT") {
+			goto("/pong")
+		}
 	})
 	applyCallbacks()
 	function applyCallbacks() {
-        $game_socket.on("connect_error", (data) => {
-            logged_in.set(false)
-        })
+		$game_socket.on("connect_error", (_data) => {
+			logged_in.set(false)
+		})
 		$game_socket.on("disconnect", (data) => {
 			console.log(data)
 			if (data === "io server disconnect") {
@@ -63,8 +63,8 @@
 			}
 		})
 		$game_socket.on("invited", async (invitation, callback) => {
-            banner_message_store.set("You are being invited")
-            banner_pending_store.set(true)
+			banner_message_store.set("You are being invited")
+			banner_pending_store.set(true)
 			const r = await new Promise<"accepted" | "refused" | undefined>((resolve) => {
 				const modal: ModalSettings = {
 					type: "component",
@@ -81,28 +81,27 @@
 			})
 			if (r) {
 				callback(r)
-                if (r === "accepted")
-                    goto('/pong')
+				if (r === "accepted") goto("/pong")
 			}
 		})
 		$game_socket.on("updatedGameStatus", (new_data) => {
-            console.log("updatedGameStatus layout", new_data)
+			console.log("updatedGameStatus layout", new_data)
 			if (new_data.status === "INVITING") {
 				banner_message_store.set("Game invitation pending")
 				banner_pending_store.set(true)
 			} else if (new_data.status === "INVITED") {
 				banner_message_store.set("You are being invited")
 				banner_pending_store.set(true)
-            } else {
-                modalStore.close()
-                banner_message_store.set("")
+			} else {
+				modalStore.close()
+				banner_message_store.set("")
 				banner_pending_store.set(true)
-            }
-        })
-    }
+			}
+		})
+	}
 
-    onDestroy(() => {
-        $game_socket.removeAllListeners()
+	onDestroy(() => {
+		$game_socket.removeAllListeners()
 		$game_socket.close()
 		$sse_store.close()
 	})

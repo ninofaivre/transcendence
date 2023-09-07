@@ -36,7 +36,7 @@
 	$: {
 		// Prevents redir coming back from 42, or losing the query string for /auth
 		if (!$page.url.pathname.match(/\bauth\b/)) {
-			if ($logged_in == false) {
+			if ($logged_in === false) {
 				goto("/auth" + $page.url.searchParams.toString())
 			}
 		}
@@ -103,7 +103,7 @@
 				>
 					<a
 						href="/"
-						class="tracking-wide"
+						class="tracking-wide first-letter"
 						style:font-family="ArcadeClassic"
 						style:font-size="1.5rem"
 					>
@@ -152,7 +152,7 @@
 </AppShell>
 
 <style>
-	a::first-letter {
+	a.first-letter::first-letter {
         initial-letter: 2;
 	}
 </style>

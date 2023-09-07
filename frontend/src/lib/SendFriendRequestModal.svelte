@@ -28,21 +28,22 @@
 	}
 
 	async function getUsernames(input: string) {
-		return client.users
-			.searchUsersV2({
-				query: {
-					params: {},
-					displayNameContains: input,
-					action: "CREATE_FRIEND_INVITE",
-				},
-			})
-			.then((ret) => {
-				if (ret.status !== 200) {
-					checkError(ret, "get users' names")
-				} else {
-					users = ret.body.map((obj) => ({ label: obj.userName, value: obj.userName }))
-				}
-			})
+		const ret = await client.users.searchUsersV2({
+			query: {
+				params: {},
+				displayNameContains: input,
+				action: "CREATE_FRIEND_INVITE",
+			},
+		})
+		if (ret.status !== 200) checkError(ret, "get user names")
+		else users = ret.body.map((obj) => ({ label: obj.displayName, value: obj.userName }))
+	}
+
+	let can_send: boolean = false
+	$: {
+		if (!users.find((el) => el.label === search_input)) {
+			can_send = false
+		} else can_send = true
 	}
 
 	async function onKeypress(event: KeyboardEvent) {
@@ -100,6 +101,7 @@
 			}}
 			class="variant-filled-primary hover:font-medium"
 			style="--border-radius-var: {border_radius}"
+			disabled={can_send}
 		>
 			Send
 		</button>

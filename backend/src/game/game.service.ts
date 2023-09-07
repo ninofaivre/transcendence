@@ -526,7 +526,7 @@ class Game {
     }
 
     private emitGamePositions() {
-        this.webSocket.server.to(this.id).emit('updatedGamePositions', {
+        this.webSocket.server.to(this.id).volatile.emit('updatedGamePositions', {
             paddleLeft: this.playerA.paddle.position,
             paddleRight: this.playerB.paddle.position,
             ball: this.ball.position 

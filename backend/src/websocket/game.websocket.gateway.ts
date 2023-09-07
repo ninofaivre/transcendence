@@ -145,6 +145,13 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         return userData.status.type
     }
 
+    @SubscribeMessage('ping')
+    async ping(
+        @MessageBody(EmptyValidation)payload: never
+    ) {
+        return ""
+    }
+
     @SubscribeMessage('invite')
     async invite(
         @ConnectedSocket()client: EnrichedSocket,

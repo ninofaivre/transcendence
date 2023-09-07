@@ -14,7 +14,7 @@ export type Score = z.infer<typeof ScoreSchema>
 const zTimeOut = z.number().positive().int()
 
 export const zConnectErrorData = z.strictObject({
-    code: z.enum(["InvalidJwt", "ExpiredJwt", "NotFoundUserForValidToken"])
+    code: z.enum(["InvalidJwt", "ExpiredJwt", "NotFoundUserForValidToken", "Error"])
 })
 
 // use timeout only to show a cooldown to the user
@@ -120,6 +120,7 @@ export interface ClientToServerEvents {
 				| { status: "RECONNECT" },
 		) => void,
 	) => void
+    ping: (e: "", callback: () => void) => void
 }
 
 export interface ServerToClientEvents {

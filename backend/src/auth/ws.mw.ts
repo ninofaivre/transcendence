@@ -37,15 +37,16 @@ export function WebSocketAuthMiddleware(
             client.data = alreadyExistingClient.data
             next()
         } catch (error) {
-            console.log("error :", error)
             if (error instanceof Error) {
                 if (error.name === 'JsonWebTokenError')
                     next({ message: error.message, data: { code: "InvalidJwt" } })
                 else if (error.name === 'TokenExpiredError')
                     next({ message: error.message, data: { code: "ExpiredJwt" } })
+                else
+                    next({ message: error.message, data: { code: "Error" } })
             }
             else
-                next({ message: 'generic handshake error' })
+                next({ message: `undefined error : ${error}`, data: { code: "Error" } })
         }
     })
 }

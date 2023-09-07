@@ -10,7 +10,7 @@
 
 	console.log("DiscussionDisplay init")
 
-	export let discussion: Chan | DirectConversation 
+	export let discussion: Chan | DirectConversation | undefined
 	export let messages: MessageOrEvent[] = []
 	export let sendLoadEvents: boolean
 	export let my_name: string
@@ -53,62 +53,64 @@
 
 <div bind:this={conversation_container} class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
 	<div class="flex flex-col scroll-smooth">
-		<div bind:this={canary} id="canary" class="min-h-[1px]" />
-		{#each messages as message (message.creationDate)}
-			{#if message.type === "message"}
-				<ChatBubble
-					{discussion}
-					{message}
-					from_me={message.author === my_name}
-					on:delete
-					on:edit
-					{game_socket}
-				/>
-			{:else if message.type === "event"}
-				<div id={message.id}>
-					{#if message.eventType == "CREATED_FRIENDSHIP"}
-						<div class="text-center text-gray-500">
-							{`You are now friend with ${message.otherName}`}
-						</div>
-					{:else if message.eventType == "BLOCKED"}
-						<div class="text-center text-gray-500">
-							{`${message.blockingUserName} blocked ${message.blockedUserName}`}
-						</div>
-					{:else if message.eventType == "AUTHOR_LEAVED"}
-						<div class="text-center text-gray-500">
-							{`${message.author} left chan`}
-						</div>
-					{:else if message.eventType == "AUTHOR_JOINED"}
-                        <div class="text-center text-gray-500">
-							{`${message.author} joined the chan`}
-						</div>
-					{:else if message.eventType == "CHAN_INVITATION"}
-                        <div class="text-center text-gray-500">
-						</div>
-					{:else if message.eventType == "DELETED_FRIENDSHIP"}
-                        <div class="text-center text-gray-500">
-							{`You are no longer friend with ${message.otherName}`}
-						</div>
-					{:else if message.eventType == "AUTHOR_MUTED_CONCERNED"}
-                        {#if message.timeoutInMs === 'infinity'}
-                            <div class="text-center text-gray-500">
-                                {`${message.author} muted ${message.concernedUserName} until further notice`}
-                            </div>
-                        {:else}
-                            <div class="text-center text-gray-500">
-                                {`${message.author} muted ${message.concernedUserName} for ${ message.timeoutInMs / 1000}`}
-                            </div>
-                        {/if}
-					{:else if message.eventType == "AUTHOR_KICKED_CONCERNED"}
-                        <div class="text-center text-gray-500">
-							{`${message.author} kicked ${message.concernedUserName}`}
-						</div>
-					{:else}
-						<div class="text-center text-gray-500">
-						</div>
-					{/if}
-				</div>
-			{/if}
-		{/each}
+		{#if discussion}
+			<div bind:this={canary} id="canary" class="min-h-[1px]" />
+			{#each messages as message (message.creationDate)}
+				{#if message.type === "message"}
+					<ChatBubble
+						{discussion}
+						{message}
+						from_me={message.author === my_name}
+						on:delete
+						on:edit
+						{game_socket}
+					/>
+				{:else if message.type === "event"}
+					<div id={message.id}>
+						{#if message.eventType == "CREATED_FRIENDSHIP"}
+							<div class="text-center text-gray-500">
+								{`You are now friend with ${message.otherName}`}
+							</div>
+						{:else if message.eventType == "BLOCKED"}
+							<div class="text-center text-gray-500">
+								{`${message.blockingUserName} blocked ${message.blockedUserName}`}
+							</div>
+						{:else if message.eventType == "AUTHOR_LEAVED"}
+							<div class="text-center text-gray-500">
+								{`${message.author} left chan`}
+							</div>
+						{:else if message.eventType == "AUTHOR_JOINED"}
+							<div class="text-center text-gray-500">
+								{`${message.author} joined the chan`}
+							</div>
+						{:else if message.eventType == "CHAN_INVITATION"}
+							<div class="text-center text-gray-500"></div>
+						{:else if message.eventType == "DELETED_FRIENDSHIP"}
+							<div class="text-center text-gray-500">
+								{`You are no longer friend with ${message.otherName}`}
+							</div>
+						{:else if message.eventType == "AUTHOR_MUTED_CONCERNED"}
+							{#if message.timeoutInMs === "infinity"}
+								<div class="text-center text-gray-500">
+									{`${message.author} muted ${message.concernedUserName} until further notice`}
+								</div>
+							{:else}
+								<div class="text-center text-gray-500">
+									{`${message.author} muted ${message.concernedUserName} for ${
+										message.timeoutInMs / 1000
+									}`}
+								</div>
+							{/if}
+						{:else if message.eventType == "AUTHOR_KICKED_CONCERNED"}
+							<div class="text-center text-gray-500">
+								{`${message.author} kicked ${message.concernedUserName}`}
+							</div>
+						{:else}
+							<div class="text-center text-gray-500"></div>
+						{/if}
+					</div>
+				{/if}
+			{/each}
+		{/if}
 	</div>
 </div>

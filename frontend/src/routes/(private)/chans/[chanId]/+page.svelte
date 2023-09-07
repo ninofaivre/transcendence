@@ -25,7 +25,6 @@
 
 	console.log($page.route.id, " init")
 
-
 	export let data: PageData
 	const sse_store: Writable<EventSource> = getContext("sse_store")
 	const toastStore = getToastStore()
@@ -66,7 +65,7 @@
 		messages = [
 			...messages,
 			{
-                authorDisplayName: data.me.displayName,
+				authorDisplayName: data.me.displayName,
 				type: "message",
 				id: "",
 				content: e.detail,
@@ -177,23 +176,26 @@
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_MESSAGE", (new_data) => {
 				console.log("Server message: Message was modified", new_data)
 				if (new_data.chanId === $page.params.chanId) {
-					updateSomeMessage(new_data.message.id, new_data.message.content, new_data.message.isDeleted)
+					updateSomeMessage(
+						new_data.message.id,
+						new_data.message.content,
+						new_data.message.isDeleted,
+					)
 				}
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (new_data) => {
 				if (new_data.chanId === $page.params.chanId) {
 					console.log("Self perms updated", new_data)
-                    if (data.chan)
-                        data.chan.selfPerms = new_data.selfPerms
+					if (data.chan) data.chan.selfPerms = new_data.selfPerms
 				}
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_USER", ({ chanId, user }) => {
 				if (chanId === $page.params.chanId) {
-                    if (data.chan) {
-                        let index = data.chan.users.findIndex((o) => o.name == user.name)
-                        shallowCopyPartialToNotPartial(user, data.chan.users[index])
-                        data.chan = data.chan
-                    }
+					if (data.chan) {
+						let index = data.chan.users.findIndex((o) => o.name == user.name)
+						shallowCopyPartialToNotPartial(user, data.chan.users[index])
+						data.chan = data.chan
+					}
 				}
 			}),
 			addListenerToEventSource($sse_store!, "BANNED_CHAN_USER", (new_data) => {
@@ -220,17 +222,15 @@
 <div class="grid grid-rows-[1fr_auto]" id="col2" style="height: calc(100vh - {header_height}px);">
 	<!-- bit of hack because there's always the CREATED event message polluting a startgin conversation -->
 	<!-- Messages -->
-    {#if data.chan}
-        <DiscussionDisplay
-            discussion={data.chan}
-            {messages}
-            {sendLoadEvents}
-            my_name={data.me.userName}
-            on:delete={deletionHandler}
-            on:edit={editHandler}
-            on:loadprevious={loadPreviousMessages}
-        />
-    {/if}
+	<DiscussionDisplay
+		discussion={data.chan}
+		{messages}
+		{sendLoadEvents}
+		my_name={data.me.userName}
+		on:delete={deletionHandler}
+		on:edit={editHandler}
+		on:loadprevious={loadPreviousMessages}
+	/>
 	<section id="input-row" class="p-4">
 		<ChatBox
 			outline

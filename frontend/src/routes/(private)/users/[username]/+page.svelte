@@ -44,8 +44,8 @@
 		if (ret.status != 201) checkError(ret, "send friend request")
 		else {
 			makeToast("Sent friend request to " + data.user.displayName)
-			//TODO either this works or I need another object back
-			invalidate(":friends")
+			// invalidate(":friends:invitations")
+			invalidate(":user")
 		}
 	}
 

@@ -49,18 +49,21 @@
             })
         }
     }
-
-	$game_socket.emit("getGameStatus", "", (new_data) => {
-		if (new_data.status === "INVITING") {
-			banner_message_store.set("Game invitation pending")
-			$banner_pending_store = true
-		} else if (new_data.status === "INVITED") {
-			banner_message_store.set("You are being invited")
-			$banner_pending_store = true
-		} else if (new_data.status === "RECONNECT") {
-			goto("/pong")
-		}
-	})
+    $game_socket.on('connect', () => {
+        banner_message_store.set("")
+        banner_pending_store.set(false)
+        $game_socket.emit("getGameStatus", "", (new_data) => {
+            if (new_data.status === "INVITING") {
+                banner_message_store.set("Game invitation pending")
+                $banner_pending_store = true
+            } else if (new_data.status === "INVITED") {
+                banner_message_store.set("You are being invited")
+                $banner_pending_store = true
+            } else if (new_data.status === "RECONNECT") {
+                goto("/pong")
+            }
+        })
+    })
     $game_socket.on("connect_error", async ({ message, data }: { message: string, data?: z.infer<typeof zConnectErrorData> }) => {
         console.log("CONNECT_ERROR")
         console.log(`errorMessage : ${message}`)
@@ -93,6 +96,8 @@
         $game_socket.connect()
     })
     $game_socket.on("disconnect", (data) => {
+        banner_message_store.set("network error ❗📶")
+        banner_pending_store.set(true)
         console.log("DISCONNECT")
         if (data === "io server disconnect")
             $game_socket.connect()

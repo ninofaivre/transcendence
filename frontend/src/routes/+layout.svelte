@@ -8,11 +8,7 @@
 	import { logged_in } from "$lib/stores"
 	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
-	import {
-		Modal,
-		type ModalComponent,
-		type ModalSettings,
-	} from "@skeletonlabs/skeleton"
+	import { Modal, type ModalComponent, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { page } from "$app/stores"
 	import { client } from "$clients"
@@ -28,7 +24,7 @@
 	import TwoFAModal from "$lib/TwoFAModal.svelte"
 	import JoinRoom from "$lib/JoinRoom.svelte"
 	import CropperModal from "$lib/CropperModal.svelte"
-    import ChangePasswordModal from "$lib/ChangePasswordModal.svelte" 
+	import ChangePasswordModal from "$lib/ChangePasswordModal.svelte"
 
 	initializeStores()
 	const toastStore = getToastStore()
@@ -51,7 +47,7 @@
 		SendFriendRequestModal: { ref: SendFriendRequestModal },
 		AcceptGameInvitationModal: { ref: AcceptGameInvitationModal },
 		TwoFAModal: { ref: TwoFAModal },
-        ChangePasswordModal: { ref: ChangePasswordModal },
+		ChangePasswordModal: { ref: ChangePasswordModal },
 		CropperModal: { ref: CropperModal },
 	}
 
@@ -103,7 +99,7 @@
 				>
 					<a
 						href="/"
-						class="tracking-wide first-letter"
+						class="tracking-wide"
 						style:font-family="ArcadeClassic"
 						style:font-size="1.5rem"
 					>
@@ -152,7 +148,7 @@
 </AppShell>
 
 <style>
-	a.first-letter::first-letter {
-        initial-letter: 2;
+	a::first-letter {
+		initial-letter: 2;
 	}
 </style>

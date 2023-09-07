@@ -15,16 +15,20 @@
 	let input_focused = false
 	let border_radius = "15px"
 
-	async function sendFriendRequest(username: string) {
-		const ret = await client.invitations.friend.createFriendInvitation({
-			body: { invitedUserName: username },
-		})
-		if (ret.status != 201) {
-			checkError(ret, "send friend request")
-		} else {
-			// TODO either this works or I need the same object back
-			invalidate(":friendships")
-			console.log("Sent friendship request to " + username)
+	async function sendFriendRequest(input: string) {
+		const invitedUserName = users.find((el) => input === el.label)?.value
+
+		if (typeof invitedUserName === "string" && invitedUserName) {
+			const ret = await client.invitations.friend.createFriendInvitation({
+				body: { invitedUserName },
+			})
+			if (ret.status != 201) {
+				checkError(ret, "send friend request")
+			} else {
+				// TODO either this works or I need the same object back
+				invalidate(":friendships")
+				console.log("Sent friendship request to " + input)
+			}
 		}
 	}
 

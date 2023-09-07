@@ -13,7 +13,7 @@
 	import { client } from "$clients"
 	import { makeToast } from "$lib/global"
 	import type { Writable } from "svelte/store"
-	import { goto } from "$app/navigation"
+	import { goto, invalidate } from "$app/navigation"
 
 	export let data: LayoutData
 
@@ -52,7 +52,9 @@
 				}
 			}),
 			addListenerToEventSource($sse_store, "CREATED_CHAN", (new_data) => {
+				console.log("CREATED_CHAN")
 				data.chanList = [new_data, ...data.chanList]
+				invalidate(":chans")
 			}),
 		)
 		return () => {

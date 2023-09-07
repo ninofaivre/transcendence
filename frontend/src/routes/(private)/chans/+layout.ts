@@ -9,7 +9,7 @@ export const load = async ({ depends }: LayoutLoadEvent) => {
 	const ret = await client.chans.getMyChans()
 
 	if (ret.status !== 200) {
-        checkError(ret, "load channel list")
-        return { chanList: [] }
-    } else return { chanList: ret.body }
+		checkError(ret, "load channel list")
+		return { chanList: [] }
+	} else return { chanList: ret.body }
 }

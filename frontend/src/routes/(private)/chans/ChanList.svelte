@@ -60,76 +60,94 @@
 		}
 	}
 
-    async function changePasswordModal(d: Chan) {
-        const password = await new Promise<string | null | undefined>((resolve) => {
-            const modalSettings: ModalSettings = {
-                type: "component",
-                component: 'ChangePasswordModal',
-                response: (r)  => {
-                    modalStore.close(),
-                    resolve(r)
-                },
-                meta: { chanId: d.id },
-            }
-            modalStore.trigger(modalSettings)
-        })
-        if (password !== undefined) {
-            const ret = await client.chans.updateChan(
-            {
-                params: {
-                    chanId: d.id,
-                },
-                body: {
-                   type: "PUBLIC",
-                   password,
-                }
-            })
-            if (ret.status !== 204) {
-                if (password)
-                    checkError(ret, "change password")
-                else
-                    checkError(ret, "remove password")
-            } else {
-                if (password)
-                    makeToast("Changed password on " + d.title, toastStore)
-                else
-                    makeToast("Removed password on" + d.title, toastStore)
-            }
-        }
-    }
+	async function changePasswordModal(d: Chan) {
+		const password = await new Promise<string | null | undefined>((resolve) => {
+			const modalSettings: ModalSettings = {
+				type: "component",
+				component: "ChangePasswordModal",
+				response: (r) => {
+					modalStore.close(), resolve(r)
+				},
+				meta: { chanId: d.id },
+			}
+			modalStore.trigger(modalSettings)
+		})
+		if (password !== undefined) {
+			const ret = await client.chans.updateChan({
+				params: {
+					chanId: d.id,
+				},
+				body: {
+					type: "PUBLIC",
+					password,
+				},
+			})
+			if (ret.status !== 204) {
+				if (password) checkError(ret, "change password")
+				else checkError(ret, "remove password")
+			} else {
+				if (password) makeToast("Changed password on " + d.title, toastStore)
+				else makeToast("Removed password on" + d.title, toastStore)
+			}
+		}
+	}
+
+	async function removeChan(d: Chan) {
+		const ret = await client.chans.deleteChan({
+			params: {
+				chanId: d.id,
+			},
+			body: null,
+		})
+		if (ret.status !== 204) checkError(ret, "remove chan: " + d.title)
+		else invalidate(":chans")
+	}
 </script>
 
 {#each discussions as d}
 	<div
-		class={`flex rounded px-1 py-2 place-items-center ${
+		class={`flex place-items-center rounded px-1 py-2 ${
 			d.id != currentDiscussionId
 				? "font-medium hover:variant-soft-secondary hover:font-semibold"
 				: "variant-ghost-secondary font-semibold"
 		}`}
 	>
-		<a href={`/chans/${d.id}`} class="flex-1 justify-self-start mx-2">
+		<a href={`/chans/${d.id}`} class="mx-2 flex-1 justify-self-start">
 			{d.title}
 		</a>
-        {#if d.passwordProtected }
-            <button
-                class="variant-ghost-secondary btn btn-sm p-1 mx-[0.10rem]"
-                on:click={() => {
-                if (d.selfPerms.includes("EDIT")) changePasswordModal(d)
-            }}>
-                🔒
-            </button>
-        {:else}
-            <button
-                class="variant-ghost-secondary btn btn-sm p-1 mx-[0.10rem]"
-                on:click={() => {
-                if (d.selfPerms.includes("EDIT")) changePasswordModal(d)
-            }}>
-                🔓
-            </button>
-        {/if}
-		<button on:click={() => onInviteToChan(d.id)} class="variant-ghost-secondary btn btn-sm p-1 mx-[0.10rem] ">
-            👥+
-        </button>
+		{#if d.passwordProtected}
+			<button
+				class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
+				on:click={() => {
+					if (d.selfPerms.includes("EDIT")) changePasswordModal(d)
+				}}
+			>
+				🔒
+			</button>
+		{:else}
+			<button
+				class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
+				on:click={() => {
+					if (d.selfPerms.includes("EDIT")) changePasswordModal(d)
+				}}
+			>
+				🔓
+			</button>
+		{/if}
+		<button
+			on:click={() => onInviteToChan(d.id)}
+			class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
+		>
+			👥+
+		</button>
+		<button
+			class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
+			on:click={() => {
+				if (d.selfPerms.includes("EDIT")) removeChan(d)
+			}}
+		>
+			X
+		</button>
 	</div>
 {/each}
 

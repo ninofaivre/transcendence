@@ -13,6 +13,10 @@ export type Score = z.infer<typeof ScoreSchema>
 
 const zTimeOut = z.number().positive().int()
 
+export const zConnectErrorData = z.strictObject({
+    code: z.enum(["InvalidJwt", "ExpiredJwt", "NotFoundUserForValidToken"])
+})
+
 // use timeout only to show a cooldown to the user
 export const GameStatusSchema = z.discriminatedUnion("status", [
 	z.strictObject({

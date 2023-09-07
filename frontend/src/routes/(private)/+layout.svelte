@@ -10,6 +10,9 @@
 	import { writable } from "svelte/store"
 	import { goto } from "$app/navigation"
 	import { logged_in } from "$stores"
+    import { zConnectErrorData } from 'contract'
+	import type { z } from "zod"
+	import { client } from "$clients"
 
 	console.log("private layout init")
 	const modalStore = getModalStore()
@@ -50,17 +53,26 @@
 	})
 	applyCallbacks()
 	function applyCallbacks() {
-		$game_socket.on("connect_error", (_data) => {
-			logged_in.set(false)
+		$game_socket.on("connect_error", async (_data: any) => {
+            console.log("CONNECT_ERROR")
+            const a: z.infer<typeof zConnectErrorData> | undefined = _data.data
+            if (a && a.code !== 'NotFoundUserForValidToken') {
+                const ret = await client.auth.refreshTokens({ body: null })
+                if (ret.status === 200) {
+                    $game_socket.connect()
+                    return ;
+                }
+            }
+            console.log(`loging out on websocket connect_error`)
+            console.log(`errorData: ${a}`)
+            console.log(`errorMessage : ${_data.message}`)
+            logged_in.set(false)
 		})
 		$game_socket.on("disconnect", (data) => {
-			console.log(data)
+            console.log("DISCONNECT")
 			if (data === "io server disconnect") {
-				$game_socket = io(PUBLIC_BACKEND_URL, {
-					withCredentials: true,
-				})
-				applyCallbacks()
-			}
+				$game_socket.connect()
+            }
 		})
 		$game_socket.on("invited", async (invitation, callback) => {
 			banner_message_store.set("You are being invited")

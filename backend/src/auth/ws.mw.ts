@@ -3,7 +3,8 @@ import { AuthService } from "./auth.service";
 import { EnrichedSocket, GameWebsocketGateway, IntraUserName, SocketData } from "src/websocket/game.websocket.gateway";
 import { UserService } from "src/user/user.service";
 import { PrismaService } from "src/prisma/prisma.service";
-import { contractErrors } from "contract";
+import { contractErrors, zConnectErrorData } from "contract";
+import z from "zod";
 
 export function WebSocketAuthMiddleware(
     authService: AuthService,
@@ -11,7 +12,7 @@ export function WebSocketAuthMiddleware(
     gameWebsocketGateway: GameWebsocketGateway,
     prisma: PrismaService
 ) {
-    return (async (client: EnrichedSocket, next: (err?: unknown) => void) => {
+    return (async (client: EnrichedSocket, next: (err?: { message: string, data?: z.infer<typeof zConnectErrorData> }) => void) => {
         try {
             const jwtPayload = authService.isValidAccessTokenFromCookie(client)
             const displayName = (await prisma.user.findUnique({
@@ -19,7 +20,8 @@ export function WebSocketAuthMiddleware(
                 select: { displayName: true }
             }))?.displayName
             if (!displayName) {
-                next(new Error(JSON.stringify(contractErrors.NotFoundUserForValidToken(jwtPayload.intraUserName))))
+                const error = contractErrors.NotFoundUserForValidToken(jwtPayload.intraUserName).body
+                next({ message: error.message, data: { code: error.code } })
                 return ;
             }
             const data = new SocketData(jwtPayload, userService, displayName)
@@ -35,7 +37,15 @@ export function WebSocketAuthMiddleware(
             client.data = alreadyExistingClient.data
             next()
         } catch (error) {
-            next(error)
+            console.log("error :", error)
+            if (error instanceof Error) {
+                if (error.name === 'JsonWebTokenError')
+                    next({ message: error.message, data: { code: "InvalidJwt" } })
+                else if (error.name === 'TokenExpiredError')
+                    next({ message: error.message, data: { code: "ExpiredJwt" } })
+            }
+            else
+                next({ message: 'generic handshake error' })
         }
     })
 }

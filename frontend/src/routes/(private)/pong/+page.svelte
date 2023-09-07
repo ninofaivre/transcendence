@@ -99,8 +99,8 @@
 		})
 		$game_socket.on("disconnect", (data) => {
 			if (data === "io server disconnect") {
-				console.log("applying callbacks for pong page")
-				applyCallback()
+				// console.log("applying callbacks for pong page")
+				// applyCallback()
 			}
 		})
 	}

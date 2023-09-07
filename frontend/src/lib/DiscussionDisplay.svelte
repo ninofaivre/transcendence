@@ -47,14 +47,16 @@
 
 		_init = false
 
-		return () => observer.unobserve(canary)
+		return () => {
+			observer.unobserve(canary)
+		}
 	})
 </script>
 
 <div bind:this={conversation_container} class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
 	<div class="flex flex-col scroll-smooth">
+		<div bind:this={canary} id="canary" class="min-h-[1px]" />
 		{#if discussion}
-			<div bind:this={canary} id="canary" class="min-h-[1px]" />
 			{#each messages as message (message.creationDate)}
 				{#if message.type === "message"}
 					<ChatBubble

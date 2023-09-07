@@ -15,9 +15,11 @@
 	let input_focused = false
 	let border_radius = "15px"
 
-	async function sendBackUsername(username: string) {
+	async function sendBackUsername(input: string) {
+		const invitedUserName = users.find((el) => input === el.label)?.value
+
 		if ($modalStore[0].response) {
-			$modalStore[0].response(username)
+			$modalStore[0].response(invitedUserName)
 		}
 	}
 

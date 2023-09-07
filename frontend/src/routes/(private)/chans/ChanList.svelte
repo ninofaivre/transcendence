@@ -91,6 +91,17 @@
 		}
 	}
 
+	async function leaveChan(d: Chan) {
+		const ret = await client.chans.leaveChan({
+			params: {
+				chanId: d.id,
+			},
+			body: null,
+		})
+		if (ret.status !== 204) checkError(ret, "remove chan: " + d.title)
+		else invalidate(":chans")
+	}
+
 	async function removeChan(d: Chan) {
 		const ret = await client.chans.deleteChan({
 			params: {
@@ -161,6 +172,7 @@
 			class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
 			on:click={() => {
 				if (d.selfPerms.includes("EDIT")) removeChan(d)
+                else leaveChan(d)
 			}}
 		>
 			X

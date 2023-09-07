@@ -124,7 +124,7 @@
 			{#each data.chan_invites.incoming as request}
 				<li class="variant-soft chip m-2">
 					<span>
-						{request.invitingUserName} invited you to the {request.chanTitle} channel :
+						{request.invitingDisplayName} invited you to the {request.chanTitle} channel :
 					</span>
 					<button
 						data-id={request.id}
@@ -152,7 +152,7 @@
 			{#each data.friend_requests.incoming as request}
 				<li class="variant-soft chip m-2">
 					<span>
-						{request.invitingUserName}
+						{request.invitedDisplayName}
 					</span>
 					<button
 						data-id={request.id}

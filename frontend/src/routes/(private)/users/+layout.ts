@@ -4,9 +4,9 @@ import { checkError } from "$lib/global"
 import type { FriendInvitation, FriendInvitations } from "$types"
 
 export const load: LayoutLoad = async ({ depends }) => {
-	console.log("layout load function from chans/ ")
+	console.log("layout load function from users/ ")
 
-	depends(":users:invitations")
+	depends(":friends:invitations")
 	const friend_invitations = await client.invitations.friend.getFriendInvitations()
 
 	if (friend_invitations.status !== 200) {

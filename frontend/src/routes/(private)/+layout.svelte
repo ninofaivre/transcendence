@@ -96,8 +96,12 @@
         $game_socket.connect()
     })
     $game_socket.on("disconnect", (data) => {
-        banner_message_store.set("network error ❗📶")
-        banner_pending_store.set(true)
+        setTimeout(() => {
+            if (!$game_socket.disconnected)
+                return ;
+            banner_message_store.set("network error ❗📶")
+            banner_pending_store.set(true)
+        }, 500)
         console.log("DISCONNECT")
         if (data === "io server disconnect")
             $game_socket.connect()

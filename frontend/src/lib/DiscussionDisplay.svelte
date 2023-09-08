@@ -76,41 +76,41 @@
 					<div id={message.id}>
 						{#if message.eventType == "CREATED_FRIENDSHIP"}
 							<div class="text-center text-gray-500">
-								{`You are now friend with ${message.otherName}`}
+								{`You are now friend with ${message.otherDisplayName}`}
 							</div>
 						{:else if message.eventType == "BLOCKED"}
 							<div class="text-center text-gray-500">
-								{`${message.blockingUserName} blocked ${message.blockedUserName}`}
+								{`${message.blockingDisplayName} blocked ${message.blockedDisplayName}`}
 							</div>
 						{:else if message.eventType == "AUTHOR_LEAVED"}
 							<div class="text-center text-gray-500">
-								{`${message.author} left chan`}
+								{`${message.authorDisplayName} left chan`}
 							</div>
 						{:else if message.eventType == "AUTHOR_JOINED"}
 							<div class="text-center text-gray-500">
-								{`${message.author} joined the chan`}
+								{`${message.authorDisplayName} joined the chan`}
 							</div>
 						{:else if message.eventType == "CHAN_INVITATION"}
 							<div class="text-center text-gray-500"></div>
 						{:else if message.eventType == "DELETED_FRIENDSHIP"}
 							<div class="text-center text-gray-500">
-								{`You are no longer friend with ${message.otherName}`}
+								{`You are no longer friend with ${message.otherDisplayName}`}
 							</div>
 						{:else if message.eventType == "AUTHOR_MUTED_CONCERNED"}
 							{#if message.timeoutInMs === "infinity"}
 								<div class="text-center text-gray-500">
-									{`${message.author} muted ${message.concernedUserName} until further notice`}
+									{`${message.authorDisplayName} muted ${message.concernedDisplayName} until further notice`}
 								</div>
 							{:else}
 								<div class="text-center text-gray-500">
-									{`${message.author} muted ${message.concernedUserName} for ${
+									{`${message.authorDisplayName} muted ${message.concernedDisplayName} for ${
 										message.timeoutInMs / 1000
 									}`}
 								</div>
 							{/if}
 						{:else if message.eventType == "AUTHOR_KICKED_CONCERNED"}
 							<div class="text-center text-gray-500">
-								{`${message.author} kicked ${message.concernedUserName}`}
+								{`${message.authorDisplayName} kicked ${message.concernedDisplayName}`}
 							</div>
 						{:else}
 							<div class="text-center text-gray-500"></div>

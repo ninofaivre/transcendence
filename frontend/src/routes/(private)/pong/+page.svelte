@@ -89,7 +89,20 @@
 					}, 1000 * i)
 				}
 			} else if (new_data.status === "PAUSE") {
-				// Implemeting the timeout
+                timeout = new_data.timeout / 1000
+                value = Math.floor(timeout)
+                button_disabled = false
+                let i = 0
+                const f = () => {
+                    if (state.status !== 'PAUSE')
+                        return ;
+                    value -= 1
+                    i++
+                    if (i >= timeout)
+                        return
+                    setTimeout(f, 1000)
+                }
+                setTimeout(f, 1000)
 			} else if (new_data.status === "END") {
 				;({ paddleLeftScore, paddleRightScore } = new_data)
 			}
@@ -135,7 +148,11 @@
 			<div>
 				Waiting for {state.displayName}
 			</div>
-			<div class="spinner" />
+			<div class="justify-self-center">
+				<ProgressRadial bind:value={progress} width="w-32" font={100}>
+					{value}
+				</ProgressRadial>
+			</div>
 		</div>
 	{:else if state.status === "BREAK"}
 		<div class="grid grid-rows-2 gap-1">

@@ -135,7 +135,7 @@ class Paddle extends GameObject {
 }
 
 class Player {
-    public pauseAmount = 15 * 1000//GameTimings.userPauseAmount
+    public pauseAmount = GameTimings.userPauseAmount
     public score = 0
 
     public isPause = () => (!!this._pauseData)

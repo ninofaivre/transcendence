@@ -57,6 +57,11 @@
 	<div class="flex flex-col scroll-smooth">
 		<div bind:this={canary} id="canary" class="min-h-[1px]" />
 		{#if discussion}
+            <div class="relative">
+                <div class="absolute bottom-1/2 left-1/2 text-red-600">
+                    {discussion.id}
+                </div>
+            </div>
 			{#each messages as message (message.creationDate)}
 				{#if message.type === "message"}
 					<ChatBubble
@@ -113,6 +118,8 @@
 					</div>
 				{/if}
 			{/each}
+        {:else}
+            {discussion}
 		{/if}
 	</div>
 </div>

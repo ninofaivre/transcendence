@@ -18,10 +18,12 @@
 	onMount(() => {
 		const destroyer = new Array(
 			addListenerToEventSource($sse_store, "CREATED_CHAN_ELEMENT", (new_data) => {
+                console.log("CREATED_CHAN_ELEMENT")
 				invalidate(":chans") // Does this work ?
 				// TODO: mark chan unread on new message ?
 			}),
 			addListenerToEventSource($sse_store, "UPDATED_CHAN_MESSAGE", (new_data) => {
+                console.log("UPDATED_CHAN_MESSAGE")
 				invalidate(":chans") // Does this work ?
 				// TODO: mark chan unread on new message ?
 			}),
@@ -141,7 +143,7 @@
 		}`}
 	>
 		<a href={`/chans/${d.id}`} class="mx-2 flex-1 justify-self-start">
-			{d.title}
+			{ d.id.slice(0, 8) }
 		</a>
 		{#if d.passwordProtected}
 			<button

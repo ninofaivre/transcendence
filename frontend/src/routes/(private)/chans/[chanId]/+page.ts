@@ -4,6 +4,7 @@ import { client } from "$lib/clients"
 
 export const load = async ({ depends, params, parent }: PageLoadEvent) => {
 	console.log("chans/[chanId]/ page load")
+
 	depends(`:chan:${params.chanId}`)
 
 	let { chanList } = await parent()

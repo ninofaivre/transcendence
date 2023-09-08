@@ -55,11 +55,14 @@
 			addListenerToEventSource($sse_store, "CREATED_CHAN", (new_data) => {
 				console.log("CREATED_CHAN")
 				data.chanList = [new_data, ...data.chanList]
-				// invalidate(":chans")
+				invalidate(":chans")
+                invalidate(`:chan:${new_data.id}`)
 			}),
 			addListenerToEventSource($sse_store, "DELETED_CHAN", (new_data) => {
 				console.log("DELETED_CHAN")
 				data.chanList = data.chanList.filter((el) => el.id != new_data.chanId)
+                invalidate(":chans")
+                invalidate(`:chan:${new_data.chanId}`)
 			}),
 		)
 		return () => {
@@ -96,7 +99,6 @@
 			else {
 				makeToast(`Created a new ${type.toLowerCase()} room: ${ret.body.title}`)
 				data.chanList = [ret.body, ...data.chanList]
-				console.log("post insert", data.chanList)
 				goto("/chans/" + ret.body.id)
 			}
 		}
@@ -130,6 +132,7 @@
 				ret.body
 				makeToast(`Joined ${title}`)
 				data.chanList = [ret.body, ...data.chanList]
+				goto("/chans/" + ret.body.id)
 			}
 		}
 	}

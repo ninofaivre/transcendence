@@ -118,62 +118,70 @@
 </script>
 
 <div class="grid grid-cols-2">
-	{#if data.chan_invites.incoming.length != 0}
-		<ul class="variant-ringed-primary m-3 rounded-xl">
-			Pending chan invitations:
+	<fieldset class="variant-ringed-primary list m-3 rounded-xl p-3 text-gray-400">
+		<legend class="variant-filled-primary rounded px-3">Chan invitations</legend>
+		{#if data.chan_invites.incoming.length != 0}
 			{#each data.chan_invites.incoming as request}
-				<li class="variant-soft chip m-2">
-					<span>
-						{request.invitingDisplayName} invited you to the {request.chanTitle} channel :
+				<li class="list-item">
+					<span class="p-0">
+						<a
+							href="/users/{request.invitingDisplayName}"
+							class="variant-soft btn rounded p-1 font-bold text-gray-500"
+						>
+							{request.invitingDisplayName}
+						</a>
+						invited you to {request.chanTitle}
 					</span>
 					<button
 						data-id={request.id}
-						class="variant-ghost-primary chip"
-						on:click={acceptChanInvitation}>✅</button
+						class="variant-ghost-primary chip px-2"
+						on:click={acceptFriendInvitation}>✅ Join chan</button
 					>
 					<button
 						data-id={request.id}
-						class="variant-ghost-error chip"
-						on:click={declineChanInvitation}>❌</button
+						class="variant-ghost-error chip px-2"
+						on:click={declineFriendInvitation}>❌ Decline</button
 					>
 				</li>
 			{/each}
-		</ul>
-	{:else}
-		<div
-			class="variant-ringed-primary m-3 rounded-xl p-7 text-center text-xl font-bold text-gray-400"
-		>
-			You have no pending chan invitations
-		</div>
-	{/if}
-	{#if data.friend_requests.incoming.length != 0}
-		<ul class="variant-ringed-secondary m-3 rounded-xl">
-			Pending friend invitations:
+		{:else}
+			<div class="p-7 text-center text-xl font-bold text-gray-400">
+				You have no pending chan invitations
+			</div>
+		{/if}
+	</fieldset>
+	<fieldset class="variant-ringed-secondary list m-3 rounded-xl p-3 text-gray-400">
+		<legend class="variant-filled-secondary rounded px-3">Friend requests</legend>
+		{#if data.friend_requests.incoming.length != 0}
 			{#each data.friend_requests.incoming as request}
-				<li class="variant-soft chip m-2">
-					<span>
-						{request.invitedDisplayName}
+				<li class="list-item">
+					<span class="p-0">
+						<a
+							href="/users/{request.invitingDisplayName}"
+							class="variant-soft btn rounded p-1 font-bold text-gray-500"
+						>
+							{request.invitingDisplayName}
+						</a>
+						sent a friend request
 					</span>
 					<button
 						data-id={request.id}
-						class="variant-ghost-primary chip"
-						on:click={acceptFriendInvitation}>✅</button
+						class="variant-ghost-primary chip px-2"
+						on:click={acceptFriendInvitation}>✅ Accept</button
 					>
 					<button
 						data-id={request.id}
-						class="variant-ghost-error chip"
-						on:click={declineFriendInvitation}>❌</button
+						class="variant-ghost-error chip px-2"
+						on:click={declineFriendInvitation}>❌ Reject</button
 					>
 				</li>
 			{/each}
-		</ul>
-	{:else}
-		<div
-			class="variant-ringed-secondary m-3 rounded-xl p-7 text-center text-xl font-bold text-gray-400"
-		>
-			You have no pending friend request
-		</div>
-	{/if}
+		{:else}
+			<div class="p-7 text-center text-xl font-bold text-gray-400">
+				You have no pending friend request
+			</div>
+		{/if}
+	</fieldset>
 </div>
 
 <div class="my-5 flex items-center justify-center">

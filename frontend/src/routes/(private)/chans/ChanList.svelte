@@ -2,7 +2,7 @@
 	import type { Chan } from "$types"
 	import { getContext, onMount } from "svelte"
 	import { addListenerToEventSource } from "$lib/global"
-	import { invalidate } from "$app/navigation"
+	import { goto, invalidate } from "$app/navigation"
 	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import type { Writable } from "svelte/store"
@@ -18,13 +18,13 @@
 	onMount(() => {
 		const destroyer = new Array(
 			addListenerToEventSource($sse_store, "CREATED_CHAN_ELEMENT", (new_data) => {
-                console.log("CREATED_CHAN_ELEMENT")
-				invalidate(":chans") // Does this work ?
+				console.log("CREATED_CHAN_ELEMENT")
+				// invalidate(":chans")
 				// TODO: mark chan unread on new message ?
 			}),
 			addListenerToEventSource($sse_store, "UPDATED_CHAN_MESSAGE", (new_data) => {
-                console.log("UPDATED_CHAN_MESSAGE")
-				invalidate(":chans") // Does this work ?
+				console.log("UPDATED_CHAN_MESSAGE")
+				// invalidate(":chans")
 				// TODO: mark chan unread on new message ?
 			}),
 		)
@@ -112,7 +112,9 @@
 			body: null,
 		})
 		if (ret.status !== 204) checkError(ret, "remove chan: " + d.title)
-		else invalidate(":chans")
+		else {
+			goto("/chans", {invalidateAll: true} )
+		}
 	}
 
 	function makeToast(message: string) {
@@ -143,7 +145,7 @@
 		}`}
 	>
 		<a href={`/chans/${d.id}`} class="mx-2 flex-1 justify-self-start">
-			{ d.id.slice(0, 8) }
+			{d.id.slice(0, 8)}
 		</a>
 		{#if d.passwordProtected}
 			<button
@@ -174,7 +176,7 @@
 			class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
 			on:click={() => {
 				if (d.selfPerms.includes("EDIT")) removeChan(d)
-                else leaveChan(d)
+				else leaveChan(d)
 			}}
 		>
 			X

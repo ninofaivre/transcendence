@@ -11,8 +11,10 @@
 	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import type { Writable } from "svelte/store"
-	import { goto, invalidate } from "$app/navigation"
+	import { goto, invalidate, invalidateAll } from "$app/navigation"
 	import { isContractError } from "contract"
+
+	console.log($page.route.id, "layout init")
 
 	export let data: LayoutData
 
@@ -56,13 +58,14 @@
 				console.log("CREATED_CHAN")
 				data.chanList = [new_data, ...data.chanList]
 				invalidate(":chans")
-                invalidate(`:chan:${new_data.id}`)
+				invalidate(`:chan:${new_data.id}`)
+				// goto("/chans")
 			}),
 			addListenerToEventSource($sse_store, "DELETED_CHAN", (new_data) => {
-				console.log("DELETED_CHAN")
-				data.chanList = data.chanList.filter((el) => el.id != new_data.chanId)
-                invalidate(":chans")
-                invalidate(`:chan:${new_data.chanId}`)
+				// console.log("DELETED_CHAN")
+				// data.chanList = data.chanList.filter((el) => el.id != new_data.chanId)
+				// invalidate(":chans")
+				// invalidate(`:chan:${new_data.chanId}`)
 			}),
 		)
 		return () => {
@@ -98,7 +101,7 @@
 			if (ret.status != 201) checkError(ret, "create a new room")
 			else {
 				makeToast(`Created a new ${type.toLowerCase()} room: ${ret.body.title}`)
-				data.chanList = [ret.body, ...data.chanList]
+				await invalidate(":chans")
 				goto("/chans/" + ret.body.id)
 			}
 		}
@@ -131,7 +134,7 @@
 			else {
 				ret.body
 				makeToast(`Joined ${title}`)
-				data.chanList = [ret.body, ...data.chanList]
+				await invalidate(":chans")
 				goto("/chans/" + ret.body.id)
 			}
 		}

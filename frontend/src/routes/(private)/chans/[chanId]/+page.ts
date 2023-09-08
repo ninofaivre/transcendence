@@ -1,8 +1,7 @@
-import type { PageLoadEvent } from "./$types"
 import type { PageLoad } from "./$types"
 import { client } from "$lib/clients"
 
-export const load = async ({ depends, params, parent }: PageLoadEvent) => {
+export const load: PageLoad = async ({ depends, params, parent }) => {
 	console.log("chans/[chanId]/ page load")
 
 	depends(`:chan:${params.chanId}`)
@@ -16,6 +15,9 @@ export const load = async ({ depends, params, parent }: PageLoadEvent) => {
 			chanId: params.chanId,
 		},
 	})
+	console.log("chanList", chanList)
+	console.log("params.chanId", params.chanId)
+	console.log("chan", chan)
 	if (status !== 200) {
 		console.log(
 			`Failed to load channel list. Server returned code ${status} with message \"${(

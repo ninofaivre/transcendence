@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte"
 
-    console.log("load ChatBox")
+	console.log("ChatBox init")
 
 	export let outline = false
 	export let min_rows = 1

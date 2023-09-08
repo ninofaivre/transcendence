@@ -22,6 +22,7 @@
 	const toastStore = getToastStore()
 
 	export let message: Message
+    export let my_name: string
 	export let from_me: boolean
 	export let discussion: Chan | DirectConversation
 	export let game_socket: Writable<GameSocket>
@@ -57,7 +58,7 @@
 				const canMute = user.myPermissionOver.includes("MUTE")
 				const canKick = user.myPermissionOver.includes("KICK")
 				const canBan = user.myPermissionOver.includes("BAN")
-                const canToggleAdminStatus = true
+                const canToggleAdminStatus = (discussion as Chan).ownerName === my_name
                 menu = menu_init
                 if (canMute) {
                     menu = [

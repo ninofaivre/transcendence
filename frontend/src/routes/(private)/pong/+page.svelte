@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Position } from "contract"
+	import type { GameStatus, Position } from "contract"
 	import type { GameSocket } from "$types"
 	import type { Writable } from "svelte/store"
 	import type { PageData } from "./$types"
@@ -16,7 +16,7 @@
 	export let data: PageData
 
 	let my_paddle_is_left: boolean = false
-	let state: "IDLE" | "INIT" | "PAUSE" | "BREAK" | "PLAY" | "QUEUE" | "END" | "RECONNECT" | "INVITING" | "INVITED"
+	let state: GameStatus = { status: 'IDLE' }
 
 	// Fixed sizings
 	let court: (typeof GameDim)["court"] = GameDim.court
@@ -29,8 +29,8 @@
 
 	// Positions
 	let ball_pos: Position = { x: court.width / 2, y: court.height / 2 }
-	let lpaddle_pos: Position = { x: 0, y: court.height / 2 }
-	let rpaddle_pos: Position = { x: court.width, y: court.height / 2 }
+	let lpaddle_pos: Position = { x: lpaddle_sz.width / 2, y: court.height / 2 }
+	let rpaddle_pos: Position = { x: court.width - rpaddle_sz.width / 2, y: court.height / 2 }
 
 	// Utils
 	let button_disabled = false
@@ -46,14 +46,12 @@
 	let game_socket: Writable<GameSocket> = getContext("game_socket")
 
 	$game_socket.emit("getGameStatus", "", (new_data) => {
-		state = new_data.status
+		state.status = new_data.status
 		console.log(new_data)
 	})
 
 	// game_socket.test = 42
 	applyCallback()
-
-	let winner = "none"
 
 	function applyCallback() {
 		console.log("Applying pong callback to socket:", $game_socket.id) //, $game_socket.test)
@@ -64,9 +62,9 @@
 		$game_socket.on("newInGameMessage", (data) => {})
 		$game_socket.on("updatedGameStatus", (new_data) => {
 			console.log(new_data)
-			state = new_data.status
+			state = new_data
 			if (new_data.status === "INIT" || new_data.status === "RECONNECT") {
-				my_paddle_is_left = new_data.paddleLeftDisplayName === data.me.userName
+				my_paddle_is_left = new_data.paddleLeftDisplayName === data.me.displayName
 				;({ paddleLeftDisplayName, paddleRightDisplayName } = new_data)
 				;({ paddleLeftScore, paddleRightScore } = new_data)
 				if (new_data.status === "INIT") {
@@ -94,7 +92,6 @@
 				// Implemeting the timeout
 			} else if (new_data.status === "END") {
 				;({ paddleLeftScore, paddleRightScore } = new_data)
-				winner = new_data.winnerDisplayName
 			}
 		})
 		$game_socket.on("disconnect", (data) => {
@@ -133,16 +130,14 @@
 </script>
 
 <div class="menu-container grid grid-cols-1">
-	{#if state === "PAUSE"}
+	{#if state.status === "PAUSE"}
 		<div class="justify-self self-center">
 			<div>
-				Waiting for {data.me.userName === paddleLeftDisplayName
-					? paddleRightDisplayName
-					: paddleLeftDisplayName}
+				Waiting for {state.displayName}
 			</div>
 			<div class="spinner" />
 		</div>
-	{:else if state === "BREAK"}
+	{:else if state.status === "BREAK"}
 		<div class="grid grid-rows-2 gap-1">
 			<div>READY ?</div>
 			<div class="justify-self-center">
@@ -151,7 +146,7 @@
 				</ProgressRadial>
 			</div>
 		</div>
-	{:else if state === "IDLE"}
+	{:else if state.status === "IDLE"}
 		<button
 			class="variant-ringed-primary btn rounded"
 			on:click={createGame}
@@ -159,12 +154,12 @@
 		>
 			PLAY
 		</button>
-	{:else if state === "QUEUE"}
+	{:else if state.status === "QUEUE"}
 		<div class="card grid grid-rows-2 gap-2 p-8">
 			<button class="variant-ringed-error btn rounded" on:click={cancelGame}>CANCEL</button>
 			<div class="spinner justify-self-center" />
 		</div>
-	{:else if state === "INIT"}
+	{:else if state.status === "INIT"}
 		<div class="grid grid-rows-2 gap-1">
 			<div>FOUND A GAME !</div>
 			<div class="justify-self-center">
@@ -173,13 +168,13 @@
 				</ProgressRadial>
 			</div>
 		</div>
-	{:else if state === "END"}
+	{:else if state.status === "END"}
 		<div class="grid grid-rows-2 gap-1">
-			{#if winner === data.me.userName}
+			{#if state.winnerDisplayName === data.me.displayName}
 				<div>🎉 You won 🎉</div>
 			{:else}
 				<div>
-					📉 {winner} has won 📉
+					📉 {state.winnerDisplayName} has won 📉
 				</div>
 			{/if}
 			<button

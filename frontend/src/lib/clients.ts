@@ -34,8 +34,7 @@ export const client = initClient(contract, {
 		// precise handling with Code instead of just status
 		if (isErrorCode(ret, "TwoFATokenNeeded")) {
 			logged_in.set(false)
-		} 
-        else if (isErrorCode(ret, "NotFoundUserForValidToken")) {
+		} else if (isErrorCode(ret, "NotFoundUserForValidToken")) {
 			logged_in.set(false)
 		} // there is a chance of getting a 404 here but I guess we don't care
 		return ret

@@ -37,15 +37,14 @@
 
 	let is_admin_menu_open = false
 	let toggleAdminMenu = () => (is_admin_menu_open = !is_admin_menu_open)
-	let isAdmin: boolean | undefined
-	let isMuted: boolean | undefined
 	// let filterType: "#Noir" | "" = ""
-	const menu_admin_init: { label: string; handler: () => void }[] = [
+	const menu_init: { label: string; handler: () => void }[] = [
 		{ label: "Show profile", handler: () => goto(`/users/${message.author}`) },
 		{ label: "Invite to a game", handler: inviteToGame },
 	]
-	let menu_admin = menu_admin_init
+	let menu = menu_init
 	const is_chan = isChan(discussion)
+	let isAdmin: boolean | undefined
 
 	$: {
 		if (is_chan) {
@@ -53,19 +52,41 @@
 				return message.author === name
 			})
 			if (user) {
-				isAdmin = user.roles.includes("ADMIN")
-				isMuted = user.myPermissionOver.includes("UNMUTE")
-				menu_admin = [
-					...menu_admin_init,
-					{ label: "Kick", handler: kickHandler },
-					isAdmin
-						? { label: "Remove Admin status", handler: toggleAdmin }
-						: { label: "Grant Admin status", handler: toggleAdmin },
-					isMuted
-						? { label: "UnMute", handler: unmute }
-						: { label: "Mute", handler: mute },
-					{ label: "Ban", handler: ban },
-				]
+				const isAdmin = user.roles.includes("ADMIN")
+				const isMuted = user.myPermissionOver.includes("UNMUTE")
+				const canMute = user.myPermissionOver.includes("MUTE")
+				const canKick = user.myPermissionOver.includes("KICK")
+				const canBan = user.myPermissionOver.includes("BAN")
+                const canToggleAdminStatus = true
+                menu = menu_init
+                if (canMute) {
+                    menu = [
+                        ...menu,
+                        isMuted
+                            ? { label: "UnMute", handler: unmute }
+                            : { label: "Mute", handler: mute },
+                    ]
+                }
+                if (canKick) {
+                    menu = [
+                        ...menu,
+                        { label: "Kick", handler: kickHandler },
+                    ]
+                }
+                if (canToggleAdminStatus) {
+                    menu = [
+                        ...menu,
+                        isAdmin
+                            ? { label: "Remove Admin status", handler: toggleAdmin }
+                            : { label: "Grant Admin status", handler: toggleAdmin },
+                    ]
+                }
+                if (canBan) {
+                    menu = [
+                        ...menu,
+                        { label: "Ban", handler: ban },
+                    ]
+                }
 				//DEBUG
 				roles = user.roles
 				perms = user.myPermissionOver
@@ -276,7 +297,7 @@
 				class="h-8 w-8"
 				rounded="rounded-full"
 				on:click={() => {
-					menu_admin.length > 1 ? toggleAdminMenu() : menu_admin[0].handler()
+					menu.length > 1 ? toggleAdminMenu() : menu[0].handler()
 				}}
 			/>
 		{/if}
@@ -287,7 +308,7 @@
 				transition:slide={{ axis: "x", duration: 200 }}
 				class="variant-filled-tertiary list rounded px-2 py-2"
 			>
-				{#each menu_admin as item}
+				{#each menu as item}
 					<li class="">
 						<button
 							class="variant-filled-secondary btn btn-sm flex-auto"

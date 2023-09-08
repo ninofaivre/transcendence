@@ -38,7 +38,6 @@ export function addListenerToEventSource<EventType extends SseEvent["type"]>(
 	const call_callback_on_event_data = (ev: MessageEvent) => {
 		callback(JSON.parse(ev.data), ev)
 	}
-	console.log("Adding event listener to EventSource for ", eventType)
 	es.addEventListener(eventType, call_callback_on_event_data)
 	return () => void es.removeEventListener(eventType, call_callback_on_event_data)
 }

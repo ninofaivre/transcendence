@@ -113,8 +113,7 @@
 		})
 		if (ret.status !== 204) checkError(ret, "remove chan: " + d.title)
 		else {
-			// await invalidate(":chans")
-			goto("/chans")
+			goto("/chans", {invalidateAll: true} )
 		}
 	}
 

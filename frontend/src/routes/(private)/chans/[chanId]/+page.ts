@@ -1,9 +1,7 @@
-import type { PageLoadEvent } from "./$types"
 import type { PageLoad } from "./$types"
 import { client } from "$lib/clients"
-import { page } from "$app/stores"
 
-export const load = async ({ depends, params, parent }: PageLoadEvent) => {
+export const load: PageLoad = async ({ depends, params, parent }) => {
 	console.log("chans/[chanId]/ page load")
 
 	depends(`:chan:${params.chanId}`)

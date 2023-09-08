@@ -101,7 +101,9 @@
 			body: null,
 		})
 		if (ret.status !== 204) checkError(ret, "remove chan: " + d.title)
-		else invalidate(":chans")
+		else {
+			goto("/chans", { invalidateAll: true })
+		}
 	}
 
 	async function removeChan(d: Chan) {
@@ -113,7 +115,7 @@
 		})
 		if (ret.status !== 204) checkError(ret, "remove chan: " + d.title)
 		else {
-			goto("/chans", {invalidateAll: true} )
+			goto("/chans", { invalidateAll: true })
 		}
 	}
 

@@ -18,7 +18,7 @@
 	import { isContractError } from "contract"
 	import { getToastStore } from "@skeletonlabs/skeleton"
 
-	console.log($page.route.id, " init")
+	console.log($page.route.id, "page init")
 
 	export let data: PageData
 	const sse_store: Writable<EventSource> = getContext("sse_store")

@@ -10,7 +10,7 @@
 	import { writable } from "svelte/store"
 	import { goto } from "$app/navigation"
 	import { logged_in } from "$stores"
-    import type { zConnectErrorData } from 'contract'
+	import type { zConnectErrorData } from "contract"
 	import type { z } from "zod"
 	import { client } from "$clients"
 
@@ -41,15 +41,15 @@
 		}),
 	)
 
-    ;(window as any)['game'] = { 
-        ping() {
-            const start = Date.now()
-            $game_socket.emit("ping", "", () => {
-                console.log(`ping : ${Date.now() - start}`)        
-            })
-        }
-    }
-    $game_socket.on('connect', () => {
+	;(window as any)["game"] = {
+		ping() {
+			const start = Date.now()
+			$game_socket.emit("ping", "", () => {
+				console.log(`ping : ${Date.now() - start}`)
+			})
+		},
+	}
+	$game_socket.on("connect", () => {
         banner_message_store.set("")
         banner_pending_store.set(false)
         $game_socket.emit("getGameStatus", "", (payload) => {
@@ -59,90 +59,95 @@
             } else if (payload.status === "INVITED") {
                 banner_message_store.set("You are being invited")
                 $banner_pending_store = true
-                //TODO
             } else if (payload.status !== "QUEUE" && payload.status !== "IDLE") {
                 goto("/pong")
             }
         })
-    })
-    $game_socket.on("connect_error", async ({ message, data }: { message: string, data?: z.infer<typeof zConnectErrorData> }) => {
-        console.log("CONNECT_ERROR")
-        console.log(`errorMessage : ${message}`)
-        if (!data)
-            return ;
-        console.log(`errorData: ${data}`)
-        if (data.code === 'NotFoundUserForValidToken') {
-            console.log(`loging out on websocket connect_error`)
-            logged_in.set(false)
-            return ;
-        }
-        console.log("websocket trying to refreshTokens...")
-        const ret = await client.auth.refreshTokens({ body: null })
-        if (ret.status !== 200) {
-            console.log("refreshTokens failed, loggint out")
-            logged_in.set(false)
-            return ;
-        }
-        console.log("refreshTokens success !")
-        const reconnectFail = () => {
-            console.log("connect failed after refreshTokens, logging out")
-            $game_socket.off('connect', reconnectSuccess)
-            logged_in.set(false)
-        }
-        const reconnectSuccess = () => {
-            $game_socket.off('connect_error', reconnectFail)
-        }
-        $game_socket.once('connect_error', reconnectFail)
-        $game_socket.once('connect', reconnectSuccess)
-        $game_socket.connect()
-    })
-    $game_socket.on("disconnect", (data) => {
-        setTimeout(() => {
-            if (!$game_socket.disconnected)
-                return ;
-            banner_message_store.set("network error ❗📶")
-            banner_pending_store.set(true)
-        }, 500)
-        console.log("DISCONNECT")
-        if (data === "io server disconnect")
-            $game_socket.connect()
-    })
-    $game_socket.on("invited", async (invitation, callback) => {
-        banner_message_store.set("You are being invited")
-        banner_pending_store.set(true)
-        const r = await new Promise<"accepted" | "refused" | undefined>((resolve) => {
-            const modal: ModalSettings = {
-                type: "component",
-                component: "AcceptGameInvitationModal",
-                response: (r) => {
-                    modalStore.close()
-                    resolve(r)
-                },
-                meta: {
-                    username: invitation.displayName,
-                },
-            }
-            modalStore.trigger(modal)
-        })
-        if (r) {
-            callback(r)
-            if (r === "accepted") goto("/pong")
-        }
-    })
-    $game_socket.on("updatedGameStatus", (new_data) => {
-        console.log("updatedGameStatus layout", new_data)
-        if (new_data.status === "INVITING") {
-            banner_message_store.set("Game invitation pending")
-            banner_pending_store.set(true)
-        } else if (new_data.status === "INVITED") {
-            banner_message_store.set("You are being invited")
-            banner_pending_store.set(true)
-        } else {
-            modalStore.close()
-            banner_message_store.set("")
-            banner_pending_store.set(true)
-        }
-    })
+	})
+	$game_socket.on(
+		"connect_error",
+		async ({
+			message,
+			data,
+		}: {
+			message: string
+			data?: z.infer<typeof zConnectErrorData>
+		}) => {
+			console.log("CONNECT_ERROR")
+			console.log(`errorMessage : ${message}`)
+			if (!data) return
+			console.log(`errorData: ${data}`)
+			if (data.code === "NotFoundUserForValidToken") {
+				console.log(`loging out on websocket connect_error`)
+				logged_in.set(false)
+				return
+			}
+			console.log("websocket trying to refreshTokens...")
+			const ret = await client.auth.refreshTokens({ body: null })
+			if (ret.status !== 200) {
+				console.log("refreshTokens failed, loggint out")
+				logged_in.set(false)
+				return
+			}
+			console.log("refreshTokens success !")
+			const reconnectFail = () => {
+				console.log("connect failed after refreshTokens, logging out")
+				$game_socket.off("connect", reconnectSuccess)
+				logged_in.set(false)
+			}
+			const reconnectSuccess = () => {
+				$game_socket.off("connect_error", reconnectFail)
+			}
+			$game_socket.once("connect_error", reconnectFail)
+			$game_socket.once("connect", reconnectSuccess)
+			$game_socket.connect()
+		},
+	)
+	$game_socket.on("disconnect", (data) => {
+		setTimeout(() => {
+			if (!$game_socket.disconnected) return
+			banner_message_store.set("network error ❗📶")
+			banner_pending_store.set(true)
+		}, 500)
+		console.log("DISCONNECT")
+		if (data === "io server disconnect") $game_socket.connect()
+	})
+	$game_socket.on("invited", async (invitation, callback) => {
+		banner_message_store.set("You are being invited")
+		banner_pending_store.set(true)
+		const r = await new Promise<"accepted" | "refused" | undefined>((resolve) => {
+			const modal: ModalSettings = {
+				type: "component",
+				component: "AcceptGameInvitationModal",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+				meta: {
+					username: invitation.displayName,
+				},
+			}
+			modalStore.trigger(modal)
+		})
+		if (r) {
+			callback(r)
+			if (r === "accepted") goto("/pong")
+		}
+	})
+	$game_socket.on("updatedGameStatus", (new_data) => {
+		console.log("updatedGameStatus layout", new_data)
+		if (new_data.status === "INVITING") {
+			banner_message_store.set("Game invitation pending")
+			banner_pending_store.set(true)
+		} else if (new_data.status === "INVITED") {
+			banner_message_store.set("You are being invited")
+			banner_pending_store.set(true)
+		} else {
+			modalStore.close()
+			banner_message_store.set("")
+			banner_pending_store.set(true)
+		}
+	})
 
 	onDestroy(() => {
 		$game_socket.removeAllListeners()

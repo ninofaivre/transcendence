@@ -148,6 +148,7 @@
 	>
 		<a href={`/chans/${d.id}`} class="mx-2 flex-1 justify-self-start">
 			{d.id.slice(0, 8)}
+			{d.title}
 		</a>
 		{#if d.passwordProtected}
 			<button

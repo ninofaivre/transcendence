@@ -109,6 +109,7 @@
 						on:delete
 						on:edit
 						{game_socket}
+                        {my_name}
 					/>
 				{:else if message.type === "event"}
 					<div id={message.id}>

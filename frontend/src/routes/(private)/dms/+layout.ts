@@ -8,11 +8,10 @@ export const load = async ({ depends }: LayoutLoadEvent) => {
 	const { status, body: dmList } = await client.dms.getDms()
 	if (status !== 200) {
 		console.log(
-			`Failed to load channel list. Server returned code ${status} with message \"${
-				(dmList as any)?.message
-			}\"`,
+			`Failed to load channel list. Server returned code ${status} with message \"${(
+				dmList as any
+			)?.message}\"`,
 		)
-        return { dmList: []}
-	}
-    else return { dmList }
+		return { dmList: [] }
+	} else return { dmList }
 }

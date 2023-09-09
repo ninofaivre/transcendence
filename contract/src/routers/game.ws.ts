@@ -46,8 +46,8 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
 	z.strictObject({
 		status: z.literal("PAUSE"),
 		timeout: z.number().positive().int(),
-		username: zUserName,
-        displayName: zUserName,
+		pausingUsername: zUserName,
+        pausingDisplayName: zUserName,
 	}),
 	z.strictObject({
 		status: z.literal("PLAY"),
@@ -57,6 +57,7 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
 	z.strictObject({
 		status: z.literal("END"),
 		winnerDisplayName: zUserName,
+        winnerUserName: zUserName,
 		paddleLeftScore: ScoreSchema,
 		paddleRightScore: ScoreSchema,
 	}),
@@ -115,11 +116,17 @@ export interface ClientToServerEvents {
 	getGameStatus: (
 		e: "",
 		callback: (
-			e:
-				| Extract<GameStatus, { status: "IDLE" | "QUEUE" | "INVITING" | "INVITED" }>
-				| { status: "RECONNECT" },
-		) => void,
-	) => void
+			e: FlattenUnionObjectByDiscriminator<
+                    ((Exclude<GameStatus, { status: 'RECONNECT' | 'QUEUE' | 'IDLE' | 'INVITED' | 'INVITING' }>
+                        & Omit<
+                            Extract<GameStatus, { status: 'INIT' }>,
+                            "status" | "timeout"
+                        >)
+                        | (Extract<GameStatus, { status: 'QUEUE' | 'IDLE' | 'INVITED' | 'INVITING' }>)),
+                    "status"
+                >
+		) => void
+    ) => void,
     ping: (e: "", callback: () => void) => void
 }
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { GameStatus, Position } from "contract"
+	import type { FlattenUnionObjectByDiscriminator, GameStatus, Position } from "contract"
 	import type { GameSocket } from "$types"
 	import type { Writable } from "svelte/store"
 	import type { PageData } from "./$types"
@@ -15,7 +15,6 @@
 	injectLookAtPlugin()
 	export let data: PageData
 
-	let my_paddle_is_left: boolean = false
 	let state: GameStatus = { status: 'IDLE' }
 
 	// Fixed sizings
@@ -41,79 +40,75 @@
 	let timeout = 0
 	let value = 0
 	let progress: number
+    let timeoutId: number | null = null
 	$: progress = (value * 100) / timeout
 
 	let game_socket: Writable<GameSocket> = getContext("game_socket")
 
-	$game_socket.emit("getGameStatus", "", (new_data) => {
-		state.status = new_data.status
-		console.log(new_data)
+    function spinLoop(status: GameStatus['status']) {
+        if (state.status !== status) {
+            timeoutId = null
+            return ;
+        }
+        value -= 1;
+        if (value > 0)
+            timeoutId = window.setTimeout(spinLoop, 1000, status)
+        else
+            timeoutId = null
+    }
+
+    function initSpin(ms: number, status: GameStatus['status']) {
+        if (timeoutId)
+            clearTimeout(timeoutId)
+        timeout = ms / 1000
+        value = Math.floor(timeout)
+        button_disabled = false
+        timeoutId = window.setTimeout(spinLoop, 1000, status)
+    }
+
+    function handleGameStatus(payload: GameStatus) {
+        console.log("pong gameStatus :", payload)
+		state = payload 
+        if (payload.status === "INIT" || payload.status === "RECONNECT") {
+            ;({ paddleLeftDisplayName, paddleRightDisplayName } = payload)
+            ;({ paddleLeftScore, paddleRightScore } = payload)
+            if (payload.status === 'RECONNECT')
+                return ;
+        }
+        if (payload.status === "INIT"
+            || payload.status === "BREAK"
+            || payload.status === "PAUSE"
+        ) {
+            initSpin(payload.timeout, payload.status)
+            return ;
+        }
+        if (payload.status === "END") {
+            ;({ paddleLeftScore, paddleRightScore } = payload)
+        }
+    }
+
+    $game_socket.on("updatedGameStatus", (payload) => {
+        handleGameStatus(payload)
+    })
+
+    $game_socket.on("updatedGamePositions", (data) => {
+        ;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
+    })
+
+	$game_socket.emit("getGameStatus", "", (payload) => {
+        if (
+            payload.status === 'QUEUE' || payload.status === 'IDLE'
+                || payload.status === 'INVITED' || payload.status === 'INVITING'
+        ) {
+            handleGameStatus(payload)
+            return ;
+        }
+        ;({ paddleLeftDisplayName, paddleRightDisplayName } = payload)
+        ;({ paddleLeftScore, paddleRightScore } = payload)
+        handleGameStatus(payload)
 	})
 
-	// game_socket.test = 42
-	applyCallback()
-
-	function applyCallback() {
-		console.log("Applying pong callback to socket:", $game_socket.id) //, $game_socket.test)
-		//Receive data
-		$game_socket.on("updatedGamePositions", (data) => {
-			;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
-		})
-		$game_socket.on("newInGameMessage", (data) => {})
-		$game_socket.on("updatedGameStatus", (new_data) => {
-			console.log(new_data)
-			state = new_data
-			if (new_data.status === "INIT" || new_data.status === "RECONNECT") {
-				my_paddle_is_left = new_data.paddleLeftDisplayName === data.me.displayName
-				;({ paddleLeftDisplayName, paddleRightDisplayName } = new_data)
-				;({ paddleLeftScore, paddleRightScore } = new_data)
-				if (new_data.status === "INIT") {
-					new_data
-					timeout = new_data.timeout / 1000
-					value = timeout
-					button_disabled = false
-					for (let i = 0; i < timeout; ++i) {
-						setTimeout(() => {
-							value -= 1
-						}, 1000 * i)
-					}
-				}
-			} else if (new_data.status === "BREAK") {
-				;({ paddleLeftScore, paddleRightScore } = new_data)
-				timeout = new_data.timeout / 1000
-				value = timeout
-				button_disabled = false
-				for (let i = 0; i < timeout; ++i) {
-					setTimeout(() => {
-						value -= 1
-					}, 1000 * i)
-				}
-			} else if (new_data.status === "PAUSE") {
-                timeout = new_data.timeout / 1000
-                value = Math.floor(timeout)
-                button_disabled = false
-                let i = 0
-                const f = () => {
-                    if (state.status !== 'PAUSE')
-                        return ;
-                    value -= 1
-                    i++
-                    if (i >= timeout)
-                        return
-                    setTimeout(f, 1000)
-                }
-                setTimeout(f, 1000)
-			} else if (new_data.status === "END") {
-				;({ paddleLeftScore, paddleRightScore } = new_data)
-			}
-		})
-		$game_socket.on("disconnect", (data) => {
-			if (data === "io server disconnect") {
-				// console.log("applying callbacks for pong page")
-				// applyCallback()
-			}
-		})
-	}
+    $game_socket.on("newInGameMessage", (data) => {})
 
 	function createGame() {
 		console.log("Clicked to create")
@@ -146,7 +141,7 @@
 	{#if state.status === "PAUSE"}
 		<div class="justify-self self-center">
 			<div>
-				Waiting for {state.displayName}
+				Waiting for {state.pausingDisplayName}
 			</div>
 			<div class="justify-self-center">
 				<ProgressRadial bind:value={progress} width="w-32" font={100}>

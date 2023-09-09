@@ -140,6 +140,8 @@ class Player {
 
     public isPause = () => (!!this._pauseData)
 
+    public getPauseStart = () => this._pauseData?.time
+
     private _pauseData: {
         time: number,
         callbackId: NodeJS.Timeout
@@ -164,9 +166,7 @@ class Player {
         clearTimeout(this._pauseData.callbackId)
         this.pauseAmount -= (Date.now() - this._pauseData.time)
         this._pauseData = null
-        const otherPlayer = (this.user.intraUserName === this.game.playerA.user.intraUserName)
-            ? this.game.playerB
-            : this.game.playerA
+        const otherPlayer = this.game.getOtherPlayerByIntraUserName(this.user.intraUserName)
         if (!otherPlayer.isPause())
             this.game.status = 'PLAY'
         console.log(this.user.username, "unpaused game, pause Amount :", this.pauseAmount)
@@ -178,27 +178,24 @@ class Player {
                 return
             this.pause()
         }],
-        userRoomCreated: ['create-room', (roomId: string) => {
-            if (roomId !== this.user.intraUserName)
-                return
-            this.unpause()
-        }],
         userConnnect: ['connect', (client: EnrichedSocket) => {
             if (client.data.intraUserName != this.user.intraUserName)
                 return
             client.data.status = { type: 'GAME' }
+            this.unpause()
             client.join(this.game.id)
             client.emit('updatedGameStatus', {
                 status: 'RECONNECT',
                 ...this.game.getPaddleScores(),
                 ...this.game.getPaddlesNames()
             })
+            client.emit('updatedGameStatus',
+                this.game.getGameData())
         }]
     } as const
 
     public removeAdapterListeners() {
         this.game.webSocket.server.sockets.adapter
-            .removeListener(...this.adapterListeners.userRoomCreated)
             .removeListener(...this.adapterListeners.userRoomDeleted)
         this.game.webSocket.server.sockets
             .removeListener(...this.adapterListeners.userConnnect)
@@ -211,7 +208,6 @@ class Player {
     ) {
         this.game.webSocket.server.sockets.adapter
             .on(...this.adapterListeners.userRoomDeleted)
-            .on(...this.adapterListeners.userRoomCreated)
         this.game.webSocket.server.sockets
             .on(...this.adapterListeners.userConnnect)
     }
@@ -394,13 +390,19 @@ class Ball extends GameObject {
     }
 }
 
+type Status = Game['_status']
+
 class Game {
 
     public readonly id: string;
 
     private lastUpdateTime: number | null = null
-    private _status: GameStatus['status'] = 'INIT';
+    private _status: Extract<
+            GameStatus['status'],
+            "INIT" | "BREAK" | "PAUSE" | "PLAY" | "END"
+        > = 'INIT';
     private readonly maxScore: number = 2
+    private startTimeout = Date.now();
 
     public get status() {
         return this._status
@@ -408,17 +410,14 @@ class Game {
 
     public set status(newStatus: typeof this._status) {
         console.log(`status of game ${this.id} goes from ${this._status} to ${newStatus}`)
+        this._status = newStatus
+        if (this._status !== 'PLAY')
+            this.lastUpdateTime = null
         switch(newStatus) {
             case 'INIT': {
-                console.log(this.playerA.user.username, "est à gauche")
-                console.log(this.playerB.user.username, "est à droite")
                 this.emitGamePositions()
-                this.webSocket.server.to(this.id).emit('updatedGameStatus', {
-                    status: 'INIT',
-                    timeout: GameTimings.initTimeout,
-                    ...this.getPaddlesNames(),
-                    ...this.getPaddleScores()
-                })
+                this.startTimeout = Date.now()
+                this.emitUpdatedGameStatus()
                 setTimeout(
                     () => {
                         if (this.status !== 'INIT')
@@ -430,30 +429,18 @@ class Game {
                 break ;
             }
             case 'PLAY': {
-                this.webSocket.server.to(this.id).emit('updatedGameStatus', {
-                    status: 'PLAY',
-                    ...this.getPaddleScores()
-                })
+                this.emitUpdatedGameStatus()
                 break ;
             }
             case 'PAUSE': {
-                const pausingPlayer = this.playerA.isPause() ? this.playerA : this.playerB
-                this.webSocket.server.to(this.id).emit('updatedGameStatus', {
-                    status: 'PAUSE',
-                    timeout: pausingPlayer.pauseAmount,
-                    username: pausingPlayer.user.username,
-                    displayName: pausingPlayer.user.displayName
-                })
+                this.emitUpdatedGameStatus()
                 break ;
             }
             case 'BREAK': {
                 console.log(this.playerA.user.username, "score :", this.playerA.score)
                 console.log(this.playerB.user.username, "score :", this.playerB.score)
-                this.webSocket.server.to(this.id).emit("updatedGameStatus", {
-                    status: 'BREAK',
-                    timeout: GameTimings.breakTimeout,
-                    ...this.getPaddleScores()
-                })
+                this.startTimeout = Date.now()
+                this.emitUpdatedGameStatus()
                 setTimeout(
                     () => {
                         if (this.status !== 'BREAK')
@@ -465,15 +452,9 @@ class Game {
                 break ;
             }
             case 'END': {
-                this.webSocket.server.to(this.id).emit("updatedGameStatus", {
-                    status: 'END',
-                    winnerDisplayName: this.getWinner().user.displayName,
-                    ...this.getPaddleScores()
-                })
+                this.emitUpdatedGameStatus()
             }
         }
-        this.lastUpdateTime = null
-        this._status = newStatus
     }
 
     public readonly playerA: Player;
@@ -533,10 +514,21 @@ class Game {
         })
     }
 
+    private emitUpdatedGameStatus() {
+        this.webSocket.server.to(this.id)
+            .emit('updatedGameStatus', this.getGameData())
+    }
+
     private getPlayerByIntraUserName(intraUserName: IntraUserName) {
         return (this.playerA.user.intraUserName === intraUserName)
             ? this.playerA
             : this.playerB
+    }
+
+    public getOtherPlayerByIntraUserName(intraUserName: IntraUserName) {
+        return (this.playerA.user.intraUserName === intraUserName)
+            ? this.playerB
+            : this.playerA
     }
 
     public updateMovement(intraUserName: IntraUserName, move: GameMovement) {
@@ -609,6 +601,68 @@ class Game {
         this.handleWin()
     }
 
+    public getGameData()
+    : Extract<GameStatus, { status: Status }> {
+        switch (this._status) {
+            case 'INIT': {
+                return {
+                    status: 'INIT',
+                    timeout: GameTimings.initTimeout - (Date.now() - this.startTimeout),
+                    ...this.getPaddleScores(),
+                    ...this.getPaddlesNames()
+                }
+            }
+            case 'BREAK': {
+                return {
+                    status: 'BREAK',
+                    timeout: GameTimings.breakTimeout - (Date.now() - this.startTimeout),
+                    ...this.getPaddleScores()
+                }
+            }
+            case 'PAUSE': {
+                const pausingPlayer = this.playerA.isPause()
+                    ? this.playerA
+                    : this.playerB
+                const pauseStart = pausingPlayer.getPauseStart()
+                return {
+                    status: 'PAUSE',
+                    timeout: pauseStart
+                        ? pausingPlayer.pauseAmount - (Date.now() - pauseStart)
+                        : pausingPlayer.pauseAmount,
+                    pausingUsername: pausingPlayer.user.username,
+                    pausingDisplayName: pausingPlayer.user.displayName
+                }
+            }
+            case 'PLAY': {
+                return {
+                    status: 'PLAY',
+                    ...this.getPaddleScores()
+                }
+            }
+            case 'END': {
+                return {
+                    status: 'END',
+                    winnerUserName: this.getWinner().user.username,
+                    winnerDisplayName: this.getWinner().user.displayName,
+                    ...this.getPaddleScores()
+                }
+            }
+        }
+    }
+
+    public getFullGameStatus(intraName: IntraUserName)
+    : Extract<GameStatus, { status: Status }>
+    & Omit<
+        Extract<GameStatus, { status: 'INIT' }>,
+        "status" | "timeout"
+    > {
+        return {
+            ...this.getGameData(),
+            ...this.getPaddleScores(),
+            ...this.getPaddlesNames(),
+        }
+    }
+
     public score(player: Player) {
         console.log(player.user.username, "a marqué")
         player.score++
@@ -664,6 +718,11 @@ export class GameService {
                 game.update()
         })
         setTimeout(this.loop.bind(this), 0)
+    }
+
+    public getGameStatusForUser(intraUserName: IntraUserName) {
+        return this.usersToGame.get(intraUserName)
+            ?.getFullGameStatus(intraUserName)
     }
 
     public getGameIdForUser(username: IntraUserName) {

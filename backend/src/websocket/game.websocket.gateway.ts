@@ -313,9 +313,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     getGameStatus(
         @ConnectedSocket()client: EnrichedSocket,
         @MessageBody(EmptyValidation)payload: never
-    ) {
-        if (client.data.status.type === 'GAME')
-            return { status: 'RECONNECT' }
+    ): Parameters<Parameters<ClientToServerEvents['getGameStatus']>[1]>[0] {
         if (client.data.status.type === 'INVITING' ||
             client.data.status.type === 'INVITED'
         ) {
@@ -326,6 +324,13 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
                 timeout: timeReplyToInvitation - (Date.now() - startTimeoutMs),
             }
         }
+        if (client.data.status.type === 'GAME') {
+            return this.gameService
+                .getGameStatusForUser(client.data.intraUserName)
+                || { status: 'IDLE' }
+        }
+        if (client.data.status.type === 'OFFLINE')
+            return { status: 'IDLE' }
         return { status: client.data.status.type }
     }
 

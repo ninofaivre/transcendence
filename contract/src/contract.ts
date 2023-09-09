@@ -10,17 +10,15 @@ import { gameContract } from "./routers/game"
 
 export type FlattenUnionObjectByDiscriminator<
     Union,
-    DiscriminatorKey extends keyof Union,
-    DataKey extends keyof Union
+    DiscriminatorKey extends keyof Union
 > = Union extends Record<DiscriminatorKey, infer Discriminator>
-        & Record<DataKey, infer Data>
-	? Discriminator extends any
-		? Record<DiscriminatorKey, Discriminator> & Record<DataKey, Data>
-		: never
-	: never
+    ? Discriminator extends unknown
+        ? { [key in DiscriminatorKey]: Extract<Union, Record<key, unknown>> }[DiscriminatorKey]
+        : never
+    : never
 
 export type SseEvent = FlattenUnionObjectByDiscriminator<
-	(InvitationEvent | DmEvent | FriendEvent | ChanEvent | UserEvent), "type", "data"
+	(InvitationEvent | DmEvent | FriendEvent | ChanEvent | UserEvent), "type"
 >
 
 // Dummy function to raise error at contract compilation instead

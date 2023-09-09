@@ -617,7 +617,7 @@ export class ChansService {
     }
 
 	async createChanMessageIfRightTo(
-		username: string,
+        { username, sseId }: { username: string, sseId?: string },
 		chanId: string,
         { relatedTo, content }: RequestShapes["createChanMessage"]["body"],
 	) {
@@ -639,7 +639,7 @@ export class ChansService {
 
         return (await new ChanElementFactory(chanId, username, this)
             .createMessage(content, relatedTo, ats))
-            .notifyByUsers(chan.users, username)
+            .notifyByUsers(chan.users, { username, id: sseId })
             .formatted()
 	}
 
@@ -703,7 +703,7 @@ export class ChansService {
             .updateMessage(content,
                 { users: oldMessage.relatedUsers, roles: oldMessage.relatedRoles },
                 newAts))
-            .notifyByUsers(chan.users, username)
+            .notifyByUsers(chan.users, { username })
             .formatted(username)
     }
 
@@ -726,7 +726,7 @@ export class ChansService {
             return contractErrors.ChanPermissionTooLowOverUser(username, authorName, chanId, 'DELETE_MESSAGE')
         return (await new UpdateChanElementFactory(chanId, elementId, this)
             .deleteMessage(username))
-            .notifyByUsers(chan.users, username)
+            .notifyByUsers(chan.users, { username })
             .formatted()
 	}
 

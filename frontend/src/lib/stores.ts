@@ -1,7 +1,7 @@
 import type { Chan, ChanInvitations, ChanMessage, DirectConversation, DirectMessageOrEvent,  FriendInvitations, Friendship } from "$types"
 import { localStorageStore } from "@skeletonlabs/skeleton"
 import type { Writable } from "svelte/store"
-import {  writable } from "svelte/store"
+import {  readable, writable } from "svelte/store"
 
 console.log("The stores module is being executed...")
 
@@ -17,3 +17,5 @@ export const chans_messages_store: Writable<ChanMessage[]> = writable([])
 export const friendships_store: Writable<Friendship[]> = writable([])
 export const friendship_requests_store: Writable<FriendInvitations> = writable({ incoming: [], outcoming: []})
 export const chan_invitations_store: Writable<ChanInvitations> = writable({ incoming: [], outcoming: []}) 
+
+export const sseId = readable(Date.now().toString())

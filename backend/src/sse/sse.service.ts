@@ -11,7 +11,7 @@ export class SseService {
         @Inject(forwardRef(() => UserService))
         private readonly usersService: UserService) {}
 
-	private eventSource = new Map<string, Subject<MessageEvent>>()
+	private eventSource = new Map<string, Subject<MessageEvent & { ignoreSseId?: string }>>()
 
 	async addSubject(username: string) {
 		let tmp = this.eventSource.get(username)
@@ -25,14 +25,22 @@ export class SseService {
 		return tmp
 	}
 
-	public async pushEvent(username: string, event: SseEvent) {
+	public async pushEvent(username: string, event: SseEvent, ignoreSseId?: string) {
 		console.log("push Event to", username)
         console.log("event:", event)
-		this.eventSource.get(username)?.next(event)
+		this.eventSource.get(username)?.next({ ...event, ignoreSseId })
 	}
 
-	public async pushEventMultipleUser(usernames: string[], event: SseEvent) {
-		return Promise.all(usernames.map(async (el) => this.pushEvent(el, event)))
+	public async pushEventMultipleUser(usernames: string[], event: SseEvent, ignoreSse?: { username: string, id?: string }) {
+		return Promise.all(
+            usernames
+                .map(async (username) => {
+                    if (ignoreSse && ignoreSse.username === username)
+                        return this.pushEvent(username, event, ignoreSse.id)
+                    else
+                        return this.pushEvent(username, event)
+                })
+        )
 	}
 
 	async deleteSubject(username: string) {

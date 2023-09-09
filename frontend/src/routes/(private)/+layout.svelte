@@ -2,6 +2,7 @@
 	import type { GameSocket } from "$types"
 	import { ProgressRadial, type ModalSettings } from "@skeletonlabs/skeleton"
 	import type { Writable } from "svelte/store"
+    import { get } from "svelte/store"
 
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { io } from "socket.io-client"
@@ -14,6 +15,8 @@
 	import type { z } from "zod"
 	import { client } from "$clients"
 
+    import { sseId } from "$lib/stores"
+
 	console.log("private layout init")
 	const modalStore = getModalStore()
 
@@ -25,7 +28,7 @@
 
 	// Sse
 	let sse_store: Writable<EventSource> = writable(
-		new EventSource(PUBLIC_BACKEND_URL + "/api/sse", { withCredentials: true }),
+		new EventSource(PUBLIC_BACKEND_URL + "/api/sse" + `?sse-id=${get(sseId)}`, { withCredentials: true }),
 	)
 	$sse_store.onopen = function (_evt) {
 		console.log("Successfully established sse connection")

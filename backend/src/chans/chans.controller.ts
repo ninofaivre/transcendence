@@ -14,7 +14,12 @@ export class ChansController {
 
     @UseGuards(JwtAuthGuard)
     @TsRestHandler(c)
-    async handler(@Request(){ user: { username } }: EnrichedRequest) {
+    async handler(@Request()req: EnrichedRequest) {
+        const { user: { username } } = req
+        let tmp = req.headers['sse-id']
+        if (typeof tmp === 'object')
+            tmp = undefined
+        const sseId = tmp
         return tsRestHandler(c, {
             searchChans: async ({ query }) => ({
                 status: 200,
@@ -47,7 +52,7 @@ export class ChansController {
             },
 
             createChanMessage: async ({ params: { chanId }, body }) => {
-                const res = await this.chansService.createChanMessageIfRightTo(username, chanId, body)
+                const res = await this.chansService.createChanMessageIfRightTo({ username, sseId }, chanId, body)
                 return isContractError(res) ? res : { status: 201, body: res }
             },
 

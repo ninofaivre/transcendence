@@ -48,6 +48,10 @@ export type FriendInvitations = ClientInferResponseBody<
 	typeof contract.invitations.friend.getFriendInvitations,
 	200
 >
-export type FriendInvitation = Flatten<FriendInvitations>
+
+export type ChanInvitations = ClientInferResponseBody<
+	typeof contract.invitations.chan.getChanInvitations, 
+	200
+>
 
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>

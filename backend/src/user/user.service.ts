@@ -671,8 +671,7 @@ export class UserService {
                 args: Extract<
                     FlattenUnionObjectByDiscriminator<
                         RequestShapes['searchUsersV2']['query'],
-                        "action",
-                        "params"
+                        "action"
                     >,
                     { action: key }
                 >['params']

@@ -52,14 +52,15 @@
     $game_socket.on('connect', () => {
         banner_message_store.set("")
         banner_pending_store.set(false)
-        $game_socket.emit("getGameStatus", "", (new_data) => {
-            if (new_data.status === "INVITING") {
+        $game_socket.emit("getGameStatus", "", (payload) => {
+            if (payload.status === "INVITING") {
                 banner_message_store.set("Game invitation pending")
                 $banner_pending_store = true
-            } else if (new_data.status === "INVITED") {
+            } else if (payload.status === "INVITED") {
                 banner_message_store.set("You are being invited")
                 $banner_pending_store = true
-            } else if (new_data.status === "RECONNECT") {
+                //TODO
+            } else if (payload.status !== "QUEUE" && payload.status !== "IDLE") {
                 goto("/pong")
             }
         })

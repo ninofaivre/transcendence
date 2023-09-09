@@ -17,6 +17,7 @@
 	console.log("private layout init")
 	const modalStore = getModalStore()
 
+    // Banner
 	let banner_message = ""
 	let banner_pending = false
 	let banner_message_store = writable(banner_message)
@@ -40,6 +41,7 @@
 			withCredentials: true,
 		}),
 	)
+	setContext("game_socket", game_socket)
 
 	;(window as any)["game"] = {
 		ping() {
@@ -155,7 +157,6 @@
 		$sse_store.close()
 	})
 
-	setContext("game_socket", game_socket)
 </script>
 
 {#if $banner_message_store}

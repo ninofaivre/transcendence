@@ -1,7 +1,8 @@
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from "@nestjs/websockets"
 import { Injectable, PipeTransform, Logger, Inject, forwardRef } from "@nestjs/common"
 import { RemoteSocket, Server, Socket } from "socket.io"
-import { AuthService, EnrichedRequest } from "src/auth/auth.service";
+import { EnrichedRequest } from "src/types"
+import { AuthService } from "src/auth/auth.service"
 import { WebSocketAuthMiddleware } from "src/auth/ws.mw";
 import { GameService } from "src/game/game.service";
 import { Schema, z } from "zod";

@@ -31,12 +31,12 @@ export class SseService {
 		this.eventSource.get(username)?.next({ ...event, ignoreSseId })
 	}
 
-	public async pushEventMultipleUser(usernames: string[], event: SseEvent, ignoreSse?: { username: string, id?: string }) {
+	public async pushEventMultipleUser(usernames: string[], event: SseEvent, ignoreSse?: { username: string, sseId?: string }) {
 		return Promise.all(
             usernames
                 .map(async (username) => {
                     if (ignoreSse && ignoreSse.username === username)
-                        return this.pushEvent(username, event, ignoreSse.id)
+                        return this.pushEvent(username, event, ignoreSse.sseId)
                     else
                         return this.pushEvent(username, event)
                 })

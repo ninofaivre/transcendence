@@ -1,5 +1,5 @@
 import { EventEmitter2 } from "@nestjs/event-emitter"
-import { EnrichedRequest } from "./auth/auth.service"
+import { EnrichedRequest } from "src/types"
 
 export interface InternalEvents {
     'game.end': {

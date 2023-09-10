@@ -1,5 +1,14 @@
 import { Prisma, AccessPolicyLevel as AccessPolicyLevelPrisma, ChanDiscussionEvent, ChanDiscussionElement } from "@prisma/client"
 import { PrismaService } from "./prisma/prisma.service"
+import { Request } from 'express'
+
+export interface EnrichedRequest extends Request {
+    user: {
+        username: string,
+        intraUserName: string
+        sseId?: string
+    }
+}
 
 export type Tx = Omit<
 	PrismaService,

@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { GameDim, GameMovement, GameSpeed, GameStatus, GameTimings } from 'contract';
-import { EnrichedRequest } from 'src/auth/auth.service';
+import { EnrichedRequest } from "src/types"
 import { InternalEvents, emitInternalEvent } from 'src/internalEvents';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EnrichedRemoteSocket, EnrichedSocket, GameWebsocketGateway, IntraUserName, SocketData } from 'src/websocket/game.websocket.gateway';

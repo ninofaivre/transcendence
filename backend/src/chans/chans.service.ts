@@ -9,19 +9,18 @@ import {
 import { compareSync, hash } from "bcrypt"
 import { SseService } from "src/sse/sse.service"
 import { NestRequestShapes } from "@ts-rest/nest"
-import { contract, contractErrors, isContractError } from "contract"
+import { adminPermissions, contract, contractErrors, isContractError } from "contract"
 import { zChanDiscussionElementReturn } from "contract"
 import { z } from "zod"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
 import { zSelfPermissionList } from "contract"
-import { ChanElementUnion, RetypeChanElement } from "src/types"
+import { ChanElementUnion, EnrichedRequest, RetypeChanElement } from "src/types"
 import { zPermissionOverList } from "contract"
 import { CallbackService } from "src/callback/callback.service"
 import { ChanElementFactory, UpdateChanElementFactory } from "./element"
 import { defaultPermissions } from "contract"
-import { adminPermissions } from "contract"
 
 type RequestShapes = NestRequestShapes<typeof contract.chans>
 
@@ -606,10 +605,11 @@ export class ChansService {
     }
 
 	async createChanMessageIfRightTo(
-        { username, sseId }: { username: string, sseId?: string },
+        reqUser: EnrichedRequest['user'],
 		chanId: string,
         { relatedTo, content }: RequestShapes["createChanMessage"]["body"],
 	) {
+        const { username } = reqUser
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 ...this.getSelfPermSelect(),
@@ -628,7 +628,7 @@ export class ChansService {
 
         return (await new ChanElementFactory(chanId, username, this)
             .createMessage(content, relatedTo, ats))
-            .notifyByUsers(chan.users, { username, id: sseId })
+            .notifyByUsers(chan.users, reqUser)
             .formatted()
 	}
 
@@ -657,10 +657,11 @@ export class ChansService {
 		return this.formatChanDiscussionElementArrayForUser(username, chan.elements.reverse())
 	}
 
-    async updateChanMessageIfRightTo(username: string,
+    async updateChanMessageIfRightTo(reqUser: EnrichedRequest['user'],
         { chanId, elementId }: RequestShapes['updateChanMessage']['params'],
         content: string
     ) {
+        const { username } = reqUser
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 ...this.getSelfPermSelect(),
@@ -692,11 +693,14 @@ export class ChansService {
             .updateMessage(content,
                 { users: oldMessage.relatedUsers, roles: oldMessage.relatedRoles },
                 newAts))
-            .notifyByUsers(chan.users, { username })
+            .notifyByUsers(chan.users, reqUser)
             .formatted(username)
     }
 
-	async deleteChanMessageIfRightTo(username: string, { chanId , elementId }: RequestShapes['deleteChanMessage']['params']) {
+	async deleteChanMessageIfRightTo(reqUser: EnrichedRequest['user'],
+        { chanId , elementId }: RequestShapes['deleteChanMessage']['params']
+    ) {
+        const { username } = reqUser
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 ...this.getPermSelect(username),
@@ -715,7 +719,7 @@ export class ChansService {
             return contractErrors.ChanPermissionTooLowOverUser(username, authorName, chanId, 'DELETE_MESSAGE')
         return (await new UpdateChanElementFactory(chanId, elementId, this)
             .deleteMessage(username))
-            .notifyByUsers(chan.users, { username })
+            .notifyByUsers(chan.users, reqUser)
             .formatted()
 	}
 

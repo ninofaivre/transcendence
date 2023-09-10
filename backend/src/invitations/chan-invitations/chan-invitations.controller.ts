@@ -9,7 +9,7 @@ import {
 } from "@ts-rest/nest"
 import { ChanInvitationsService } from "./chan-invitations.service"
 import { contract } from "contract"
-import { EnrichedRequest } from "src/auth/auth.service"
+import { EnrichedRequest } from "src/types"
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard"
 import { isContractError } from "contract"
 

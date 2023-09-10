@@ -11,7 +11,7 @@ import {
     tsRestHandler,
 } from "@ts-rest/nest"
 import { contract } from "contract"
-import { EnrichedRequest } from "src/auth/auth.service"
+import { EnrichedRequest } from "src/types"
 import { isContractError } from "contract"
 
 const c = contract.friends

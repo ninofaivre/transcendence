@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Req, Res, UseGuards } from "@nestjs/common"
-import { AuthService, EnrichedRequest } from "./auth.service"
+import { AuthService } from "./auth.service"
 import { TsRest, TsRestHandler, tsRestHandler } from "@ts-rest/nest"
 import { contract, contractErrors } from "contract"
 import { Response } from "express"
@@ -8,6 +8,7 @@ import { JwtAuthGuard, JwtAuthGuardBase, RefreshTokenGuard } from "./jwt-auth.gu
 import { isContractError } from "contract"
 import { DevGuard } from "src/env/env.guards"
 import { PrismaService } from "src/prisma/prisma.service"
+import { EnrichedRequest } from "src/types"
 
 const c = contract.auth
 

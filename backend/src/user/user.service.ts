@@ -707,7 +707,7 @@ export class UserService {
                 >['params']
             ) => Prisma.UserWhereInput)
     } = {
-        "*": (username) => ({}),
+        "*": () => ({}),
         "CREATE_CHAN_INVITE": (username, { chanId }) => ({
             name: { not: username },
             blockedByUser: { none: { blockingUserName: username } },
@@ -722,12 +722,28 @@ export class UserService {
                 }
             },
             chans: { none: { id: chanId } },
-            timedUserChan: { none: { chanId } },
+            timedUserChan: { none: { chanId, type: 'BAN' } },
             incomingChanInvitation: {
                 none: {
                     chanId,
                     invitingUserName: username,
                     status: 'PENDING'
+                }
+            }
+        }),
+        // only to push project, would not work with full role system
+        "UNBAN_CHAN_USER": (username, { chanId }) => ({
+            name: { not: username },
+            timedUserChan: { some: { chanId, type: 'BAN' } },
+            roles: {
+                some: {
+                    chanId,
+                    rolesSym: {
+                        some: {
+                            users: { some: { name: username } },
+                            permissions: { has: 'BAN' }
+                        }
+                    }
                 }
             }
         }),
@@ -757,6 +773,7 @@ export class UserService {
         let whereSearch: Prisma.UserWhereInput;
         switch (dto.action) {
             case "CREATE_CHAN_INVITE": whereSearch = this.searchMode[dto.action](username, dto.params); break ;
+            case "UNBAN_CHAN_USER": whereSearch = this.searchMode[dto.action](username, dto.params); break ;
             default : whereSearch = this.searchMode[dto.action](username, dto.params)
         }
         const users = await this.prisma.user.findMany({
@@ -767,6 +784,7 @@ export class UserService {
                 ],
             },
             take: dto.nResult,
+            orderBy: { displayName: 'asc' },
             select: this.getUserProfilePreviewSelectForUser(username)
         })
         return this.formatUserProfilePreviewForUserArray(username, users)

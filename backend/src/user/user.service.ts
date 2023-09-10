@@ -1,4 +1,4 @@
-import type { Prisma, AccessPolicyLevel as AccessPolicyLevelPrisma } from "@prisma/client"
+import { Prisma, AccessPolicyLevel as AccessPolicyLevelPrisma } from "@prisma/client"
 import { Inject, Injectable, StreamableFile, forwardRef } from "@nestjs/common"
 import { NotFoundException, ConflictException } from "@nestjs/common"
 import { hash } from "bcrypt"
@@ -253,36 +253,70 @@ export class UserService {
 	}
 
 	async updateMe(username: string, dto: RequestShapes["updateMe"]["body"]) {
-		const oldData = await this.getNotifyStatusData(username)
-		if (!oldData) return contractErrors.NotFoundUser(username)
-		const oldUserNames = this.getArrayOfUniqueUserNamesFromStatusData(oldData)
+        // sniff sniff no dm policy
+		// const oldData = await this.getNotifyStatusData(username)
+		// if (!oldData) return contractErrors.NotFoundUserForValidToken(username)
+		// const oldUserNames = this.getArrayOfUniqueUserNamesFromStatusData(oldData)
 
 		const updatedMe = await this.prisma.user.update({
 			where: { name: username },
 			data: dto,
-			select: this.myProfileSelect,
-		})
+			select: {
+                ...this.myProfileSelect,
+                chans: {
+                    select: { users: { select: { name: true } } }
+                },
+                friend: { select: { requestedUserName: true } },
+                friendOf: { select: { requestingUserName: true } },
+                directMessage: { select: { requestedUserName: true } },
+                directMessageOf: { select: { requestingUserName: true } },
+                outcomingFriendInvitation: { select: { invitedUserName: true } },
+                outcomingChanInvitation: { select: { invitedUserName: true } }
+            },
+		}).catch((error) => {
+            if (!(error instanceof Prisma.PrismaClientKnownRequestError))
+                throw error
+            if (error.code === 'P2002')
+                return contractErrors.UserAlreadyExist(dto.displayName)
+            else if (error.code)
+                return contractErrors.NotFoundUserForValidToken(dto.displayName)
+            else
+                throw error
+        })
 
-		const newData = await this.getNotifyStatusData(username)
-		if (!newData) return contractErrors.NotFoundUser(username)
-		const newUserNames = this.getArrayOfUniqueUserNamesFromStatusData(newData)
+        if (isContractError(updatedMe))
+            return updatedMe
 
-		this.sse.pushEventMultipleUser(
-			oldUserNames.filter((el) => !newUserNames.includes(el)),
-			{
-				type: "UPDATED_USER_STATUS",
-				data: { userName: username, status: "INVISIBLE" },
-			},
-		)
-		this.sse.pushEventMultipleUser(
-			newUserNames.filter((el) => !oldUserNames.includes(el)),
-			{
-				type: "UPDATED_USER_STATUS",
-				data: { userName: username, status: this.getUserStatus(username) },
-			},
-		)
-
+        updatedMe.chans.flatMap(({ users }) => users.map(({ name }) => name))
+            .concat(updatedMe.friend.map(({ requestedUserName }) => requestedUserName))
+            .concat(updatedMe.friendOf.map(({ requestingUserName }) => requestingUserName))
+           .concat(updatedMe.directMessage.map(({ requestedUserName }) => requestedUserName))
+            .concat(updatedMe.directMessageOf.map(({ requestingUserName }) => requestingUserName))
+            .concat(updatedMe.outcomingFriendInvitation.map(({ invitedUserName }) => invitedUserName))
+            .concat(updatedMe.outcomingChanInvitation.map(({ invitedUserName }) => invitedUserName))
+        
 		return this.formatMe(updatedMe)
+
+        // sniff sniff no dm policy
+		// const newData = await this.getNotifyStatusData(username)
+		// if (!newData) return contractErrors.NotFoundUser(username)
+		// const newUserNames = this.getArrayOfUniqueUserNamesFromStatusData(newData)
+
+        // sniff sniff no dm policy
+		// this.sse.pushEventMultipleUser(
+		// 	oldUserNames.filter((el) => !newUserNames.includes(el)),
+		// 	{
+		// 		type: "UPDATED_USER_STATUS",
+		// 		data: { userName: username, status: "INVISIBLE" },
+		// 	},
+		// )
+		// this.sse.pushEventMultipleUser(
+		// 	newUserNames.filter((el) => !oldUserNames.includes(el)),
+		// 	{
+		// 		type: "UPDATED_USER_STATUS",
+		// 		data: { userName: username, status: this.getUserStatus(username) },
+		// 	},
+		// )
 	}
 
 	public async getUserByNameOrThrow<T extends Prisma.UserSelect>(

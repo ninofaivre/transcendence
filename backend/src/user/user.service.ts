@@ -356,29 +356,15 @@ export class UserService {
         const intraUserName = await this.oauth.getIntraUserName(code, redirect_uri)
         if (!intraUserName)
             return contractErrors.Invalid42ApiCode(code)
-        const user = await this.prisma.user.findMany({
-            where: {
-                OR: [
-                    { intraUserName },
-                    { name: intraUserName },
-                    { displayName }
-                ]
-            },
-            select: {
-                name: true,
-                intraUserName: true
-            },
-            take: 1
-        })
-        if (user.length)
-            return contractErrors.UserAlreadyExist(`${intraUserName} || ${displayName}`)
-        await this.prisma.user.create({
+        const newUser = await this.prisma.user.create({
             data: {
                 intraUserName,
                 name: intraUserName,
                 displayName
             }
-        })
+        }).catch(() => contractErrors.UserAlreadyExist(`${intraUserName} || ${displayName}`))
+        if (isContractError(newUser))
+            return newUser
 		return { displayName, username: intraUserName, intraUserName }
 	}
 
@@ -721,7 +707,7 @@ export class UserService {
                 >['params']
             ) => Prisma.UserWhereInput)
     } = {
-        "*": (username) => ({}),
+        "*": () => ({}),
         "CREATE_CHAN_INVITE": (username, { chanId }) => ({
             name: { not: username },
             blockedByUser: { none: { blockingUserName: username } },
@@ -736,12 +722,28 @@ export class UserService {
                 }
             },
             chans: { none: { id: chanId } },
-            timedUserChan: { none: { chanId } },
+            timedUserChan: { none: { chanId, type: 'BAN' } },
             incomingChanInvitation: {
                 none: {
                     chanId,
                     invitingUserName: username,
                     status: 'PENDING'
+                }
+            }
+        }),
+        // only to push project, would not work with full role system
+        "UNBAN_CHAN_USER": (username, { chanId }) => ({
+            name: { not: username },
+            timedUserChan: { some: { chanId, type: 'BAN' } },
+            roles: {
+                some: {
+                    chanId,
+                    rolesSym: {
+                        some: {
+                            users: { some: { name: username } },
+                            permissions: { has: 'BAN' }
+                        }
+                    }
                 }
             }
         }),
@@ -771,6 +773,7 @@ export class UserService {
         let whereSearch: Prisma.UserWhereInput;
         switch (dto.action) {
             case "CREATE_CHAN_INVITE": whereSearch = this.searchMode[dto.action](username, dto.params); break ;
+            case "UNBAN_CHAN_USER": whereSearch = this.searchMode[dto.action](username, dto.params); break ;
             default : whereSearch = this.searchMode[dto.action](username, dto.params)
         }
         const users = await this.prisma.user.findMany({
@@ -781,6 +784,7 @@ export class UserService {
                 ],
             },
             take: dto.nResult,
+            orderBy: { displayName: 'asc' },
             select: this.getUserProfilePreviewSelectForUser(username)
         })
         return this.formatUserProfilePreviewForUserArray(username, users)

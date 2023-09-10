@@ -66,7 +66,7 @@ export const usersContract = c.router(
                     params: z.strictObject({})
                 }),
                 zSearchUsersQueryBase.extend({
-                    action: z.literal("CREATE_CHAN_INVITE"),
+                    action: z.enum(["CREATE_CHAN_INVITE", "UNBAN_CHAN_USER"]),
                     params: z.strictObject({
                         chanId: z.string().uuid()
                     })

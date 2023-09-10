@@ -58,10 +58,10 @@ export const authContract = c.router(
                     displayName: zUserName,
 					intraUserName: z.string(),
 				}),
-				404: z.object({
-					code: z.literal("NotFound"),
-				}),
-				...getErrorsForContract(c, [403, "ForbiddenByEnv"]),
+				...getErrorsForContract(c,
+                    [403, "ForbiddenByEnv"],
+                    [409, "UserAlreadyExist"]
+                ),
 			},
 			description: "login route for dev purposes (disabled in prod)",
 		},

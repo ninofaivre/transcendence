@@ -7,6 +7,7 @@ import { EnvService } from "src/env/env.service"
 import { JwtAuthGuard, JwtAuthGuardBase, RefreshTokenGuard } from "./jwt-auth.guard"
 import { isContractError } from "contract"
 import { DevGuard } from "src/env/env.guards"
+import { PrismaService } from "src/prisma/prisma.service"
 
 const c = contract.auth
 
@@ -14,7 +15,10 @@ const c = contract.auth
 @Controller()
 export class AuthController{
 
-	constructor(private authService: AuthService) {}
+	constructor(
+        private readonly authService: AuthService,
+        private readonly prisma: PrismaService
+    ) {}
 
 	@TsRestHandler(c.login)
 	async login(@Res({ passthrough: true }) res: Response) {
@@ -34,9 +38,25 @@ export class AuthController{
     @TsRestHandler(c.loginDev)
     async loginDev(@Res({ passthrough: true }) res: Response) {
         return tsRestHandler(c.loginDev, async ({ body: { username } }) => {
-            const user = await this.authService.validateUserDev(username)
-            if (!user)
-                return { status: 404, body: { code: "NotFound" } }
+            let user = await this.authService.validateUserDev(username)
+            if (!user) {
+                const res = await this.prisma.user.create({
+                    data: {
+                        name: username,
+                        intraUserName: username,
+                        displayName: `displayName_${username}`
+                    },
+                    select: {
+                        name: true,
+                        intraUserName: true,
+                        displayName: true
+                    }
+                }).catch(() => contractErrors.UserAlreadyExist(`displayName_${username}`))
+                if (isContractError(res))
+                    return res
+                const { name, ...rest } = res
+                user = { ...rest, username: name } 
+            }
             await this.authService.setNewTokensAsCookies(res, { ...user, twoFA: true })
             return { status: 200, body: user }
         })

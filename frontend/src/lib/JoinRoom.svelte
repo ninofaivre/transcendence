@@ -7,6 +7,7 @@
 	import { getModalStore, getToastStore } from "@skeletonlabs/skeleton"
 	import { simpleKeypressHandlerFactory } from "./global"
 	import { isContractError } from "contract"
+	import { tick } from "svelte"
 
 	const modalStore = getModalStore()
 	let search_input: string = ""
@@ -36,6 +37,7 @@
 		if (password_needed) password_element.focus()
 		else {
 			can_send = true
+			await tick()
 			send_button.focus()
 		}
 	}
@@ -63,11 +65,11 @@
 	function onSearchEnter() {
 		if (chans.find((el) => el.value === search_input)?.meta) {
 			password_element.focus
-		} //else sendBackData([search_input, password_input])
+		} else send_button.focus()
 	}
 
 	function onPasswordEnter(event: KeyboardEvent) {
-		//sendBackData([search_input, password_input])
+		send_button.focus()
 	}
 
 	$: if (search_input) getChanList(search_input)
@@ -145,6 +147,7 @@
 		class="variant-filled-primary btn w-fit justify-self-center px-12"
 		disabled={!can_send}
 		on:click={sendBackData}
+		on:keypress={simpleKeypressHandlerFactory(["Enter"], sendBackData)}
 	>
 		Send
 	</button>

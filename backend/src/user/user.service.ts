@@ -356,29 +356,15 @@ export class UserService {
         const intraUserName = await this.oauth.getIntraUserName(code, redirect_uri)
         if (!intraUserName)
             return contractErrors.Invalid42ApiCode(code)
-        const user = await this.prisma.user.findMany({
-            where: {
-                OR: [
-                    { intraUserName },
-                    { name: intraUserName },
-                    { displayName }
-                ]
-            },
-            select: {
-                name: true,
-                intraUserName: true
-            },
-            take: 1
-        })
-        if (user.length)
-            return contractErrors.UserAlreadyExist(`${intraUserName} || ${displayName}`)
-        await this.prisma.user.create({
+        const newUser = await this.prisma.user.create({
             data: {
                 intraUserName,
                 name: intraUserName,
                 displayName
             }
-        })
+        }).catch(() => contractErrors.UserAlreadyExist(`${intraUserName} || ${displayName}`))
+        if (isContractError(newUser))
+            return newUser
 		return { displayName, username: intraUserName, intraUserName }
 	}
 

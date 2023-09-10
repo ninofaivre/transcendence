@@ -23,14 +23,14 @@ export class FriendsController {
 
     @UseGuards(JwtAuthGuard)
     @TsRestHandler(c)
-    async handler(@Request(){ user: { username } }: EnrichedRequest) {
+    async handler(@EnrichedRequest(){ user }: EnrichedRequest) {
         return tsRestHandler(c, {
             getFriends: async () => {
-                const res = await this.friendsService.getFriends(username)
+                const res = await this.friendsService.getFriends(user.username)
                 return { status: 200, body: res }
             },
             deleteFriend: async ({ params: { friendShipId } }) => {
-                const res = await this.friendsService.deleteFriend(username, friendShipId)
+                const res = await this.friendsService.deleteFriend(user, friendShipId)
                 return isContractError(res) ? res : { status: 204, body: null }
             }
         })

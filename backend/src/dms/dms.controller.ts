@@ -2,11 +2,7 @@ import { Controller, Request, UseGuards } from "@nestjs/common"
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard"
 import { DmsService } from "./dms.service"
 import {
-	NestControllerInterface,
-	NestRequestShapes,
 	TsRest,
-	TsRestRequest,
-	nestControllerContract,
 	TsRestHandler,
 	tsRestHandler,
 } from "@ts-rest/nest"
@@ -22,22 +18,23 @@ export class DmsController {
 
 	@UseGuards(JwtAuthGuard)
 	@TsRestHandler(c)
-	async handler(@Request() req: EnrichedRequest) {
+	async handler(@EnrichedRequest() { user }: EnrichedRequest) {
 		return tsRestHandler(c, {
 
 			getDms: async () => {
-				const body = await this.dmsService.getDms(req.user.username)
+				const body = await this.dmsService.getDms(user.username)
 				return { status: 200, body }
 			},
 
-			createDm: async ({ body: { username } }) => {
-				const res = await this.dmsService.createDmIfRightTo(req.user.username, username)
-				return isContractError(res) ? res : { status: 201, body: res }
-			},
+            // unused at the time
+			// createDm: async ({ body: { username } }) => {
+			// 	const res = await this.dmsService.createDmIfRightTo(user.username, username)
+			// 	return isContractError(res) ? res : { status: 201, body: res }
+			// },
 
 			getDmElements: async ({ params: { dmId }, query: { cursor, nElements } }) => {
 				const body = await this.dmsService.getDmElements(
-					req.user.username,
+					user.username,
 					dmId,
 					nElements,
 					cursor,
@@ -47,7 +44,7 @@ export class DmsController {
 
 			createDmMessage: async ({ params: { dmId }, body: { content, relatedTo } }) => {
 				const body = await this.dmsService.createDmMessage(
-					req.user.username,
+					user,
 					dmId,
 					content,
 					relatedTo,
@@ -57,7 +54,7 @@ export class DmsController {
 
 			updateDmMessage: async ({ body: { content }, params: { elementId, dmId } }) => {
 				const body = await this.dmsService.updateMessage(
-					req.user.username,
+					user,
 					dmId,
 					elementId,
 					content,
@@ -67,7 +64,7 @@ export class DmsController {
 
 			deleteDmMessage: async ({ params: { dmId, elementId } }) => {
 				const body = await this.dmsService.deleteDmMessage(
-					req.user.username,
+					user,
 					dmId,
 					elementId,
 				)

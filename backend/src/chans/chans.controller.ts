@@ -1,4 +1,4 @@
-import { Controller, ExecutionContext, Request, UseGuards, createParamDecorator } from "@nestjs/common"
+import { Controller, UseGuards } from "@nestjs/common"
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard"
 import { ChansService } from "./chans.service"
 import { contract, isContractError } from "contract"
@@ -6,15 +6,6 @@ import { TsRest, TsRestHandler, tsRestHandler } from "@ts-rest/nest"
 import { EnrichedRequest } from "src/types"
 
 const c = contract.chans
-
-const EnrichedRequest = createParamDecorator((data: never, ctx: ExecutionContext): EnrichedRequest => {
-    const req: EnrichedRequest = ctx.switchToHttp().getRequest()
-    console.log(req.headers['sse-id'])
-    const sseId = req.headers['sse-id']
-    if (typeof sseId === "string")
-        req.user['sseId'] = sseId
-    return req
-})
 
 @Controller()
 @TsRest({ jsonQuery: true })
@@ -37,22 +28,22 @@ export class ChansController {
             }),
 
             leaveChan: async ({ params: { chanId } }) => {
-                const res = await this.chansService.leaveChan(username, chanId)
+                const res = await this.chansService.leaveChan(user, chanId)
                 return isContractError(res) ? res : { status: 204, body: null }
             },
 
             joinChan: async ({ body }) => {
-                const res = await this.chansService.joinChan(username, body)
+                const res = await this.chansService.joinChan(user, body)
                 return isContractError(res) ? res : { status: 200, body: res }
             },
 
             createChan: async ({ body }) => {
-                const res = await this.chansService.createChan(username, body)
+                const res = await this.chansService.createChan(user, body)
                 return isContractError(res) ? res: { status: 201, body: res }
             },
 
             deleteChan: async ({ params: { chanId } }) => {
-                const res = await this.chansService.deleteChan(username, chanId)
+                const res = await this.chansService.deleteChan(user, chanId)
                 return isContractError(res) ? res : { status: 204, body: null }
             },
 
@@ -77,7 +68,7 @@ export class ChansController {
             },
 
             kickUserFromChan: async ({ params }) => {
-                const res = await this.chansService.kickUserFromChanIfRightTo(username, params)
+                const res = await this.chansService.kickUserFromChanIfRightTo(user, params)
                 return isContractError(res) ? res : { status: 204, body: null }
             },
 
@@ -87,7 +78,7 @@ export class ChansController {
             },
 
             banUserFromChan: async ({ params, body: { timeoutInMs } }) => {
-                const res = await this.chansService.banUserFromChanIfRighTo(username, params, timeoutInMs)
+                const res = await this.chansService.banUserFromChanIfRighTo(user, params, timeoutInMs)
                 return isContractError(res) ? res : { status: 204, body: null }
             },
 

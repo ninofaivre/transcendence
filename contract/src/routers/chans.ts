@@ -85,12 +85,6 @@ export const zChanReturn = z.object({
 	ownerName: zUserName,
 	id: z.string().uuid(),
 	users: z.array(zChanUser).min(1),
-	bannedUsers: z.array(
-        z.strictObject({
-            username: zUserName,
-            displayName: zUserName
-        })
-    ),
 	passwordProtected: z.boolean(),
 	selfPerms: z.array(zSelfPermissionList),
 })
@@ -493,12 +487,6 @@ export type ChanEvent =
 			type: "UPDATED_CHAN_INFO"
 			data: z.infer<typeof zUpdatedChan>
 	  }
-    | {
-            type: "FLUSH_BANNED_USERS"
-            data: {
-                chanId: string
-            }
-    }
 	| {
 			type: "CREATED_CHAN_USER"
 			data: {
@@ -517,7 +505,7 @@ export type ChanEvent =
 			// on BANNED_CHAN_USER add remove chanUser from array and add name to
 			// banUsers array if perm 'BAN' over him. On UNBANNED_CHAN_USER just
 			// remove user from bannedUsers array if he was in.
-			type: "DELETED_CHAN_USER" | "BANNED_CHAN_USER" | "UNBANNED_CHAN_USER"
+			type: "DELETED_CHAN_USER" | "BANNED_CHAN_USER" // | "UNBANNED_CHAN_USER" not used right now
 			data: {
 				chanId: string
 				username: z.infer<typeof zUserName>

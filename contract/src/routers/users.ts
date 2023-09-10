@@ -243,13 +243,17 @@ export type UserEvent =
         }
     }
     | {
-        type: "BLOCKED_BY_USER",
+        type: "UPDATED_USER_PROFILE_PICTURE",
+        data: { intraUserName: z.infer<typeof zUserName> }
+    }
+    | {
+        type: "BLOCKED_BY_USER" | "BLOCKED_USER",
         data: {
             username: z.infer<typeof zUserName>
         }
     }
     | {
-        type: "UNBLOCKED_BY_USER",
+        type: "UNBLOCKED_BY_USER" | "UNBLOCKED_USER",
         data: {
             username: z.infer<typeof zUserName>
         }

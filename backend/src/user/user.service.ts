@@ -11,7 +11,7 @@ import { SseService } from "src/sse/sse.service"
 import { ChansService } from "src/chans/chans.service"
 import { FriendsService } from "src/friends/friends.service"
 import { DmsService } from "src/dms/dms.service"
-import { AccessPolicyLevel, ProximityLevel } from "src/types"
+import { AccessPolicyLevel, EnrichedRequest, ProximityLevel } from "src/types"
 import { fileTypeFromBuffer } from "../disgustingImports"
 import { join } from "path"
 import { EnvService } from "src/env/env.service"
@@ -252,7 +252,8 @@ export class UserService {
 		].filter(el => !blockUserNames.includes(el))
 	}
 
-	async updateMe(intraUserName: string, dto: RequestShapes["updateMe"]["body"]) {
+	async updateMe(reqUser: EnrichedRequest['user'], dto: RequestShapes["updateMe"]["body"]) {
+        const { intraUserName } = reqUser
         // sniff sniff no dm policy
 		// const oldData = await this.getNotifyStatusData(username)
 		// if (!oldData) return contractErrors.NotFoundUserForValidToken(username)
@@ -294,7 +295,8 @@ export class UserService {
                 updatedMe.directMessage.map(({ requestedUserName }) => requestedUserName),
                 updatedMe.directMessageOf.map(({ requestingUserName }) => requestingUserName),
                 updatedMe.outcomingFriendInvitation.map(({ invitedUserName }) => invitedUserName),
-                updatedMe.outcomingChanInvitation.map(({ invitedUserName }) => invitedUserName)
+                updatedMe.outcomingChanInvitation.map(({ invitedUserName }) => invitedUserName),
+                [intraUserName]
             )
         
         this.sse.pushEventMultipleUser([...new Set(toNotify)], {
@@ -303,7 +305,7 @@ export class UserService {
                 intraUserName,
                 displayName: dto.displayName
             }
-        })
+        }, reqUser)
 
 		return this.formatMe(updatedMe)
 
@@ -495,21 +497,37 @@ export class UserService {
         return null
     }
 
-    public async setMyProfilePicture(username: string, profilePicture: Express.Multer.File) {
+    public async setMyProfilePicture(reqUser: EnrichedRequest['user'], profilePicture: Express.Multer.File) {
+        const { username } = reqUser
         if (!profilePicture)
             return contractErrors.InvalidProfilePicture('no file')
         let buffer = profilePicture.buffer
         const contractError = await this.isInvalidProfilePicture(buffer)
         if (contractError)
             return contractError 
-        const user = await this.getUserByName(username, { profilePicture: true })
+        const user = await this.getUserByName(username, {
+            profilePicture: true,
+            directMessage: { select: { requestedUserName: true } },
+            directMessageOf: { select: { requestingUserName: true } },
+            chans: { select: { users: { select: { name: true } } } }
+        })
         if (!user)
             return contractErrors.NotFoundUserForValidToken(username)
+        const toNotify = user.directMessage.map(dm => dm.requestedUserName)
+            .concat(
+                user.directMessageOf.map(dm => dm.requestingUserName),
+                user.chans.flatMap(chan => chan.users.map(user => user.name)),
+                [username]
+            )
         const { profilePicture: profilePictureFileName } = user
         if (username === 'tom')
             buffer = await sharp(profilePicture.buffer).negate().toBuffer()
         try {
             writeFileSync(join(EnvService.env.PROFILE_PICTURE_DIR, profilePictureFileName), buffer)
+            this.sse.pushEventMultipleUser([...new Set(toNotify)], {
+                type: 'UPDATED_USER_PROFILE_PICTURE',
+                data: { intraUserName: username }
+            }, reqUser)
             return null
         } catch {}
         return contractErrors.ServerUnableToWriteProfilePicture()
@@ -577,7 +595,7 @@ export class UserService {
         })
     }
 
-    public async blockUser(username: string, blockedUserName: string) {
+    public async blockUser({ username, sseId }: EnrichedRequest['user'], blockedUserName: string) {
         if (username === blockedUserName)
             return contractErrors.ForbiddenSelfOperation('to block')
         const user = await this.getUserByName(blockedUserName, {
@@ -648,10 +666,14 @@ export class UserService {
             type: "BLOCKED_BY_USER",
             data: { username }
         })
+        await this.sse.pushEvent(username, {
+            type: "BLOCKED_USER",
+            data: { username: blockedUserName }
+        }, sseId)
         return res
     }
 
-    public async unblockUser(username: string, unblockUserName: string) {
+    public async unblockUser({ username, sseId }: EnrichedRequest['user'], unblockUserName: string) {
         const res = await this.prisma.blockedShip.delete({
             where: {
                 blockingUserName_blockedUserName: {
@@ -677,6 +699,10 @@ export class UserService {
             type: "UNBLOCKED_BY_USER",
             data: { username }
         })
+        await this.sse.pushEvent(username, {
+            type: "UNBLOCKED_USER",
+            data: { username: unblockUserName }
+        }, sseId)
     }
 
     public async getBlockedUsers(username: string) {

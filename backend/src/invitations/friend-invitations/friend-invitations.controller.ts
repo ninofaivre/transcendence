@@ -35,11 +35,11 @@ export class FriendInvitationsController implements NestControllerInterface<type
 	@UseGuards(JwtAuthGuard)
 	@TsRest(c.createFriendInvitation)
 	async createFriendInvitation(
-		@Request() req: EnrichedRequest,
+		@EnrichedRequest() req: EnrichedRequest,
 		@TsRestRequest() { body: { invitedUserName } }: RequestShapes["createFriendInvitation"],
 	) {
 		const body = await this.friendInvitationsService.createFriendInvitation(
-			req.user.username,
+			req.user,
 			invitedUserName,
 		)
 		return { status: 201 as const, body }
@@ -53,7 +53,7 @@ export class FriendInvitationsController implements NestControllerInterface<type
 		{ body: { status }, params: { id } }: RequestShapes["updateFriendInvitation"],
 	) {
 		const body = await this.friendInvitationsService.updateFriendInvitation(
-			req.user.username,
+			req.user,
 			status,
 			id,
 		)

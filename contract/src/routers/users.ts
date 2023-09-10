@@ -236,6 +236,13 @@ export type UserEvent =
         },
     }
     | {
+        type: "UPDATED_USER_DISPLAY_NAME"
+        data: {
+            intraUserName: z.infer<typeof zUserName>
+            displayName: z.infer<typeof zUserName>
+        }
+    }
+    | {
         type: "BLOCKED_BY_USER",
         data: {
             username: z.infer<typeof zUserName>

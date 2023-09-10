@@ -8,6 +8,19 @@ import { zChanType, zClassicChanEventType, zPermissionList } from "../generated-
 import { zUserStatus } from "../zod/user.zod"
 import { getErrorsForContract } from "../errors"
 
+export const defaultPermissions: z.infer<typeof zPermissionList>[] = [
+    "INVITE",
+    "SEND_MESSAGE",
+    "UPDATE_MESSAGE",
+]
+
+export const adminPermissions: z.infer<typeof zPermissionList>[] = [
+    "KICK",
+    "BAN",
+    "MUTE",
+    "DELETE_MESSAGE",
+]
+
 const c = initContract()
 
 export const zChanTitle = z

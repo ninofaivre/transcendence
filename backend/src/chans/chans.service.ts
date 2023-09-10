@@ -20,6 +20,8 @@ import { ChanElementUnion, RetypeChanElement } from "src/types"
 import { zPermissionOverList } from "contract"
 import { CallbackService } from "src/callback/callback.service"
 import { ChanElementFactory, UpdateChanElementFactory } from "./element"
+import { defaultPermissions } from "contract"
+import { adminPermissions } from "contract"
 
 type RequestShapes = NestRequestShapes<typeof contract.chans>
 
@@ -245,19 +247,6 @@ export class ChansService {
         }
 	} satisfies Prisma.ChanDiscussionElementSelect
 
-	private defaultPermissions: PermissionList[] = [
-		"INVITE",
-		"SEND_MESSAGE",
-        "UPDATE_MESSAGE",
-	]
-
-	private adminPermissions: PermissionList[] = [
-		"KICK",
-		"BAN",
-		"MUTE",
-		"DELETE_MESSAGE",
-	]
-
     private formatChanUserForUser = (
         username: string,
         user: ChanPayload['users'][number],
@@ -465,11 +454,11 @@ export class ChansService {
                         data: [
                             {
                                 name: "DEFAULT",
-                                permissions: this.defaultPermissions,
+                                permissions: defaultPermissions,
                             },
                             {
                                 name: "ADMIN",
-                                permissions: this.adminPermissions,
+                                permissions: adminPermissions,
                             },
                         ],
                     },

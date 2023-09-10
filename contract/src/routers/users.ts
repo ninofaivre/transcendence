@@ -111,11 +111,14 @@ export const usersContract = c.router(
 		updateMe: {
 			method: "PATCH",
 			path: "/@me",
-			// TODO after BH add userName
-			body: zMyProfileReturn.pick({ displayName: true, statusVisibilityLevel: true }).partial(),
+            // no dm policy sniff sniff
+			body: zMyProfileReturn.pick({ displayName: true}),//, statusVisibilityLevel: true }).partial(),
 			responses: {
 				200: zMyProfileReturn,
-				...getErrorsForContract(c, [404, "NotFoundUser"]),
+				...getErrorsForContract(c,
+                    [404, "NotFoundUserForValidToken"],
+                    [409, "UserAlreadyExist"]
+                ),
 			},
 		},
         qrCode: {

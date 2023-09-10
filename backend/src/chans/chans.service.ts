@@ -563,7 +563,7 @@ export class ChansService {
         this.chanInvitationsService.updateAndNotifyManyInvsStatus(
             ChanInvitationStatus.DELETED_CHAN,
             { chanId })
-        this.sse.pushEventMultipleUser(this.usersToNames(chan.users),
+        this.sse.pushEventMultipleUser(this.usersToNames(chan.users.filter(user => user.name !== username)),
             {
                 type: 'DELETED_CHAN',
                 data: { chanId }

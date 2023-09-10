@@ -175,15 +175,24 @@
 		>
 			👥+
 		</button>
-		<button
-			class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
-			on:click={() => {
-				if (d.selfPerms.includes("EDIT")) removeChan(d)
-				else leaveChan(d)
-			}}
-		>
-			X
-		</button>
+        <button
+            class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
+            on:click={() => {
+                removeChan(d)
+            }}
+        >
+            🚪
+        </button>
+        {#if d.selfPerms.includes("EDIT")}
+            <button
+                class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
+                on:click={() => {
+                    removeChan(d)
+                }}
+            >
+                ❌
+            </button>
+        {/if}
 	</div>
 {/each}
 

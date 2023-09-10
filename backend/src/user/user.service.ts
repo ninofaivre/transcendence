@@ -252,14 +252,14 @@ export class UserService {
 		].filter(el => !blockUserNames.includes(el))
 	}
 
-	async updateMe(username: string, dto: RequestShapes["updateMe"]["body"]) {
+	async updateMe(intraUserName: string, dto: RequestShapes["updateMe"]["body"]) {
         // sniff sniff no dm policy
 		// const oldData = await this.getNotifyStatusData(username)
 		// if (!oldData) return contractErrors.NotFoundUserForValidToken(username)
 		// const oldUserNames = this.getArrayOfUniqueUserNamesFromStatusData(oldData)
 
 		const updatedMe = await this.prisma.user.update({
-			where: { name: username },
+			where: { intraUserName },
 			data: dto,
 			select: {
                 ...this.myProfileSelect,
@@ -287,14 +287,24 @@ export class UserService {
         if (isContractError(updatedMe))
             return updatedMe
 
-        updatedMe.chans.flatMap(({ users }) => users.map(({ name }) => name))
-            .concat(updatedMe.friend.map(({ requestedUserName }) => requestedUserName))
-            .concat(updatedMe.friendOf.map(({ requestingUserName }) => requestingUserName))
-           .concat(updatedMe.directMessage.map(({ requestedUserName }) => requestedUserName))
-            .concat(updatedMe.directMessageOf.map(({ requestingUserName }) => requestingUserName))
-            .concat(updatedMe.outcomingFriendInvitation.map(({ invitedUserName }) => invitedUserName))
-            .concat(updatedMe.outcomingChanInvitation.map(({ invitedUserName }) => invitedUserName))
+        const toNotify = updatedMe.chans.flatMap(({ users }) => users.map(({ name }) => name))
+            .concat(
+                updatedMe.friend.map(({ requestedUserName }) => requestedUserName),
+                updatedMe.friendOf.map(({ requestingUserName }) => requestingUserName),
+                updatedMe.directMessage.map(({ requestedUserName }) => requestedUserName),
+                updatedMe.directMessageOf.map(({ requestingUserName }) => requestingUserName),
+                updatedMe.outcomingFriendInvitation.map(({ invitedUserName }) => invitedUserName),
+                updatedMe.outcomingChanInvitation.map(({ invitedUserName }) => invitedUserName)
+            )
         
+        this.sse.pushEventMultipleUser([...new Set(toNotify)], {
+            type: "UPDATED_USER_DISPLAY_NAME",
+            data: {
+                intraUserName,
+                displayName: dto.displayName
+            }
+        })
+
 		return this.formatMe(updatedMe)
 
         // sniff sniff no dm policy

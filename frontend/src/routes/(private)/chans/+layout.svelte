@@ -13,12 +13,10 @@
 	import type { Writable } from "svelte/store"
 	import { goto, invalidate, invalidateAll } from "$app/navigation"
 	import { isContractError } from "contract"
-    import { chans_store } from "$lib/stores"
 
 	console.log($page.route.id, "layout init")
 
 	export let data: LayoutData
-    chans_store.set(data.chanList)
 
 	const modalStore = getModalStore()
 	const toastStore = getToastStore()

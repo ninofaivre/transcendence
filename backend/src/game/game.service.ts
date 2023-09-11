@@ -142,14 +142,28 @@ class Player {
 
     public getPauseStart = () => this._pauseData?.time
 
+    private away: boolean = false
+
     private _pauseData: {
         time: number,
         callbackId: NodeJS.Timeout
     } | null = null
     
     public pause() {
+        this.away = true
         if (this._pauseData)
             return
+        if (this.game.status === "INIT" || this.game.status === "BREAK") {
+            setTimeout(() => {
+                if (!this.away)
+                    return
+                this.pause()
+            }, (this.game.status === "INIT"
+                ? GameTimings.initTimeout
+                : GameTimings.breakTimeout) -
+                    Date.now() - this.game.startTimeout)
+            return
+        }
         this._pauseData = {
             time: Date.now(),
             callbackId: setTimeout((() => {
@@ -161,6 +175,7 @@ class Player {
     }
 
     public unpause() {
+        this.away = false
         if (!this._pauseData)
             return
         clearTimeout(this._pauseData.callbackId)
@@ -402,7 +417,7 @@ class Game {
             "INIT" | "BREAK" | "PAUSE" | "PLAY" | "END"
         > = 'INIT';
     private readonly maxScore: number = 2
-    private startTimeout = Date.now();
+    public startTimeout = Date.now();
 
     public get status() {
         return this._status

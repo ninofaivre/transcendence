@@ -209,6 +209,7 @@
 	let reload_avatar: number
 	$: {
 		if ($reload_img === data.user.userName) reload_avatar = Date.now()
+		$reload_img = ""
 	}
 </script>
 

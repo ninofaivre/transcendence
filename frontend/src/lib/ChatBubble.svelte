@@ -263,6 +263,7 @@
 	let reload_avatar: number
 	$: {
 		if ($reload_img === message.author) reload_avatar = Date.now()
+		$reload_img = ""
 	}
 </script>
 

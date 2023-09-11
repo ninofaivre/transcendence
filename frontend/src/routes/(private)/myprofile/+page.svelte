@@ -16,8 +16,8 @@
 
 	let _init = true
 	export let data: PageData
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		(window as any).checkError
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
 	const makeToast: (message: string) => void = (window as any).makeToast
 
 	// 2FA
@@ -248,6 +248,7 @@
 	let reload_avatar: number
 	$: {
 		if ($reload_img === data.me.userName) reload_avatar = Date.now()
+		$reload_img = ""
 	}
 </script>
 

@@ -94,6 +94,7 @@
 	$: {
 		if ($page?.data?.me?.userName)
 			if ($reload_img === $page.data.me.userName) reload_avatar = Date.now()
+		$reload_img = ""
 	}
 </script>
 

@@ -14,7 +14,6 @@
 
 	import { reload_img } from "$stores"
 	import { invalidate } from "$app/navigation"
-	import { tick } from "svelte"
 
 	let _init = true
 	export let data: PageData
@@ -172,33 +171,6 @@
 		}
 	}
 
-	async function changeDisplayName() {
-		const r = await new Promise<string | undefined>((resolve) => {
-			const modalSettings: ModalSettings = {
-				type: "component",
-				component: "UsernameChooserModal",
-				response: (r) => {
-					modalStore.close()
-					resolve(r)
-				},
-			}
-			modalStore.trigger(modalSettings)
-		})
-		if (r) {
-			const ret = await client.users.updateMe({
-				body: {
-					displayName: r,
-				},
-			})
-			if (ret.status !== 200) {
-				checkError(ret, "change username")
-			} else {
-				makeToast(`Your new username is ${ret.body.displayName}`)
-				invalidate(":me")
-			}
-		}
-	}
-
 	function makeToast(message: string) {
 		if (toastStore)
 			toastStore.trigger({
@@ -221,15 +193,17 @@
 
 	let display_name_content: string = data.me.displayName
 	let name_already_exists: boolean = false
-	export function makeEditable(node: HTMLElement) {
+	export function changeDisplayName(node: HTMLElement) {
 		let original_display_name: string = node.textContent as string
 
 		const makeEditable = () => {
 			node.contentEditable = "true"
+			node.style.fontFamily = "Mono"
 			node.focus()
 		}
 		const reset = async () => {
 			console.log("blur!")
+			node.style.fontFamily = "ArcadeClassic"
 			node.contentEditable = "false"
 			node.textContent = original_display_name
 		}
@@ -290,13 +264,13 @@
 	}
 </script>
 
-<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-	<div class="flex flex-col gap-3 rounded-lg bg-gray-50 p-8 sm:px-10">
+<div class="mt-10 max-w-xl sm:mx-auto sm:w-full">
+	<div class="flex w-full flex-col gap-3 rounded-lg bg-gray-50 p-8 sm:px-10">
 		<!-- Avatar -->
-		<div class="grid flex-1 grid-cols-2">
+		<div class="flex flex-1 gap-6">
 			<!-- col1 -->
 			<button
-				class="btn w-fit p-0 hover:outline hover:outline-secondary-400"
+				class="btn w-fit p-0 hover:outline hover:outline-tertiary-400"
 				on:click={triggerCropperModal}
 			>
 				<Avatar
@@ -306,19 +280,25 @@
 					alt="profile"
 				/>
 			</button>
-			<div>
+			<div class="group relative flex w-fit flex-1 flex-col justify-center gap-1">
 				<h1
-					class="self-center bg-teal-400 text-4xl text-black"
+					class="w-fit rounded p-2 text-black hover:variant-ghost-tertiary"
 					style:font-family="ArcadeClassic"
 					contenteditable="false"
 					bind:textContent={display_name_content}
-					use:makeEditable
+					use:changeDisplayName
 				/>
-				{#if name_already_exists}
-					<sub class="text-red-600"> This name is already taken </sub>
-				{:else}
-					<sub class="text-green-500">Available</sub>
-				{/if}
+				<sub
+					class={name_already_exists
+						? "invisible p-2 text-red-500 group-focus-within:visible"
+						: "invisible p-2 text-green-500 group-focus-within:visible"}
+				>
+					{#if name_already_exists}
+						This name is already taken
+					{:else}
+						Available
+					{/if}
+				</sub>
 			</div>
 		</div>
 
@@ -368,3 +348,9 @@
 		<div class="py-8 text-center text-3xl font-bold text-gray-500">No games to show yet</div>
 	{/if}
 </div>
+
+<style>
+	[contenteditable] {
+		font-size: 1.5rem;
+	}
+</style>

@@ -4,7 +4,6 @@
 	import { getToastStore, initializeStores } from "@skeletonlabs/skeleton"
 
 	import { AppShell, AppBar, LightSwitch, Toast, Avatar } from "@skeletonlabs/skeleton"
-	import { checkError, makeToast } from "$lib/global"
 	import { logged_in } from "$lib/stores"
 	import { goto } from "$app/navigation"
 	import { Modal, type ModalComponent } from "@skeletonlabs/skeleton"
@@ -29,23 +28,27 @@
 
 	initializeStores()
 	const toastStore = getToastStore()
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
+	const makeToast: (message: string) => void = windowAsAny.makeToast
 
-	;(window as any).makeToast = function (message: string) {
+	windowAsAny.makeToast = function (message: string) {
 		toastStore.trigger({
 			message,
 		})
 	}
-	;(window as any).checkError = function (ret: { status: number; body: any }, what: string) {
+	windowAsAny.checkError = function (ret: { status: number; body: any }, what: string) {
 		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
+			windowAsAny.makeToast("Could not " + what + " : " + ret.body.message)
 			console.log(ret.body.code)
 		} else {
 			if (PUBLIC_MODE.toLowerCase() === "dev") {
 				let msg = "Server return unexpected status " + ret.status
 				if ("message" in ret.body) msg += " with message " + ret.body.message
-				makeToast(msg, toastStore)
+				windowAsAny.makeToast(msg, toastStore)
 				console.error(msg)
-			} else makeToast("Unexpected error. Please refresh the page")
+			} else windowAsAny.makeToast("Unexpected error. Please refresh the page")
 		}
 	}
 
@@ -84,7 +87,7 @@
 		if (ret.status !== 200) {
 			checkError(ret, "log")
 		} else {
-			makeToast("Logging out...", toastStore)
+			makeToast("Logging out...")
 			logged_in.set(false)
 		}
 	}

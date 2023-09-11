@@ -15,10 +15,13 @@
 	import { isContractError } from "contract"
 	import { onMount } from "svelte"
 
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
+	const makeToast: (message: string) => void = windowAsAny.makeToast
 	let username = ""
 	const isProd = PUBLIC_MODE.toLowerCase() === "prod"
 	const code = $page.url.searchParams.get("code")
-	const toastStore = getToastStore()
 	let ft_uri = new URL(PUBLIC_API42_OAUTH_URI)
 	ft_uri.searchParams.append("redirect_uri", new URL("auth", PUBLIC_FRONTEND_URL).toString())
 	ft_uri.searchParams.append("client_id", PUBLIC_API42_CLIENT_ID)
@@ -74,23 +77,6 @@
 	let sign_in_42: HTMLAnchorElement
 	let dev_input: HTMLInputElement
 	onMount(() => dev_input.focus())
-	function makeToast(message: string) {
-		if (toastStore)
-			toastStore.trigger({
-				message,
-			})
-	}
-	function checkError(ret: { status: number; body: any }, what: string) {
-		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
-			console.log(ret.body.code)
-		} else {
-			let msg = "Server return unexpected status " + ret.status
-			if ("message" in ret.body) msg += " with message " + ret.body.message
-			makeToast(msg)
-			console.error(msg)
-		}
-	}
 </script>
 
 <svelte:window

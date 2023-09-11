@@ -16,13 +16,15 @@
 	import { client } from "$clients"
 	import { addListenerToEventSource, shallowCopyPartialToNotPartial } from "$lib/global"
 	import { isContractError } from "contract"
-	import { getToastStore } from "@skeletonlabs/skeleton"
 
 	console.log($page.route.id, "page init")
 
 	export let data: PageData
 	const sse_store: Writable<EventSource> = getContext("sse_store")
-	const toastStore = getToastStore()
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
+	const makeToast: (message: string) => void = windowAsAny.makeToast
 
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
@@ -196,35 +198,12 @@
 				if (chan) chan.users = chan.users.filter((el) => el.name === new_data.username)
 				data.chanList = data.chanList
 			}),
-			addListenerToEventSource($sse_store!, "FLUSH_BANNED_USERS", (new_data) => {
-				let to_flush = data.chanList.find((el) => el.id === new_data.chanId)?.users
-				if (to_flush) to_flush = []
-				data.chanList = data.chanList
-			}),
 		)
 		return () => {
 			destroyer.forEach((func) => void func())
 			resizeObserver.unobserve(header as HTMLElement) // Is this necessary ?
 		}
 	})
-
-	function makeToast(message: string) {
-		if (toastStore)
-			toastStore.trigger({
-				message,
-			})
-	}
-	function checkError(ret: { status: number; body: any }, what: string) {
-		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
-			console.log(ret.body.code)
-		} else {
-			let msg = "Server return unexpected status " + ret.status
-			if ("message" in ret.body) msg += " with message " + ret.body.message
-			makeToast(msg)
-			console.error(msg)
-		}
-	}
 </script>
 
 <!-- {@debug data} -->

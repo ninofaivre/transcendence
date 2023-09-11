@@ -13,13 +13,15 @@
 	import { PUBLIC_BACKEND_URL, PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB } from "$env/static/public"
 
 	import { reload_img } from "$stores"
-	import { invalidate } from "$app/navigation"
 
 	let _init = true
 	export let data: PageData
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
+	const makeToast: (message: string) => void = windowAsAny.makeToast
 
 	// 2FA
-	let toastStore = getToastStore()
 	let twoFA: boolean = data.me.enabledTwoFA
 	let modalStore = getModalStore()
 
@@ -168,24 +170,6 @@
 		})
 		if (r) {
 			onComplete(r)
-		}
-	}
-
-	function makeToast(message: string) {
-		if (toastStore)
-			toastStore.trigger({
-				message,
-			})
-	}
-	function checkError(ret: { status: number; body: any }, what: string) {
-		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
-			console.log(ret.body.code)
-		} else {
-			let msg = "Server return unexpected status " + ret.status
-			if ("message" in ret.body) msg += " with message " + ret.body.message
-			makeToast(msg)
-			console.error(msg)
 		}
 	}
 

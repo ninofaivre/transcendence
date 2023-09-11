@@ -1,21 +1,21 @@
 <script lang="ts">
-
 	import { onMount } from "svelte"
 	import { client } from "$clients"
-	import { getModalStore, getToastStore } from "@skeletonlabs/skeleton"
+	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { simpleKeypressHandlerFactory } from "./global"
-	import { isContractError } from "contract"
 
 	const modalStore = getModalStore()
 	let search_input: string = ""
-    let blacklist: string[]
+	let blacklist: string[]
 	let input_element: HTMLElement
 	let send_button: HTMLButtonElement
 	let input_focused = false
 	let can_send: boolean = false
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
 
 	async function sendBackData() {
-
 		if ($modalStore[0].response) {
 			$modalStore[0].response(search_input)
 		}
@@ -24,17 +24,17 @@
 	async function getUserList(input: string) {
 		return client.users
 			.searchUsersV2({
-                query: {
-                    params: {},
-                    action: "*",
-                    displayNameContains: input,
-                }
+				query: {
+					params: {},
+					action: "*",
+					displayNameContains: input,
+				},
 			})
 			.then((ret) => {
 				if (ret.status !== 200) {
 					checkError(ret, "get room list")
 				} else {
-					blacklist = ret.body.map((obj) => (obj.displayName))
+					blacklist = ret.body.map((obj) => obj.displayName)
 				}
 			})
 	}
@@ -48,30 +48,10 @@
 	$: {
 		if (blacklist.find((el) => el === search_input)) {
 			can_send = false
-		}
-        else can_send = true
+		} else can_send = true
 	}
 
 	onMount(() => void input_element.focus())
-
-	const toastStore = getToastStore()
-	function makeToast(message: string) {
-		if (toastStore)
-			toastStore.trigger({
-				message,
-			})
-	}
-	function checkError(ret: { status: number; body: any }, what: string) {
-		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
-			console.log(ret.body.code)
-		} else {
-			let msg = "Server return unexpected status " + ret.status
-			if ("message" in ret.body) msg += " with message " + ret.body.message
-			makeToast(msg)
-			console.error(msg)
-		}
-	}
 </script>
 
 <div class="card flex flex-col items-center gap-2 p-8">
@@ -89,11 +69,11 @@
 			autocomplete="off"
 		/>
 	</div>
-    <sub class="text-red-500">
-        {#if !can_send}
-            User name already taken
-        {/if}
-    </sub>
+	<sub class="text-red-500">
+		{#if !can_send}
+			User name already taken
+		{/if}
+	</sub>
 	<!-- send button -->
 	<button
 		bind:this={send_button}

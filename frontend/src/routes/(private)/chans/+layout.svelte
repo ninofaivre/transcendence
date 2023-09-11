@@ -4,22 +4,24 @@
 
 	/* Components */
 	import ChanList from "./ChanList.svelte"
-	import { getContext, onMount, setContext } from "svelte"
+	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
 	import { addListenerToEventSource } from "$lib/global"
-	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import type { Writable } from "svelte/store"
-	import { goto, invalidate, invalidateAll } from "$app/navigation"
-	import { isContractError } from "contract"
+	import { goto, invalidate } from "$app/navigation"
 
 	console.log($page.route.id, "layout init")
 
 	export let data: LayoutData
 
 	const modalStore = getModalStore()
-	const toastStore = getToastStore()
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
+	const makeToast: (message: string) => void = windowAsAny.makeToast
 	let header: HTMLElement | null
 	let header_height: number
 	const sse_store: Writable<EventSource> = getContext("sse_store")
@@ -67,7 +69,7 @@
 				await invalidate(":chans")
 				await invalidate(`:chan:${new_data.chanId}`)
 				if (new_data.chanId === $page.params.chanId) {
-                    goto("/chans")
+					goto("/chans")
 				}
 			}),
 		)
@@ -139,23 +141,6 @@
 				await invalidate(":chans")
 				goto("/chans/" + ret.body.id)
 			}
-		}
-	}
-	function makeToast(message: string) {
-		if (toastStore)
-			toastStore.trigger({
-				message,
-			})
-	}
-	function checkError(ret: { status: number; body: any }, what: string) {
-		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
-			console.log(ret.body.code)
-		} else {
-			let msg = "Server return unexpected status " + ret.status
-			if ("message" in ret.body) msg += " with message " + ret.body.message
-			makeToast(msg)
-			console.error(msg)
 		}
 	}
 </script>

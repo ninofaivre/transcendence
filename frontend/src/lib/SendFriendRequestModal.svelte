@@ -4,10 +4,12 @@
 
 	import { onMount } from "svelte"
 	import { client } from "$clients"
-	import { getModalStore, getToastStore } from "@skeletonlabs/skeleton"
-	import { isContractError } from "contract"
+	import { getModalStore } from "@skeletonlabs/skeleton"
 
 	const modalStore = getModalStore()
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
 	let input_element: HTMLElement
@@ -62,25 +64,6 @@
 	$: if (search_input) getUsernames(search_input)
 
 	onMount(() => void input_element.focus())
-
-	const toastStore = getToastStore()
-	function makeToast(message: string) {
-		if (toastStore)
-			toastStore.trigger({
-				message,
-			})
-	}
-	function checkError(ret: { status: number; body: any }, what: string) {
-		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
-			console.log(ret.body.code)
-		} else {
-			let msg = "Server return unexpected status " + ret.status
-			if ("message" in ret.body) msg += " with message " + ret.body.message
-			makeToast(msg)
-			console.error(msg)
-		}
-	}
 </script>
 
 <div class="card grid grid-rows-2 gap-1 p-8">
@@ -101,7 +84,7 @@
 				sendBackUsername(search_input)
 				search_input = ""
 			}}
-			class="variant-filled-primary hover:font-medium disabled:font-normal btn"
+			class="variant-filled-primary btn hover:font-medium disabled:font-normal"
 			style="--border-radius-var: {border_radius}"
 			disabled={!can_send}
 		>

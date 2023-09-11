@@ -6,11 +6,13 @@
 	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import type { Writable } from "svelte/store"
-	import { isContractError } from "contract"
 
 	const modalStore = getModalStore()
 	const sse_store: Writable<EventSource> = getContext("sse_store")
-	const toastStore = getToastStore()
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
+	const makeToast: (message: string) => void = windowAsAny.makeToast
 
 	export let currentDiscussionId: string
 	export let discussions: Chan[]
@@ -118,24 +120,6 @@
 		else {
 			goto("/chans", { invalidateAll: true })
 			// goto("/chans")
-		}
-	}
-
-	function makeToast(message: string) {
-		if (toastStore)
-			toastStore.trigger({
-				message,
-			})
-	}
-	function checkError(ret: { status: number; body: any }, what: string) {
-		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
-			console.log(ret.body.code)
-		} else {
-			let msg = "Server return unexpected status " + ret.status
-			if ("message" in ret.body) msg += " with message " + ret.body.message
-			makeToast(msg)
-			console.error(msg)
 		}
 	}
 </script>

@@ -16,13 +16,16 @@
 	import { client } from "$clients"
 	import { goto } from "$app/navigation"
 	import { reload_img } from "$stores"
-	import { isContractError } from "contract"
 
 	const modalStore = getModalStore()
 	const toastStore = getToastStore()
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
+	const makeToast: (message: string) => void = windowAsAny.makeToast
 
 	export let message: Message
-    export let my_name: string
+	export let my_name: string
 	export let from_me: boolean
 	export let discussion: Chan | DirectConversation
 	export let game_socket: Writable<GameSocket>
@@ -58,36 +61,30 @@
 				const canMute = user.myPermissionOver.includes("MUTE")
 				const canKick = user.myPermissionOver.includes("KICK")
 				const canBan = user.myPermissionOver.includes("BAN")
-                const canToggleAdminStatus = (discussion as Chan).ownerName === my_name
-                menu = menu_init
-                if (canMute) {
-                    menu = [
-                        ...menu,
-                        isMuted
-                            ? { label: "UnMute", handler: unmute }
-                            : { label: "Mute", handler: mute },
-                    ]
-                }
-                if (canKick) {
-                    menu = [
-                        ...menu,
-                        { label: "Kick", handler: kickHandler },
-                    ]
-                }
-                if (canToggleAdminStatus) {
-                    menu = [
-                        ...menu,
-                        isAdmin
-                            ? { label: "Remove Admin status", handler: toggleAdmin }
-                            : { label: "Grant Admin status", handler: toggleAdmin },
-                    ]
-                }
-                if (canBan) {
-                    menu = [
-                        ...menu,
-                        { label: "Ban", handler: ban },
-                    ]
-                }
+				const canToggleAdminStatus = (discussion as Chan).ownerName === my_name
+				menu = menu_init
+				if (canMute) {
+					menu = [
+						...menu,
+						isMuted
+							? { label: "UnMute", handler: unmute }
+							: { label: "Mute", handler: mute },
+					]
+				}
+				if (canKick) {
+					menu = [...menu, { label: "Kick", handler: kickHandler }]
+				}
+				if (canToggleAdminStatus) {
+					menu = [
+						...menu,
+						isAdmin
+							? { label: "Remove Admin status", handler: toggleAdmin }
+							: { label: "Grant Admin status", handler: toggleAdmin },
+					]
+				}
+				if (canBan) {
+					menu = [...menu, { label: "Ban", handler: ban }]
+				}
 				//DEBUG
 				roles = user.roles
 				perms = user.myPermissionOver
@@ -262,23 +259,6 @@
 		closeMenu()
 		is_sent = false
 		dispatch("delete", { id: message.id })
-	}
-	function makeToast(message: string) {
-		if (toastStore)
-			toastStore.trigger({
-				message,
-			})
-	}
-	function checkError(ret: { status: number; body: any }, what: string) {
-		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
-			console.log(ret.body.code)
-		} else {
-			let msg = "Server return unexpected status " + ret.status
-			if ("message" in ret.body) msg += " with message " + ret.body.message
-			makeToast(msg)
-			console.error(msg)
-		}
 	}
 </script>
 

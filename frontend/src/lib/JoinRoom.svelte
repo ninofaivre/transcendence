@@ -6,10 +6,12 @@
 	import { client } from "$clients"
 	import { getModalStore, getToastStore } from "@skeletonlabs/skeleton"
 	import { simpleKeypressHandlerFactory } from "./global"
-	import { isContractError } from "contract"
 	import { tick } from "svelte"
 
 	const modalStore = getModalStore()
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
 	let search_input: string = ""
 	let password_input: string = ""
 	let chans: AutocompleteOption[] = []
@@ -82,25 +84,6 @@
 	$: if (password_input) can_send = true
 
 	onMount(() => void input_element.focus())
-
-	const toastStore = getToastStore()
-	function makeToast(message: string) {
-		if (toastStore)
-			toastStore.trigger({
-				message,
-			})
-	}
-	function checkError(ret: { status: number; body: any }, what: string) {
-		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
-			console.log(ret.body.code)
-		} else {
-			let msg = "Server return unexpected status " + ret.status
-			if ("message" in ret.body) msg += " with message " + ret.body.message
-			makeToast(msg)
-			console.error(msg)
-		}
-	}
 </script>
 
 <div class="card flex flex-col items-center gap-2 p-8">

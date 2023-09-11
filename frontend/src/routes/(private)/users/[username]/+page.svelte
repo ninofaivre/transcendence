@@ -1,12 +1,11 @@
 <script lang="ts">
 	import type { PageData } from "./$types"
-	import type { MatchHistoryElement, MatchHistory } from "$types"
+	import type { MatchHistory } from "$types"
 	import {
 		Table,
 		type PaginationSettings,
 		type TableSource,
 		tableMapperValues,
-		getToastStore,
 		ProgressRadial,
 	} from "@skeletonlabs/skeleton"
 
@@ -19,12 +18,14 @@
 	import { goto, invalidate } from "$app/navigation"
 	import { reload_img } from "$stores"
 	import { getContext } from "svelte"
-	import { isContractError } from "contract"
 
 	export let data: PageData
 
 	const modalStore = getModalStore()
-	const toastStore = getToastStore()
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
+	const makeToast: (message: string) => void = windowAsAny.makeToast
 
 	let already_friend: boolean
 	$: already_friend = data.friendList.includes($page.params.username)
@@ -190,7 +191,7 @@
 
 	$: nPlayed = data.user.nWin + data.user.nLoose
 
-	async function acceptFriendRequest(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
+	async function acceptFriendRequest() {
 		if (data.user.invitedId) {
 			const { status, body } = await client.invitations.friend.updateFriendInvitation({
 				params: { id: data.user.invitedId },
@@ -203,23 +204,6 @@
 				makeToast(message)
 				console.error(message)
 			} else invalidate(":friends:invitations")
-		}
-	}
-	function makeToast(message: string) {
-		if (toastStore)
-			toastStore.trigger({
-				message,
-			})
-	}
-	function checkError(ret: { status: number; body: any }, what: string) {
-		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
-			console.log(ret.body.code)
-		} else {
-			let msg = "Server return unexpected status " + ret.status
-			if ("message" in ret.body) msg += " with message " + ret.body.message
-			makeToast(msg)
-			console.error(msg)
 		}
 	}
 </script>

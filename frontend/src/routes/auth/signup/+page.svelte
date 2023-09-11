@@ -10,7 +10,6 @@
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
 	import { getToastStore } from "@skeletonlabs/skeleton"
-	import { isContractError } from "contract"
 
 	let ft_uri = new URL(PUBLIC_API42_OAUTH_URI)
 	ft_uri.searchParams.append("client_id", PUBLIC_API42_CLIENT_ID)
@@ -21,7 +20,10 @@
 	const redirect_uri = new URL("/auth/signup", PUBLIC_FRONTEND_URL)
 	ft_uri.searchParams.set("redirect_uri", redirect_uri.toString())
 
-	const toastStore = getToastStore()
+	const windowAsAny: any = window
+	const checkError: (ret: { status: number; body: any }, what: string) => void =
+		windowAsAny.checkError
+	const makeToast: (message: string) => void = windowAsAny.makeToast
 	let displayName = ""
 	const code = $page.url.searchParams.get("code") ?? ""
 	const state = $page.url.searchParams.get("state")
@@ -69,23 +71,6 @@
 				console.log(ret)
 				goto("/")
 			}
-		}
-	}
-	function makeToast(message: string) {
-		if (toastStore)
-			toastStore.trigger({
-				message,
-			})
-	}
-	function checkError(ret: { status: number; body: any }, what: string) {
-		if (isContractError(ret)) {
-			makeToast("Could not " + what + " : " + ret.body.message)
-			console.log(ret.body.code)
-		} else {
-			let msg = "Server return unexpected status " + ret.status
-			if ("message" in ret.body) msg += " with message " + ret.body.message
-			makeToast(msg)
-			console.error(msg)
 		}
 	}
 </script>

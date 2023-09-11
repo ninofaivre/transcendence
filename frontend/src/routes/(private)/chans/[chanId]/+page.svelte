@@ -21,10 +21,9 @@
 
 	export let data: PageData
 	const sse_store: Writable<EventSource> = getContext("sse_store")
-	const windowAsAny: any = window
 	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
-	const makeToast: (message: string) => void = windowAsAny.makeToast
+		(window as any).checkError
+	const makeToast: (message: string) => void = (window as any).makeToast
 
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true

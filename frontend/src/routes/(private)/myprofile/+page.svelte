@@ -16,10 +16,9 @@
 
 	let _init = true
 	export let data: PageData
-	const windowAsAny: any = window
 	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
-	const makeToast: (message: string) => void = windowAsAny.makeToast
+		(window as any).checkError
+	const makeToast: (message: string) => void = (window as any).makeToast
 
 	// 2FA
 	let twoFA: boolean = data.me.enabledTwoFA

@@ -4,14 +4,13 @@
 
 	import { onMount } from "svelte"
 	import { client } from "$clients"
-	import { getModalStore, getToastStore } from "@skeletonlabs/skeleton"
+	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { simpleKeypressHandlerFactory } from "./global"
 	import { tick } from "svelte"
 
 	const modalStore = getModalStore()
-	const windowAsAny: any = window
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
 	let search_input: string = ""
 	let password_input: string = ""
 	let chans: AutocompleteOption[] = []

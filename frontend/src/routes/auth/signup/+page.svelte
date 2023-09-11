@@ -20,10 +20,9 @@
 	const redirect_uri = new URL("/auth/signup", PUBLIC_FRONTEND_URL)
 	ft_uri.searchParams.set("redirect_uri", redirect_uri.toString())
 
-	const windowAsAny: any = window
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
-	const makeToast: (message: string) => void = windowAsAny.makeToast
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
+	const makeToast: (message: string) => void = (window as any).makeToast
 	let displayName = ""
 	const code = $page.url.searchParams.get("code") ?? ""
 	const state = $page.url.searchParams.get("state")

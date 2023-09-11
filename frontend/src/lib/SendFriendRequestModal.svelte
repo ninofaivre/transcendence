@@ -7,9 +7,8 @@
 	import { getModalStore } from "@skeletonlabs/skeleton"
 
 	const modalStore = getModalStore()
-	const windowAsAny: any = window
 	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
+		(window as any).checkError
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
 	let input_element: HTMLElement

@@ -19,10 +19,9 @@
 
 	const modalStore = getModalStore()
 
-	const windowAsAny: any = window
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
-	const makeToast: (message: string) => void = windowAsAny.makeToast
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
+	const makeToast: (message: string) => void = (window as any).makeToast
 
 	export let message: Message
 	export let my_name: string

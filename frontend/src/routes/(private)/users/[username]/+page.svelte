@@ -22,10 +22,9 @@
 	export let data: PageData
 
 	const modalStore = getModalStore()
-	const windowAsAny: any = window
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
-	const makeToast: (message: string) => void = windowAsAny.makeToast
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
+	const makeToast: (message: string) => void = (window as any).makeToast
 
 	let already_friend: boolean
 	$: already_friend = data.friendList.includes($page.params.username)

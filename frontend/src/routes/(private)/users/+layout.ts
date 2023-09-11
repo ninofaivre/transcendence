@@ -1,7 +1,7 @@
 import type { LayoutLoad } from "./$types"
 import { client } from "$clients"
 import { checkError } from "$lib/global"
-import type { FriendInvitation, FriendInvitations } from "$types"
+import type { FriendInvitations } from "$types"
 
 export const load: LayoutLoad = async ({ depends }) => {
 	console.log("layout load function from users/ ")

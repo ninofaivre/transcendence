@@ -11,9 +11,8 @@
 	let send_button: HTMLButtonElement
 	let input_focused = false
 	let can_send: boolean = false
-	const windowAsAny: any = window
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
 
 	async function sendBackData() {
 		if ($modalStore[0].response) {

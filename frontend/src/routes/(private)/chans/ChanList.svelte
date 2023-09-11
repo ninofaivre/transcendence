@@ -9,10 +9,9 @@
 
 	const modalStore = getModalStore()
 	const sse_store: Writable<EventSource> = getContext("sse_store")
-	const windowAsAny: any = window
 	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
-	const makeToast: (message: string) => void = windowAsAny.makeToast
+		(window as any).checkError
+	const makeToast: (message: string) => void = (window as any).makeToast
 
 	export let currentDiscussionId: string
 	export let discussions: Chan[]

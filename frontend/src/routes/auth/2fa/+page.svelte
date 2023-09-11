@@ -4,10 +4,9 @@
 	import { getToastStore } from "@skeletonlabs/skeleton"
 	import { goto } from "$app/navigation"
 
-	const windowAsAny: any = window
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
-	const makeToast: (message: string) => void = windowAsAny.makeToast
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
+	const makeToast: (message: string) => void = (window as any).makeToast
 	let input = ""
 
 	async function login2FA() {

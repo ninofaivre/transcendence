@@ -28,38 +28,27 @@
 
 	initializeStores()
 	const toastStore = getToastStore()
-	const windowAsAny: any = window
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
-	const makeToast: (message: string) => void = windowAsAny.makeToast
-
-	windowAsAny.makeToast = function (message: string) {
+	;(window as any).makeToast = function (message: string) {
 		toastStore.trigger({
 			message,
 		})
 	}
-	windowAsAny.checkError = function (ret: { status: number; body: any }, what: string) {
+	;(window as any).checkError = function (ret: { status: number; body: any }, what: string) {
 		if (isContractError(ret)) {
-			windowAsAny.makeToast("Could not " + what + " : " + ret.body.message)
+			;(window as any).makeToast("Could not " + what + " : " + ret.body.message)
 			console.log(ret.body.code)
 		} else {
 			if (PUBLIC_MODE.toLowerCase() === "dev") {
 				let msg = "Server return unexpected status " + ret.status
 				if ("message" in ret.body) msg += " with message " + ret.body.message
-				windowAsAny.makeToast(msg, toastStore)
+				;(window as any).makeToast(msg, toastStore)
 				console.error(msg)
-			} else windowAsAny.makeToast("Unexpected error. Please refresh the page")
+			} else (window as any).makeToast("Unexpected error. Please refresh the page")
 		}
 	}
-
-	$: {
-		// Prevents redir coming back from 42 api, or losing the query string for /auth
-		if (!$page.url.pathname.match(/\bauth\b/)) {
-			if ($logged_in === false) {
-				goto("/auth" + $page.url.searchParams.toString())
-			}
-		}
-	}
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
+	const makeToast: (message: string) => void = (window as any).makeToast
 
 	const modalComponentRegistry: Record<string, ModalComponent> = {
 		TimeChooser: { ref: TimeChooser },
@@ -92,9 +81,19 @@
 		}
 	}
 
+	$: {
+		// Prevents redir coming back from 42 api, or losing the query string for /auth
+		if (!$page.url.pathname.match(/\bauth\b/)) {
+			if ($logged_in === false) {
+				goto("/auth" + $page.url.searchParams.toString())
+			}
+		}
+	}
+
 	let reload_avatar: number
 	$: {
-		if ($reload_img === $page.data.me.userName) reload_avatar = Date.now()
+		if ($page?.data?.me?.userName)
+			if ($reload_img === $page.data.me.userName) reload_avatar = Date.now()
 	}
 </script>
 

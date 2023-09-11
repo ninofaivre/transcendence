@@ -18,9 +18,8 @@
 	const sse_store: Writable<EventSource> = getContext("sse_store")
 
 	const modalStore = getModalStore()
-	const windowAsAny: any = window
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		windowAsAny.checkError
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
 	let header: HTMLElement | null
 	let header_height: number
 

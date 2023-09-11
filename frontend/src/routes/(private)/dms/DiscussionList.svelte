@@ -45,7 +45,7 @@
 
 {#each discussions as d}
 	<div
-		class={`flex rounded px-2 py-2 place-items-center ${
+		class={`flex place-items-center rounded px-2 py-2 ${
 			d.id != currentDiscussionId
 				? "font-medium hover:variant-soft-secondary hover:font-semibold"
 				: "variant-ghost-secondary font-semibold"
@@ -56,7 +56,8 @@
 		</a>
 		<div class="flex justify-self-end">
 			<Avatar
-				src="{PUBLIC_BACKEND_URL}/api/users/{d.otherName}/profilePicture?reload={$reload_img}"
+				src="{PUBLIC_BACKEND_URL}/api/users/{d.otherName}/profilePicture?reload={$reload_img +
+					Date.now()}"
 				fallback="https://i.pravatar.cc/?u={d.otherName}"
 				class="h-8 w-8"
 				rounded="rounded-full"

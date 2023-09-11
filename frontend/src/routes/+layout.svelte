@@ -91,6 +91,11 @@
 			logged_in.set(false)
 		}
 	}
+
+	let reload_avatar: number
+	$: {
+		if ($reload_img === $page.data.me.userName) reload_avatar = Date.now()
+	}
 </script>
 
 <!-- App Shell -->
@@ -141,7 +146,7 @@
 					<a href="/myprofile" class="variant-ghost chip ml-1 flex">
 						<Avatar
 							src="{PUBLIC_BACKEND_URL}/api/users/{$page.data.me
-								.userName}/profilePicture?reload={$reload_img}"
+								.userName}/profilePicture?reload={reload_avatar}"
 							fallback="https://i.pravatar.cc/?u={$page.data.me.userName}"
 							class="h-8 w-8"
 							rounded="rounded-full"

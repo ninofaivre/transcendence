@@ -6,7 +6,7 @@
 	import type { ModalSettings } from "@skeletonlabs/skeleton"
 
 	import { ProgressRadial, getModalStore } from "@skeletonlabs/skeleton"
-	import { Avatar, Paginator, SlideToggle, Table, getToastStore } from "@skeletonlabs/skeleton"
+	import { Avatar, Paginator, SlideToggle, Table } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { isContractError } from "contract"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
@@ -143,7 +143,7 @@
 		})
 		if (ret.status === 204) {
 			makeToast("Upload successful")
-			$reload_img = $reload_img + 1
+			$reload_img = data.me.userName
 		} else if (ret.status === 413) {
 			makeToast(
 				`Image is too big. Upload must be under ${PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB}MB`,
@@ -246,6 +246,10 @@
 			},
 		}
 	}
+	let reload_avatar: number
+	$: {
+		if ($reload_img === data.me.userName) reload_avatar = Date.now()
+	}
 </script>
 
 <div class="mt-10 max-w-xl sm:mx-auto sm:w-full">
@@ -259,7 +263,7 @@
 			>
 				<Avatar
 					src="{PUBLIC_BACKEND_URL}/api/users/{data.me
-						.userName}/profilePicture?reload={$reload_img}"
+						.userName}/profilePicture?reload={reload_avatar}"
 					fallback="https://i.pravatar.cc/?u={data.me.userName}"
 					alt="profile"
 				/>

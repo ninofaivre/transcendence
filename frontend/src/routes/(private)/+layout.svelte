@@ -2,7 +2,7 @@
 	import type { GameSocket } from "$types"
 	import { ProgressRadial, type ModalSettings } from "@skeletonlabs/skeleton"
 	import type { Writable } from "svelte/store"
-    import { get } from "svelte/store"
+	import { get } from "svelte/store"
 
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { io } from "socket.io-client"
@@ -10,17 +10,18 @@
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { writable } from "svelte/store"
 	import { goto } from "$app/navigation"
-	import { logged_in } from "$stores"
+	import { logged_in, reload_img } from "$stores"
 	import type { zConnectErrorData } from "contract"
 	import type { z } from "zod"
 	import { client } from "$clients"
 
-    import { sseId } from "$lib/stores"
+	import { sseId } from "$lib/stores"
+	import { addListenerToEventSource } from "$lib/global"
 
 	console.log("private layout init")
 	const modalStore = getModalStore()
 
-    // Banner
+	// Banner
 	let banner_message = ""
 	let banner_pending = false
 	let banner_message_store = writable(banner_message)
@@ -28,7 +29,9 @@
 
 	// Sse
 	let sse_store: Writable<EventSource> = writable(
-		new EventSource(PUBLIC_BACKEND_URL + "/api/sse" + `?sse-id=${get(sseId)}`, { withCredentials: true }),
+		new EventSource(PUBLIC_BACKEND_URL + "/api/sse" + `?sse-id=${get(sseId)}`, {
+			withCredentials: true,
+		}),
 	)
 	$sse_store.onopen = function (_evt) {
 		console.log("Successfully established sse connection")
@@ -36,6 +39,13 @@
 	$sse_store.onerror = function (_evt) {
 		console.log("Error while openning new sse connection: Probably already in use")
 	}
+	const destroy_sse_listener = addListenerToEventSource(
+		$sse_store,
+		"UPDATED_USER_PROFILE_PICTURE",
+		(new_data) => {
+			reload_img.set(new_data.intraUserName)
+		},
+	)
 	setContext("sse_store", sse_store)
 
 	// Game socket
@@ -45,7 +55,6 @@
 		}),
 	)
 	setContext("game_socket", game_socket)
-
 	;(window as any)["game"] = {
 		ping() {
 			const start = Date.now()
@@ -55,19 +64,19 @@
 		},
 	}
 	$game_socket.on("connect", () => {
-        banner_message_store.set("")
-        banner_pending_store.set(false)
-        $game_socket.emit("getGameStatus", "", (payload) => {
-            if (payload.status === "INVITING") {
-                banner_message_store.set("Game invitation pending")
-                $banner_pending_store = true
-            } else if (payload.status === "INVITED") {
-                banner_message_store.set("You are being invited")
-                $banner_pending_store = true
-            } else if (payload.status !== "QUEUE" && payload.status !== "IDLE") {
-                goto("/pong")
-            }
-        })
+		banner_message_store.set("")
+		banner_pending_store.set(false)
+		$game_socket.emit("getGameStatus", "", (payload) => {
+			if (payload.status === "INVITING") {
+				banner_message_store.set("Game invitation pending")
+				$banner_pending_store = true
+			} else if (payload.status === "INVITED") {
+				banner_message_store.set("You are being invited")
+				$banner_pending_store = true
+			} else if (payload.status !== "QUEUE" && payload.status !== "IDLE") {
+				goto("/pong")
+			}
+		})
 	})
 	$game_socket.on(
 		"connect_error",
@@ -158,8 +167,8 @@
 		$game_socket.removeAllListeners()
 		$game_socket.close()
 		$sse_store.close()
+		destroy_sse_listener()
 	})
-
 </script>
 
 {#if $banner_message_store}

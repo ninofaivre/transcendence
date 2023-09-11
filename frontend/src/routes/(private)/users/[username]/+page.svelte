@@ -206,6 +206,11 @@
 			} else invalidate(":friends:invitations")
 		}
 	}
+
+	let reload_avatar: number
+	$: {
+		if ($reload_img === data.user.userName) reload_avatar = Date.now()
+	}
 </script>
 
 <!-- Container -->
@@ -217,7 +222,7 @@
 			<!-- col1: Avatar + menu -->
 			<Avatar
 				src="{PUBLIC_BACKEND_URL}/api/users/{data.user
-					.userName}/profilePicture?reload={$reload_img}"
+					.userName}/profilePicture?reload={reload_avatar}"
 				fallback="https://i.pravatar.cc/?u={data.user.userName}"
 				alt="profile"
 			/>

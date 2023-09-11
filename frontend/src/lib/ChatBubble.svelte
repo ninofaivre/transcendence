@@ -260,6 +260,11 @@
 		is_sent = false
 		dispatch("delete", { id: message.id })
 	}
+
+	let reload_avatar: number
+	$: {
+		if ($reload_img === message.author) reload_avatar = Date.now()
+	}
 </script>
 
 <div
@@ -273,7 +278,7 @@
 		<!-- <span class="relative left-1 text-xl text-green-600">&#8226</span> -->
 		{#if is_chan}
 			<Avatar
-				src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture?reload={$reload_img}"
+				src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture?reload={reload_avatar}"
 				fallback="https://i.pravatar.cc/?u={message.author}"
 				class="h-8 w-8"
 				rounded="rounded-full"

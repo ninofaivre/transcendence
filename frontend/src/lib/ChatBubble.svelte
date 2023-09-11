@@ -18,7 +18,7 @@
 	import { reload_img } from "$stores"
 
 	const modalStore = getModalStore()
-	const toastStore = getToastStore()
+
 	const windowAsAny: any = window
 	const checkError: (ret: { status: number; body: any }, what: string) => void =
 		windowAsAny.checkError

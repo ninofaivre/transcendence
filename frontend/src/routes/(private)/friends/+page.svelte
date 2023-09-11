@@ -5,7 +5,7 @@
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
-	import { invalidate, invalidateAll } from "$app/navigation"
+	import { invalidate } from "$app/navigation"
 	import { addListenerToEventSource, makeToast } from "$lib/global"
 	import { getContext, onMount } from "svelte"
 	import type { Writable } from "svelte/store"

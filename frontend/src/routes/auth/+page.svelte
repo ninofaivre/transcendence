@@ -11,7 +11,6 @@
 	} from "$env/static/public"
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
-	import { getToastStore } from "@skeletonlabs/skeleton"
 	import { isContractError } from "contract"
 	import { onMount } from "svelte"
 

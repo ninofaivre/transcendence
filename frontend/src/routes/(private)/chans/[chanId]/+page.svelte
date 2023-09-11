@@ -162,11 +162,16 @@
 		resizeObserver.observe(header!)
 
 		const destroyer: (() => void)[] = new Array(
-			addListenerToEventSource($sse_store!, "CREATED_CHAN_ELEMENT", (new_data) => {
-				console.log("Server message: New chan element", new_data)
+			addListenerToEventSource($sse_store!, "CREATED_CHAN_USER", (new_data) => {
+				console.log("Server message: New chan user", new_data)
 				if (new_data.chanId === $page.params.chanId) {
 					invalidate(":chans")
 					invalidate(":chan:" + new_data.chanId)
+				}
+			}),
+			addListenerToEventSource($sse_store!, "CREATED_CHAN_ELEMENT", (new_data) => {
+				console.log("Server message: New chan element", new_data)
+				if (new_data.chanId === $page.params.chanId) {
 					messages = [...messages, new_data.element]
 				}
 			}),

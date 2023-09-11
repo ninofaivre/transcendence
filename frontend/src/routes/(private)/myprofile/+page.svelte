@@ -14,8 +14,7 @@
 
 	import { reload_img } from "$stores"
 	import { invalidate } from "$app/navigation"
-	import Toggle from "$lib/Toggle.svelte"
-	import { listenOutsideClick } from "$lib/global"
+	import { tick } from "svelte"
 
 	let _init = true
 	export let data: PageData
@@ -220,16 +219,28 @@
 
 	_init = false
 
-	let display_name_content: string
+	let display_name_content: string = data.me.displayName
 	let name_already_exists: boolean = false
 	export function makeEditable(node: HTMLElement) {
-		const original_display_name: string = node.innerHTML as string
+		let original_display_name: string = node.textContent as string
 
 		const makeEditable = () => {
 			node.contentEditable = "true"
 			node.focus()
 		}
-		const checkIfExists = async () => {
+		const reset = async () => {
+			console.log("blur!")
+			node.contentEditable = "false"
+			node.textContent = original_display_name
+		}
+		const checkIfExistsSubmitOnEnter = async (e: Event) => {
+			const ev = e as InputEvent
+			const enter_pressed = ["insertParagraph", "insertLineBreak"].includes(ev.inputType)
+			if (enter_pressed) {
+				console.log(ev.inputType)
+				ev.preventDefault()
+				ev.stopPropagation()
+			}
 			if (display_name_content) {
 				const ret = await client.users.searchUsersV2({
 					query: {
@@ -245,12 +256,13 @@
 					name_already_exists = userlist.includes(display_name_content)
 				}
 			}
+			if (enter_pressed) removeEditableAndSubmit()
 		}
 		const removeEditableAndSubmit = async () => {
 			node.contentEditable = "false"
 			if (!display_name_content || name_already_exists) {
 				alert(display_name_content)
-				node.innerHTML = original_display_name
+				node.textContent = original_display_name
 			} else {
 				const ret = await client.users.updateMe({
 					body: {
@@ -259,16 +271,19 @@
 				})
 				if (ret.status !== 200) {
 					checkError(ret, "change your username")
-				} else makeToast("Username successfully changed")
+				} else {
+					original_display_name = display_name_content
+					makeToast("Username successfully changed")
+				}
 			}
 		}
 		node.addEventListener("click", makeEditable)
-		node.addEventListener("input", checkIfExists)
-		node.addEventListener("blur", removeEditableAndSubmit)
+		node.addEventListener("beforeinput", checkIfExistsSubmitOnEnter)
+		node.addEventListener("blur", reset)
 		return {
 			destroy: () => {
-				node.removeEventListener("blur", removeEditableAndSubmit)
-				node.removeEventListener("input", checkIfExists)
+				node.removeEventListener("blur", reset)
+				node.removeEventListener("beforeinput", checkIfExistsSubmitOnEnter)
 				node.removeEventListener("click", makeEditable)
 			},
 		}
@@ -296,11 +311,9 @@
 					class="self-center bg-teal-400 text-4xl text-black"
 					style:font-family="ArcadeClassic"
 					contenteditable="false"
-					bind:innerHTML={display_name_content}
+					bind:textContent={display_name_content}
 					use:makeEditable
-				>
-					{data.user.displayName}
-				</h1>
+				/>
 				{#if name_already_exists}
 					<sub class="text-red-600"> This name is already taken </sub>
 				{:else}

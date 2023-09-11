@@ -1,12 +1,17 @@
 <script lang="ts">
-	import { goto } from "$app/navigation"
+	import { goto, invalidate } from "$app/navigation"
 	import { page } from "$app/stores"
 	import type { PageData } from "./$types"
 
 	export let data: PageData
 
-    console.log(data.chanList)
+	// ;(async () => {
+	// 	await invalidate("/chans")
+	// })()
+
+	console.log($page.data.chanList)
 	if (data.chanList[0]) {
-		goto($page.url + "/" + $page.data.chanList[0].id)
+		alert("You are on the chan. The first chan id is :" +data.chanList[0].id)
+		goto($page.url + "/" + data.chanList[0].id)
 	}
 </script>

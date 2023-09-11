@@ -25,6 +25,7 @@
 	import JoinRoom from "$lib/JoinRoom.svelte"
 	import CropperModal from "$lib/CropperModal.svelte"
 	import ChangePasswordModal from "$lib/ChangePasswordModal.svelte"
+	import UsernameChooserModal from "$lib/UsernameChooserModal.svelte"
 
 	initializeStores()
 	const toastStore = getToastStore()
@@ -49,6 +50,7 @@
 		TwoFAModal: { ref: TwoFAModal },
 		ChangePasswordModal: { ref: ChangePasswordModal },
 		CropperModal: { ref: CropperModal },
+		UsernameChooserModal: { ref: UsernameChooserModal },
 	}
 
 	onMount(() => console.log("Layout mounted"))

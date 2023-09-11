@@ -62,7 +62,7 @@ export function listenOutsideClick(
 
 	return {
 		destroy: () => {
-			node.removeEventListener("click", handleClick, true)
+			document.removeEventListener("click", handleClick, true)
 		},
 	}
 }

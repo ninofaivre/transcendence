@@ -103,6 +103,7 @@
 		if (ret.status !== 204) checkError(ret, "remove chan: " + d.title)
 		else {
 			goto("/chans", { invalidateAll: true })
+			// goto("/chans")
 		}
 	}
 
@@ -116,6 +117,7 @@
 		if (ret.status !== 204) checkError(ret, "remove chan: " + d.title)
 		else {
 			goto("/chans", { invalidateAll: true })
+			// goto("/chans")
 		}
 	}
 
@@ -175,24 +177,25 @@
 		>
 			👥+
 		</button>
-        <button
-            class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
-            on:click={() => {
-                removeChan(d)
-            }}
-        >
-            🚪
-        </button>
-        {#if d.selfPerms.includes("EDIT")}
-            <button
-                class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
-                on:click={() => {
-                    removeChan(d)
-                }}
-            >
-                ❌
-            </button>
-        {/if}
+		{#if d.selfPerms.includes("EDIT")}
+			<button
+				class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
+				on:click={() => {
+					removeChan(d)
+				}}
+			>
+				❌
+			</button>
+		{:else}
+			<button
+				class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
+				on:click={() => {
+					leaveChan(d)
+				}}
+			>
+				🚪
+			</button>
+		{/if}
 	</div>
 {/each}
 

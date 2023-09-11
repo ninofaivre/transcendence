@@ -33,8 +33,7 @@
 		}
 	})
 
-	async function acceptFriendInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
-		const id = e.currentTarget.dataset.id
+	async function acceptFriendInvitation(id: string) {
 		if (id) {
 			const { status, body } = await client.invitations.friend.updateFriendInvitation({
 				params: { id },
@@ -50,8 +49,7 @@
 		}
 	}
 
-	async function declineFriendInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
-		const id = e.currentTarget.dataset.id
+	async function declineFriendInvitation(id: string) {
 		if (id) {
 			const { status, body } = await client.invitations.friend.updateFriendInvitation({
 				params: { id },
@@ -67,8 +65,7 @@
 		}
 	}
 
-	async function acceptChanInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
-		const id = e.currentTarget.dataset.id
+	async function acceptChanInvitation(id: string) {
 		if (id) {
 			const { status, body } = await client.invitations.chan.updateChanInvitation({
 				params: { id },
@@ -84,8 +81,7 @@
 		}
 	}
 
-	async function declineChanInvitation(e: MouseEvent & { currentTarget: HTMLButtonElement }) {
-		const id = e.currentTarget.dataset.id
+	async function declineChanInvitation(id: string) {
 		if (id) {
 			const { status, body } = await client.invitations.chan.updateChanInvitation({
 				params: { id },
@@ -133,14 +129,12 @@
 						invited you to {request.chanTitle}
 					</span>
 					<button
-						data-id={request.id}
 						class="variant-ghost-primary chip px-2"
-						on:click={acceptChanInvitation}>✅ Join chan</button
+						on:click={() => acceptChanInvitation(request.id)}>✅ Join chan</button
 					>
 					<button
-						data-id={request.id}
 						class="variant-ghost-error chip px-2"
-						on:click={declineChanInvitation}>❌ Decline</button
+						on:click={() => declineChanInvitation(request.id)}>❌ Decline</button
 					>
 				</li>
 			{/each}
@@ -167,12 +161,12 @@
 					<button
 						data-id={request.id}
 						class="variant-ghost-primary chip px-2"
-						on:click={acceptFriendInvitation}>✅ Accept</button
+						on:click={() => acceptFriendInvitation(request.id)}>✅ Accept</button
 					>
 					<button
 						data-id={request.id}
 						class="variant-ghost-error chip px-2"
-						on:click={declineFriendInvitation}>❌ Reject</button
+						on:click={() => declineFriendInvitation(request.id)}>❌ Reject</button
 					>
 				</li>
 			{/each}

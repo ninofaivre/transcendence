@@ -56,16 +56,19 @@
 			}),
 			addListenerToEventSource($sse_store, "CREATED_CHAN", (new_data) => {
 				console.log("CREATED_CHAN")
-				data.chanList = [new_data, ...data.chanList]
-				invalidate(":chans")
-				invalidate(`:chan:${new_data.id}`)
+				// data.chanList = [new_data, ...data.chanList]
+				// invalidate(":chans")
+				// invalidate(`:chan:${new_data.id}`)
 				// goto("/chans")
 			}),
-			addListenerToEventSource($sse_store, "DELETED_CHAN", (new_data) => {
-				// console.log("DELETED_CHAN")
-				// data.chanList = data.chanList.filter((el) => el.id != new_data.chanId)
-				// invalidate(":chans")
-				// invalidate(`:chan:${new_data.chanId}`)
+			addListenerToEventSource($sse_store, "DELETED_CHAN", async (new_data) => {
+				console.log("DELETED_CHAN")
+				data.chanList = data.chanList.filter((el) => el.id != new_data.chanId)
+				await invalidate(":chans")
+				await invalidate(`:chan:${new_data.chanId}`)
+				if (new_data.chanId === $page.params.chanId) {
+                    goto("/chans")
+				}
 			}),
 		)
 		return () => {
@@ -132,7 +135,6 @@
 			})
 			if (ret.status != 200) checkError(ret, `join ${title}`)
 			else {
-				ret.body
 				makeToast(`Joined ${title}`)
 				await invalidate(":chans")
 				goto("/chans/" + ret.body.id)

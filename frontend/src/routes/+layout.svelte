@@ -4,12 +4,11 @@
 	import { getToastStore, initializeStores } from "@skeletonlabs/skeleton"
 
 	import { AppShell, AppBar, LightSwitch, Toast, Avatar } from "@skeletonlabs/skeleton"
-	import { makeToast } from "$lib/global"
+	import { checkError, makeToast } from "$lib/global"
 	import { logged_in } from "$lib/stores"
-	import { onMount } from "svelte"
 	import { goto } from "$app/navigation"
-	import { Modal, type ModalComponent, type ModalSettings } from "@skeletonlabs/skeleton"
-	import { PUBLIC_BACKEND_URL } from "$env/static/public"
+	import { Modal, type ModalComponent } from "@skeletonlabs/skeleton"
+	import { PUBLIC_BACKEND_URL, PUBLIC_MODE } from "$env/static/public"
 	import { page } from "$app/stores"
 	import { client } from "$clients"
 	import { reload_img } from "$lib/stores"
@@ -26,12 +25,32 @@
 	import CropperModal from "$lib/CropperModal.svelte"
 	import ChangePasswordModal from "$lib/ChangePasswordModal.svelte"
 	import UsernameChooserModal from "$lib/UsernameChooserModal.svelte"
+	import { isContractError } from "contract"
 
 	initializeStores()
 	const toastStore = getToastStore()
 
+	;(window as any).makeToast = function (message: string) {
+		toastStore.trigger({
+			message,
+		})
+	}
+	;(window as any).checkError = function (ret: { status: number; body: any }, what: string) {
+		if (isContractError(ret)) {
+			makeToast("Could not " + what + " : " + ret.body.message)
+			console.log(ret.body.code)
+		} else {
+			if (PUBLIC_MODE.toLowerCase() === "dev") {
+				let msg = "Server return unexpected status " + ret.status
+				if ("message" in ret.body) msg += " with message " + ret.body.message
+				makeToast(msg, toastStore)
+				console.error(msg)
+			} else makeToast("Unexpected error. Please refresh the page")
+		}
+	}
+
 	$: {
-		// Prevents redir coming back from 42, or losing the query string for /auth
+		// Prevents redir coming back from 42 api, or losing the query string for /auth
 		if (!$page.url.pathname.match(/\bauth\b/)) {
 			if ($logged_in === false) {
 				goto("/auth" + $page.url.searchParams.toString())
@@ -53,8 +72,6 @@
 		UsernameChooserModal: { ref: UsernameChooserModal },
 	}
 
-	onMount(() => console.log("Layout mounted"))
-
 	const menuItems = [
 		{ inner: "🏓", href: "/pong" },
 		{ inner: "💬", href: "/chans" },
@@ -63,22 +80,13 @@
 	]
 
 	async function logout() {
-		return client.auth
-			.logout()
-			.catch(({ status, message }) => {
-				makeToast(
-					`Can't log out. Server returned ${status} ${
-						message ? "without a message" : `${message}`
-					}`,
-					toastStore,
-				)
-			})
-			.then(() => {
-				makeToast("Logging out...", toastStore)
-			})
-			.finally(() => {
-				logged_in.set(false)
-			})
+		const ret = await client.auth.logout()
+		if (ret.status !== 200) {
+			checkError(ret, "log")
+		} else {
+			makeToast("Logging out...", toastStore)
+			logged_in.set(false)
+		}
 	}
 </script>
 

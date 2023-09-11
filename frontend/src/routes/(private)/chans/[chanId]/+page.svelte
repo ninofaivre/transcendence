@@ -16,13 +16,14 @@
 	import { client } from "$clients"
 	import { addListenerToEventSource, shallowCopyPartialToNotPartial } from "$lib/global"
 	import { isContractError } from "contract"
+	import { invalidate } from "$app/navigation"
 
 	console.log($page.route.id, "page init")
 
 	export let data: PageData
 	const sse_store: Writable<EventSource> = getContext("sse_store")
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		(window as any).checkError
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
 	const makeToast: (message: string) => void = (window as any).makeToast
 
 	let messages: MessageOrEvent[]
@@ -164,6 +165,8 @@
 			addListenerToEventSource($sse_store!, "CREATED_CHAN_ELEMENT", (new_data) => {
 				console.log("Server message: New chan element", new_data)
 				if (new_data.chanId === $page.params.chanId) {
+					invalidate(":chans")
+					invalidate(":chan:" + new_data.chanId)
 					messages = [...messages, new_data.element]
 				}
 			}),
@@ -205,7 +208,6 @@
 	})
 </script>
 
-<!-- {@debug data} -->
 <!--Column layout -->
 <!-- Rows for Column 2-->
 <div class="grid grid-rows-[1fr_auto]" id="col2" style="height: calc(100vh - {header_height}px);">

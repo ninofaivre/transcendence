@@ -52,43 +52,39 @@
 		}
 	})
 
-    function msToCoolDown(timeout: number) {
-        let total = 0;
+	function msToCoolDown(timeout: number) {
+		let total = 0
 
-        const oneDayMs = 1000 * 60 * 60 * 24
-        const oneHourMs = 1000 * 60 * 60
-        const oneMinuteMs = 1000 * 60
+		const oneDayMs = 1000 * 60 * 60 * 24
+		const oneHourMs = 1000 * 60 * 60
+		const oneMinuteMs = 1000 * 60
 
-        const days = Math.floor(timeout / oneDayMs)
-        total += days * oneDayMs
-        const hours = Math.floor((timeout - total) / oneHourMs)
-        total += hours * oneHourMs 
-        const minutes = Math.floor((timeout - total) / oneMinuteMs)
-        total += minutes * oneMinuteMs
-        const seconds = Math.floor((timeout - total) / 1000)
-        total += seconds * 1000
+		const days = Math.floor(timeout / oneDayMs)
+		total += days * oneDayMs
+		const hours = Math.floor((timeout - total) / oneHourMs)
+		total += hours * oneHourMs
+		const minutes = Math.floor((timeout - total) / oneMinuteMs)
+		total += minutes * oneMinuteMs
+		const seconds = Math.floor((timeout - total) / 1000)
+		total += seconds * 1000
 
-        const daysString = days 
-            ? `${days}d`
-            : ''
-        total -= days * oneDayMs
-        let hoursString = (daysString.length && total) ? ':' : ''
-        hoursString += hours
-            ? `${hours < 10 ? `0${hours}`: hours}h`
-            : (days && total) ? '00h' : ''
-        total -= hours * oneHourMs 
-        let minutesString = (hoursString.length && total) ? ':' : ''
-        minutesString += minutes
-            ? `${minutes < 10 ? `0${minutes}`: minutes}m`
-            : (hours && total) ? '00m' : ''
-        total -= minutes * oneMinuteMs 
-        let secondsString = (minutesString.length && total) ? ':' : ''
-        secondsString += seconds
-            ? `${seconds < 10 ? `0${seconds}`: seconds}s`
-            : ''
-        const res = `${daysString}${hoursString}${minutesString}${secondsString}`
-        return res.length ? res : `${timeout}ms`
-    }
+		const daysString = days ? `${days}d` : ""
+		total -= days * oneDayMs
+		let hoursString = daysString.length && total ? ":" : ""
+		hoursString += hours ? `${hours < 10 ? `0${hours}` : hours}h` : days && total ? "00h" : ""
+		total -= hours * oneHourMs
+		let minutesString = hoursString.length && total ? ":" : ""
+		minutesString += minutes
+			? `${minutes < 10 ? `0${minutes}` : minutes}m`
+			: hours && total
+			? "00m"
+			: ""
+		total -= minutes * oneMinuteMs
+		let secondsString = minutesString.length && total ? ":" : ""
+		secondsString += seconds ? `${seconds < 10 ? `0${seconds}` : seconds}s` : ""
+		const res = `${daysString}${hoursString}${minutesString}${secondsString}`
+		return res.length ? res : `${timeout}ms`
+	}
 </script>
 
 <div bind:this={conversation_container} class="flex flex-col-reverse space-y-4 overflow-y-auto p-4">
@@ -109,49 +105,64 @@
 						on:delete
 						on:edit
 						{game_socket}
-                        {my_name}
+						{my_name}
 					/>
 				{:else if message.type === "event"}
 					<div id={message.id}>
 						{#if message.eventType == "CREATED_FRIENDSHIP"}
 							<div class="text-center text-gray-500">
-                                You are now friend with 
-                                <a href={`/users/${message.otherName}`} class="btn btn-sm variant-soft">
-                                    <span class="text-gray-500">
-                                        {message.otherDisplayName}
-                                    </span>
-                                </a>
+								You are now friend with
+								<a
+									href={`/users/${message.otherName}`}
+									class="variant-soft btn btn-sm"
+								>
+									<span class="text-gray-500">
+										{message.otherDisplayName}
+									</span>
+								</a>
 							</div>
 						{:else if message.eventType == "BLOCKED"}
 							<div class="text-center text-gray-500">
-                                <a href={`/users/${message.blockingUserName}`} class="btn btn-sm variant-soft">
-                                    <span class="text-gray-500">
-                                        {message.blockingDisplayName}
-                                    </span>
-                                </a>
-                                blocked
-                                <a href={`/users/${message.blockedUserName}`} class="btn btn-sm variant-soft">
-                                    <span class="text-gray-500">
-                                        {message.blockedDisplayName}
-                                    </span>
-                                </a>
+								<a
+									href={`/users/${message.blockingUserName}`}
+									class="variant-soft btn btn-sm"
+								>
+									<span class="text-gray-500">
+										{message.blockingDisplayName}
+									</span>
+								</a>
+								blocked
+								<a
+									href={`/users/${message.blockedUserName}`}
+									class="variant-soft btn btn-sm"
+								>
+									<span class="text-gray-500">
+										{message.blockedDisplayName}
+									</span>
+								</a>
 							</div>
 						{:else if message.eventType == "AUTHOR_LEAVED"}
 							<div class="text-center text-gray-500">
-                                <a href={`/users/${message.author}`} class="btn btn-sm variant-soft">
-                                    <span class="text-gray-500">
-                                        {message.authorDisplayName}
-                                    </span>
-                                </a>
-                                left the chan
+								<a
+									href={`/users/${message.author}`}
+									class="variant-soft btn btn-sm"
+								>
+									<span class="text-gray-500">
+										{message.authorDisplayName}
+									</span>
+								</a>
+								left the chan
 							</div>
 						{:else if message.eventType == "AUTHOR_JOINED"}
 							<div class="text-center text-gray-500">
-                                <a href={`/users/${message.author}`} class="btn btn-sm variant-soft">
-                                    <span class="text-gray-500">
-                                        {message.authorDisplayName}
-                                    </span>
-                                </a>
+								<a
+									href={`/users/${message.author}`}
+									class="variant-soft btn btn-sm"
+								>
+									<span class="text-gray-500">
+										{message.authorDisplayName}
+									</span>
+								</a>
 								joined the chan
 							</div>
 						{:else if message.eventType == "CHAN_INVITATION"}
@@ -163,49 +174,67 @@
 						{:else if message.eventType == "AUTHOR_MUTED_CONCERNED"}
 							{#if message.timeoutInMs === "infinity"}
 								<div class="text-center text-gray-500">
-                                    <a href={`/users/${message.author}`} class="btn btn-sm variant-soft">
-                                        <span class="text-gray-500">
-                                            {message.authorDisplayName}
-                                        </span>
-                                    </a>
-                                    muted
-                                    <a href={`/users/${message.concernedUserName}`} class="btn btn-sm variant-soft">
-                                        <span class="text-gray-500">
-                                            {message.concernedDisplayName}
-                                        </span>
-                                    </a>
-                                    until further notice
+									<a
+										href={`/users/${message.author}`}
+										class="variant-soft btn btn-sm"
+									>
+										<span class="text-gray-500">
+											{message.authorDisplayName}
+										</span>
+									</a>
+									muted
+									<a
+										href={`/users/${message.concernedUserName}`}
+										class="variant-soft btn btn-sm"
+									>
+										<span class="text-gray-500">
+											{message.concernedDisplayName}
+										</span>
+									</a>
+									until further notice
 								</div>
 							{:else}
 								<div class="text-center text-gray-500">
-                                    <a href={`/users/${message.author}`} class="btn btn-sm variant-soft">
-                                        <span class="text-gray-500">
-                                            {message.authorDisplayName}
-                                        </span>
-                                    </a>
-                                    muted
-                                    <a href={`/users/${message.concernedUserName}`} class="btn btn-sm variant-soft">
-                                        <span class="text-gray-500">
-                                            {message.concernedDisplayName}
-                                        </span>
-                                    </a>
-                                    for {msToCoolDown(message.timeoutInMs)}
+									<a
+										href={`/users/${message.author}`}
+										class="variant-soft btn btn-sm"
+									>
+										<span class="text-gray-500">
+											{message.authorDisplayName}
+										</span>
+									</a>
+									muted
+									<a
+										href={`/users/${message.concernedUserName}`}
+										class="variant-soft btn btn-sm"
+									>
+										<span class="text-gray-500">
+											{message.concernedDisplayName}
+										</span>
+									</a>
+									for {msToCoolDown(message.timeoutInMs)}
 								</div>
 							{/if}
 						{:else if message.eventType == "AUTHOR_KICKED_CONCERNED"}
 							<div class="text-center text-gray-500">
-                                <a href={`/users/${message.author}`} class="btn btn-sm variant-soft">
-                                    <span class="text-gray-500">
-                                        {message.authorDisplayName}
-                                    </span>
-                                </a>
-                                kicked
-                                <!-- TODO s'assurer que concernedUserName et displayName ne soit pas nul du côté du back / contract -->
-                                <a href={`/users/${message.concernedUserName}`} class="btn btn-sm variant-soft">
-                                    <span class="text-gray-500">
-                                        {message.concernedDisplayName}
-                                    </span>
-                                </a>
+								<a
+									href={`/users/${message.author}`}
+									class="variant-soft btn btn-sm"
+								>
+									<span class="text-gray-500">
+										{message.authorDisplayName}
+									</span>
+								</a>
+								kicked
+								<!-- TODO s'assurer que concernedUserName et displayName ne soit pas nul du côté du back / contract -->
+								<a
+									href={`/users/${message.concernedUserName}`}
+									class="variant-soft btn btn-sm"
+								>
+									<span class="text-gray-500">
+										{message.concernedDisplayName}
+									</span>
+								</a>
 							</div>
 						{:else}
 							<div class="text-center text-gray-500"></div>

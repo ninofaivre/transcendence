@@ -79,6 +79,8 @@
 			makeToast("Logging out...")
 			logged_in.set(false)
 		}
+		// TODO
+		logged_in.set(false)
 	}
 
 	$: {

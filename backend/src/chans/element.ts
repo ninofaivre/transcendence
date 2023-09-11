@@ -5,6 +5,7 @@ import { ChanDiscussionElementEventWithoutDeletedPayload,
 import { ClassicChanEventType, Prisma } from "@prisma/client"
 import { Inject, forwardRef } from "@nestjs/common"
 import { SseEvent } from "contract"
+import { EnrichedRequest } from "src/types"
 
 type ChanMessageType = 'CREATED' | 'UPDATED'
 
@@ -14,16 +15,16 @@ abstract class ChanElement {
     protected readonly abstract chanId: string
     protected readonly abstract element: ChanDiscussionElementPayload
 
-    public notifyByUsers = (users: { name: string }[], ignoreSse?: { username: string, id?: string }) =>
+    public notifyByUsers = (users: { name: string }[], ignoreSse?: EnrichedRequest['user']) =>
         this.notifyByNames(users.map(user => user.name), ignoreSse)
 
-    public notifyByNames(users: string[], ignoreSse?: { username: string, id?: string }) {
+    public notifyByNames(users: string[], ignoreSse?: EnrichedRequest['user']) {
         users.forEach(name =>
             this.chansService.sse
                 .pushEvent(name,
                     this.getSseEvent(name),
                     (ignoreSse && ignoreSse.username === name)
-                        ? ignoreSse.id
+                        ? ignoreSse.sseId
                         : undefined
                 )
         )

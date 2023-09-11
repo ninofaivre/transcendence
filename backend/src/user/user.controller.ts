@@ -4,7 +4,8 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard"
 import { UserService } from "./user.service"
 import { TsRest, TsRestHandler, tsRestHandler } from "@ts-rest/nest"
 import { contract, isContractError } from "contract"
-import { AuthService, EnrichedRequest } from "src/auth/auth.service"
+import { EnrichedRequest } from "src/types"
+import { AuthService } from "src/auth/auth.service"
 import { FileInterceptor } from "@nestjs/platform-express"
 import { EnvService } from "src/env/env.service"
 import { Response } from "express"
@@ -55,16 +56,17 @@ export class UserController {
         }
     ))
     @TsRestHandler(c.setMyProfilePicture)
-    async setMyProfilePicture(@Request() { user: { username } }: EnrichedRequest, @UploadedFile()profilePicture: Express.Multer.File) {
+    async setMyProfilePicture(@EnrichedRequest() { user }: EnrichedRequest, @UploadedFile()profilePicture: Express.Multer.File) {
         return tsRestHandler(c.setMyProfilePicture, async ({ body }) => {
-            const res = await this.userService.setMyProfilePicture(username, profilePicture)
+            const res = await this.userService.setMyProfilePicture(user, profilePicture)
             return res ? res : { status: 204, body: null }
         })
     }
 
 	@UseGuards(JwtAuthGuard)
 	@TsRestHandler(c)
-	async handler(@Request() { user: { username } }: EnrichedRequest) {
+	async handler(@EnrichedRequest() { user }: EnrichedRequest) {
+        const { username } = user
 		return tsRestHandler<Omit<typeof c, "signUp" | "setMyProfilePicture">>(c, {
 			getMe: async () => {
 				const res = await this.userService.getMe(username)
@@ -72,7 +74,7 @@ export class UserController {
 
             },
 			updateMe: async ({ body }) => {
-				const res = await this.userService.updateMe(username, body)
+				const res = await this.userService.updateMe(user, body)
 				return isContractError(res) ? res : { status: 200, body: res }
 			},
 
@@ -113,12 +115,12 @@ export class UserController {
             },
 
             blockUser: async ({ body: { username: blockedUserName } }) => {
-                const res = await this.userService.blockUser(username, blockedUserName)
+                const res = await this.userService.blockUser(user, blockedUserName)
                 return isContractError(res) ? res : { status: 201, body: res }
             },
 
             unBlockUser: async ({ query: { username: blockedUserName } }) => {
-                const res = await this.userService.unblockUser(username, blockedUserName)
+                const res = await this.userService.unblockUser(user, blockedUserName)
                 return isContractError(res) ? res : { status: 204, body: null }
             },
 

@@ -84,22 +84,23 @@ export const dmsContract = c.router(
 				200: z.array(zDmReturn),
 			},
 		},
-		createDm: {
-			method: "POST",
-			path: "/",
-			body: z.strictObject({
-				username: zUserName,
-			}),
-			responses: {
-				201: zDmReturn,
-				...getErrorsForContract(
-					c,
-					[403, "BlockedUser", "BlockedByUser", "ProximityLevelTooLow"],
-					[404, "NotFoundUser"],
-					[409, "DmAlreadyExist"],
-				),
-			},
-		},
+        // sniff sniff
+		// createDm: {
+		// 	method: "POST",
+		// 	path: "/",
+		// 	body: z.strictObject({
+		// 		username: zUserName,
+		// 	}),
+		// 	responses: {
+		// 		201: zDmReturn,
+		// 		...getErrorsForContract(
+		// 			c,
+		// 			[403, "BlockedUser", "BlockedByUser", "ProximityLevelTooLow"],
+		// 			[404, "NotFoundUser"],
+		// 			[409, "DmAlreadyExist"],
+		// 		),
+		// 	},
+		// },
 		getDmElements: {
 			method: "GET",
 			path: "/:dmId/elements",

@@ -9,19 +9,18 @@ import {
 import { compareSync, hash } from "bcrypt"
 import { SseService } from "src/sse/sse.service"
 import { NestRequestShapes } from "@ts-rest/nest"
-import { contract, contractErrors, isContractError } from "contract"
+import { adminPermissions, contract, contractErrors, isContractError } from "contract"
 import { zChanDiscussionElementReturn } from "contract"
 import { z } from "zod"
 import { ChanInvitationsService } from "src/invitations/chan-invitations/chan-invitations.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
 import { zSelfPermissionList } from "contract"
-import { ChanElementUnion, RetypeChanElement } from "src/types"
+import { ChanElementUnion, EnrichedRequest, RetypeChanElement } from "src/types"
 import { zPermissionOverList } from "contract"
 import { CallbackService } from "src/callback/callback.service"
 import { ChanElementFactory, UpdateChanElementFactory } from "./element"
 import { defaultPermissions } from "contract"
-import { adminPermissions } from "contract"
 
 type RequestShapes = NestRequestShapes<typeof contract.chans>
 
@@ -302,10 +301,6 @@ export class ChansService {
             roles: roles.map(role => role.name),
             passwordProtected: !!password,
             selfPerms: this.getSelfPerm(username, chan),
-            bannedUsers: timedStatusUsers
-                .filter(({ type }) => type === 'BAN')
-                .filter(({ timedUserName }) => this.doesUserHasPermOverUserInChan(username, timedUserName, chan, 'BAN'))
-                .map(({ timedUserName, timedUser: { displayName } }) => ({ username: timedUserName, displayName })),
             users: users.map(user =>
                 this.formatChanUserForUser(username, user, chan),
             )
@@ -439,7 +434,7 @@ export class ChansService {
 		)
 	}
 
-	async createChan(username: string, chan: RequestShapes["createChan"]["body"]) {
+	async createChan({ username, sseId }: EnrichedRequest['user'], chan: RequestShapes["createChan"]["body"]) {
 		if (chan.type === "PUBLIC" && chan.password)
             chan.password = await hash(chan.password, 10)
         if (chan.title && await this.getChan({ title: chan.title }, { id: true }))
@@ -483,10 +478,15 @@ export class ChansService {
             data: { users: { connect: { name: username } } },
             select: this.getChansSelect(username)['roles']['select']
         })
-        return this.formatChan(username, {
+        const createdChan = this.formatChan(username, {
             ...newChan,
             roles: [adminRolePayload, defaultRolePayload]
         })
+        this.sse.pushEvent(username, {
+            type: 'CREATED_CHAN',
+            data: createdChan
+        }, sseId)
+        return createdChan
 	}
 
     public doesUserHasSelfPermInChan = (
@@ -537,8 +537,8 @@ export class ChansService {
         perm: z.infer<typeof zPermissionOverList>
     ) => this.getPermOverUserInChan(username, otherUserName, permPayload).includes(perm)
 
-	async deleteChan(username: string, chanId: string) {
-        
+	async deleteChan(reqUser: EnrichedRequest['user'], chanId: string) {
+        const { username } = reqUser
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 ...this.getSelfPermSelect(username),
@@ -556,11 +556,11 @@ export class ChansService {
             {
                 type: 'DELETED_CHAN',
                 data: { chanId }
-            })
+            }, reqUser)
         return null
 	}
 
-	async leaveChan(username: string, chanId: string) {
+	async leaveChan({ username, sseId }: EnrichedRequest['user'], chanId: string) {
 		const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
 			{
                 ownerName: true,
@@ -586,6 +586,10 @@ export class ChansService {
             type: 'DELETED_CHAN_USER',
             data: { chanId, username }
         })
+        this.sse.pushEvent(username, {
+            type: 'DELETED_CHAN',
+            data: { chanId }
+        }, sseId)
 	}
 
     getAtsFromChanMessageContent(chan: {
@@ -606,10 +610,11 @@ export class ChansService {
     }
 
 	async createChanMessageIfRightTo(
-        { username, sseId }: { username: string, sseId?: string },
+        reqUser: EnrichedRequest['user'],
 		chanId: string,
         { relatedTo, content }: RequestShapes["createChanMessage"]["body"],
 	) {
+        const { username } = reqUser
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 ...this.getSelfPermSelect(),
@@ -628,7 +633,7 @@ export class ChansService {
 
         return (await new ChanElementFactory(chanId, username, this)
             .createMessage(content, relatedTo, ats))
-            .notifyByUsers(chan.users, { username, id: sseId })
+            .notifyByUsers(chan.users, reqUser)
             .formatted()
 	}
 
@@ -657,10 +662,11 @@ export class ChansService {
 		return this.formatChanDiscussionElementArrayForUser(username, chan.elements.reverse())
 	}
 
-    async updateChanMessageIfRightTo(username: string,
+    async updateChanMessageIfRightTo(reqUser: EnrichedRequest['user'],
         { chanId, elementId }: RequestShapes['updateChanMessage']['params'],
         content: string
     ) {
+        const { username } = reqUser
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 ...this.getSelfPermSelect(),
@@ -692,11 +698,14 @@ export class ChansService {
             .updateMessage(content,
                 { users: oldMessage.relatedUsers, roles: oldMessage.relatedRoles },
                 newAts))
-            .notifyByUsers(chan.users, { username })
+            .notifyByUsers(chan.users, reqUser)
             .formatted(username)
     }
 
-	async deleteChanMessageIfRightTo(username: string, { chanId , elementId }: RequestShapes['deleteChanMessage']['params']) {
+	async deleteChanMessageIfRightTo(reqUser: EnrichedRequest['user'],
+        { chanId , elementId }: RequestShapes['deleteChanMessage']['params']
+    ) {
+        const { username } = reqUser
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 ...this.getPermSelect(username),
@@ -715,14 +724,15 @@ export class ChansService {
             return contractErrors.ChanPermissionTooLowOverUser(username, authorName, chanId, 'DELETE_MESSAGE')
         return (await new UpdateChanElementFactory(chanId, elementId, this)
             .deleteMessage(username))
-            .notifyByUsers(chan.users, { username })
+            .notifyByUsers(chan.users, reqUser)
             .formatted()
 	}
 
-    async banUserFromChanIfRighTo(username: string,
+    async banUserFromChanIfRighTo(reqUser: EnrichedRequest['user'],
         { username: otherUserName, chanId }: RequestShapes['banUserFromChan']['params'],
         timeoutInMs: number | 'infinity'
     ) {
+        const { username } = reqUser
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 id: true,
@@ -773,8 +783,9 @@ export class ChansService {
                     {invitedUserName: otherUserName}]
             })
         this.sse.pushEventMultipleUser(this.usersToNames(updatedChan.users), {
-            type: 'BANNED_CHAN_USER', data: { chanId, username: otherUserName }
-        })
+            type: 'BANNED_CHAN_USER',
+            data: { chanId, username: otherUserName }
+        }, reqUser)
         if (timeoutInMs === 'infinity')
             return
         const timeoutId = setTimeout(
@@ -805,10 +816,10 @@ export class ChansService {
     async unbanUser(username: string, chanId: string) {
         const res = await this.endTimedStatusUserInChan(username, chanId,
             'BAN', { users: { select: { name: true } } })
-        this.sse.pushEventMultipleUser(this.usersToNames(res.users, username), {
-            type: 'UNBANNED_CHAN_USER',
-            data: { chanId, username }
-        })
+        // this.sse.pushEventMultipleUser(this.usersToNames(res.users, username), {
+        //     type: 'UNBANNED_CHAN_USER',
+        //     data: { chanId, username }
+        // })
     }
 
     async muteUserFromChanIfRightTo(username: string,
@@ -916,9 +927,10 @@ export class ChansService {
     usersToNames = (users: { name: string }[], exclude?: string) => 
         users.map(user => user.name).filter(name => name !== exclude)
 
-    async kickUserFromChanIfRightTo(username: string,
+    async kickUserFromChanIfRightTo(reqUser: EnrichedRequest['user'],
         { username: otherUserName, chanId }: RequestShapes['kickUserFromChan']['params']
     ) {
+        const { username } = reqUser
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 users: { select: { name: true } },
@@ -932,20 +944,20 @@ export class ChansService {
         if (!this.doesUserHasPermOverUserInChan(username, otherUserName, chan, "KICK"))
             return contractErrors.ChanPermissionTooLowOverUser(username, otherUserName, chanId, 'KICK')
 
-        const res = await this.prisma.chan.update({
+        await this.prisma.chan.update({
             where: { id: chanId },
             data: { users: { disconnect: { name: otherUserName } } }
         })
 
         const chanUserNames = this.usersToNames(chan.users, otherUserName)
-        this.sse.pushEventMultipleUser(chanUserNames.filter(name => name !== username),
+        this.sse.pushEventMultipleUser(chanUserNames,
             {
                 type: 'DELETED_CHAN_USER',
                 data: {
                     chanId,
                     username: otherUserName
                 }
-            })
+            }, reqUser)
         this.sse.pushEvent(otherUserName, { type: 'KICKED_FROM_CHAN', data: { chanId } })
         new ChanElementFactory(chanId, username, this)
             .createClassicEvent('AUTHOR_KICKED_CONCERNED', otherUserName)
@@ -1014,7 +1026,7 @@ export class ChansService {
         return chan as RetypeChan<typeof chan>
     }
 
-	async joinChan(username: string, { title, password }: RequestShapes['joinChan']['body']) {
+	async joinChan({ username, sseId }: EnrichedRequest['user'], { title, password }: RequestShapes['joinChan']['body']) {
 		const chan = await this.getChan(
 			{
                 
@@ -1048,7 +1060,14 @@ export class ChansService {
             return contractErrors.ChanWrongPassword(title)
         await this.chanInvitationsService
             .updateAndNotifyManyInvsStatus('ACCEPTED', { chanId: chan.id, invitedUserName: username })
-		return this.pushUserToChanAndNotifyUsers(username, chan.id)
+		const joinedChan = await this.pushUserToChanAndNotifyUsers(username, chan.id)
+        if (isContractError(joinedChan))
+            return joinedChan
+        this.sse.pushEvent(username, {
+            type: 'CREATED_CHAN',
+            data: joinedChan
+        }, sseId)
+        return joinedChan
 	}
 
 	async searchChans(username: string, { titleContains, nResult }: RequestShapes['searchChans']['query']) {
@@ -1119,12 +1138,6 @@ export class ChansService {
             })
         if (!updatedChan)
             return
-        if (!state) {
-            this.sse.pushEvent(otherUserName, {
-                type: "FLUSH_BANNED_USERS",
-                data: { chanId }
-            })
-        }
         this.notifyUpdatedSelfPerm(otherUserName, updatedChan)
         this.notifyUpdatedChanUser(otherUserName,
             this.usersToNames(chan.users),
@@ -1181,7 +1194,7 @@ export class ChansService {
         if (body.title && await this.getChan({ title: body.title }, { id: true }))
             return contractErrors.ChanAlreadyExist(body.title)
         await this.prisma.chan.update({ where: { id: chanId }, data: body })
-        const toNotify = this.usersToNames(chan.users, username)
+        const toNotify = this.usersToNames(chan.users)
         const { password, ...bodyRest } = (body.type === 'PUBLIC')
             ? body
             : { ...body, password: chan.password }

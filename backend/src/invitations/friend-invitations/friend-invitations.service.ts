@@ -3,6 +3,7 @@ import { FriendInvitationStatus, Prisma } from "@prisma/client"
 import { FriendsService } from "src/friends/friends.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { SseService } from "src/sse/sse.service"
+import { EnrichedRequest } from "src/types"
 import { UserService } from "src/user/user.service"
 
 type FriendInvitationPayload = Prisma.FriendInvitationGetPayload<
@@ -82,7 +83,8 @@ export class FriendInvitationsService {
 		return res
 	}
 
-	async createFriendInvitation(invitingUserName: string, invitedUserName: string) {
+	async createFriendInvitation(reqUser: EnrichedRequest['user'], invitedUserName: string) {
+        const { username: invitingUserName } = reqUser
 		if (invitingUserName === invitedUserName)
 			throw new ForbiddenException(`self friend invitation`)
 		const invitedUser = await this.userService.getUserByNameOrThrow(invitedUserName, {
@@ -145,18 +147,19 @@ export class FriendInvitationsService {
 			},
 			select: this.friendInvitationSelect,
 		}))
-		await this.sse.pushEvent(invitedUserName, {
+		await this.sse.pushEventMultipleUser([invitedUserName, invitingUserName], {
 			type: "CREATED_FRIEND_INVITATION",
 			data: newFriendInvitation,
-        })
+        }, reqUser)
 		return newFriendInvitation
 	}
 
 	async updateFriendInvitation(
-		username: string,
+        reqUser: EnrichedRequest['user'],
 		newStatus: (typeof FriendInvitationStatus)[keyof typeof FriendInvitationStatus],
 		id: string,
 	) {
+        const { username } = reqUser
 		const {
 			invitedUserName,
 			invitingUserName,
@@ -181,10 +184,10 @@ export class FriendInvitationsService {
 			data: { status: newStatus },
 			select: this.friendInvitationSelect,
 		}))
-		this.sse.pushEvent(invitingUserName !== username ? invitingUserName : invitedUserName, {
+		this.sse.pushEventMultipleUser([invitingUserName, invitedUserName], {
 			type: "UPDATED_FRIEND_INVITATION_STATUS",
 			data: { friendInvitationId: id, status: newStatus },
-		})
+		}, reqUser)
 		return updatedFriendInvitation
 	}
 }

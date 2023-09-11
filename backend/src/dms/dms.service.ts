@@ -10,7 +10,7 @@ import { ClassicDmEventType, DirectMessageStatus, Prisma } from "@prisma/client"
 import { SseService } from "src/sse/sse.service"
 import { z } from "zod"
 import { DmEvent, contractErrors, zDmDiscussionElementReturn, zDmReturn } from "contract"
-import { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx, AccessPolicyLevel, ProximityLevel } from "src/types"
+import { ElementUnion, EventUnion, RetypedElement, RetypedEvent, Tx, AccessPolicyLevel, ProximityLevel, EnrichedRequest } from "src/types"
 import { PrismaService } from "src/prisma/prisma.service"
 import { UserService } from "src/user/user.service"
 import type { zDmDiscussionEventReturn, zDmDiscussionMessageReturn } from "contract"
@@ -298,30 +298,53 @@ export class DmsService {
 	private getDmDiscussionEventCreateArgs(dmId: string) {
 		const args = {
 			data: {
-				discussionElement: {
-					create: {
-						directMessage: { connect: { id: dmId } },
-					},
-				},
+				directMessage: { connect: { id: dmId } },
 			},
-			select: { discussionElement: { select: this.dmDiscussionElementSelect } },
-		} satisfies Prisma.DmDiscussionEventCreateArgs
+			select: {
+                ...this.dmDiscussionElementSelect,
+                directMessage: { select: { requestedUserName: true, requestingUserName: true } }
+            }
+		} satisfies Prisma.DmDiscussionElementCreateArgs
 		return args
 	}
 
-	public async createClassicDmEvent(
+	public async createAndNotifyClassicDmEvent(
 		dmId: string,
 		eventType: (typeof ClassicDmEventType)[keyof typeof ClassicDmEventType],
 	) {
 		const { data, ...rest } = this.getDmDiscussionEventCreateArgs(dmId)
 		const createArgs = {
 			...rest,
-			data: { classicDmDiscussionEvent: { create: { eventType: eventType } }, ...data },
-		} satisfies Prisma.DmDiscussionEventCreateArgs
-		return (await this.prisma.dmDiscussionEvent.create(createArgs)).discussionElement
+			data: {
+                ...data,
+                event:  {
+                    create: {
+                        classicDmDiscussionEvent: {
+                            create: { eventType: eventType }
+                        },
+                    }
+                }
+            },
+		} satisfies Prisma.DmDiscussionElementCreateArgs
+        const res = await this.prisma.dmDiscussionElement.create(createArgs)
+        const { directMessage: { requestedUserName, requestingUserName } } = res
+        this.sse.pushEvent(requestedUserName, {
+            type: 'CREATED_DM_ELEMENT',
+            data: {
+                dmId,
+                element: await this.formatDmElementForUser(res, requestedUserName)
+            }
+        })
+        this.sse.pushEvent(requestingUserName, {
+            type: 'CREATED_DM_ELEMENT',
+            data: {
+                dmId,
+                element: await this.formatDmElementForUser(res, requestingUserName)
+            }
+        })
 	}
 
-	public async createChanInvitationDmEvent(
+	public async createAndNotifyChanInvitationDmEvent(
 		dmId: string,
 		chanId: string
 	) {
@@ -329,13 +352,34 @@ export class DmsService {
 		const createArgs = {
 			...rest,
 			data: {
-				chanInvitationDmDiscussionEvent: { create: { chanInvitationId: chanId } },
 				...data,
+                event: {
+                    create: {
+				        chanInvitationDmDiscussionEvent: {
+                            create: {
+                                chanInvitationId: chanId
+                            }
+                        },
+                    }
+                }
 			},
-		} satisfies Prisma.DmDiscussionEventCreateArgs
-		const newEvent = (await this.prisma.dmDiscussionEvent.create(createArgs))
-			.discussionElement
-		return newEvent as Exclude<typeof newEvent, null>
+		} satisfies Prisma.DmDiscussionElementCreateArgs
+		const res = (await this.prisma.dmDiscussionElement.create(createArgs))
+        const { directMessage: { requestedUserName, requestingUserName } } = res
+        this.sse.pushEvent(requestedUserName, {
+            type: 'CREATED_DM_ELEMENT',
+            data: {
+                dmId,
+                element: await this.formatDmElementForUser(res, requestedUserName)
+            }
+        })
+        this.sse.pushEvent(requestingUserName, {
+            type: 'CREATED_DM_ELEMENT',
+            data: {
+                dmId,
+                element: await this.formatDmElementForUser(res, requestingUserName)
+            }
+        })
 	}
 
 	public async findOneDmElement(
@@ -470,7 +514,8 @@ export class DmsService {
         return this.formatDirectMessage(newDm, username)
     }
 
-	async createDmMessage(username: string, dmId: string, content: string, relatedId?: string) {
+	async createDmMessage(reqUser: EnrichedRequest['user'], dmId: string, content: string, relatedId?: string) {
+        const { username } = reqUser
 		const toCheck = await this.getDmOfUserOrThrow(username, dmId, {
 			elements: relatedId !== undefined && {
 				where: { id: relatedId },
@@ -483,40 +528,46 @@ export class DmsService {
 			throw new NotFoundException(`not found element ${relatedId} in directMessage ${dmId}`)
 		if (toCheck.status === DirectMessageStatus.DISABLED)
 			throw new ForbiddenException(`DISABLED DirectMessage`)
-		const res = (
-			await this.prisma.dmDiscussionMessage.create({
+		const res = await this.prisma
+            .dmDiscussionElement.create({
 				data: {
-					authorRelation: { connect: { name: username } },
-					content: content,
-					related:
-						relatedId !== undefined
-							? {
-									connect: { id: relatedId },
-							  }
-							: undefined,
-					discussionElement: {
-						create: {
-							directMessageId: dmId,
-						},
-					},
-				},
+                    directMessage: { connect: { id: dmId } },
+                    message: {
+                        create: {
+                            authorRelation: { connect: { name: username } },
+                            content: content,
+                            related:
+                                relatedId !== undefined
+                                    ? {
+                                            connect: { id: relatedId },
+                                      }
+                                    : undefined,
+                        },
+                    }
+                },
 				select: {
-					discussionElement: { select: this.dmDiscussionElementSelect },
+					...this.dmDiscussionElementSelect,
+                    directMessage: {
+                        select: {
+                            requestedUserName: true,
+                            requestingUserName: true
+                        }
+                    }
 				},
 			})
-		).discussionElement
-		if (!res || !res.message || res.event)
-			throw new InternalServerErrorException("discussion element creation failed")
-		const { message, ...rest } = res
+        const retypedRes = res as Extract<RetypedElement<typeof res>, { event: null }>
+        const { message, ...rest } = retypedRes
 		const formattedRes = this.formatDmMessage(rest, { ...message, isDeleted: false })
-		await this.notifyOtherMemberOfDm(username, dmId, {
+        const { directMessage: { requestedUserName, requestingUserName } } = res
+		await this.sse.pushEventMultipleUser([requestedUserName, requestingUserName], {
 			type: "CREATED_DM_ELEMENT",
 			data: { dmId: dmId, element: formattedRes },
-		})
+		}, reqUser)
 		return formattedRes
 	}
 
-	async updateMessage(username: string, dmId: string, elementId: string, content: string) {
+	async updateMessage(reqUser: EnrichedRequest['user'], dmId: string, elementId: string, content: string) {
+        const { username } = reqUser
         const dm = await this.prisma.directMessage.findUnique({ where: { id: dmId },
             select: { status: true }})
         if (dm && dm.status === "DISABLED")
@@ -531,21 +582,25 @@ export class DmsService {
 		const updatedElement = await this.prisma.dmDiscussionElement.update({
 			where: { id: elementId },
 			data: { message: { update: { content: content } } },
-			select: this.dmDiscussionElementSelect,
+			select: {
+                ...this.dmDiscussionElementSelect,
+                directMessage: { select: { requestedUserName: true, requestingUserName: true } }
+            },
 		})
-		if (!updatedElement.message || updatedElement.event)
-			throw new InternalServerErrorException("discussion element update failed")
-		const { message, ...rest } = updatedElement
+        const retypedUpdatedDmElement = updatedElement as Extract<RetypedElement<typeof updatedElement>, { event: null }>
+		const { message, ...rest } = retypedUpdatedDmElement 
 		const formattedUpdatedElement = this.formatDmMessage(rest, { ...message, isDeleted: false })
-		await this.notifyOtherMemberOfDm(username, dmId, {
-			type: "UPDATED_DM_MESSAGE",
-			data: { dmId: dmId, message: formattedUpdatedElement },
-		})
+        const { directMessage: { requestedUserName, requestingUserName } } = updatedElement
+        this.sse.pushEventMultipleUser([requestedUserName, requestingUserName], {
+            type: 'UPDATED_DM_MESSAGE',
+            data: { dmId, message: formattedUpdatedElement }
+        }, reqUser)
 		return formattedUpdatedElement
 	}
 
 	// a bit dirty
-	async deleteDmMessage(username: string, dmId: string, elementId: string) {
+	async deleteDmMessage(reqUser: EnrichedRequest['user'], dmId: string, elementId: string) {
+        const { username } = reqUser
 		const { message } = await this.getDmElementOrThrow(
 			username,
 			{ message: { select: { author: true, id: true } } },
@@ -570,53 +625,24 @@ export class DmsService {
 			data: {
 				message: { delete: { id: message.id } },
 			},
-			select: this.dmDiscussionElementSelect,
+			select: {
+                ...this.dmDiscussionElementSelect,
+                directMessage: { select: { requestingUserName: true, requestedUserName: true } }
+            }
 		})
-		if (!res.event || !res.event.deletedMessageDmDiscussionEvent || res.message)
-			throw new InternalServerErrorException("discussion element update failed")
-		const { event, ...rest } = res
+        const retypedRes = res as Extract<RetypedElement<typeof res>, { event: {} }>
+		const { event, ...rest } = retypedRes
 		const retypedEvent = event as Extract<
 			RetypedEvent<typeof event>,
 			{ deletedMessageDmDiscussionEvent: {} }
 		>
 		const formattedRes = this.formatDmMessage(rest, { ...retypedEvent, isDeleted: true })
-		await this.notifyOtherMemberOfDm(username, dmId, {
-			type: "UPDATED_DM_MESSAGE",
-			data: { dmId: dmId, message: formattedRes },
-		})
+        const { directMessage: { requestingUserName, requestedUserName } } = res
+        this.sse.pushEventMultipleUser([requestingUserName, requestedUserName], {
+            type: 'UPDATED_DM_MESSAGE',
+            data: { dmId, message: formattedRes }
+        }, reqUser)
 		return formattedRes
 	}
 
-	async formatAndNotifyDmElement(
-		usernameA: string,
-		usernameB: string,
-		dmId: string,
-		element: Prisma.DmDiscussionElementGetPayload<typeof this.dmDiscussionElementGetPayload>,
-	) {
-		return Promise.all([
-			this.sse.pushEvent(usernameA, {
-				type: "CREATED_DM_ELEMENT",
-				data: { dmId, element: await this.formatDmElementForUser(element, usernameA) },
-			}),
-			this.sse.pushEvent(usernameB, {
-				type: "CREATED_DM_ELEMENT",
-				data: { dmId, element: await this.formatDmElementForUser(element, usernameB) },
-			}),
-		])
-	}
-
-	async notifyOtherMemberOfDm(username: string, dmId: string, event: DmEvent) {
-		const { requestedUserName, requestingUserName } = await this.getDmOfUserOrThrow(
-			username,
-			dmId,
-			{
-				requestingUserName: true,
-				requestedUserName: true,
-			},
-		)
-		return this.sse.pushEvent(
-			requestedUserName !== username ? requestedUserName : requestingUserName,
-			event,
-		)
-	}
 }

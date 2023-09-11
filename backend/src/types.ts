@@ -1,5 +1,24 @@
 import { Prisma, AccessPolicyLevel as AccessPolicyLevelPrisma, ChanDiscussionEvent, ChanDiscussionElement } from "@prisma/client"
 import { PrismaService } from "./prisma/prisma.service"
+import { Request } from 'express'
+import { ExecutionContext, createParamDecorator } from "@nestjs/common"
+
+export interface EnrichedRequest extends Request {
+    user: {
+        username: string,
+        intraUserName: string
+        sseId?: string
+    }
+}
+
+export const EnrichedRequest = createParamDecorator((data: never, ctx: ExecutionContext): EnrichedRequest => {
+    const req: EnrichedRequest = ctx.switchToHttp().getRequest()
+    console.log(req.headers['sse-id'])
+    const sseId = req.headers['sse-id']
+    if (typeof sseId === "string")
+        req.user['sseId'] = sseId
+    return req
+})
 
 export type Tx = Omit<
 	PrismaService,

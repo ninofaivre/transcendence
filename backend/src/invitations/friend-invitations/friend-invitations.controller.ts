@@ -9,7 +9,7 @@ import {
 import { contract } from "contract"
 import { FriendInvitationsService } from "./friend-invitations.service"
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard"
-import { EnrichedRequest } from "src/auth/auth.service"
+import { EnrichedRequest } from "src/types"
 
 const c = nestControllerContract(contract.invitations.friend)
 type RequestShapes = NestRequestShapes<typeof c>
@@ -35,11 +35,11 @@ export class FriendInvitationsController implements NestControllerInterface<type
 	@UseGuards(JwtAuthGuard)
 	@TsRest(c.createFriendInvitation)
 	async createFriendInvitation(
-		@Request() req: EnrichedRequest,
+		@EnrichedRequest() req: EnrichedRequest,
 		@TsRestRequest() { body: { invitedUserName } }: RequestShapes["createFriendInvitation"],
 	) {
 		const body = await this.friendInvitationsService.createFriendInvitation(
-			req.user.username,
+			req.user,
 			invitedUserName,
 		)
 		return { status: 201 as const, body }
@@ -53,7 +53,7 @@ export class FriendInvitationsController implements NestControllerInterface<type
 		{ body: { status }, params: { id } }: RequestShapes["updateFriendInvitation"],
 	) {
 		const body = await this.friendInvitationsService.updateFriendInvitation(
-			req.user.username,
+			req.user,
 			status,
 			id,
 		)

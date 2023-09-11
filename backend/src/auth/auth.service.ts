@@ -11,13 +11,7 @@ import { contract, contractErrors } from "contract"
 import { Socket } from "socket.io"
 import { JwtPayload } from "./jwt.strategy"
 import { authenticator } from "otplib"
-
-export interface EnrichedRequest extends Request {
-    user: {
-        username: string,
-        intraUserName: string
-    }
-}
+import { EnrichedRequest } from "src/types"
 
 const c = contract.auth
 

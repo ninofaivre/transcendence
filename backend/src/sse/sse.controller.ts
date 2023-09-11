@@ -10,7 +10,7 @@ import { filter, finalize, Observable } from "rxjs"
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard"
 import { MessageEvent } from "@nestjs/common"
 import { SseService } from "./sse.service"
-import { EnrichedRequest } from "src/auth/auth.service"
+import { EnrichedRequest } from "src/types"
 
 @Controller("/api/sse")
 export class SseController {

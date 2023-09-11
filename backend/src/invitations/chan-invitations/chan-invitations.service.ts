@@ -13,6 +13,7 @@ import { ChansService } from "src/chans/chans.service"
 import { DmsService } from "src/dms/dms.service"
 import { PrismaService } from "src/prisma/prisma.service"
 import { SseService } from "src/sse/sse.service"
+import { EnrichedRequest } from "src/types"
 import { UserService } from "src/user/user.service"
 import { z } from "zod"
 
@@ -105,7 +106,8 @@ export class ChanInvitationsService {
 		return res
 	}
 
-	async createChanInvitation(invitingUserName: string, invitedUserName: string, chanId: string) {
+	async createChanInvitation(reqUser: EnrichedRequest['user'], invitedUserName: string, chanId: string) {
+        const { username: invitingUserName } = reqUser
 		if (invitingUserName === invitedUserName)
 			return contractErrors.ForbiddenSelfOperation('create chan invitation')
 		const invitedUser = await this.usersService.getUserByNameOrThrow(invitedUserName, {
@@ -147,20 +149,14 @@ export class ChanInvitationsService {
                 select: this.chanInvitationSelect,
             }),
         )
-        const dmEvent = await this.dmsService.createChanInvitationDmEvent(
+        await this.dmsService.createAndNotifyChanInvitationDmEvent(
             directMessageId,
             chanInv.id
         )
-		await this.dmsService.formatAndNotifyDmElement(
-			invitingUserName,
-			invitedUserName,
-			directMessageId,
-			dmEvent,
-		)
-		await this.sse.pushEvent(invitedUserName, {
+		await this.sse.pushEventMultipleUser([invitedUserName, invitingUserName], {
 			type: "CREATED_CHAN_INVITATION",
 			data: chanInv,
-		})
+		}, reqUser)
 		return chanInv
 	}
 
@@ -193,10 +189,11 @@ export class ChanInvitationsService {
     }
 
 	async updateChanInvitation(
-		username: string,
+        reqUser: EnrichedRequest['user'],
 		newStatus: (typeof ChanInvitationStatus)[keyof typeof ChanInvitationStatus],
 		id: string,
 	) {
+        const { username } = reqUser
 		const {
 			status: oldStatus,
 			chanId,
@@ -231,13 +228,10 @@ export class ChanInvitationsService {
 				select: this.chanInvitationSelect,
 			}),
 		)
-		await this.sse.pushEvent(
-			invitingUserName !== username ? invitingUserName : invitedUserName,
-			{
+		await this.sse.pushEventMultipleUser([invitingUserName, invitedUserName], {
 				type: "UPDATED_CHAN_INVITATION_STATUS",
 				data: { chanInvitationId: id, status: newStatus },
-			},
-		)
+			}, reqUser)
 		return updatedChanInvitation
 	}
 }

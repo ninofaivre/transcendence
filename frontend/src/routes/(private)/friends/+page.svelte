@@ -135,12 +135,12 @@
 					<button
 						data-id={request.id}
 						class="variant-ghost-primary chip px-2"
-						on:click={acceptFriendInvitation}>✅ Join chan</button
+						on:click={acceptChanInvitation}>✅ Join chan</button
 					>
 					<button
 						data-id={request.id}
 						class="variant-ghost-error chip px-2"
-						on:click={declineFriendInvitation}>❌ Decline</button
+						on:click={declineChanInvitation}>❌ Decline</button
 					>
 				</li>
 			{/each}

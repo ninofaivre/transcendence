@@ -13,6 +13,9 @@
 	import { PUBLIC_BACKEND_URL, PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB } from "$env/static/public"
 
 	import { reload_img } from "$stores"
+	import { invalidate } from "$app/navigation"
+	import Toggle from "$lib/Toggle.svelte"
+	import { listenOutsideClick } from "$lib/global"
 
 	let _init = true
 	export let data: PageData
@@ -170,7 +173,33 @@
 		}
 	}
 
-	_init = false
+	async function changeDisplayName() {
+		const r = await new Promise<string | undefined>((resolve) => {
+			const modalSettings: ModalSettings = {
+				type: "component",
+				component: "UsernameChooserModal",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+			}
+			modalStore.trigger(modalSettings)
+		})
+		if (r) {
+			const ret = await client.users.updateMe({
+				body: {
+					displayName: r,
+				},
+			})
+			if (ret.status !== 200) {
+				checkError(ret, "change username")
+			} else {
+				makeToast(`Your new username is ${ret.body.displayName}`)
+				invalidate(":me")
+			}
+		}
+	}
+
 	function makeToast(message: string) {
 		if (toastStore)
 			toastStore.trigger({
@@ -186,6 +215,62 @@
 			if ("message" in ret.body) msg += " with message " + ret.body.message
 			makeToast(msg)
 			console.error(msg)
+		}
+	}
+
+	_init = false
+
+	let display_name_content: string
+	let name_already_exists: boolean = false
+	export function makeEditable(node: HTMLElement) {
+		const original_display_name: string = node.innerHTML as string
+
+		const makeEditable = () => {
+			node.contentEditable = "true"
+			node.focus()
+		}
+		const checkIfExists = async () => {
+			if (display_name_content) {
+				const ret = await client.users.searchUsersV2({
+					query: {
+						params: {},
+						action: "*",
+						displayNameContains: display_name_content,
+					},
+				})
+				if (ret.status !== 200) {
+					checkError(ret, "get room list")
+				} else {
+					let userlist = ret.body.map((obj) => obj.displayName)
+					name_already_exists = userlist.includes(display_name_content)
+				}
+			}
+		}
+		const removeEditableAndSubmit = async () => {
+			node.contentEditable = "false"
+			if (!display_name_content || name_already_exists) {
+				alert(display_name_content)
+				node.innerHTML = original_display_name
+			} else {
+				const ret = await client.users.updateMe({
+					body: {
+						displayName: display_name_content,
+					},
+				})
+				if (ret.status !== 200) {
+					checkError(ret, "change your username")
+				} else makeToast("Username successfully changed")
+			}
+		}
+		node.addEventListener("click", makeEditable)
+		node.addEventListener("input", checkIfExists)
+		node.addEventListener("blur", removeEditableAndSubmit)
+		return {
+			destroy: () => {
+				node.removeEventListener("blur", removeEditableAndSubmit)
+				node.removeEventListener("input", checkIfExists)
+				node.removeEventListener("click", makeEditable)
+			},
 		}
 	}
 </script>
@@ -206,10 +291,22 @@
 					alt="profile"
 				/>
 			</button>
-			<!-- Name  -->
-			<h1 class="self-center text-4xl text-black" style:font-family="ArcadeClassic">
-				{data.user.displayName}
-			</h1>
+			<div>
+				<h1
+					class="self-center bg-teal-400 text-4xl text-black"
+					style:font-family="ArcadeClassic"
+					contenteditable="false"
+					bind:innerHTML={display_name_content}
+					use:makeEditable
+				>
+					{data.user.displayName}
+				</h1>
+				{#if name_already_exists}
+					<sub class="text-red-600"> This name is already taken </sub>
+				{:else}
+					<sub class="text-green-500">Available</sub>
+				{/if}
+			</div>
 		</div>
 
 		<div class="flex-1">

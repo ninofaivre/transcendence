@@ -68,8 +68,8 @@ export class AuthController {
 		@Req() { user: { username } }: EnrichedRequest,
 	) {
 		return tsRestHandler(c.logout, async () => {
-			res.cookie("access_token", "", { expires: new Date(Date.now() + 3600000) })
-			res.cookie("refresh_token", "", { expires: new Date(Date.now() + 3600000) })
+			res.cookie("access_token", "", { expires: new Date(0) })
+			res.cookie("refresh_token", "", { expires: new Date(0) })
 			this.authService.revokeRefreshToken(username)
 			return { status: 200 as const, body: null }
 		})

@@ -131,10 +131,10 @@
 		$game_socket.emit("surrend", "")
 	}
 
-	let ball_color: string = "red"
-	let court_color: string = "green"
-	let lpaddle_color: string = "green"
-	let rpaddle_color: string = "green"
+	let ball_color: string = "#ff0000"
+	let court_color: string = "#008000"
+	let lpaddle_color: string = "#008000"
+	let rpaddle_color: string = "#008000"
 </script>
 
 <div class="menu-container grid grid-cols-1">

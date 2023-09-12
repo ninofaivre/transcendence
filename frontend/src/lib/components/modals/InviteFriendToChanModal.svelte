@@ -21,7 +21,7 @@
 	let chanId: string = $modalStore[0].meta?.chanId
 
 	async function sendBackData() {
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response(to_send_back)
 		}
 	}
@@ -33,6 +33,7 @@
 	}
 
 	async function getUserList(input: string) {
+		console.log(input)
 		const ret = await client.users.searchUsersV2({
 			query: {
 				params: {

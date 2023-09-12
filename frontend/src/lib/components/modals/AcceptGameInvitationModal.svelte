@@ -13,13 +13,13 @@
 	}
 
 	function onDeny() {
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response("refused")
 		}
 	}
 
 	function onAccept() {
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response("accepted")
 		}
 	}

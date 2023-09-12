@@ -10,7 +10,7 @@
 	// 24 h -- 1d
 
 	function onPromptSubmit() {
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response(
 				seconds * 1000 +
 					minutes * 1000 * 60 +
@@ -21,7 +21,7 @@
 	}
 
 	function onClose() {
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response(undefined)
 		}
 	}

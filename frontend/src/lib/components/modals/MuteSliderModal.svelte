@@ -28,13 +28,13 @@
 	}
 
 	function onPromptSubmit() {
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response(value)
 		}
 	}
 
 	function onClose() {
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response(undefined)
 		}
 	}

@@ -19,13 +19,13 @@
 		if (res.status === "error") {
 			error_reason = res.reason
 			setTimeout(() => {
-				if ($modalStore[0].response) {
+				if ($modalStore[0]?.response) {
 					$modalStore[0].response(undefined)
 				}
 			}, 1000)
 		}
 		if (state === "accepted") {
-			if ($modalStore[0].response) {
+			if ($modalStore[0]?.response) {
 				$modalStore[0].response(true)
 			}
 		}
@@ -39,7 +39,7 @@
 	}
 
 	function onClose() {
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response(undefined)
 		}
 	}

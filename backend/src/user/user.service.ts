@@ -738,15 +738,24 @@ export class UserService {
             name: { not: username },
             blockedByUser: { none: { blockingUserName: username } },
             blockedUser: { none: { blockedUserName: username } },
-            directMessage: {
-                some: {
-                    OR: [
-                        { requestedUserName: username },
-                        { requestingUserName: username }
-                    ],
-                    status: 'ENABLED'
-                }
-            },
+            OR: [
+                    {
+                        directMessage: {
+                            some: {
+                                requestedUserName: username,
+                                status: 'ENABLED'
+                            }
+                        }
+                    },
+                    {
+                        directMessageOf: {
+                            some: {
+                                requestingUserName: username,
+                                status: 'ENABLED'
+                            }
+                        }
+                    }
+            ],
             chans: { none: { id: chanId } },
             timedUserChan: { none: { chanId, type: 'BAN' } },
             incomingChanInvitation: {
@@ -802,6 +811,7 @@ export class UserService {
             case "UNBAN_CHAN_USER": whereSearch = this.searchMode[dto.action](username, dto.params); break ;
             default : whereSearch = this.searchMode[dto.action](username, dto.params)
         }
+        console.log("whereSearch :", whereSearch)
         const users = await this.prisma.user.findMany({
             where: {
                 AND: [

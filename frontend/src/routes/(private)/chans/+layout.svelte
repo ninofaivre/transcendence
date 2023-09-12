@@ -6,7 +6,7 @@
 	import ChanList from "./ChanList.svelte"
 	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
-	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
+	import SendFriendRequest from "$components/SendFriendRequest.svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
@@ -18,8 +18,8 @@
 	export let data: LayoutData
 
 	const modalStore = getModalStore()
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		(window as any).checkError
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
 	const makeToast: (message: string) => void = (window as any).makeToast
 	let header: HTMLElement | null
 	let header_height: number
@@ -85,7 +85,7 @@
 		const r = await new Promise<ModalReturnType>((resolve) => {
 			const modal: ModalSettings = {
 				type: "component",
-				component: "CreateRoom",
+				component: "CreateRoomModal",
 				response: (r) => {
 					modalStore.close()
 					resolve(r)
@@ -118,7 +118,7 @@
 		const r = await new Promise<ModalReturnType>((resolve) => {
 			const modal: ModalSettings = {
 				type: "component",
-				component: "JoinRoom",
+				component: "JoinRoomModal",
 				response: (r) => {
 					modalStore.close()
 					resolve(r)

@@ -3,28 +3,29 @@
 	import "../app.postcss"
 	import { getToastStore, initializeStores } from "@skeletonlabs/skeleton"
 
-	import { AppShell, AppBar, LightSwitch, Toast, Avatar } from "@skeletonlabs/skeleton"
+	import { AppShell, AppBar, LightSwitch, Toast } from "@skeletonlabs/skeleton"
 	import { logged_in } from "$lib/stores"
 	import { goto } from "$app/navigation"
 	import { Modal, type ModalComponent } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL, PUBLIC_MODE } from "$env/static/public"
 	import { page } from "$app/stores"
 	import { client } from "$clients"
-	import { reload_img } from "$lib/stores"
+	import { isContractError } from "contract"
+
+	// Components
+	import ProfilePicture from "$components/ProfilePicture.svelte"
 
 	// Modals
-	import TimeChooser from "$lib/TimeChooser.svelte"
-	import InviteFriendToChan from "$lib/InviteFriendToChan.svelte"
-	import CreateRoom from "$lib/CreateRoom.svelte"
-	import WaitForGame from "$lib/WaitForGame.svelte"
-	import SendFriendRequestModal from "$lib/SendFriendRequestModal.svelte"
-	import AcceptGameInvitationModal from "$lib/AcceptGameInvitationModal.svelte"
-	import TwoFAModal from "$lib/TwoFAModal.svelte"
-	import JoinRoom from "$lib/JoinRoom.svelte"
-	import CropperModal from "$lib/CropperModal.svelte"
-	import ChangePasswordModal from "$lib/ChangePasswordModal.svelte"
-	import UsernameChooserModal from "$lib/UsernameChooserModal.svelte"
-	import { isContractError } from "contract"
+	import TimeChooserModal from "$modals/TimeChooserModal.svelte"
+	import InviteFriendToChanModal from "$modals/InviteFriendToChanModal.svelte"
+	import CreateRoomModal from "$modals/CreateRoomModal.svelte"
+	import WaitForGameModal from "$modals/WaitForGameModal.svelte"
+	import SendFriendRequestModal from "$modals/SendFriendRequestModal.svelte"
+	import AcceptGameInvitationModal from "$modals/AcceptGameInvitationModal.svelte"
+	import TwoFAModal from "$modals/TwoFAModal.svelte"
+	import JoinRoomModal from "$modals/JoinRoomModal.svelte"
+	import CropperModal from "$modals/CropperModal.svelte"
+	import ChangePasswordModal from "$modals/ChangePasswordModal.svelte"
 
 	initializeStores()
 	const toastStore = getToastStore()
@@ -51,17 +52,16 @@
 	const makeToast: (message: string) => void = (window as any).makeToast
 
 	const modalComponentRegistry: Record<string, ModalComponent> = {
-		TimeChooser: { ref: TimeChooser },
-		InviteFriendToChan: { ref: InviteFriendToChan },
-		CreateRoom: { ref: CreateRoom },
-		JoinRoom: { ref: JoinRoom },
-		WaitForGame: { ref: WaitForGame },
+		TimeChooserModal: { ref: TimeChooserModal },
+		InviteFriendToChanModal: { ref: InviteFriendToChanModal },
+		CreateRoomModal: { ref: CreateRoomModal },
+		JoinRoomModal: { ref: JoinRoomModal },
+		WaitForGameModal: { ref: WaitForGameModal },
 		SendFriendRequestModal: { ref: SendFriendRequestModal },
 		AcceptGameInvitationModal: { ref: AcceptGameInvitationModal },
 		TwoFAModal: { ref: TwoFAModal },
 		ChangePasswordModal: { ref: ChangePasswordModal },
 		CropperModal: { ref: CropperModal },
-		UsernameChooserModal: { ref: UsernameChooserModal },
 	}
 
 	const menuItems = [
@@ -90,13 +90,6 @@
 				goto("/auth" + $page.url.searchParams.toString())
 			}
 		}
-	}
-
-	let reload_avatar: number
-	$: {
-		if ($page?.data?.me?.userName)
-			if ($reload_img === $page.data.me.userName) reload_avatar = Date.now()
-		$reload_img = ""
 	}
 </script>
 
@@ -146,13 +139,11 @@
 						Log out
 					</button>
 					<a href="/myprofile" class="variant-ghost chip ml-1 flex">
-						<Avatar
+						<ProfilePicture
 							src="{PUBLIC_BACKEND_URL}/api/users/{$page.data.me
-								.userName}/profilePicture?reload={reload_avatar}"
+								.userName}/profilePicture?id={$page.data.me.userName}"
 							fallback="https://i.pravatar.cc/?u={$page.data.me.userName}"
 							class="h-8 w-8"
-							rounded="rounded-full"
-							alt="account profile"
 						/>
 						<div>
 							{$page.data.me.displayName}

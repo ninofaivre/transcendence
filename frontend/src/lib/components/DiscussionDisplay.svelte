@@ -4,7 +4,7 @@
 	import type { Chan, DirectConversation, GameSocket, MessageOrEvent } from "$types"
 	import type { Writable } from "svelte/store"
 
-	import ChatBubble from "$lib/ChatBubble.svelte"
+	import ChatBubble from "$components/ChatBubble.svelte"
 	import { getContext, onMount } from "svelte"
 	import { createEventDispatcher } from "svelte"
 

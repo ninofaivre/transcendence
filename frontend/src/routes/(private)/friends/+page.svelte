@@ -4,7 +4,7 @@
 	import { Table, getToastStore } from "@skeletonlabs/skeleton"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
+	import SendFriendRequest from "$components/SendFriendRequest.svelte"
 	import { invalidate } from "$app/navigation"
 	import { addListenerToEventSource, makeToast } from "$lib/global"
 	import { getContext, onMount } from "svelte"

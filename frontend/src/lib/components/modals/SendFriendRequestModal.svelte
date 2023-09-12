@@ -1,15 +1,14 @@
 <script lang="ts">
+	import Autocomplete from "$components/Autocomplete.svelte"
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
-
-	import Autocomplete from "$lib/Autocomplete.svelte"
 
 	import { onMount } from "svelte"
 	import { client } from "$clients"
-	import { invalidate } from "$app/navigation"
-	import { listenOutsideClick } from "$lib/global"
+	import { getModalStore } from "@skeletonlabs/skeleton"
 
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		(window as any).checkError
+	const modalStore = getModalStore()
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
 	let search_input: string = ""
 	let users: AutocompleteOption[] = []
 	let input_element: HTMLElement
@@ -17,20 +16,11 @@
 	let input_focused = false
 	let border_radius = "15px"
 
-	async function sendFriendRequest(input: string) {
+	async function sendBackUsername(input: string) {
 		const invitedUserName = users.find((el) => input === el.label)?.value
 
-		if (typeof invitedUserName === "string" && invitedUserName) {
-			const ret = await client.invitations.friend.createFriendInvitation({
-				body: { invitedUserName },
-			})
-			if (ret.status != 201) {
-				checkError(ret, "send friend request")
-			} else {
-				// TODO either this works or I need the same object back
-				invalidate(":friendships")
-				console.log("Sent friendship request to " + input)
-			}
+		if ($modalStore[0].response) {
+			$modalStore[0].response(invitedUserName)
 		}
 	}
 
@@ -52,11 +42,18 @@
 		else users = ret.body.map((obj) => ({ label: obj.displayName, value: obj.userName }))
 	}
 
+	let can_send: boolean = false
+	$: {
+		if (!users.find((el) => el.label === search_input)) {
+			can_send = false
+		} else can_send = true
+	}
+
 	async function onKeypress(event: KeyboardEvent) {
 		if (event.shiftKey == false) {
 			switch (event.key) {
 				case "Enter":
-					sendFriendRequest(search_input)
+					sendBackUsername(search_input)
 					event.preventDefault() // Prevent actual input of the newline that triggered sending
 					search_input = ""
 			}
@@ -66,41 +63,33 @@
 	$: if (search_input) getUsernames(search_input)
 
 	onMount(() => void input_element.focus())
-
-	let can_send: boolean = false
-	$: {
-		if (users.find((el) => el.label === search_input)) {
-			can_send = true
-		} else can_send = false
-	}
 </script>
 
-<div use:listenOutsideClick on:outsideclick={() => void (input_focused = false)}>
-	<div class="grid min-w-[50vw] grid-cols-[1fr_auto]">
+<div class="card grid grid-rows-2 gap-1 p-8">
+	<div class="grid h-fit min-w-[50vw] grid-cols-[1fr_auto]">
 		<input
-			class="input py-2"
 			bind:this={input_element}
+			class="input py-2"
 			type="search"
 			bind:value={search_input}
 			placeholder="Search user..."
 			on:focusin={() => void (input_focused = true)}
 			on:keypress={onKeypress}
-			style:--border-radius-var={border_radius}
+			style="--border-radius-var: {border_radius}"
 		/>
 		<button
 			bind:this={send_button}
 			on:click={() => {
-				sendFriendRequest(search_input)
+				sendBackUsername(search_input)
 				search_input = ""
 			}}
 			class="variant-filled-primary btn hover:font-medium disabled:font-normal"
-			style:--border-radius-var={border_radius}
+			style="--border-radius-var: {border_radius}"
 			disabled={!can_send}
 		>
 			Send
 		</button>
 	</div>
-
 	{#if input_focused}
 		<div class="card my-2 max-h-48 w-full overflow-y-auto p-2" tabindex="-1">
 			<Autocomplete
@@ -118,8 +107,6 @@
 	}
 
 	button {
-		/* border-top-right-radius: var(--border-radius-var); */
-		/* border-bottom-right-radius: var(--border-radius-var); */
 		border-top-left-radius: var(--border-radius-var);
 		border-bottom-left-radius: var(--border-radius-var);
 		/* top | right | bottom | left */

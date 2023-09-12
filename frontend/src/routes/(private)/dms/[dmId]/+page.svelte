@@ -8,8 +8,8 @@
 	import type { DirectConversation, Message, MessageOrEvent } from "$types"
 
 	/* Components */
-	import DiscussionDisplay from "$lib/DiscussionDisplay.svelte"
-	import ChatBox from "$lib/ChatBox.svelte"
+	import DiscussionDisplay from "$components/DiscussionDisplay.svelte"
+	import ChatBox from "$components/ChatBox.svelte"
 	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
 	import { client } from "$clients"
@@ -57,7 +57,7 @@
 			...messages,
 			{
 				type: "message",
-                authorDisplayName: data.me.displayName,
+				authorDisplayName: data.me.displayName,
 				id: "",
 				content: e.detail,
 				creationDate: new Date(),
@@ -151,7 +151,7 @@
 	let header: HTMLElement | null
 	let header_height: number
 	let disabled: boolean = false
-    $: disabled = data.dmList.find((el) => el.id === $page.params.dmId)?.status === "DISABLED"
+	$: disabled = data.dmList.find((el) => el.id === $page.params.dmId)?.status === "DISABLED"
 	let disabled_placeholder = "Disabled"
 
 	// Calculate the NavBar height in order to adapt the layout
@@ -178,18 +178,28 @@
 			addListenerToEventSource($sse_store, "UPDATED_DM_MESSAGE", (new_data) => {
 				console.log("Server message: Message was modified", new_data)
 				if (new_data.dmId === $page.params.dmId) {
-					updateSomeMessage(new_data.message.id, new_data.message.content, new_data.message.isDeleted)
+					updateSomeMessage(
+						new_data.message.id,
+						new_data.message.content,
+						new_data.message.isDeleted,
+					)
 				}
 			}),
 			addListenerToEventSource($sse_store, "BLOCKED_BY_USER", (new_data) => {
-                if ( data.dmList.find((el) => el.otherName === new_data.username)!.id === $page.params.dmId) {
-                    disabled = true
-                }
+				if (
+					data.dmList.find((el) => el.otherName === new_data.username)!.id ===
+					$page.params.dmId
+				) {
+					disabled = true
+				}
 			}),
 			addListenerToEventSource($sse_store, "UNBLOCKED_BY_USER", (new_data) => {
-                if ( data.dmList.find((el) => el.otherName === new_data.username)!.id === $page.params.dmId) {
-                    disabled = false
-                }
+				if (
+					data.dmList.find((el) => el.otherName === new_data.username)!.id ===
+					$page.params.dmId
+				) {
+					disabled = false
+				}
 			}),
 		)
 		return () => {

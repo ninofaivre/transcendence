@@ -3,14 +3,14 @@
 	import { getContext, onMount } from "svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { goto, invalidate } from "$app/navigation"
-	import { getModalStore, getToastStore, type ModalSettings } from "@skeletonlabs/skeleton"
+	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import type { Writable } from "svelte/store"
 
 	const modalStore = getModalStore()
 	const sse_store: Writable<EventSource> = getContext("sse_store")
-	const checkError: (ret: { status: number; body: any }, what: string) => void =
-		(window as any).checkError
+	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
+		.checkError
 	const makeToast: (message: string) => void = (window as any).makeToast
 
 	export let currentDiscussionId: string
@@ -38,7 +38,7 @@
 		const r = await new Promise<string | undefined>((resolve) => {
 			const modal: ModalSettings = {
 				type: "component",
-				component: "InviteFriendToChan",
+				component: "InviteFriendToChanModal",
 				response: (r) => {
 					modalStore.close()
 					resolve(r)

@@ -43,7 +43,7 @@
 		$sse_store,
 		"UPDATED_USER_PROFILE_PICTURE",
 		(new_data) => {
-			reload_img.set(new_data.intraUserName)
+			reload_img.set({ id: new_data.intraUserName, trigger: Date.now() })
 		},
 	)
 	setContext("sse_store", sse_store)

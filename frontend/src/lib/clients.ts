@@ -4,7 +4,7 @@ import { initClient, tsRestFetchApi } from "@ts-rest/core"
 
 import { PUBLIC_BACKEND_URL as baseUrl } from "$env/static/public"
 
-import { contract, isContractError, isErrorCode } from "contract"
+import { contract, isErrorCode } from "contract"
 import { logged_in } from "$lib/stores"
 import { sseId } from "$lib/stores"
 import { get } from "svelte/store"
@@ -12,8 +12,8 @@ import { get } from "svelte/store"
 export const client = initClient(contract, {
 	baseUrl,
 	baseHeaders: {
-        "sse-id": get(sseId)
-    },
+		"sse-id": get(sseId),
+	},
 	jsonQuery: true,
 	credentials: "include",
 	api: async (args) => {

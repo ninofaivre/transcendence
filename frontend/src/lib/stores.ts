@@ -15,7 +15,7 @@ console.log("The stores module is being executed...")
 
 export const logged_in = localStorageStore("logged", false)
 
-export const reload_img = writable("")
+export const reload_img = writable({ trigger: Date.now(), id: "" })
 
 export const dms_store: Writable<DirectConversation[]> = writable([])
 export const chans_store: Writable<Chan[]> = writable([])

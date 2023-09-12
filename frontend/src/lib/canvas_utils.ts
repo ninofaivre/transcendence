@@ -1,8 +1,3 @@
-/**
- * @author Valentin Hervieu
- * https://codesandbox.io/s/y09komm059?file=/src/canvasUtils.js
- */
-
 export async function getCroppedImg(
 	imageSrc: string,
 	pixelCrop: { x: number; y: number; width: number; height: number },

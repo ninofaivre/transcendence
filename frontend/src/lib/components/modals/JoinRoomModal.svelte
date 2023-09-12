@@ -1,11 +1,11 @@
 <script lang="ts">
-	import Autocomplete from "$lib/Autocomplete.svelte"
+	import Autocomplete from "$components/Autocomplete.svelte"
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
 
 	import { onMount } from "svelte"
 	import { client } from "$clients"
 	import { getModalStore } from "@skeletonlabs/skeleton"
-	import { simpleKeypressHandlerFactory } from "./global"
+	import { simpleKeypressHandlerFactory } from "$lib/global"
 	import { tick } from "svelte"
 
 	const modalStore = getModalStore()

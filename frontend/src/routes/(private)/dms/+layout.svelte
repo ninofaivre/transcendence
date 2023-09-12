@@ -6,7 +6,7 @@
 	import DiscussionList from "./DiscussionList.svelte"
 	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
-	import SendFriendRequest from "$lib/SendFriendRequest.svelte"
+	import SendFriendRequest from "$components/SendFriendRequest.svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"

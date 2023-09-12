@@ -4,7 +4,7 @@
 	import { Autocomplete } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { getModalStore } from "@skeletonlabs/skeleton"
-	import { onMount } from "svelte"
+	import { onMount, tick } from "svelte"
 
 	const modalStore = getModalStore()
 	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
@@ -15,10 +15,11 @@
 	let send_button: HTMLButtonElement
 	let input_focused = false
 	let chanId: string = $modalStore[0].meta?.chanId
+	let to_send_back: string
 
-	function onModalSubmit(str: string) {
+	function onModalSubmit() {
 		if ($modalStore[0].response) {
-			$modalStore[0].response(str)
+			$modalStore[0].response(to_send_back)
 		}
 	}
 
@@ -30,7 +31,10 @@
 
 	async function onUserSelection(event: any) {
 		search_input = event.detail.label
+		to_send_back = event.detail.value
 		input_focused = false
+		can_send = true
+		await tick()
 		send_button.focus()
 	}
 
@@ -46,20 +50,23 @@
 		})
 		if (ret.status != 200)
 			checkError(ret, `retrieve name of users whose name contains '${input}'`)
-		else users = ret.body.map((obj) => ({ label: obj.userName, value: obj.userName }))
+		else users = ret.body.map((obj) => ({ label: obj.displayName, value: obj.userName }))
 	}
 
 	async function onKeypress(event: KeyboardEvent) {
-		if (event.shiftKey == false) {
-			switch (event.key) {
-				case "Enter":
-					onModalSubmit(search_input)
-					event.preventDefault() // Prevent actual input of the newline that triggered sending
-			}
+		switch (event.key) {
+			case "Enter":
+				event.preventDefault() // Prevent actual input of the newline that triggered sending
+				onModalSubmit()
 		}
 	}
 
+	let can_send: boolean = false
 	$: if (search_input) getUsernames(search_input)
+	$: {
+		if (users.find((el) => el.label === search_input)) can_send = true
+		else can_send = true
+	}
 
 	onMount(() => void input_element.focus())
 
@@ -97,9 +104,10 @@
 		<button
 			bind:this={send_button}
 			on:click={() => {
-				onModalSubmit(search_input)
+				onModalSubmit()
 			}}
 			class="variant-filled-primary btn hover:font-medium"
+			disabled={!can_send}
 		>
 			Send invitation
 		</button>

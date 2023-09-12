@@ -17,6 +17,8 @@ const config = {
 			$types: "src/lib/types",
 			$stores: "src/lib/stores",
 			$clients: "src/lib/clients",
+			$components: "src/lib/components",
+			$modals: "src/lib/components/modals",
 		},
 		env: {
 			dir: "..",

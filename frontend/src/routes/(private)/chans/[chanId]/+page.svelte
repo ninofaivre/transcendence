@@ -9,8 +9,8 @@
 	import type { Writable } from "svelte/store"
 
 	/* Components */
-	import DiscussionDisplay from "$lib/DiscussionDisplay.svelte"
-	import ChatBox from "$lib/ChatBox.svelte"
+	import DiscussionDisplay from "$components/DiscussionDisplay.svelte"
+	import ChatBox from "$components/ChatBox.svelte"
 	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
 	import { client } from "$clients"

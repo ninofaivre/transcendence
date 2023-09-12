@@ -4,8 +4,7 @@
 	import type { Chan, ChanMessage, DirectConversation, GameSocket, Message } from "$types"
 
 	//Components
-	import { Avatar, getToastStore } from "@skeletonlabs/skeleton"
-	import ChatBox from "$lib/ChatBox.svelte"
+	import ChatBox from "$components/ChatBox.svelte"
 
 	//Utils
 	import { blur, slide } from "svelte/transition"
@@ -15,7 +14,7 @@
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { goto } from "$app/navigation"
-	import { reload_img } from "$stores"
+	import ProfilePicture from "$components/ProfilePicture.svelte"
 
 	const modalStore = getModalStore()
 
@@ -95,7 +94,7 @@
 		const r = await new Promise<true | undefined>((resolve) => {
 			const modal: ModalSettings = {
 				type: "component",
-				component: "WaitForGame",
+				component: "WaitForGameModal",
 				response: (r) => {
 					modalStore.close()
 					resolve(r)
@@ -125,7 +124,7 @@
 		const r = await new Promise<string | undefined>((resolve) => {
 			const modal: ModalSettings = {
 				type: "component",
-				component: "TimeChooser",
+				component: "TimeChooserModal",
 				response: (r) => {
 					modalStore.close()
 					resolve(r)
@@ -259,12 +258,6 @@
 		is_sent = false
 		dispatch("delete", { id: message.id })
 	}
-
-	let reload_avatar: number
-	$: {
-		if ($reload_img === message.author) reload_avatar = Date.now()
-		$reload_img = ""
-	}
 </script>
 
 <div
@@ -277,11 +270,10 @@
 		<!-- Need online status for that -->
 		<!-- <span class="relative left-1 text-xl text-green-600">&#8226</span> -->
 		{#if is_chan}
-			<Avatar
-				src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture?reload={reload_avatar}"
+			<ProfilePicture
+				src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture?id={message.author}"
 				fallback="https://i.pravatar.cc/?u={message.author}"
 				class="h-8 w-8"
-				rounded="rounded-full"
 				on:click={() => {
 					menu.length > 1 ? toggleAdminMenu() : menu[0].handler()
 				}}

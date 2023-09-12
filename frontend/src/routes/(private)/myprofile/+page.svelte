@@ -6,13 +6,14 @@
 	import type { ModalSettings } from "@skeletonlabs/skeleton"
 
 	import { ProgressRadial, getModalStore } from "@skeletonlabs/skeleton"
-	import { Avatar, Paginator, SlideToggle, Table } from "@skeletonlabs/skeleton"
+	import { Paginator, SlideToggle, Table } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { isContractError } from "contract"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL, PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB } from "$env/static/public"
 
 	import { reload_img } from "$stores"
+	import ProfilePicture from "$components/ProfilePicture.svelte"
 
 	let _init = true
 	export let data: PageData
@@ -142,7 +143,8 @@
 		})
 		if (ret.status === 204) {
 			makeToast("Upload successful")
-			$reload_img = data.me.userName
+			$reload_img.id = data.me.userName
+			$reload_img.trigger = Date.now()
 		} else if (ret.status === 413) {
 			makeToast(
 				`Image is too big. Upload must be under ${PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB}MB`,
@@ -245,27 +247,21 @@
 			},
 		}
 	}
-	let reload_avatar: number
-	$: {
-		if ($reload_img === data.me.userName) reload_avatar = Date.now()
-		$reload_img = ""
-	}
 </script>
 
 <div class="mt-10 max-w-xl sm:mx-auto sm:w-full">
 	<div class="flex w-full flex-col gap-3 rounded-lg bg-gray-50 p-8 sm:px-10">
-		<!-- Avatar -->
+		<!-- Profile Picture -->
 		<div class="flex flex-1 gap-6">
 			<!-- col1 -->
 			<button
 				class="btn w-fit p-0 hover:outline hover:outline-tertiary-400"
 				on:click={triggerCropperModal}
 			>
-				<Avatar
-					src="{PUBLIC_BACKEND_URL}/api/users/{data.me
-						.userName}/profilePicture?reload={reload_avatar}"
+				<ProfilePicture
+					src="{PUBLIC_BACKEND_URL}/api/users/{data.me.userName}/profilePicture?id={data
+						.me.userName}"
 					fallback="https://i.pravatar.cc/?u={data.me.userName}"
-					alt="profile"
 				/>
 			</button>
 			<div class="group relative flex w-fit flex-1 flex-col justify-center gap-1">

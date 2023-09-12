@@ -10,14 +10,13 @@
 	} from "@skeletonlabs/skeleton"
 
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
-	import { Avatar } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { page } from "$app/stores"
 	import { Paginator } from "@skeletonlabs/skeleton"
 	import { goto, invalidate } from "$app/navigation"
-	import { reload_img } from "$stores"
 	import { getContext } from "svelte"
+	import ProfilePicture from "$components/ProfilePicture.svelte"
 
 	export let data: PageData
 
@@ -70,7 +69,7 @@
 	async function inviteToGame() {
 		const modal: ModalSettings = {
 			type: "component",
-			component: "WaitForGame",
+			component: "WaitForGameModal",
 			response: () => {
 				modalStore.close()
 			},
@@ -205,12 +204,6 @@
 			} else invalidate(":friends:invitations")
 		}
 	}
-
-	let reload_avatar: number
-	$: {
-		if ($reload_img === data.user.userName) reload_avatar = Date.now()
-		$reload_img = ""
-	}
 </script>
 
 <!-- Container -->
@@ -219,12 +212,11 @@
 	<div class="flex flex-row gap-2 rounded-lg bg-gray-100 p-8 sm:px-10">
 		<!-- User basic info -->
 		<div class="flex flex-1 flex-col gap-2">
-			<!-- col1: Avatar + menu -->
-			<Avatar
-				src="{PUBLIC_BACKEND_URL}/api/users/{data.user
-					.userName}/profilePicture?reload={reload_avatar}"
+			<!-- col1: Profile picture + menu -->
+			<ProfilePicture
+				src="{PUBLIC_BACKEND_URL}/api/users/{data.user.userName}/profilePicture?id={data
+					.user.userName}"
 				fallback="https://i.pravatar.cc/?u={data.user.userName}"
-				alt="profile"
 			/>
 			<!-- Block | Remove block -->
 			<div class="flex-1">

@@ -552,7 +552,7 @@ export class ChansService {
         this.chanInvitationsService.updateAndNotifyManyInvsStatus(
             ChanInvitationStatus.DELETED_CHAN,
             { chanId })
-        this.sse.pushEventMultipleUser(this.usersToNames(chan.users.filter(user => user.name !== username)),
+        this.sse.pushEventMultipleUser(this.usersToNames(chan.users),
             {
                 type: 'DELETED_CHAN',
                 data: { chanId }
@@ -1063,7 +1063,7 @@ export class ChansService {
 		const joinedChan = await this.pushUserToChanAndNotifyUsers(username, chan.id)
         if (isContractError(joinedChan))
             return joinedChan
-        this.sse.pushEvent(username, {
+        await this.sse.pushEvent(username, {
             type: 'CREATED_CHAN',
             data: joinedChan
         }, sseId)

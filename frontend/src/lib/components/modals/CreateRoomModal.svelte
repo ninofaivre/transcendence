@@ -1,7 +1,18 @@
 <script lang="ts">
+	import { client } from "$clients"
 	import { getModalStore } from "@skeletonlabs/skeleton"
 
 	const modalStore = getModalStore()
+
+	let minlength = 8
+	let maxlength = 100
+
+	let priv: boolean = false
+	let form: HTMLFormElement
+
+	let titles: string[] = []
+	let title_input: string
+	let can_send: boolean
 
 	async function onDiscussionCreation() {
 		let formdata = new FormData(form) // `form` is bound to the form node
@@ -21,11 +32,31 @@
 		}
 	}
 
-	let minlength = 8
-	let maxlength = 100
+	async function getRoomList(input: string) {
+		const ret = await client.chans.searchChans({
+			query: {
+				titleContains: input,
+			},
+		})
+		if (ret.status !== 200) {
+		} else {
+			titles = ret.body.map((el) => el.title)
+			console.log(titles)
+		}
+	}
 
-	let priv: boolean = false
-	let form: HTMLFormElement
+	$: {
+		if (title_input) {
+			getRoomList(title_input)
+		}
+	}
+	$: {
+		if (titles.length > 0 && titles.includes(title_input)) {
+			can_send = false
+		} else {
+			can_send = true
+		}
+	}
 </script>
 
 <form
@@ -35,15 +66,27 @@
 >
 	<label for="title" class="label"> Choose a name for the room </label>
 	<input
+		bind:value={title_input}
 		type="text"
 		name="title"
 		id="title"
 		{minlength}
 		{maxlength}
-		class="input"
+		class="peer input"
 		required
 		autocomplete="off"
 	/>
+	<sub
+		class={!can_send
+			? "invisible p-2 text-red-500 peer-focus-within:visible"
+			: "invisible p-2 text-green-500 peer-focus-within:visible"}
+	>
+		{#if !can_send}
+			This name is already taken
+		{:else if title_input}
+			Available
+		{/if}
+	</sub>
 	<label for="password" class="label">Password (Optional)</label>
 	<input
 		type="text"
@@ -58,7 +101,7 @@
 	<input id="priv" type="checkbox" bind:checked={priv} class="checkbox" />
 	<footer class="modal-footer">
 		<button type="button" class="variant-ghost-error btn" on:click={onClose}>Cancel</button>
-		<button type="submit" class="variant-ghost btn">Create Room</button>
+		<button type="submit" disabled={!can_send} class="variant-ghost btn">Create Room</button>
 	</footer>
 </form>
 

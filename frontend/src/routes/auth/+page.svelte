@@ -116,11 +116,8 @@
 					required
 				/>
 			</label>
-			<button
-				type="submit"
-				class="variant-filled-primary btn btn-sm grid grid-rows-2 rounded-2xl"
-			>
-				<div>Get in with existing username</div>
+			<button type="submit" class=" variant-filled-primary btn btn-sm rounded-2xl">
+				Get in (will create user if needed)
 			</button>
 		</div>
 	</form>

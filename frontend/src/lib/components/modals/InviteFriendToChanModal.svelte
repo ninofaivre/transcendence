@@ -1,10 +1,12 @@
 <script lang="ts">
+	import Autocomplete from "$components/Autocomplete.svelte"
 	import type { AutocompleteOption } from "@skeletonlabs/skeleton"
 
-	import { Autocomplete } from "@skeletonlabs/skeleton"
+	import { onMount } from "svelte"
 	import { client } from "$clients"
 	import { getModalStore } from "@skeletonlabs/skeleton"
-	import { onMount, tick } from "svelte"
+	import { simpleKeypressHandlerFactory } from "$lib/global"
+	import { tick } from "svelte"
 
 	const modalStore = getModalStore()
 	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
@@ -14,105 +16,99 @@
 	let input_element: HTMLElement
 	let send_button: HTMLButtonElement
 	let input_focused = false
-	let chanId: string = $modalStore[0].meta?.chanId
+	let can_send: boolean = false
 	let to_send_back: string
+	let chanId: string = $modalStore[0].meta?.chanId
 
-	function onModalSubmit() {
+	async function sendBackData() {
 		if ($modalStore[0].response) {
 			$modalStore[0].response(to_send_back)
 		}
 	}
 
-	function onClose() {
-		if ($modalStore[0].response) {
-			$modalStore[0].response(undefined)
-		}
-	}
-
-	async function onUserSelection(event: any) {
+	async function onUserSelection(event: CustomEvent<AutocompleteOption>) {
 		search_input = event.detail.label
-		to_send_back = event.detail.value
-		input_focused = false
-		can_send = true
-		await tick()
-		send_button.focus()
+		to_send_back = event.detail.value as string
+		input_element.focus()
 	}
 
-	async function getUsernames(input: string) {
+	async function getUserList(input: string) {
 		const ret = await client.users.searchUsersV2({
 			query: {
-				action: "CREATE_CHAN_INVITE",
 				params: {
 					chanId,
 				},
 				displayNameContains: input,
+				action: "CREATE_CHAN_INVITE",
 			},
 		})
-		if (ret.status != 200)
-			checkError(ret, `retrieve name of users whose name contains '${input}'`)
-		else users = ret.body.map((obj) => ({ label: obj.displayName, value: obj.userName }))
-	}
-
-	async function onKeypress(event: KeyboardEvent) {
-		switch (event.key) {
-			case "Enter":
-				event.preventDefault() // Prevent actual input of the newline that triggered sending
-				onModalSubmit()
+		if (ret.status !== 200) {
+			checkError(ret, "get room list")
+		} else {
+			users = ret.body.map((obj) => ({
+				label: obj.displayName,
+				value: obj.userName,
+			}))
+			console.log(users)
 		}
 	}
 
-	let can_send: boolean = false
-	$: if (search_input) getUsernames(search_input)
+	async function onSearchEnter() {
+		if (can_send) {
+			await tick()
+			send_button.focus()
+		}
+	}
+
+	$: if (search_input) getUserList(search_input)
 	$: {
-		if (users.find((el) => el.label === search_input)) can_send = true
-		else can_send = true
+		if (users.find((el) => el.label === search_input)) {
+			can_send = true
+		} else can_send = false
 	}
 
 	onMount(() => void input_element.focus())
-
-	let tw_rows: string
-	$: tw_rows = input_focused ? "grid-rows-2" : "grid-rows-1"
 </script>
 
-<div class="card grid grid-rows-2 gap-1 p-6">
-	<!-- row 1  -->
-	<div class="grid min-w-[50vw] {tw_rows} gap-1">
-		<!-- row 1 -->
+<div class="card flex flex-col items-center gap-6 p-8">
+	<!-- input container -->
+	<div class="relative min-w-[50vw] flex-1">
 		<input
 			bind:this={input_element}
-			class="input min-h-fit"
+			class="input"
 			type="search"
+			name="title"
 			bind:value={search_input}
 			placeholder="Search user..."
 			on:focusin={() => void (input_focused = true)}
-			on:keypress={onKeypress}
+			on:keypress={simpleKeypressHandlerFactory(["Enter"], onSearchEnter)}
+			autocomplete="off"
 		/>
-		<!-- row 2 -->
-		{#if input_focused}
-			<div class="card my-2 max-h-48 w-full overflow-y-auto p-2" tabindex="-1">
+		{#if search_input && input_focused && !can_send}
+			<div class="card absolute z-10 mt-1 max-h-48 w-full overflow-y-auto p-2" tabindex="-1">
 				<Autocomplete
 					options={users}
 					on:selection={onUserSelection}
 					regionButton="w-full btn-md"
+					class="w-full"
 				/>
 			</div>
 		{/if}
 	</div>
-	<!-- row 2  -->
-	<footer class="modal-footer self-end">
-		<button type="button" class="variant-filled-error btn" on:click={onClose}> Cancel </button>
-		<button
-			bind:this={send_button}
-			on:click={() => {
-				onModalSubmit()
-			}}
-			class="variant-filled-primary btn hover:font-medium"
-			disabled={!can_send}
-		>
-			Send invitation
-		</button>
-	</footer>
+	<!-- send button -->
+	<button
+		bind:this={send_button}
+		class="variant-filled-primary btn w-fit justify-self-center px-12"
+		disabled={!can_send}
+		on:click={sendBackData}
+		on:keypress={simpleKeypressHandlerFactory(["Enter"], sendBackData)}
+	>
+		Send
+	</button>
 </div>
 
 <style>
+	input {
+		border-radius: 15px;
+	}
 </style>

@@ -6,7 +6,6 @@
 	import DiscussionList from "./DiscussionList.svelte"
 	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
-	import SendFriendRequest from "$components/SendFriendRequest.svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
@@ -18,6 +17,7 @@
 	const sse_store: Writable<EventSource> = getContext("sse_store")
 
 	const modalStore = getModalStore()
+	const makeToast: (message: string) => void = (window as any).makeToast
 	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
 		.checkError
 	let header: HTMLElement | null
@@ -68,13 +68,8 @@
 			if (ret.status != 201) {
 				checkError(ret, "create friend request")
 			} else {
-				//TODO
-				// data.friendships = [
-				// 	...data.friendships,
-				// 	ret.body.map((el: (typeof ret.body)["number"]) => {}),
-				// ]
 				invalidate(":friendships")
-				console.log("Sent friendship request to " + username)
+				makeToast("Friend request sent")
 			}
 		}
 	}
@@ -113,7 +108,13 @@
 	<div id="convo" class="my-10 flex h-full flex-col justify-center">
 		<div class="mx-auto text-center text-3xl font-bold">You don't have any friends yet</div>
 		<div class="mx-auto my-10">
-			<SendFriendRequest />
+			<button
+				class="variant-ghost-tertiary btn btn-sm w-full rounded-md text-2xl"
+				style:font-family="ArcadeClassic"
+				on:click={onSendFriendRequest}
+			>
+				Send a friend request
+			</button>
 		</div>
 	</div>
 {/if}

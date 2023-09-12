@@ -142,6 +142,31 @@
 			}
 		}
 	}
+
+	async function onSendFriendRequest() {
+		const username = await new Promise<string | undefined>((resolve) => {
+			const modal: ModalSettings = {
+				type: "component",
+				component: "SendFriendRequestModal",
+				response: (r) => {
+					modalStore.close()
+					resolve(r)
+				},
+			}
+			modalStore.trigger(modal)
+		})
+		if (username) {
+			const ret = await client.invitations.friend.createFriendInvitation({
+				body: { invitedUserName: username },
+			})
+			if (ret.status != 201) {
+				checkError(ret, "create friend request")
+			} else {
+				invalidate(":friendships")
+				makeToast("Friendhisp request sent")
+			}
+		}
+	}
 </script>
 
 {#if data.chanList && data.chanList.length}
@@ -182,23 +207,27 @@
 {:else}
 	<div class="my-2 flex h-full flex-col justify-center">
 		<div class="text-center text-xl font-bold">
-			You are not participating in any channel yet
+			You are not participating in any channels yet
 		</div>
 		<div class="mx-auto my-10">
-			<h2 class="my-2">Invite a friend:</h2>
-			<SendFriendRequest />
-			<section class="mt-1 grid gap-1">
+			<section class=" grid gap-3" style:font-family="ArcadeClassic">
 				<button
-					class="variant-ghost-primary btn btn-sm w-full rounded"
+					class="variant-ghost-primary btn btn-sm w-full rounded-md text-2xl"
 					on:click={onJoinChan}
 				>
 					Join a room
 				</button>
 				<button
-					class="variant-ghost-primary btn btn-sm w-full rounded"
+					class="variant-ghost-secondary btn btn-sm w-full rounded-md text-2xl"
 					on:click={onCreateChan}
 				>
 					Create new room
+				</button>
+				<button
+					class="variant-ghost-tertiary btn btn-sm w-full rounded-md text-2xl"
+					on:click={onSendFriendRequest}
+				>
+					Send a friend request
 				</button>
 			</section>
 		</div>

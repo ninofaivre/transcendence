@@ -35,55 +35,11 @@ export class AuthService {
 		domain: EnvService.env.PUBLIC_BACKEND_HOST,
 	} as const
 
-    public isValidAccessTokenFromCookie(client: Socket) {
-        const access_token = cookie
-            .parse(client.handshake?.headers?.cookie || '')
-            .access_token
-        return this.jwtService.verify<JwtPayload>(access_token || '', {
-            secret: EnvService.env.JWT_SECRET
-        })
-    }
-
-    public async setNewTokensAsCookies(res: Response, user: EnrichedRequest['user'] & { twoFA: boolean }) {
-        const tokens = await this.getTokens(user)
-        res.cookie("access_token", tokens.accessToken, {
-            ...AuthService.cookieOptions,
-            maxAge: (EnvService.env.PUBLIC_MODE === 'DEV' ? 3600 : 900) * 1000,
-        })
-        res.cookie("refresh_token", tokens.refreshToken, {
-            ...AuthService.cookieOptions,
-            maxAge: 604800 * 1000,
-            path: c.refreshTokens.path
-        })
-        this.updateRefreshToken(user.username, tokens.refreshToken)
-    }
-
-    public async getTokens(user: EnrichedRequest['user'] & { twoFA: boolean }) {
-        console.log(`getTokens : twoFA: ${user.twoFA}`)
-        const payload = { username: user.username, intraUserName: user.intraUserName, sub: user.username, twoFA: user.twoFA }
-        const [accessToken, refreshToken] = await Promise.all([
-            this.jwtService.signAsync(payload, {
-                secret: EnvService.env.JWT_SECRET,
-                expiresIn: EnvService.env.PUBLIC_MODE === 'DEV' ? '1h' : '15m'
-            }),
-            this.jwtService.signAsync(payload, {
-                secret: EnvService.env.JWT_SECRET,
-                expiresIn: '7d'
-            })
-        ])
-        return { accessToken, refreshToken }
-    }
-
-	public async validateUser(code: string, redirect_uri: string) {
-        const intraUserName = await this.oAuth.getIntraUserName(code, redirect_uri)
-        if (!intraUserName)
-            return contractErrors.Invalid42ApiCode(code)
-        const user = await this.prisma.user.findUnique({ where: { intraUserName },
-            select: { name: true, enabledTwoFA: true, displayName: true }}) 
-        if (!user)
-            return contractErrors.NotRegisteredUser(intraUserName)
-        const { name, ...rest } = user
-        return { ...rest, username: name, intraUserName }
+	public isValidAccessTokenFromCookie(client: Socket) {
+		const access_token = cookie.parse(client.handshake?.headers?.cookie || "").access_token
+		return this.jwtService.verify<JwtPayload>(access_token || "", {
+			secret: EnvService.env.JWT_SECRET,
+		})
 	}
 
 	public async setNewTokensAsCookies(
@@ -114,8 +70,7 @@ export class AuthService {
 		const [accessToken, refreshToken] = await Promise.all([
 			this.jwtService.signAsync(payload, {
 				secret: EnvService.env.JWT_SECRET,
-				// expiresIn: EnvService.env.PUBLIC_MODE === 'DEV' ? '5s' : '15m'
-				expiresIn: "15m",
+				expiresIn: EnvService.env.PUBLIC_MODE === "DEV" ? "1h" : "15m",
 			}),
 			this.jwtService.signAsync(payload, {
 				secret: EnvService.env.JWT_SECRET,

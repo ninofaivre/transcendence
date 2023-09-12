@@ -14,6 +14,7 @@
 
 	import { reload_img } from "$stores"
 	import ProfilePicture from "$components/ProfilePicture.svelte"
+	import { invalidate } from "$app/navigation"
 
 	let _init = true
 	export let data: PageData
@@ -233,6 +234,7 @@
 				} else {
 					original_display_name = display_name_content
 					makeToast("Username successfully changed")
+					invalidate(":me")
 				}
 			}
 		}

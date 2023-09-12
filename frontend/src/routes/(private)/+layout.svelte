@@ -9,7 +9,7 @@
 	import { onDestroy, setContext } from "svelte"
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { writable } from "svelte/store"
-	import { goto } from "$app/navigation"
+	import { goto, invalidate } from "$app/navigation"
 	import { logged_in, reload_img } from "$stores"
 	import type { zConnectErrorData } from "contract"
 	import type { z } from "zod"
@@ -39,12 +39,13 @@
 	$sse_store.onerror = function (_evt) {
 		console.log("Error while openning new sse connection: Probably already in use")
 	}
-	const destroy_sse_listener = addListenerToEventSource(
-		$sse_store,
-		"UPDATED_USER_PROFILE_PICTURE",
-		(new_data) => {
+	const destroy_sse_listener = new Array(
+		addListenerToEventSource($sse_store, "UPDATED_USER_PROFILE_PICTURE", (new_data) => {
 			reload_img.set({ id: new_data.intraUserName, trigger: Date.now() })
-		},
+		}),
+		addListenerToEventSource($sse_store, "UPDATED_USER_DISPLAY_NAME", (new_data) => {
+			invalidate(":me")
+		}),
 	)
 	setContext("sse_store", sse_store)
 
@@ -167,7 +168,7 @@
 		$game_socket.removeAllListeners()
 		$game_socket.close()
 		$sse_store.close()
-		destroy_sse_listener()
+		destroy_sse_listener.forEach((func) => func())
 	})
 </script>
 

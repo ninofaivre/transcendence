@@ -27,6 +27,7 @@ export const GameStatusSchema = z.discriminatedUnion("status", [
 		paddleRightDisplayName: zUserName,
 		paddleLeftScore: ScoreSchema,
 		paddleRightScore: ScoreSchema,
+        hostIntraName: zUserName.optional()
 	}),
 	z.strictObject({
 		// INIT = décompte au début de la partie

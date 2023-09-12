@@ -418,6 +418,7 @@ class Game {
         > = 'INIT';
     private readonly maxScore: number = 2
     public startTimeout = Date.now();
+    private readonly isCustomGame: boolean;
 
     public get status() {
         return this._status
@@ -439,7 +440,9 @@ class Game {
                             return
                         this.status = 'PLAY'
                     },
-                    GameTimings.initTimeout
+                    this.isCustomGame
+                        ? GameTimings.initCustomGameTimeout
+                        : GameTimings.initTimeout
                 )
                 break ;
             }
@@ -484,8 +487,10 @@ class Game {
         clientB: EnrichedRemoteSocket | EnrichedSocket,
         public readonly webSocket: GameWebsocketGateway,
         private eventEmitter: EventEmitter2,
-        private readonly prisma: PrismaService
+        private readonly prisma: PrismaService,
+        private readonly hostIntraName?: IntraUserName
     ) {
+        this.isCustomGame = !!hostIntraName
         this.id = `${clientA.data.intraUserName}@${clientB.data.intraUserName}`
         this.playerA = new Player(clientA.data, this, new Paddle({
             x: Paddle.xOffset,
@@ -622,9 +627,13 @@ class Game {
             case 'INIT': {
                 return {
                     status: 'INIT',
-                    timeout: GameTimings.initTimeout - (Date.now() - this.startTimeout),
+                    timeout: (this.isCustomGame
+                        ? GameTimings.initCustomGameTimeout
+                        : GameTimings.initTimeout)
+                            - (Date.now() - this.startTimeout),
                     ...this.getPaddleScores(),
-                    ...this.getPaddlesNames()
+                    ...this.getPaddlesNames(),
+                    hostIntraName: this.hostIntraName
                 }
             }
             case 'BREAK': {
@@ -744,9 +753,12 @@ export class GameService {
         return this.usersToGame.get(username)?.id
     }
 
-    public async createGame(userOne: EnrichedRemoteSocket | EnrichedSocket, userTwo: EnrichedRemoteSocket | EnrichedSocket) {
+    public async createGame(userOne: EnrichedRemoteSocket | EnrichedSocket,
+        userTwo: EnrichedRemoteSocket | EnrichedSocket,
+        hostIntraName?: IntraUserName
+    ) {
         console.log("createGame")
-        const newGame = new Game(userOne, userTwo, this.webSocket, this.eventEmitter, this.prisma)
+        const newGame = new Game(userOne, userTwo, this.webSocket, this.eventEmitter, this.prisma, hostIntraName)
         this.games.set(newGame.id, newGame)
         this.usersToGame.set(userOne.data.intraUserName, newGame)
         this.usersToGame.set(userTwo.data.intraUserName, newGame)

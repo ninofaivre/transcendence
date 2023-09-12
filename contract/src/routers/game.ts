@@ -16,6 +16,7 @@ export const GameTimings = {
 	userPauseAmount: 60 * 1000,
 	breakTimeout: 3 * 1000,
 	initTimeout: 5 * 1000,
+	initCustomGameTimeout: 60 * 1000,
 }
 
 // in unit by second

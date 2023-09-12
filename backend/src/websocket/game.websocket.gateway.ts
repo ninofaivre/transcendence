@@ -220,7 +220,7 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
                 ))
             const status = InvitationClientResponseSchema.parse(payload)
             if (status == 'accepted')
-                await this.gameService.createGame(client, invitedClient)
+                await this.gameService.createGame(client, invitedClient, client.data.intraUserName)
             else {
                 this.server
                     .in([

@@ -50,7 +50,7 @@ export type FriendInvitations = ClientInferResponseBody<
 >
 
 export type ChanInvitations = ClientInferResponseBody<
-	typeof contract.invitations.chan.getChanInvitations, 
+	typeof contract.invitations.chan.getChanInvitations,
 	200
 >
 

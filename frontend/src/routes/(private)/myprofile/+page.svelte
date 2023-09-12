@@ -274,8 +274,9 @@
 				/>
 				<sub
 					class={name_already_exists
-						? "invisible p-2 text-red-500 group-focus-within:visible"
-						: "invisible p-2 text-green-500 group-focus-within:visible"}
+						? "invisible p-2 group-focus-within:visible"
+						: "invisible p-2 group-focus-within:visible"}
+					style={name_already_exists ? "color: red;" : "color: green;"}
 				>
 					{#if name_already_exists}
 						This name is already taken

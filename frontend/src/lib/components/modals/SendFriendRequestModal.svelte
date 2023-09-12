@@ -20,7 +20,7 @@
 	let to_send_back: string
 
 	async function sendBackData() {
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response(to_send_back)
 		}
 	}

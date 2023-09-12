@@ -78,7 +78,7 @@
 	}
 
 	function onComplete() {
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response(cropped_image_file)
 		}
 	}

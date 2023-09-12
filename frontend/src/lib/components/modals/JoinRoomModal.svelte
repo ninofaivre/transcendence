@@ -26,7 +26,7 @@
 		const title = search_input
 		const password = password_input || undefined
 
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response({ title, password, id })
 		}
 	}

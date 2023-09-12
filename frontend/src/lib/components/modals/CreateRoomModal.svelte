@@ -21,13 +21,13 @@
 		const password: string | undefined = priv
 			? undefined
 			: (formdata.get("password") as string | null) || undefined
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response({ type, title, password })
 		}
 	}
 
 	function onClose() {
-		if ($modalStore[0].response) {
+		if ($modalStore[0]?.response) {
 			$modalStore[0].response(undefined)
 		}
 	}

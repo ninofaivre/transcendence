@@ -160,7 +160,7 @@
 		>
 			👥+
 		</button>
-		{#if d.selfPerms.includes("EDIT")}
+		{#if d.selfPerms.includes("DESTROY")}
 			<button
 				class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
 				on:click={() => {

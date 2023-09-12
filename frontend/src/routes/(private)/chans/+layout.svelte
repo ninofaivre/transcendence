@@ -138,7 +138,8 @@
 			else {
 				makeToast(`Joined ${title}`)
 				await invalidate(":chans")
-				goto("/chans/" + ret.body.id)
+				await invalidate(":chan:" + ret.body.id)
+				setTimeout(() => goto("/chans/" + ret.body.id), 1000)
 			}
 		}
 	}

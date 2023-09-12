@@ -8,14 +8,14 @@
 	import { Canvas } from "@threlte/core"
 	import { Text, HTML } from "@threlte/extras"
 	import Pong from "./Pong.svelte"
-	import { getContext  } from "svelte"
+	import { getContext } from "svelte"
 	import { GameDim } from "contract"
 	import { injectLookAtPlugin } from "./lookAtPlugin"
 
 	injectLookAtPlugin()
 	export let data: PageData
 
-	let state: GameStatus = { status: 'IDLE' }
+	let state: GameStatus = { status: "IDLE" }
 
 	// Fixed sizings
 	let court: (typeof GameDim)["court"] = GameDim.court
@@ -40,75 +40,70 @@
 	let timeout = 0
 	let value = 0
 	let progress: number
-    let timeoutId: number | null = null
+	let timeoutId: number | null = null
 	$: progress = (value * 100) / timeout
 
 	let game_socket: Writable<GameSocket> = getContext("game_socket")
 
-    function spinLoop(status: GameStatus['status']) {
-        if (state.status !== status) {
-            timeoutId = null
-            return ;
-        }
-        value -= 1;
-        if (value > 0)
-            timeoutId = window.setTimeout(spinLoop, 1000, status)
-        else
-            timeoutId = null
-    }
+	function spinLoop(status: GameStatus["status"]) {
+		if (state.status !== status) {
+			timeoutId = null
+			return
+		}
+		value -= 1
+		if (value > 0) timeoutId = window.setTimeout(spinLoop, 1000, status)
+		else timeoutId = null
+	}
 
-    function initSpin(ms: number, status: GameStatus['status']) {
-        if (timeoutId)
-            clearTimeout(timeoutId)
-        timeout = ms / 1000
-        value = Math.floor(timeout)
-        button_disabled = false
-        timeoutId = window.setTimeout(spinLoop, 1000, status)
-    }
+	function initSpin(ms: number, status: GameStatus["status"]) {
+		if (timeoutId) clearTimeout(timeoutId)
+		timeout = ms / 1000
+		value = Math.floor(timeout)
+		button_disabled = false
+		timeoutId = window.setTimeout(spinLoop, 1000, status)
+	}
 
-    function handleGameStatus(payload: GameStatus) {
-        console.log("pong gameStatus :", payload)
-		state = payload 
-        if (payload.status === "INIT" || payload.status === "RECONNECT") {
-            ;({ paddleLeftDisplayName, paddleRightDisplayName } = payload)
-            ;({ paddleLeftScore, paddleRightScore } = payload)
-            if (payload.status === 'RECONNECT')
-                return ;
-        }
-        if (payload.status === "INIT"
-            || payload.status === "BREAK"
-            || payload.status === "PAUSE"
-        ) {
-            initSpin(payload.timeout, payload.status)
-            return ;
-        }
-        if (payload.status === "END") {
-            ;({ paddleLeftScore, paddleRightScore } = payload)
-        }
-    }
+	function handleGameStatus(payload: GameStatus) {
+		console.log("pong gameStatus :", payload)
+		state = payload
+		if (payload.status === "INIT" || payload.status === "RECONNECT") {
+			;({ paddleLeftDisplayName, paddleRightDisplayName } = payload)
+			;({ paddleLeftScore, paddleRightScore } = payload)
+			if (payload.status === "RECONNECT") return
+		}
+		if (payload.status === "INIT" || payload.status === "BREAK" || payload.status === "PAUSE") {
+			initSpin(payload.timeout, payload.status)
+			return
+		}
+		if (payload.status === "END") {
+			;({ paddleLeftScore, paddleRightScore } = payload)
+		}
+	}
 
-    $game_socket.on("updatedGameStatus", (payload) => {
-        handleGameStatus(payload)
-    })
-
-    $game_socket.on("updatedGamePositions", (data) => {
-        ;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
-    })
-
-	$game_socket.emit("getGameStatus", "", (payload) => {
-        if (
-            payload.status === 'QUEUE' || payload.status === 'IDLE'
-                || payload.status === 'INVITED' || payload.status === 'INVITING'
-        ) {
-            handleGameStatus(payload)
-            return ;
-        }
-        ;({ paddleLeftDisplayName, paddleRightDisplayName } = payload)
-        ;({ paddleLeftScore, paddleRightScore } = payload)
-        handleGameStatus(payload)
+	$game_socket.on("updatedGameStatus", (payload) => {
+		handleGameStatus(payload)
 	})
 
-    $game_socket.on("newInGameMessage", (data) => {})
+	$game_socket.on("updatedGamePositions", (data) => {
+		;({ ball: ball_pos, paddleLeft: lpaddle_pos, paddleRight: rpaddle_pos } = data)
+	})
+
+	$game_socket.emit("getGameStatus", "", (payload) => {
+		if (
+			payload.status === "QUEUE" ||
+			payload.status === "IDLE" ||
+			payload.status === "INVITED" ||
+			payload.status === "INVITING"
+		) {
+			handleGameStatus(payload)
+			return
+		}
+		;({ paddleLeftDisplayName, paddleRightDisplayName } = payload)
+		;({ paddleLeftScore, paddleRightScore } = payload)
+		handleGameStatus(payload)
+	})
+
+	$game_socket.on("newInGameMessage", (data) => {})
 
 	function createGame() {
 		console.log("Clicked to create")
@@ -135,6 +130,11 @@
 	function surrend() {
 		$game_socket.emit("surrend", "")
 	}
+
+	let ball_color: string = "red"
+	let court_color: string = "green"
+	let lpaddle_color: string = "green"
+	let rpaddle_color: string = "green"
 </script>
 
 <div class="menu-container grid grid-cols-1">
@@ -238,14 +238,36 @@
 		font="/arcadeclassic.regular.ttf"
 	/>
 	<HTML position.x={court.width + 50} position.y={230}>
-		<button
-			on:click={surrend}
-			class="btn bg-orange-500 text-xs px-2 w-fit"
-            style:font-family="ArcadeClassic"
-            style:font-size="2rem"
-		>
-			Surrend
-		</button>
+		<div class="flex flex-col gap-3" style:font-family="ArcadeClassic">
+			<button
+				on:click={surrend}
+				class="btn w-fit bg-orange-500 px-2 text-xs"
+				style:font-size="2rem"
+			>
+				Surrend
+			</button>
+			<fieldset class="variant-ringed mt-4 flex flex-col justify-center gap-3 rounded-md p-4">
+				<legend class="variant-filled-tertiary rounded-md p-1 text-sm">
+					Change game colors
+				</legend>
+				<div class="grid grid-cols-[1fr_auto] gap-2" style:font-size="1rem">
+					<div>Left paddle</div>
+					<input bind:value={lpaddle_color} class="input" type="color" />
+				</div>
+				<div class="grid grid-cols-[1fr_auto] gap-2" style:font-size="1rem">
+					<div class="">Right paddle</div>
+					<input bind:value={rpaddle_color} class="input" type="color" />
+				</div>
+				<div class="grid grid-cols-[1fr_auto] gap-2" style:font-size="1rem">
+					<div>ball</div>
+					<input bind:value={ball_color} class="input" type="color" />
+				</div>
+				<div class="grid grid-cols-[1fr_auto] gap-2" style:font-size="1rem">
+					<div>Court</div>
+					<input bind:value={court_color} class="input" type="color" />
+				</div>
+			</fieldset>
+		</div>
 	</HTML>
 	<Pong
 		{court}
@@ -255,6 +277,10 @@
 		{lpaddle_pos}
 		{rpaddle_sz}
 		{rpaddle_pos}
+		{ball_color}
+		{court_color}
+		{lpaddle_color}
+		{rpaddle_color}
 		on:UP={onUP}
 		on:DOWN={onDOWN}
 		on:NONE={onNONE}
@@ -273,7 +299,7 @@
 	button {
 		align-self: center;
 		font-family: "ArcadeClassic", monospace;
-        justify-self: center;
+		justify-self: center;
 		font-size: 3rem;
 	}
 

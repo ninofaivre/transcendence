@@ -139,7 +139,7 @@
 				makeToast(`Joined ${title}`)
 				await invalidate(":chans")
 				await invalidate(":chan:" + ret.body.id)
-				setTimeout(() => goto("/chans/" + ret.body.id), 1000)
+				setTimeout(() => goto("/chans/" + ret.body.id), 2000)
 			}
 		}
 	}

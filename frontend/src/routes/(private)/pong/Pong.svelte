@@ -2,14 +2,11 @@
 	import type { GameDim } from "contract"
 	import type { Position } from "contract"
 
-	import { T, extend, useFrame, useThrelte } from "@threlte/core"
+	import { T, extend, useThrelte } from "@threlte/core"
 	import { Vector3 } from "three"
 	import { createEventDispatcher } from "svelte"
 	import Paddle from "./Paddle.svelte"
-	import Ball from "./Ball.svelte"
-	import { Suspense, Text } from "@threlte/extras"
 	import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
-	import { text } from "@sveltejs/kit"
 	import { injectLookAtPlugin } from "./lookAtPlugin"
 
 	export let court: Size = {
@@ -23,8 +20,12 @@
 	export let lpaddle_pos: Position
 	export let rpaddle_pos: Position
 	export let wall_width = lpaddle_sz.width
+	export let ball_color = "red"
+	export let court_color = "green"
+	export let lpaddle_color = "green"
+	export let rpaddle_color = "green"
 
-	const { size, renderer, invalidate } = useThrelte()
+	const { size } = useThrelte()
 
 	$: zoom = ($size.width * (70 / 100)) / court.width
 
@@ -124,14 +125,14 @@
 
 <!-- Ball -->
 <!-- <Ball {ball} /> -->
-<Paddle position={ball_pos} size={ball_sz} color="red" />
+<Paddle position={ball_pos} size={ball_sz} color={ball_color} />
 <!-- Left paddle  -->
-<Paddle position={lpaddle_pos} size={lpaddle_sz} color="green" />
+<Paddle position={lpaddle_pos} size={lpaddle_sz} color={lpaddle_color} />
 <!-- Right paddle  -->
-<Paddle position={rpaddle_pos} size={rpaddle_sz} color="green" />
+<Paddle position={rpaddle_pos} size={rpaddle_sz} color={rpaddle_color} />
 
 <!-- Court Walls -->
-<Paddle position={top_wall.position} size={top_wall.size} color="green" />
-<Paddle position={bottom_wall.position} size={bottom_wall.size} color="green" />
+<Paddle position={top_wall.position} size={top_wall.size} color={court_color} />
+<Paddle position={bottom_wall.position} size={bottom_wall.size} color={court_color} />
 <!-- <Paddle paddle={right_wall} /> -->
 <!-- <Paddle paddle={left_wall} /> -->

@@ -30,11 +30,11 @@
 
 	let spin = false
 	let keep_loading = true
-	let my_profile: boolean
-	$: my_profile = data.me.userName === data.user.userName
+    $: { data.me.userName === data.user.userName
+        goto("/myprofile")
+    }
 	const game_socket = getContext("game_socket")
 
-	if (my_profile) goto("/myprofile")
 
 	async function askFriend() {
 		const ret = await client.invitations.friend.createFriendInvitation({

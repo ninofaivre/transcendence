@@ -70,7 +70,7 @@
 			}),
 			addListenerToEventSource($sse_store, "UPDATED_CHAN_INFO",  (new_data) => {
 				console.log("UPDATED_CHAN_INFO")
-                invalidate(":chans")
+                invalidate("app:chans")
 			}),
 		)
 		return () => {

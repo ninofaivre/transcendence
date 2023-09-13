@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { client } from "$clients"
 	import { getModalStore } from "@skeletonlabs/skeleton"
+	import { zChanPassword, zChanTitle } from "contract"
 
 	const modalStore = getModalStore()
-
-	let minlength = 8
-	let maxlength = 100
 
 	let priv: boolean = false
 	let form: HTMLFormElement
@@ -64,14 +62,15 @@
 	on:submit|preventDefault={onDiscussionCreation}
 	class="card w-full space-y-4 p-6"
 >
-	<label for="title" class="label"> Choose a name for the room </label>
+	<label for="title" class="label"> Choose a name for the room (anything but '@')</label>
 	<input
 		bind:value={title_input}
 		type="text"
 		name="title"
 		id="title"
-		{minlength}
-		{maxlength}
+		minlength={zChanTitle.minLength}
+		maxlength={zChanTitle.maxLength}
+		pattern="[^@]*"
 		class="peer input"
 		required
 		autocomplete="off"
@@ -92,8 +91,8 @@
 		type="text"
 		name="password"
 		id="password"
-		{minlength}
-		{maxlength}
+		minlength={zChanPassword.minLength}
+		maxlength={zChanPassword.maxLength}
 		class="input"
 		disabled={priv}
 	/>

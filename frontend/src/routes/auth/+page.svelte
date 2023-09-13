@@ -12,7 +12,7 @@
 	} from "$env/static/public"
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
-	import { isContractError } from "contract"
+	import { isContractError, zUserName } from "contract"
 	import { onMount } from "svelte"
 
 	const checkError: (ret: { status: number; body: any }, what: string) => void = (window as any)
@@ -113,7 +113,8 @@
 					name="username"
 					class="input"
 					autocomplete="on"
-					minlength="3"
+					minlength={zUserName.minLength}
+					maxlength={zUserName.maxLength}
 					required
 				/>
 			</label>

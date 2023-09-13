@@ -8,7 +8,7 @@
 	import { ProgressRadial, getModalStore } from "@skeletonlabs/skeleton"
 	import { Paginator, SlideToggle, Table } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import { isContractError } from "contract"
+	import { isContractError, zUserName } from "contract"
 	import { tableMapperValues } from "@skeletonlabs/skeleton"
 	import { PUBLIC_BACKEND_URL, PUBLIC_PROFILE_PICTURE_MAX_SIZE_MB } from "$env/static/public"
 
@@ -179,6 +179,8 @@
 
 	let display_name_content: string = data.me.displayName
 	let name_already_exists: boolean = false
+	let name_too_short: boolean = false
+	let name_too_long: boolean = false
 	export function changeDisplayName(node: HTMLElement) {
 		let original_display_name: string = node.textContent as string
 
@@ -215,6 +217,8 @@
 					let userlist = ret.body.map((obj) => obj.displayName)
 					name_already_exists = userlist.includes(display_name_content)
 				}
+				if (display_name_content.length > zUserName.maxLength!) name_too_long
+				else if (display_name_content.length < zUserName.minLength!) name_too_short
 			}
 			if (enter_pressed) removeEditableAndSubmit()
 		}
@@ -282,6 +286,10 @@
 				>
 					{#if name_already_exists}
 						This name is already taken
+					{:else if name_too_long}
+						This name is too long
+					{:else if name_too_short}
+						This name is too short
 					{:else}
 						Available
 					{/if}

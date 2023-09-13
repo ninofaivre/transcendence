@@ -9,7 +9,7 @@
 	import { Text, HTML } from "@threlte/extras"
 	import Pong from "./Pong.svelte"
 	import { getContext } from "svelte"
-	import { GameDim } from "contract"
+	import { GameDim, GameSpeed } from "contract"
 	import { injectLookAtPlugin } from "./lookAtPlugin"
 	import { rulesSchema } from "contract"
 
@@ -147,6 +147,7 @@
 		const ballBaseSpeed = Number(formData.get("initial_speed"))
 		const ballAccelPercentage = Number(formData.get("acceleration"))
 		const ballAccelType = Boolean(formData.get("is-exponential")) ? "exponential" : "linear"
+        alert(ballAccelType)
 		$game_socket.emit("setRules", { ballBaseSpeed, ballAccelPercentage, ballAccelType })
 	}
 </script>
@@ -275,6 +276,7 @@
                                     max={max_init_speed}
                                     min={min_init_speed}
                                     step={50}
+                                    value={GameSpeed.ball}
                                 >
                                     <div class="my-4 flex items-center justify-between">
                                         <div class="font-bold">Initial speed</div>
@@ -285,20 +287,21 @@
                                     max={max_acceleration}
                                     min={min_acceleration}
                                     step={1}
+                                    value={GameSpeed.ballAccelPercentage}
                                 >
                                     <div class="my-4 flex items-center justify-between">
                                         <div class="font-bold">Acceleration</div>
                                     </div>
                                 </RangeSlider>
-                                <label for="exponential_or_linear" class="mb-0">
-                                    Exponential acceleration?</label
-                                >
-                                <input
-                                    id="exponential_or_linear"
-                                    name="is-exponential"
-                                    type="checkbox"
-                                    class="checkbox mt- mt-00"
-                                />
+                                <label class="mb-0">
+                                    Exponential acceleration?
+                                    <input
+                                        name="is-exponential"
+                                        type="checkbox"
+                                        class="checkbox mt-0"
+                                        checked
+                                    />
+                                </label >
                                 <button type="submit" class="variant-filled-warning btn rounded-md">
                                     Proceed with game
                                 </button>

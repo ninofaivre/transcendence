@@ -9,25 +9,21 @@ import { zUserStatus } from "../zod/user.zod"
 import { getErrorsForContract } from "../errors"
 
 export const defaultPermissions: z.infer<typeof zPermissionList>[] = [
-    "INVITE",
-    "SEND_MESSAGE",
-    "UPDATE_MESSAGE",
+	"INVITE",
+	"SEND_MESSAGE",
+	"UPDATE_MESSAGE",
 ]
 
 export const adminPermissions: z.infer<typeof zPermissionList>[] = [
-    "KICK",
-    "BAN",
-    "MUTE",
-    "DELETE_MESSAGE",
+	"KICK",
+	"BAN",
+	"MUTE",
+	"DELETE_MESSAGE",
 ]
 
 const c = initContract()
 
-export const zChanTitle = z
-	.string()
-	.nonempty()
-	.max(50)
-	.refine((title) => title !== "@me", { message: "forbidden title" })
+export const zChanTitle = z.string().nonempty().max(50).regex(/[^@]*/)
 export const zChanPassword = z.string().nonempty().min(8).max(150)
 export const zRoleName = z.string().nonempty()
 
@@ -71,7 +67,7 @@ export const zPermissionOverList = z.enum([
 
 export const zChanUser = z.object({
 	name: zUserName,
-    displayName: zUserName,
+	displayName: zUserName,
 	status: zUserStatus,
 	roles: z.array(zRoleName),
 	myPermissionOver: z.array(zPermissionOverList),
@@ -92,7 +88,7 @@ export const zChanReturn = z.object({
 const zChanDiscussionBaseElement = z.strictObject({
 	id: z.string().uuid(),
 	author: zUserName,
-    authorDisplayName: zUserName,
+	authorDisplayName: zUserName,
 	creationDate: z.date(),
 })
 
@@ -108,23 +104,23 @@ export const zChanDiscussionMessageReturnTest = z.union([
 	zChanDiscussionBaseMessage.extend({
 		content: z.string(),
 		isDeleted: z.literal(false),
-        isAuthorBlocked: z.boolean(),
+		isAuthorBlocked: z.boolean(),
 		hasBeenEdited: z.boolean(),
 		mentionMe: z.boolean(),
 	}),
 	zChanDiscussionBaseMessage.extend({
 		content: z.literal(""),
 		isDeleted: z.literal(true),
-        isAuthorBlocked: z.boolean(),
+		isAuthorBlocked: z.boolean(),
 		deletingUserName: zUserName,
-        deletingDisplayName: zUserName
+		deletingDisplayName: zUserName,
 	}),
 ])
 
 export const zChanDiscussionEventReturn = z.union([
 	zChanDiscussionBaseEvent.extend({
 		concernedUserName: zUserName.nullable(),
-        concernedDisplayName: zUserName.nullable(),
+		concernedDisplayName: zUserName.nullable(),
 		concernMe: z.boolean(),
 		eventType: zClassicChanEventType,
 	}),
@@ -136,7 +132,7 @@ export const zChanDiscussionEventReturn = z.union([
 	zChanDiscussionBaseEvent.extend({
 		eventType: z.literal("AUTHOR_MUTED_CONCERNED"),
 		concernedUserName: zUserName,
-        concernedDisplayName: zUserName,
+		concernedDisplayName: zUserName,
 		concernMe: z.boolean(),
 		timeoutInMs: zTimeOut,
 	}),
@@ -149,16 +145,16 @@ export const zChanDiscussionMessageReturn = z.union([
 			.union([zChanDiscussionMessageReturnTest, zChanDiscussionEventReturn])
 			.nullable(),
 		isDeleted: z.literal(false),
-        isAuthorBlocked: z.boolean(),
+		isAuthorBlocked: z.boolean(),
 		hasBeenEdited: z.boolean(),
 		mentionMe: z.boolean(),
 	}),
 	zChanDiscussionBaseMessage.extend({
 		content: z.literal(""),
 		isDeleted: z.literal(true),
-        isAuthorBlocked: z.boolean(),
+		isAuthorBlocked: z.boolean(),
 		deletingUserName: zUserName,
-        deletingDisplayName: zUserName
+		deletingDisplayName: zUserName,
 	}),
 ])
 
@@ -184,7 +180,7 @@ export const chansContract = c.router(
 						passwordProtected: z.boolean(),
 						nUsers: z.number().positive().int(),
 						id: z.string().uuid(),
-						title: zChanTitle
+						title: zChanTitle,
 					}),
 				),
 			},
@@ -476,7 +472,9 @@ const zUpdatedChan = zChanReturn.pick({
 	passwordProtected: true,
 	id: true,
 })
-const zUpdatedChanUser = zChanUser.pick({ displayName: true, roles: true, myPermissionOver: true }).partial()
+const zUpdatedChanUser = zChanUser
+	.pick({ displayName: true, roles: true, myPermissionOver: true })
+	.partial()
 
 export type ChanEvent =
 	| {

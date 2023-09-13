@@ -30,11 +30,12 @@
 			2FA code
 			<input
 				bind:value={input}
-				type="text"
+				type="number"
 				name="username"
 				class="input"
 				autocomplete="on"
-				minlength="3"
+                minlength={6}
+                maxlength={6}
 			/>
 		</label>
 		<button on:click={login2FA} class="variant-filled-primary btn btn-sm rounded-2xl">

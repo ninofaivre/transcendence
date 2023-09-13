@@ -9,7 +9,7 @@
 	} from "$env/static/public"
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
-	import { getToastStore } from "@skeletonlabs/skeleton"
+	import { zUserName } from "contract"
 
 	let ft_uri = new URL(PUBLIC_API42_OAUTH_URI)
 	ft_uri.searchParams.append("client_id", PUBLIC_API42_CLIENT_ID)
@@ -84,7 +84,8 @@
 			name="username"
 			class="input"
 			autocomplete="on"
-			minlength="3"
+			minlength={zUserName.minLength}
+			maxlength={zUserName.maxLength}
 		/>
 		{#if $page.url.searchParams.get("retry")}
 			<sub class="p-1 text-red-500"> This user is already taken </sub>

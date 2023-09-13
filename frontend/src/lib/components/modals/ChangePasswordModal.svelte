@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getModalStore } from "@skeletonlabs/skeleton"
+	import { zChanPassword } from "contract"
 	import { onMount } from "svelte"
 
 	const modalStore = getModalStore()
@@ -32,9 +33,25 @@
 		To remove the password entirely, leave both fields empty
 	</header>
 	<label for="first" class="label"> Password </label>
-	<input bind:value={first_input} type="text" class="input" on:keyup={() => {}} id="first" />
+	<input
+		bind:value={first_input}
+		type="text"
+		class="input"
+		on:keyup={() => {}}
+		id="first"
+		minlength={zChanPassword.minLength}
+		maxlength={zChanPassword.maxLength}
+	/>
 	<label for="second" class="label"> Confirm password </label>
-	<input bind:value={second_input} type="text" class="input" on:keyup={() => {}} id="second" />
+	<input
+		bind:value={second_input}
+		type="text"
+		class="input"
+		on:keyup={() => {}}
+		id="second"
+		minlength={zChanPassword.minLength}
+		maxlength={zChanPassword.maxLength}
+	/>
 	<sub class="text-red-500">
 		{#if not_same}
 			Passwords are different

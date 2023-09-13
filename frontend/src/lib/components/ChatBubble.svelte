@@ -231,11 +231,9 @@
 		contenteditable = true
 	}
 
-	let menu_items = [
-            { label: "Edit", handler: editHandler },
-            { label: "Delete", handler: forwardAsDeletionEvent },
-    ]
-    menu_items = []
+	let menu_items: ({ label: "Edit", handler: typeof editHandler }
+        | { label: "Delete", handler: typeof forwardAsDeletionEvent }
+    )[] = []
 
 	$: {
         let canDelete = false
@@ -257,8 +255,8 @@
                 canDelete = false
         }
         menu_items = [
-            ...(canEdit ? [{ label: "Edit", handler: editHandler } ] : []),
-            ...(canDelete ? [{ label: "Delete", handler: forwardAsDeletionEvent }] : []),
+            ...(canEdit ? [{ label: "Edit", handler: editHandler } as const] : []),
+            ...(canDelete ? [{ label: "Delete", handler: forwardAsDeletionEvent } as const] : []),
         ]
     }
 

@@ -29,6 +29,7 @@
 	let messages: MessageOrEvent[]
 	let sendLoadEvents: boolean = true
 	let disabled: boolean = false
+    $: disabled = !data.chan?.selfPerms.includes("SEND_MESSAGE")
 	let disabled_placeholder = "You have been muted" // ChatBox placeholder
 
 	// Important, resets variable on route parameter change
@@ -201,6 +202,11 @@
 			}),
 			addListenerToEventSource($sse_store!, "DELETED_CHAN_USER", (new_data) => {
 				console.log("DELETED_CHAN_USER")
+                invalidate("app:chans")
+                invalidate("app:chan:" + new_data.chanId)
+			}),
+			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (new_data) => {
+				console.log("UPDATED_CHAN_SELF_PERMS")
                 invalidate("app:chans")
                 invalidate("app:chan:" + new_data.chanId)
 			}),

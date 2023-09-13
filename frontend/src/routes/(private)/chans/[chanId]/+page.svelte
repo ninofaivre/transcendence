@@ -187,7 +187,9 @@
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (new_data) => {
 				console.log("UPDATED_CHAN_SELF_PERMS")
+                console.log(new_data.selfPerms)
 				invalidate("app:chans")
+                invalidate("app:chan:" + new_data.chanId)
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_USER", ({ chanId, user }) => {
 				console.log("UPDATED_CHAN_USER")

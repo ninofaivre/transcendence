@@ -244,7 +244,7 @@
                 if (isChan(discussion) && discussion.selfPerms.includes("SEND_MESSAGE")) {
                     canEdit = true
                 }
-                else if (!isChan(discussion)) {
+                else if (!isChan(discussion) && discussion.status === "ENABLED") {
                     canEdit = true
                 }
             }

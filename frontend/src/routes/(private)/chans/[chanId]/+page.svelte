@@ -199,8 +199,8 @@
 			}),
 			addListenerToEventSource($sse_store!, "DELETED_CHAN_USER", (new_data) => {
 				console.log("DELETED_CHAN_USER")
-				invalidate("app:chans")
-				// invalidateAll()
+                invalidate("app:chans")
+                invalidate("app:chan:" + new_data.chanId)
 			}),
 		)
 		return () => {

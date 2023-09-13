@@ -200,10 +200,10 @@
 				console.log("BANNED_CHAN_USER")
 				invalidate("app:chans")
 			}),
-			addListenerToEventSource($sse_store!, "DELETED_CHAN_USER", (new_data) => {
+			addListenerToEventSource($sse_store!, "DELETED_CHAN_USER", async (new_data) => {
 				console.log("DELETED_CHAN_USER")
-                invalidate("app:chans")
-                invalidate("app:chan:" + new_data.chanId)
+                await invalidate("app:chans")
+                await invalidate("app:chan:" + new_data.chanId)
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (new_data) => {
 				console.log("UPDATED_CHAN_SELF_PERMS")

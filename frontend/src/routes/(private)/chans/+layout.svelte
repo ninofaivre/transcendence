@@ -44,7 +44,6 @@
 		const destroyer: (() => void)[] = new Array(
 			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", async (new_data) => {
 				console.log("KICKED_FROM_CHAN")
-				// data.chanList = data.chanList.filter((el) => el.id != new_data.chanId)
 				await invalidate("app:chans")
 				await invalidate(`app:chan:${new_data.chanId}`)
 				if (new_data.chanId === $page.params.chanId) {

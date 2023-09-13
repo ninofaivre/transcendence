@@ -10,7 +10,7 @@
 	import { onDestroy, setContext } from "svelte"
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { writable } from "svelte/store"
-	import { goto, invalidate } from "$app/navigation"
+	import { goto, invalidate, invalidateAll } from "$app/navigation"
 	import { logged_in, reload_img } from "$stores"
 	import type { zConnectErrorData } from "contract"
 	import type { z } from "zod"
@@ -46,11 +46,12 @@
 		}),
 		addListenerToEventSource($sse_store, "UPDATED_USER_DISPLAY_NAME", (new_data) => {
             // if (new_data.intraUserName === data.me.userName) {
-                invalidate("app:me")
+                // invalidate("app:me")
             // }
             // else {
-                invalidate("app:chans")
+                // invalidate("app:chans")
             // }
+            invalidateAll()
 		}),
 	)
 	setContext("sse_store", sse_store)

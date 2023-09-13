@@ -29,8 +29,8 @@
             addListenerToEventSource($sse_store, "UPDATED_CHAN_INVITATION_STATUS", () => {
                 invalidate("app:chans:invitations")
             }),
-            addListenerToEventSource($sse_store, "UPDATED_FRIEND_INVITATION_STATUS", () => {
-                invalidate("app:friends:invitations")
+            addListenerToEventSource($sse_store, "CREATED_FRIENDSHIP", () => {
+                invalidate("app:friends")
             }),
 		)
 
@@ -107,15 +107,12 @@
 		// client.dms.getDmIdWithName(e.detail)
 	}
 
-	console.log("Your friendships are:", data.friendships)
-	console.log(tableMapperValues(data.friendships, ["friendName"]))
-
 	let friendTableSource: TableSource
 	$: friendTableSource = {
 		// A list of heading labels.
 		head: ["Friends"],
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues(data.friendships, ["friendName"]),
+		body: tableMapperValues(data.friendships, ["friendDisplayName"]),
 	}
 
 	async function onSendFriendRequest() {

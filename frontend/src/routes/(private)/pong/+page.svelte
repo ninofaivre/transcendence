@@ -148,6 +148,10 @@
 		const ballAccelPercentage = Number(formData.get("acceleration"))
 		const ballAccelType = Boolean(formData.get("is-exponential")) ? "exponential" : "linear"
 
+        // alert(ballBaseSpeed)
+        // alert(ballAccelPercentage)
+        // alert(ballAccelType)
+
 		$game_socket.emit("setRules", { ballBaseSpeed, ballAccelPercentage, ballAccelType })
 	}
 </script>
@@ -187,9 +191,9 @@
 			<div class="spinner justify-self-center" />
 		</div>
 	{:else if state.status === "INIT"}
-		<div class="grid grid-rows-2 gap-1">
+		<div class="flex flex-col items-center gap-4">
 			<div>FOUND A GAME !</div>
-			<div class="justify-self-center">
+			<div class="">
 				<ProgressRadial bind:value={progress} width="w-32" font={100}>
 					{value}
 				</ProgressRadial>
@@ -197,7 +201,7 @@
 			{#if state.hostIntraName === data.me.userName}
 				<form
 					on:submit|preventDefault={(e) => sendSettings(new FormData(e.currentTarget))}
-					class="variant-filled-error grid h-1/2 w-1/2 grid-rows-4 items-center gap-8 rounded-md p-6 text-xs outline outline-white"
+					class="variant-filled-error grid grid-rows-4 items-center rounded-md p-6 outline outline-white"
 				>
 					<RangeSlider
 						name="initial_speed"
@@ -213,7 +217,7 @@
 						name="acceleration"
 						max={max_acceleration}
 						min={min_acceleration}
-						step={10}
+						step={1}
 					>
 						<div class="mb-4 flex items-center justify-between">
 							<div class="font-bold">Acceleration</div>

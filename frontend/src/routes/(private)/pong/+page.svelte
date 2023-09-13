@@ -37,9 +37,6 @@
 	let max_init_speed = rulesSchema.shape.ballBaseSpeed.maxValue ?? undefined
 	let min_acceleration = rulesSchema.shape.ballAccelPercentage.minValue ?? undefined
 	let max_acceleration = rulesSchema.shape.ballAccelPercentage.maxValue ?? undefined
-	let init_speed_setting: number
-	let init_acceleration_setting: number
-	let exponential_or_linear: boolean
 
 	// Utils
 	let button_disabled = false

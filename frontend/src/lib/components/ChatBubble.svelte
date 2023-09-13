@@ -270,14 +270,21 @@
 		<!-- Need online status for that -->
 		<!-- <span class="relative left-1 text-xl text-green-600">&#8226</span> -->
 		{#if is_chan}
-			<ProfilePicture
-				src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture?id={message.author}"
-				fallback="https://i.pravatar.cc/?u={message.author}"
-				class="h-8 w-8"
+			<button
 				on:click={() => {
 					menu.length > 1 ? toggleAdminMenu() : menu[0].handler()
 				}}
-			/>
+				on:keydown={() =>
+					simpleKeypressHandlerFactory(["Enter"], () => {
+						menu.length > 1 ? toggleAdminMenu() : menu[0].handler()
+					})}
+			>
+				<ProfilePicture
+					src="{PUBLIC_BACKEND_URL}/api/users/{message.author}/profilePicture?id={message.author}"
+					fallback="https://i.pravatar.cc/?u={message.author}"
+					class="h-8 w-8"
+				/>
+			</button>
 		{/if}
 		{#if is_admin_menu_open}
 			<ol

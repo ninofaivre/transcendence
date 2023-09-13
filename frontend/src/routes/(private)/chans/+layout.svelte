@@ -46,6 +46,7 @@
 				console.log("KICKED_FROM_CHAN")
 				if (new_data.chanId === $page.params.chanId) {
                     invalidate("app:chans")
+                    invalidate(`app:chan:${new_data.chanId}`)
 				}
 			}),
 			addListenerToEventSource($sse_store!, "BANNED_FROM_CHAN", (new_data) => {
@@ -57,7 +58,7 @@
 			addListenerToEventSource($sse_store, "CREATED_CHAN", (new_data) => {
 				console.log("CREATED_CHAN")
 				invalidate("app:chans")
-				invalidate(`:chan:${new_data.id}`)
+				invalidate(`app:chan:${new_data.id}`)
 			}),
 			addListenerToEventSource($sse_store, "DELETED_CHAN", async (new_data) => {
 				console.log("DELETED_CHAN")

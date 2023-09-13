@@ -4,6 +4,7 @@
 
 	import { ProgressRadial, getModalStore } from "@skeletonlabs/skeleton"
 	import { timeReplyToInvitation } from "contract"
+	import { goto } from "$app/navigation"
 
 	const modalStore = getModalStore()
 	let state: "accepted" | "refused" | "timedOut" | "waiting" | "error" = "waiting"
@@ -25,9 +26,7 @@
 			}, 1000)
 		}
 		if (state === "accepted") {
-			if ($modalStore[0]?.response) {
-				$modalStore[0].response(true)
-			}
+			goto("/pong")
 		}
 	})
 

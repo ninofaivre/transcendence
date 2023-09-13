@@ -100,7 +100,6 @@ export class AuthController {
 			Record<"user", EnrichedRequest["user"] & { refreshToken: string; twoFA: boolean }>,
 	) {
 		return tsRestHandler(c.refreshTokens, async () => {
-			console.log(`twoFA: ${user.twoFA}`)
 			if (!(await this.authService.doesRefreshTokenMatch(user.username, user.refreshToken)))
 				return contractErrors.Unauthorized()
 			await this.authService.setNewTokensAsCookies(res, user)

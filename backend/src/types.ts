@@ -13,7 +13,6 @@ export interface EnrichedRequest extends Request {
 
 export const EnrichedRequest = createParamDecorator((data: never, ctx: ExecutionContext): EnrichedRequest => {
     const req: EnrichedRequest = ctx.switchToHttp().getRequest()
-    console.log(req.headers['sse-id'])
     const sseId = req.headers['sse-id']
     if (typeof sseId === "string")
         req.user['sseId'] = sseId

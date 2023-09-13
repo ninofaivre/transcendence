@@ -152,10 +152,6 @@ export class FriendsService {
         await this.dmsService.createAndNotifyClassicDmEvent(
             dmId,
             ClassicDmEventType.DELETED_FRIENDSHIP)
-        await this.prisma.directMessage.update({
-            where: { id: dmId },
-            data: { status: 'DISABLED' }
-        })
 	}
 
 	async getFriends(username: string) {

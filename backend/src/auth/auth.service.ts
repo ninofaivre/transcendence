@@ -60,7 +60,6 @@ export class AuthService {
 	}
 
 	public async getTokens(user: EnrichedRequest["user"] & { twoFA: boolean }) {
-		console.log(`getTokens : twoFA: ${user.twoFA}`)
 		const payload = {
 			username: user.username,
 			intraUserName: user.intraUserName,

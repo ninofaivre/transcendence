@@ -1177,7 +1177,8 @@ export class ChansService {
         })
     }))
     
-    async updateChan(username: string, chanId: string, body: RequestShapes['updateChan']['body']) {
+    async updateChan(reqUser: EnrichedRequest['user'], chanId: string, body: RequestShapes['updateChan']['body']) {
+        const { username } = reqUser
         const chan = await this.getChan({ id: chanId, users: { some: { name: username } } },
             {
                 ...this.getSelfPermSelect(username),
@@ -1211,7 +1212,7 @@ export class ChansService {
                 passwordProtected: !!password,
                 title: (body.title) ? body.title : null
             }
-        })
+        }, reqUser)
     }
 
 }

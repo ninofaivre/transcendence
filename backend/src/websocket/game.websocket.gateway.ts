@@ -117,13 +117,11 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     intraNameToSocketData = new Map<IntraUserName, SocketData>()
 
     handleConnection(client: EnrichedSocket, ...args: any[]) {
-        console.log(`${client.data.intraUserName} logged in with id ${client.id}`)
         this.userNameToSocketData.set(client.data.username, client.data)
         this.intraNameToSocketData.set(client.data.username, client.data)
     }
 
     handleDisconnect(client: EnrichedSocket) {
-        console.log(`${client.data.intraUserName} logged out with id ${client.id}`)
     }
 
     handleDeleteRoom(roomId: string) {
@@ -253,11 +251,8 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         @ConnectedSocket()client: EnrichedSocket,
         @MessageBody(EmptyValidation)payload: never
     ) {
-        console.log(`client ${client.data.intraUserName} is trying to queue.`)
-        console.log(`status is : ${client.data.status}`)
         if (client.data.status.type !== 'IDLE')
             return
-        console.log("queue :", client.data.intraUserName)
         client.data.status = { type: 'QUEUE' }
         this.server.sockets.to(client.data.intraUserName)
             .emit("updatedGameStatus", { status: "QUEUE" })
@@ -281,7 +276,6 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
     ) {
         if (client.data.status.type !== 'QUEUE')
             return
-        console.log("deQueue :", client.data.intraUserName)
         client.data.status = { type: 'IDLE' }
         this.server.sockets.to(client.data.intraUserName)
             .emit("updatedGameStatus", { status: "IDLE" })

@@ -124,6 +124,8 @@
 </script>
 
 {#each discussions as d}
+    {@const canEdit = d.selfPerms.includes("EDIT")}
+    {@const canDestroy = d.selfPerms.includes("DESTROY")}
 	<div
 		class={`flex place-items-center rounded px-1 py-2 ${
 			d.id != currentDiscussionId
@@ -137,21 +139,21 @@
 		</a>
 		{#if d.passwordProtected}
 			<button
-				class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
+				class={ canEdit ? "variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1" : "variant-glass-surface !cursor-default mx-[0.10rem] p-1"}
 				on:click={() => {
-					if (d.selfPerms.includes("EDIT")) changePasswordModal(d)
+					if (canEdit) changePasswordModal(d)
 				}}
 			>
 				🔒
 			</button>
 		{:else}
 			<button
-				class="variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1"
+				class={ canEdit ? "variant-ghost-secondary btn btn-sm mx-[0.10rem] p-1" : "variant-glass-surface-secondary !cursor-default mx-[0.10rem] p-1"}
 				on:click={() => {
-					if (d.selfPerms.includes("EDIT")) changePasswordModal(d)
+					if (canEdit) changePasswordModal(d)
 				}}
 			>
-				🔓
+				🔓 
 			</button>
 		{/if}
 		<button

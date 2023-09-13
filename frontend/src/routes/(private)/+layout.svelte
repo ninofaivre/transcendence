@@ -19,8 +19,6 @@
 	import { sseId } from "$lib/stores"
 	import { addListenerToEventSource } from "$lib/global"
 
-    export let data: LayoutData
-
 	console.log("private layout init")
 	const modalStore = getModalStore()
 

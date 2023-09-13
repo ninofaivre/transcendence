@@ -16,7 +16,7 @@
 	import { client } from "$clients"
 	import { addListenerToEventSource, shallowCopyPartialToNotPartial } from "$lib/global"
 	import { isContractError } from "contract"
-	import { invalidate, invalidateAll } from "$app/navigation"
+	import { goto, invalidate, invalidateAll } from "$app/navigation"
 
 	console.log($page.route.id, "page init")
 
@@ -196,9 +196,13 @@
 				console.log("UPDATED_CHAN_USER")
 				invalidate("app:chans")
 			}),
-			addListenerToEventSource($sse_store!, "BANNED_CHAN_USER", (new_data) => {
+			addListenerToEventSource($sse_store!, "BANNED_CHAN_USER", async (new_data) => {
 				console.log("BANNED_CHAN_USER")
-				invalidate("app:chans")
+				await invalidate("app:chans")
+				await invalidate(`app:chan:${new_data.chanId}`)
+				if (new_data.chanId === $page.params.chanId) {
+					goto("/chans")
+				}
 			}),
 			addListenerToEventSource($sse_store!, "DELETED_CHAN_USER", async (new_data) => {
 				console.log("DELETED_CHAN_USER")

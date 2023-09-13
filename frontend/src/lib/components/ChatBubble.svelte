@@ -204,8 +204,7 @@
 			} else {
 				makeToast(message.authorDisplayName + " lost Admin status")
 			}
-			// invalidate("app:chans")
-			// invalidate("app:chan:" + $page.params.chanId)
+			// No need to invalidate because event is received
 		}
 	}
 

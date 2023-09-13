@@ -48,7 +48,6 @@
 	let menu = menu_init
 	const is_chan = isChan(discussion)
 	let isAdmin: boolean | undefined
-    let canTalk: boolean = true
 
 	$: {
 		if (isChan(discussion)) {
@@ -62,7 +61,6 @@
 				const canKick = user.myPermissionOver.includes("KICK")
 				const canBan = user.myPermissionOver.includes("BAN")
 				const canToggleAdminStatus = (discussion as Chan).ownerName === my_name
-                canTalk = discussion.selfPerms.includes("SEND_MESSAGE")
 				menu = menu_init
 				if (canMute) {
 					menu = [
@@ -232,31 +230,37 @@
 		closeMenu()
 		contenteditable = true
 	}
-	let menu_items = from_me
-		? [
-				{ label: "Edit", handler: editHandler },
-				{ label: "Delete", handler: forwardAsDeletionEvent },
-		  ]
-		: []
+
+	let menu_items = [
+            { label: "Edit", handler: editHandler },
+            { label: "Delete", handler: forwardAsDeletionEvent },
+    ]
+    menu_items = []
 
 	$: {
-		if (from_me) {
-			if (message.isDeleted) {
-				menu_items = []
-			}
+        let canDelete = false
+        let canEdit = false
+		if (message.author === my_name) {
+            if (!message.isDeleted) {
+                canDelete = true
+                if (isChan(discussion) && discussion.selfPerms.includes("SEND_MESSAGE")) {
+                    canEdit = true
+                }
+                else if (!isChan(discussion)) {
+                    canEdit = true
+                }
+            }
 		}
-        if (canTalk) {
-            menu_items = [
-                    { label: "Edit", handler: editHandler },
-                    { label: "Delete", handler: forwardAsDeletionEvent },
-                ]
+        else if (isChan(discussion)) {
+             canDelete =  discussion.users.find(el => message.author === el.name)?.myPermissionOver.includes("DELETE_MESSAGE") || false
+            if (message.isDeleted) 
+                canDelete = false
         }
-        else {
-            menu_items = [
-				{ label: "Delete", handler: forwardAsDeletionEvent },
-            ]
-        }
-	}
+        menu_items = [
+            ...(canEdit ? [{ label: "Edit", handler: editHandler } ] : []),
+            ...(canDelete ? [{ label: "Delete", handler: forwardAsDeletionEvent }] : []),
+        ]
+    }
 
 	$: is_sent = message?.id !== ""
 

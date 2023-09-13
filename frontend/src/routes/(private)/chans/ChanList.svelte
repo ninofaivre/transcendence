@@ -90,6 +90,7 @@
 			} else {
 				if (password) makeToast("Changed password on " + d.title)
 				else makeToast("Removed password on" + d.title)
+                invalidate("app:chans")
 			}
 		}
 	}

@@ -178,7 +178,10 @@
 	_init = false
 
 	let display_name_content: string = data.me.displayName
-	$: display_name_content = data.me.displayName
+	$: {
+        if (data.me.displayName)
+            display_name_content = data.me.displayName
+    }
 	let name_already_exists: boolean = false
 	let name_too_short: boolean = false
 	let name_too_long: boolean = false

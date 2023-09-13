@@ -320,14 +320,6 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         this.gameService.setRules(payload, client.data.intraUserName)       
     }
 
-    @SubscribeMessage("getRules")
-    getRules(
-        @ConnectedSocket()client: EnrichedSocket,
-        @MessageBody(new ZodValidationPipe(rulesSchema))payload: Rules
-    ) {
-        return this.gameService.getRules(payload, client.data.intraUserName) || "error"
-    }
-
     @SubscribeMessage("getGameStatus")
     getGameStatus(
         @ConnectedSocket()client: EnrichedSocket,

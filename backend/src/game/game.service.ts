@@ -142,7 +142,7 @@ class Player {
 
     public getPauseStart = () => this._pauseData?.time
 
-    private away: boolean = false
+    public away: boolean = false
 
     private _pauseData: {
         time: number,
@@ -155,13 +155,14 @@ class Player {
             return
         if (this.game.status === "INIT" || this.game.status === "BREAK") {
             setTimeout(() => {
-                if (!this.away)
-                    return
-                this.pause()
-            }, (this.game.status === "INIT"
-                ? GameTimings.initTimeout
-                : GameTimings.breakTimeout) -
-                    Date.now() - this.game.startTimeout)
+                    if (!this.away)
+                        return
+                    this.pause()
+                }, (this.game.status === "INIT"
+                        ? GameTimings.initTimeout
+                        : GameTimings.breakTimeout) -
+                            Date.now() - this.game.startTimeout
+            )
             return
         }
         this._pauseData = {
@@ -285,12 +286,6 @@ class Ball extends GameObject {
             }
         }
     }
-
-    public getRules = (): Rules => ({
-        ballAccelPercentage: this.percentageSpeedIncr,
-        ballBaseSpeed: this.baseSpeed,
-        ballAccelType: this.speedIncrType
-    })
 
     constructor(
         _startingPosition: Position,
@@ -450,9 +445,12 @@ class Game {
         if (this._status !== 'INIT')
             return
         this.ball.setRules(payload)
+        this.status = 'PLAY'
+        if (this.playerA.away)
+            this.playerA.pause()
+        if (this.playerB.away)
+            this.playerB.pause()
     }
-
-    public getRules = () => this.ball.getRules
 
     public set status(newStatus: typeof this._status) {
         console.log(`status of game ${this.id} goes from ${this._status} to ${newStatus}`)
@@ -832,10 +830,6 @@ export class GameService {
         this.usersToGame.get(intraUserName)?.setRules(payload, intraUserName)
     }
     
-    public getRules(payload: Rules, intraUserName: IntraUserName) {
-        return this.usersToGame.get(intraUserName)?.getRules()
-    }
-
     public async getMatchHistory(take: number, username: string, cursor?: string) {
         const matches = await this.prisma.matchSummary.findMany({
             where: { OR:[{winnerName: username}, {looserName: username}] },

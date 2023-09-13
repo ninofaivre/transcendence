@@ -43,12 +43,12 @@ type Codes =
 // as const is only useful for precise type of message
 export const contractErrors = {
 
-    ForbiddenByEnv: (envKey: string, envValue: string | number) =>
+    ForbiddenByEnv: (envCondition: string) =>
     ({
         status: 403,
         body: {
             code: "ForbiddenByEnv",
-            message: `this route is forbidden because envVar ${envKey} is not set to ${envValue}`
+            message: `this route is forbidden because env condition :\n${envCondition}\nis not fullfilled`
         }
     } as const),
 

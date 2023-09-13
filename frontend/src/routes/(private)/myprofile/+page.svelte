@@ -14,7 +14,7 @@
 
 	import { reload_img } from "$stores"
 	import ProfilePicture from "$components/ProfilePicture.svelte"
-	import { goto, invalidate } from "$app/navigation"
+	import { invalidate } from "$app/navigation"
     import { page } from "$app/stores"
 
 	let _init = true
@@ -85,6 +85,7 @@
 	$: settings.size = match_history.length
 
 	let match_history: ReturnType<typeof remap> = remap(data.match_history)
+	$: match_history = remap(data.match_history)
 
 	let last_page_number: number
 	$: last_page_number = Math.ceil(match_history.length / settings.limit)
@@ -240,7 +241,6 @@
 					makeToast("Username successfully changed")
 					invalidate("app:me")
 					invalidate("app:match_history")
-                    goto($page.url)
 				}
 			}
 		}

@@ -42,11 +42,13 @@
 			// This callback cleans up the observer
 		}
 		const destroyer: (() => void)[] = new Array(
-			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (new_data) => {
+			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", async (new_data) => {
 				console.log("KICKED_FROM_CHAN")
-                invalidate("app:chans")
-                invalidate(`app:chan:${new_data.chanId}`)
+				// data.chanList = data.chanList.filter((el) => el.id != new_data.chanId)
+				await invalidate("app:chans")
+				await invalidate(`app:chan:${new_data.chanId}`)
 				if (new_data.chanId === $page.params.chanId) {
+                    alert("coucou")
 					goto("/chans")
 				}
 			}),

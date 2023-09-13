@@ -53,14 +53,16 @@
 		<a href={`/dms/${d.id}`} class="flex-1 justify-self-start">
 			{d.otherDisplayName}
 		</a>
-		<div class="flex justify-self-end">
+		<button
+			class="flex justify-self-end"
+			on:click={() => {
+				goto(`/users/${d.otherName}`)
+			}}
+		>
 			<ProfilePicture
 				src="{PUBLIC_BACKEND_URL}/api/users/{d.otherName}/profilePicture?id={d.otherName}"
 				fallback="https://i.pravatar.cc/?u={d.otherName}"
 				class="h-8 w-8"
-				on:click={() => {
-					goto(`/users/${d.otherName}`)
-				}}
 			/>
 			<span
 				data-relatedto={d.otherName}
@@ -69,7 +71,7 @@
 			>
 				&#8226
 			</span>
-		</div>
+		</button>
 	</div>
 {/each}
 

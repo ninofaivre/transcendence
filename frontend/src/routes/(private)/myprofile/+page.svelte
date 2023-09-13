@@ -14,7 +14,8 @@
 
 	import { reload_img } from "$stores"
 	import ProfilePicture from "$components/ProfilePicture.svelte"
-	import { invalidate } from "$app/navigation"
+	import { goto, invalidate } from "$app/navigation"
+    import { page } from "$app/stores"
 
 	let _init = true
 	export let data: PageData
@@ -239,6 +240,7 @@
 					makeToast("Username successfully changed")
 					invalidate("app:me")
 					invalidate("app:match_history")
+                    goto($page.url)
 				}
 			}
 		}

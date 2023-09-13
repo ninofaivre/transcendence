@@ -447,6 +447,8 @@ class Game {
     public setRules(payload: Rules, intraUserName: IntraUserName) {
         if (intraUserName !== this.hostIntraName)
             return
+        if (this._status !== 'INIT')
+            return
         this.ball.setRules(payload)
     }
 

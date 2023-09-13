@@ -328,8 +328,6 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
         return this.gameService.getRules(payload, client.data.intraUserName) || "error"
     }
 
-    @SubscribeMessage("")
-
     @SubscribeMessage("getGameStatus")
     getGameStatus(
         @ConnectedSocket()client: EnrichedSocket,

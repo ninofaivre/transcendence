@@ -13,8 +13,9 @@
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
 	import { getModalStore } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
-	import { goto } from "$app/navigation"
+	import { goto, invalidate } from "$app/navigation"
 	import ProfilePicture from "$components/ProfilePicture.svelte"
+	import { page } from "$app/stores"
 
 	const modalStore = getModalStore()
 
@@ -203,6 +204,7 @@
 			} else {
 				makeToast(message.authorDisplayName + " lost Admin status")
 			}
+			invalidate("app:chan:" + $page.params.chanId)
 		}
 	}
 

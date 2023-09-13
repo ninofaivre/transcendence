@@ -86,7 +86,6 @@ class Paddle extends GameObject {
     }
 
     private set position(newPosition: Position) {
-        // console.log("paddle is mooving")
         if (this.getRect().topY < 0)
             newPosition.y = Paddle.yOffset
         else if (this.getRect().botY > GameDim.court.height)
@@ -172,7 +171,6 @@ class Player {
             }).bind(this), this.pauseAmount)
         }
         this.game.status = 'PAUSE'
-        console.log(this.user.username, "paused game, pause Amount :", this.pauseAmount)
     }
 
     public unpause() {
@@ -185,7 +183,6 @@ class Player {
         const otherPlayer = this.game.getOtherPlayerByIntraUserName(this.user.intraUserName)
         if (!otherPlayer.isPause())
             this.game.status = 'PLAY'
-        console.log(this.user.username, "unpaused game, pause Amount :", this.pauseAmount)
     }
 
     public adapterListeners = {
@@ -257,7 +254,6 @@ class Ball extends GameObject {
     private set position(newPosition: Position) {
         this._position = newPosition
         if (this.doesBallCollideWithLeftRightWalls(this.getRect())) {
-            // console.log("point marqué")
             const scorer = (this.doesBallCollideWithLeftWall(this.getRect()))
                 ? this.game.playerB
                 : this.game.playerA
@@ -455,7 +451,6 @@ class Game {
     }
 
     public set status(newStatus: typeof this._status) {
-        console.log(`status of game ${this.id} goes from ${this._status} to ${newStatus}`)
         this._status = newStatus
         if (this._status !== 'PLAY')
             this.lastUpdateTime = null
@@ -485,8 +480,6 @@ class Game {
                 break ;
             }
             case 'BREAK': {
-                console.log(this.playerA.user.username, "score :", this.playerA.score)
-                console.log(this.playerB.user.username, "score :", this.playerB.score)
                 this.startTimeout = Date.now()
                 this.emitUpdatedGameStatus()
                 setTimeout(
@@ -619,7 +612,6 @@ class Game {
     }
 
     public async handleWin() {
-        console.log("handle win")
         this.status = 'END'
         this.playerA.removeAdapterListeners()
         this.playerB.removeAdapterListeners()
@@ -643,7 +635,6 @@ class Game {
     }
 
     public surrend(intraUserName: IntraUserName) {
-        console.log("surrend")
         const winner = this.playerA.user.intraUserName === intraUserName
             ? this.playerB
             : this.playerA
@@ -718,7 +709,6 @@ class Game {
     }
 
     public score(player: Player) {
-        console.log(player.user.username, "a marqué")
         player.score++
         this.callOnAllGameObjects("reset")
         if (player.score >= this.maxScore) {
@@ -787,7 +777,6 @@ export class GameService {
         userTwo: EnrichedRemoteSocket | EnrichedSocket,
         hostIntraName?: IntraUserName
     ) {
-        console.log("createGame")
         const newGame = new Game(userOne, userTwo, this.webSocket, this.eventEmitter, this.prisma, hostIntraName)
         this.games.set(newGame.id, newGame)
         this.usersToGame.set(userOne.data.intraUserName, newGame)

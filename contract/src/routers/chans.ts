@@ -171,7 +171,7 @@ export const chansContract = c.router(
 			summary: "search for a chan",
 			description: "only chan with type PUBLIC are searchable",
 			query: z.strictObject({
-				titleContains: zChanTitle,
+				titleContains: z.string().nonempty(),
 				nResult: z.number().positive().int().max(30).default(10),
 			}),
 			responses: {

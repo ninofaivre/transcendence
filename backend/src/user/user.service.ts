@@ -811,7 +811,6 @@ export class UserService {
             case "UNBAN_CHAN_USER": whereSearch = this.searchMode[dto.action](username, dto.params); break ;
             default : whereSearch = this.searchMode[dto.action](username, dto.params)
         }
-        console.log("whereSearch :", whereSearch)
         const users = await this.prisma.user.findMany({
             where: {
                 AND: [

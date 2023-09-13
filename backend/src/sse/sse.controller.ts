@@ -19,7 +19,6 @@ export class SseController {
 	@UseGuards(JwtAuthGuard)
 	@Sse("/")
 	async sse(@Request() req: EnrichedRequest, @Query('sse-id')sseId: string | undefined): Promise<Observable<MessageEvent>> {
-        console.log(`sseId: |${sseId}|`)
 		return this.sseService
 			.addSubject(req.user.username)
             .then(subject =>

@@ -245,6 +245,17 @@
 				menu_items = []
 			}
 		}
+        if (canTalk) {
+            menu_items = [
+                    { label: "Edit", handler: editHandler },
+                    { label: "Delete", handler: forwardAsDeletionEvent },
+                ]
+        }
+        else {
+            menu_items = [
+				{ label: "Delete", handler: forwardAsDeletionEvent },
+            ]
+        }
 	}
 
 	$: is_sent = message?.id !== ""

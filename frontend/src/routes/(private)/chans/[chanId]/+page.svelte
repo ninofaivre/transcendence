@@ -186,15 +186,19 @@
 				}
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_SELF_PERMS", (new_data) => {
+				console.log("UPDATED_CHAN_SELF_PERMS")
 				invalidate("app:chans")
 			}),
 			addListenerToEventSource($sse_store!, "UPDATED_CHAN_USER", ({ chanId, user }) => {
+				console.log("UPDATED_CHAN_USER")
 				invalidate("app:chans")
 			}),
 			addListenerToEventSource($sse_store!, "BANNED_CHAN_USER", (new_data) => {
+				console.log("BANNED_CHAN_USER")
 				invalidate("app:chans")
 			}),
 			addListenerToEventSource($sse_store!, "DELETED_CHAN_USER", (new_data) => {
+				console.log("DELETED_CHAN_USER")
 				// invalidate("app:chans")
 				invalidateAll()
 			}),

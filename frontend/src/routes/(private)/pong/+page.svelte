@@ -4,13 +4,14 @@
 	import type { Writable } from "svelte/store"
 	import type { PageData } from "./$types"
 
-	import { ProgressRadial } from "@skeletonlabs/skeleton"
+	import { ProgressRadial, RangeSlider } from "@skeletonlabs/skeleton"
 	import { Canvas } from "@threlte/core"
 	import { Text, HTML } from "@threlte/extras"
 	import Pong from "./Pong.svelte"
 	import { getContext } from "svelte"
 	import { GameDim } from "contract"
 	import { injectLookAtPlugin } from "./lookAtPlugin"
+	import { rulesSchema } from "contract"
 
 	injectLookAtPlugin()
 	export let data: PageData
@@ -30,6 +31,15 @@
 	let ball_pos: Position = { x: court.width / 2, y: court.height / 2 }
 	let lpaddle_pos: Position = { x: lpaddle_sz.width / 2, y: court.height / 2 }
 	let rpaddle_pos: Position = { x: court.width - rpaddle_sz.width / 2, y: court.height / 2 }
+
+	// Settings
+	let min_init_speed = rulesSchema.shape.ballBaseSpeed.minValue ?? undefined
+	let max_init_speed = rulesSchema.shape.ballBaseSpeed.maxValue ?? undefined
+	let min_acceleration = rulesSchema.shape.ballAccelPercentage.minValue ?? undefined
+	let max_acceleration = rulesSchema.shape.ballAccelPercentage.maxValue ?? undefined
+	let init_speed_setting: number
+	let init_acceleration_setting: number
+	let exponential_or_linear: boolean
 
 	// Utils
 	let button_disabled = false
@@ -135,6 +145,14 @@
 	let court_color: string = "#008000"
 	let lpaddle_color: string = "#008000"
 	let rpaddle_color: string = "#008000"
+
+	function sendSettings(formData: FormData) {
+		const ballBaseSpeed = Number(formData.get("initial_speed"))
+		const ballAccelPercentage = Number(formData.get("acceleration"))
+		const ballAccelType = Boolean(formData.get("is-exponential")) ? "exponential" : "linear"
+
+		$game_socket.emit("setRules", { ballBaseSpeed, ballAccelPercentage, ballAccelType })
+	}
 </script>
 
 <div class="menu-container grid grid-cols-1">
@@ -179,6 +197,45 @@
 					{value}
 				</ProgressRadial>
 			</div>
+			{#if state.hostIntraName === data.me.userName}
+				<form
+					on:submit|preventDefault={(e) => sendSettings(new FormData(e.currentTarget))}
+					class="variant-filled-error grid h-1/2 w-1/2 grid-rows-4 items-center gap-8 rounded-md p-6 text-xs outline outline-white"
+				>
+					<RangeSlider
+						name="initial_speed"
+						max={max_init_speed}
+						min={min_init_speed}
+						step={50}
+					>
+						<div class="mb-4 flex items-center justify-between">
+							<div class="font-bold">Initial speed</div>
+						</div>
+					</RangeSlider>
+					<RangeSlider
+						name="acceleration"
+						max={max_acceleration}
+						min={min_acceleration}
+						step={10}
+					>
+						<div class="mb-4 flex items-center justify-between">
+							<div class="font-bold">Acceleration</div>
+						</div>
+					</RangeSlider>
+					<label for="exponential_or_linear" class="mb-0">
+						Exponential acceleration?</label
+					>
+					<input
+						id="exponential_or_linear"
+						name="is-exponential"
+						type="checkbox"
+						class="checkbox"
+					/>
+					<button type="submit" class="variant-filled-warning btn rounded-md">
+						Proceed with game
+					</button>
+				</form>
+			{/if}
 		</div>
 	{:else if state.status === "END"}
 		<div class="grid grid-rows-2 gap-1">

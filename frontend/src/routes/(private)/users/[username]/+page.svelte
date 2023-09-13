@@ -17,6 +17,7 @@
 	import { goto, invalidate } from "$app/navigation"
 	import { getContext } from "svelte"
 	import ProfilePicture from "$components/ProfilePicture.svelte"
+	import { resolve } from "path"
 
 	export let data: PageData
 
@@ -67,15 +68,21 @@
 	}
 
 	async function inviteToGame() {
-		const modal: ModalSettings = {
-			type: "component",
-			component: "WaitForGameModal",
-			response: () => {
-				modalStore.close()
-			},
-			meta: { username: $page.params.username, game_socket: game_socket },
+		const ret = await new Promise<true | undefined>(() => {
+			const modal: ModalSettings = {
+				type: "component",
+				component: "WaitForGameModal",
+				response: (r) => {
+                    resolve(r)
+					modalStore.close()
+				},
+				meta: { username: $page.params.username, game_socket: game_socket },
+			}
+			modalStore.trigger(modal)
+		})
+		if (ret) {
+			goto("/pong")
 		}
-		modalStore.trigger(modal)
 	}
 
 	function remap(to_remap: MatchHistory) {

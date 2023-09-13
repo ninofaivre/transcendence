@@ -56,10 +56,8 @@
 			}),
 			addListenerToEventSource($sse_store, "CREATED_CHAN", (new_data) => {
 				console.log("CREATED_CHAN")
-				// data.chanList = [new_data, ...data.chanList]
-				// invalidate("app:chans")
-				// invalidate(`:chan:${new_data.id}`)
-				// goto("/chans")
+				invalidate("app:chans")
+				invalidate(`:chan:${new_data.id}`)
 			}),
 			addListenerToEventSource($sse_store, "DELETED_CHAN", async (new_data) => {
 				console.log("DELETED_CHAN")

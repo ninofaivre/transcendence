@@ -147,7 +147,6 @@
 		const ballBaseSpeed = Number(formData.get("initial_speed"))
 		const ballAccelPercentage = Number(formData.get("acceleration"))
 		const ballAccelType = Boolean(formData.get("is-exponential")) ? "exponential" : "linear"
-        alert(ballAccelType)
 		$game_socket.emit("setRules", { ballBaseSpeed, ballAccelPercentage, ballAccelType })
 	}
 </script>

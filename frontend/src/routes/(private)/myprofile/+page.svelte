@@ -225,7 +225,6 @@
 		const removeEditableAndSubmit = async () => {
 			node.contentEditable = "false"
 			if (!display_name_content || name_already_exists) {
-				alert(display_name_content)
 				node.textContent = original_display_name
 			} else {
 				const ret = await client.users.updateMe({

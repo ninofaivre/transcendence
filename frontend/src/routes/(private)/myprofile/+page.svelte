@@ -238,6 +238,7 @@
 					original_display_name = display_name_content
 					makeToast("Username successfully changed")
 					invalidate("app:me")
+					invalidate("app:match_history")
 				}
 			}
 		}

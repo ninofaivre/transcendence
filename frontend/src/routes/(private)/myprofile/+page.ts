@@ -2,7 +2,9 @@ import type { PageLoad } from "./$types"
 import { client } from "$clients"
 import { checkError } from "$lib/global"
 
-export const load: PageLoad = async ({ parent }) => {
+export const load: PageLoad = async ({ parent, depends }) => {
+
+    depends("app:match_history")
 	let { me } = await parent()
 
 	const match_history = await client.game.getMatchHistory({

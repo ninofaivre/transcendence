@@ -278,7 +278,7 @@ class Ball extends GameObject {
         this.baseSpeed = payload.ballBaseSpeed
         switch (this.speedIncrType) {
             case "linear": {
-                this.linearSpeedIncr = (this.baseSpeed * (payload.ballAccelPercentage / 100))
+                this.linearSpeedIncr = (this.baseSpeed * (payload.ballAccelPercentage / 100 / 1000))
                 break ;
             }
             case "exponential": {

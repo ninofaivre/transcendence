@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { GameDim, GameMovement, GameSpeed, GameStatus, GameTimings } from 'contract';
+import { GameDim, GameMovement, GameSpeed, GameStatus, GameTimings, Rules } from 'contract';
 import { EnrichedRequest } from "src/types"
 import { InternalEvents, emitInternalEvent } from 'src/internalEvents';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -272,12 +272,32 @@ class Ball extends GameObject {
         }
     }
 
+    public setRules(payload: Rules) {
+        this.speedIncrType = payload.ballAccelType
+        this.baseSpeed = payload.ballBaseSpeed
+        switch (this.speedIncrType) {
+            case "linear": {
+                this.linearSpeedIncr = (this.baseSpeed * (payload.ballAccelPercentage / 100))
+                break ;
+            }
+            case "exponential": {
+                this.exponentialSpeedIncr = payload.ballAccelPercentage / 100 / 1000
+            }
+        }
+    }
+
+    public getRules = (): Rules => ({
+        ballAccelPercentage: this.percentageSpeedIncr,
+        ballBaseSpeed: this.baseSpeed,
+        ballAccelType: this.speedIncrType
+    })
+
     constructor(
         _startingPosition: Position,
         private readonly game: Game,
-        private readonly baseSpeed = GameSpeed.ball / 1000,
+        private baseSpeed = GameSpeed.ball / 1000,
         private speed = baseSpeed,
-        percentageSpeedIncr = 2,
+        private percentageSpeedIncr = GameSpeed.ballAccelPercentage,
         private linearSpeedIncr = (baseSpeed * (percentageSpeedIncr / 100)) / 1000,
         private exponentialSpeedIncr = percentageSpeedIncr / 100 / 1000,
         private speedIncrType: 'linear' | 'exponential' = 'exponential'
@@ -423,6 +443,14 @@ class Game {
     public get status() {
         return this._status
     }
+
+    public setRules(payload: Rules, intraUserName: IntraUserName) {
+        if (intraUserName !== this.hostIntraName)
+            return
+        this.ball.setRules(payload)
+    }
+
+    public getRules = () => this.ball.getRules
 
     public set status(newStatus: typeof this._status) {
         console.log(`status of game ${this.id} goes from ${this._status} to ${newStatus}`)
@@ -796,6 +824,14 @@ export class GameService {
         if (!game)
             return
         game.updateMovement(intraUserName, move)
+    }
+
+    public setRules(payload: Rules, intraUserName: IntraUserName) {
+        this.usersToGame.get(intraUserName)?.setRules(payload, intraUserName)
+    }
+    
+    public getRules(payload: Rules, intraUserName: IntraUserName) {
+        return this.usersToGame.get(intraUserName)?.getRules()
     }
 
     public async getMatchHistory(take: number, username: string, cursor?: string) {

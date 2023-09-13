@@ -23,6 +23,7 @@ export const GameTimings = {
 export const GameSpeed = {
 	paddle: 450,
 	ball: 400, // will be a base speed (speed of ball will change over time) random value for now
+    ballAccelPercentage: 2
 }
 
 // export const zGameParameters = z.strictObject({

@@ -14,6 +14,8 @@ import { UserService } from "src/user/user.service";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import { InternalEvents } from "src/internalEvents";
 import { PrismaService } from "src/prisma/prisma.service";
+import { rulesSchema } from "contract"
+import { Rules } from "contract"
 
 export type IntraUserName = string
 
@@ -309,6 +311,24 @@ export class GameWebsocketGateway implements OnGatewayConnection, OnGatewayDisco
             return
         this.gameService.movement(client.data.intraUserName, payload)
     }
+
+    @SubscribeMessage("setRules")
+    setRules(
+        @ConnectedSocket()client: EnrichedSocket,
+        @MessageBody(new ZodValidationPipe(rulesSchema))payload: Rules
+    ) {
+        this.gameService.setRules(payload, client.data.intraUserName)       
+    }
+
+    @SubscribeMessage("getRules")
+    getRules(
+        @ConnectedSocket()client: EnrichedSocket,
+        @MessageBody(new ZodValidationPipe(rulesSchema))payload: Rules
+    ) {
+        return this.gameService.getRules(payload, client.data.intraUserName) || "error"
+    }
+
+    @SubscribeMessage("")
 
     @SubscribeMessage("getGameStatus")
     getGameStatus(

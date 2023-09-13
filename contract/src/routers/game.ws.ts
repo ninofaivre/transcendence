@@ -92,6 +92,13 @@ export const InvitationSchema = z.strictObject({
 })
 export type Invitation = z.infer<typeof InvitationSchema>
 
+export const rulesSchema = z.strictObject({
+    ballBaseSpeed: z.number().int().min(50).max(1000),
+    ballAccelPercentage: z.number().int().min(1).max(10),
+    ballAccelType: z.enum(["exponential", "linear"])
+})
+export type Rules = z.infer<typeof rulesSchema>
+
 export const InvitationClientResponseSchema = z.enum(["accepted", "refused"])
 export type InvitationClientResponse = z.infer<typeof InvitationClientResponseSchema>
 
@@ -129,6 +136,8 @@ export interface ClientToServerEvents {
 		) => void
     ) => void,
     ping: (e: "", callback: () => void) => void
+    setRules: (e: Rules) => void
+    getRules: (e: "", callback: (e: Rules | "error") => void) => void
 }
 
 export interface ServerToClientEvents {

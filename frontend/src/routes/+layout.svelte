@@ -36,7 +36,10 @@
 	}
 	;(window as any).checkError = function (ret: { status: number; body: any }, what: string) {
 		if (isContractError(ret)) {
-			;(window as any).makeToast("Could not " + what + " : " + ret.body.message)
+            if (PUBLIC_MODE.toLowerCase() === "dev")
+			    (window as any).makeToast("Could not " + what + " : " + ret.body.message)
+            else
+			    (window as any).makeToast("Could not " + what)
 			console.log(ret.body.code)
 		} else {
 			if (PUBLIC_MODE.toLowerCase() === "dev") {

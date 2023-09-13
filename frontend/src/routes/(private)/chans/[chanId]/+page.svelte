@@ -192,9 +192,10 @@
 				invalidate("app:chans")
 			}),
 			addListenerToEventSource($sse_store!, "BANNED_CHAN_USER", (new_data) => {
-				const chan = data.chanList.find((el) => el.id === new_data.chanId)
-				if (chan) chan.users = chan.users.filter((el) => el.name === new_data.username)
-				data.chanList = data.chanList
+				invalidate("app:chans")
+			}),
+			addListenerToEventSource($sse_store!, "DELETED_CHAN_USER", (new_data) => {
+				invalidate("app:chans")
 			}),
 		)
 		return () => {

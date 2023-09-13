@@ -93,7 +93,7 @@ export const InvitationSchema = z.strictObject({
 export type Invitation = z.infer<typeof InvitationSchema>
 
 export const rulesSchema = z.strictObject({
-    ballBaseSpeed: z.number().int().min(50).max(1000),
+    ballBaseSpeed: z.number().int().min(50).max(5000),
     ballAccelPercentage: z.number().int().min(1).max(10),
     ballAccelType: z.enum(["exponential", "linear"])
 })

@@ -275,10 +275,10 @@ class Ball extends GameObject {
 
     public setRules(payload: Rules) {
         this.speedIncrType = payload.ballAccelType
-        this.baseSpeed = payload.ballBaseSpeed
-        switch (this.speedIncrType) {
+        this.baseSpeed = payload.ballBaseSpeed / 1000
+        switch (payload.ballAccelType) {
             case "linear": {
-                this.linearSpeedIncr = (this.baseSpeed * (payload.ballAccelPercentage / 100 / 1000))
+                this.linearSpeedIncr = (this.baseSpeed * (payload.ballAccelPercentage / 100) / 1000)
                 break ;
             }
             case "exponential": {

@@ -2,8 +2,8 @@ import type { LoadEvent } from "@sveltejs/kit"
 import { client } from "$lib/clients"
 
 export const load = async ({ depends }: LoadEvent) => {
-	depends(":chans:invitations")
-	depends(":friends:invitations")
+	depends("app:chans:invitations")
+	depends("app:friends:invitations")
 
 	const chan_invites = await client.invitations.chan.getChanInvitations({
 		query: { status: ["PENDING"] },

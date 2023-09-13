@@ -12,7 +12,7 @@ export const load = async ({ depends }: LoadEvent) => {
 				)?.message}\"`,
 			)
 		} else ret.friends = body
-		depends(":friends")
+		depends("app:friends")
 	}
 	return ret
 }

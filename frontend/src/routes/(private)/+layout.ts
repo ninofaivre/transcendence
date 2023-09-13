@@ -7,10 +7,10 @@ export const load = async ({ depends }: LayoutLoadEvent) => {
 	console.log("layout load function from root/(private) layout")
 
 	// load
-	depends(":me")
 	const me_res = await client.users.getMe()
-	depends(":friends")
-	depends(":friendships")
+	depends("app:me")
+	depends("app:friends")
+	depends("app:friendships")
 	const friendships_res = await client.friends.getFriends()
 
 	// Check

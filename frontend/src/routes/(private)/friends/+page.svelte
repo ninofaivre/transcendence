@@ -47,7 +47,7 @@
 				}\"`
 				makeToast(message)
 				console.error(message)
-			} else invalidate(":friends:invitations")
+			} else invalidate("app:friends:invitations")
 		}
 	}
 
@@ -63,7 +63,7 @@
 				}\"`
 				makeToast(message)
 				console.error(message)
-			} else invalidate(":friends:invitations")
+			} else invalidate("app:friends:invitations")
 		}
 	}
 
@@ -79,7 +79,7 @@
 				}\"`
 				makeToast(message)
 				console.error(message)
-			} else invalidate(":chans:invitations")
+			} else invalidate("app:chans:invitations")
 		}
 	}
 
@@ -95,7 +95,7 @@
 				}\"`
 				makeToast(message)
 				console.error(message)
-			} else invalidate(":chans:invitations")
+			} else invalidate("app:chans:invitations")
 		}
 	}
 
@@ -133,7 +133,7 @@
 			if (ret.status != 201) {
 				checkError(ret, "create friend request")
 			} else {
-				invalidate(":friendships")
+				invalidate("app:friendships")
 				makeToast("Friend request sent")
 			}
 		}

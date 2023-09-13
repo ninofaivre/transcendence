@@ -28,7 +28,7 @@
 				checkError(ret, "send friend request")
 			} else {
 				// TODO either this works or I need the same object back
-				invalidate(":friendships")
+				invalidate("app:friendships")
 				console.log("Sent friendship request to " + input)
 			}
 		}

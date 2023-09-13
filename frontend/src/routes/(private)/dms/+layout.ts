@@ -4,7 +4,7 @@ import { client } from "$clients"
 export const load = async ({ depends }: LayoutLoadEvent) => {
 	console.log("layout load function from dms/ ")
 
-	depends(":dms")
+	depends("app:dms")
 	const { status, body: dmList } = await client.dms.getDms()
 	if (status !== 200) {
 		console.log(

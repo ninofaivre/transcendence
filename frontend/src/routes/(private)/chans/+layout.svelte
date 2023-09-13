@@ -6,7 +6,6 @@
 	import ChanList from "./ChanList.svelte"
 	import { getContext, onMount } from "svelte"
 	import { page } from "$app/stores"
-	import SendFriendRequest from "$components/SendFriendRequest.svelte"
 	import { addListenerToEventSource } from "$lib/global"
 	import { getModalStore, type ModalSettings } from "@skeletonlabs/skeleton"
 	import { client } from "$clients"
@@ -58,15 +57,15 @@
 			addListenerToEventSource($sse_store, "CREATED_CHAN", (new_data) => {
 				console.log("CREATED_CHAN")
 				// data.chanList = [new_data, ...data.chanList]
-				// invalidate(":chans")
+				// invalidate("app:chans")
 				// invalidate(`:chan:${new_data.id}`)
 				// goto("/chans")
 			}),
 			addListenerToEventSource($sse_store, "DELETED_CHAN", async (new_data) => {
 				console.log("DELETED_CHAN")
 				data.chanList = data.chanList.filter((el) => el.id != new_data.chanId)
-				await invalidate(":chans")
-				await invalidate(`:chan:${new_data.chanId}`)
+				await invalidate("app:chans")
+				await invalidate(`app:chan:${new_data.chanId}`)
 				if (new_data.chanId === $page.params.chanId) {
 					goto("/chans")
 				}
@@ -105,7 +104,7 @@
 			if (ret.status != 201) checkError(ret, "create a new room")
 			else {
 				makeToast(`Created a new ${type.toLowerCase()} room: ${ret.body.title}`)
-				await invalidate(":chans")
+				await invalidate("app:chans")
 				goto("/chans/" + ret.body.id)
 			}
 		}
@@ -163,7 +162,7 @@
 			if (ret.status != 201) {
 				checkError(ret, "create friend request")
 			} else {
-				invalidate(":friendships")
+				invalidate("app:friendships")
 				makeToast("Friendhisp request sent")
 			}
 		}

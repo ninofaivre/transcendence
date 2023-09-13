@@ -43,8 +43,8 @@
 		if (ret.status != 201) checkError(ret, "send friend request")
 		else {
 			makeToast("Sent friend request to " + data.user.displayName)
-			// invalidate(":friends:invitations")
-			invalidate(":user")
+			// invalidate("app:friends:invitations")
+			invalidate("app:user")
 		}
 	}
 
@@ -61,7 +61,7 @@
 			if (ret.status != 204) checkError(ret, "send friend request")
 			else {
 				makeToast("Revoked friendship with " + data.user.displayName)
-				invalidate(":friends")
+				invalidate("app:friends")
 			}
 		} else throw new Error("There is no friendShipId for this user")
 	}
@@ -168,7 +168,7 @@
 		if (ret.status != 201) checkError(ret, "block " + username)
 		else {
 			makeToast("Blocked " + username)
-			invalidate(":user")
+			invalidate("app:user")
 		}
 	}
 
@@ -183,7 +183,7 @@
 		if (ret.status != 204) checkError(ret, "remove block over " + username)
 		else {
 			makeToast("Unblocked " + username)
-			invalidate(":user")
+			invalidate("app:user")
 		}
 	}
 
@@ -201,7 +201,7 @@
 				}\"`
 				makeToast(message)
 				console.error(message)
-			} else invalidate(":friends:invitations")
+			} else invalidate("app:friends:invitations")
 		}
 	}
 </script>

@@ -147,11 +147,6 @@
 		const ballBaseSpeed = Number(formData.get("initial_speed"))
 		const ballAccelPercentage = Number(formData.get("acceleration"))
 		const ballAccelType = Boolean(formData.get("is-exponential")) ? "exponential" : "linear"
-
-        // alert(ballBaseSpeed)
-        // alert(ballAccelPercentage)
-        // alert(ballAccelType)
-
 		$game_socket.emit("setRules", { ballBaseSpeed, ballAccelPercentage, ballAccelType })
 	}
 </script>
@@ -261,25 +256,31 @@
 <Canvas frameloop="demand" debugFrameloop={false}>
 	<Text
 		text={paddleLeftDisplayName}
-		fontSize={100}
+		fontSize={60}
+        outlineColor="black"
+        outlineWidth={14}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}
 		font="/arcadeclassic.regular.ttf"
-		anchorX={-court.width / 2 + 400}
-		anchorY={court.height / 2 - 400}
+		anchorX={-court.width / 2 + 500 + paddleLeftDisplayName.length * 10 }
+		anchorY={court.height / 2 - 550}
 	/>
 	<Text
 		text={paddleRightDisplayName}
-		fontSize={100}
+		fontSize={60}
+        outlineColor="black"
+        outlineWidth={14}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}
 		font="/arcadeclassic.regular.ttf"
-		anchorX={-court.width / 2 - 400}
-		anchorY={court.height / 2 - 400}
+		anchorX={-court.width / 2 - 400 + paddleRightDisplayName.length * 10}
+		anchorY={court.height / 2 - 550}
 	/>
 	<Text
 		text={paddleLeftScore.toString()}
-		fontSize={100}
+        outlineColor="black"
+        outlineWidth={20}
+		fontSize={80}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}
 		anchorX={-court.width / 2 + 400}
@@ -288,7 +289,9 @@
 	/>
 	<Text
 		text={paddleRightScore.toString()}
-		fontSize={100}
+		fontSize={80}
+        outlineColor="black"
+        outlineWidth={20}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}
 		anchorX={-court.width / 2 - 400}

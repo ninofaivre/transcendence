@@ -137,9 +137,9 @@
 			if (ret.status != 200) checkError(ret, `join ${title}`)
 			else {
 				makeToast(`Joined ${title}`)
-				await invalidate(":chans")
-				await invalidate(":chan:" + ret.body.id)
-				setTimeout(() => goto("/chans/" + ret.body.id), 2000)
+				await invalidate("app:chans")
+				await invalidate("app:chan:" + ret.body.id)
+				goto("/chans/" + ret.body.id)
 			}
 		}
 	}

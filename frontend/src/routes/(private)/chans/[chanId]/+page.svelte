@@ -16,7 +16,7 @@
 	import { client } from "$clients"
 	import { addListenerToEventSource, shallowCopyPartialToNotPartial } from "$lib/global"
 	import { isContractError } from "contract"
-	import { invalidate } from "$app/navigation"
+	import { invalidate, invalidateAll } from "$app/navigation"
 
 	console.log($page.route.id, "page init")
 
@@ -195,7 +195,8 @@
 				invalidate("app:chans")
 			}),
 			addListenerToEventSource($sse_store!, "DELETED_CHAN_USER", (new_data) => {
-				invalidate("app:chans")
+				// invalidate("app:chans")
+				invalidateAll()
 			}),
 		)
 		return () => {

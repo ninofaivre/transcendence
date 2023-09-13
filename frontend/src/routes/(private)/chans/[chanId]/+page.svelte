@@ -199,9 +199,8 @@
 			}),
 			addListenerToEventSource($sse_store!, "DELETED_CHAN_USER", (new_data) => {
 				console.log("DELETED_CHAN_USER")
-				// invalidate("app:chans")
+				invalidate("app:chans")
 				// invalidateAll()
-				tmp = Date.now()
 			}),
 		)
 		return () => {
@@ -209,24 +208,21 @@
 			resizeObserver.unobserve(header as HTMLElement) // Is this necessary ?
 		}
 	})
-	let tmp: number
 </script>
 
 <!--Column layout -->
 <!-- Rows for Column 2-->
 <div class="grid grid-rows-[1fr_auto]" id="col2" style="height: calc(100vh - {header_height}px);">
 	<!-- Messages -->
-	{#key tmp}
-		<DiscussionDisplay
-			discussion={data.chan}
-			{messages}
-			{sendLoadEvents}
-			my_name={data.me.userName}
-			on:delete={deletionHandler}
-			on:edit={editHandler}
-			on:loadprevious={loadPreviousMessages}
-		/>
-	{/key}
+	<DiscussionDisplay
+		discussion={data.chan}
+		{messages}
+		{sendLoadEvents}
+		my_name={data.me.userName}
+		on:delete={deletionHandler}
+		on:edit={editHandler}
+		on:loadprevious={loadPreviousMessages}
+	/>
 	<section id="input-row" class="p-4">
 		<ChatBox
 			outline

@@ -147,139 +147,39 @@
 		const ballBaseSpeed = Number(formData.get("initial_speed"))
 		const ballAccelPercentage = Number(formData.get("acceleration"))
 		const ballAccelType = Boolean(formData.get("is-exponential")) ? "exponential" : "linear"
-
-        // alert(ballBaseSpeed)
-        // alert(ballAccelPercentage)
-        // alert(ballAccelType)
-
 		$game_socket.emit("setRules", { ballBaseSpeed, ballAccelPercentage, ballAccelType })
 	}
 </script>
 
-<div class="menu-container grid grid-cols-1">
-	{#if state.status === "PAUSE"}
-		<div class="justify-self self-center">
-			<div>
-				Waiting for {state.pausingDisplayName}
-			</div>
-			<div class="justify-self-center">
-				<ProgressRadial bind:value={progress} width="w-32" font={100}>
-					{value}
-				</ProgressRadial>
-			</div>
-		</div>
-	{:else if state.status === "BREAK"}
-		<div class="grid grid-rows-2 gap-1">
-			<div>READY ?</div>
-			<div class="justify-self-center">
-				<ProgressRadial bind:value={progress} width="w-32" font={100}>
-					{value}
-				</ProgressRadial>
-			</div>
-		</div>
-	{:else if state.status === "IDLE"}
-		<button
-			class="variant-ringed-primary btn rounded"
-			on:click={createGame}
-			disabled={button_disabled}
-		>
-			PLAY
-		</button>
-	{:else if state.status === "QUEUE"}
-		<div class="card grid grid-rows-2 gap-2 p-8">
-			<button class="variant-ringed-error btn rounded" on:click={cancelGame}>CANCEL</button>
-			<div class="spinner justify-self-center" />
-		</div>
-	{:else if state.status === "INIT"}
-		<div class="flex flex-col items-center gap-4">
-			<div>FOUND A GAME !</div>
-			<div class="">
-				<ProgressRadial bind:value={progress} width="w-32" font={100}>
-					{value}
-				</ProgressRadial>
-			</div>
-			{#if state.hostIntraName === data.me.userName}
-				<form
-					on:submit|preventDefault={(e) => sendSettings(new FormData(e.currentTarget))}
-					class="variant-filled-error grid grid-rows-4 items-center rounded-md p-6 outline outline-white"
-				>
-					<RangeSlider
-						name="initial_speed"
-						max={max_init_speed}
-						min={min_init_speed}
-						step={50}
-					>
-						<div class="mb-4 flex items-center justify-between">
-							<div class="font-bold">Initial speed</div>
-						</div>
-					</RangeSlider>
-					<RangeSlider
-						name="acceleration"
-						max={max_acceleration}
-						min={min_acceleration}
-						step={1}
-					>
-						<div class="mb-4 flex items-center justify-between">
-							<div class="font-bold">Acceleration</div>
-						</div>
-					</RangeSlider>
-					<label for="exponential_or_linear" class="mb-0">
-						Exponential acceleration?</label
-					>
-					<input
-						id="exponential_or_linear"
-						name="is-exponential"
-						type="checkbox"
-						class="checkbox"
-					/>
-					<button type="submit" class="variant-filled-warning btn rounded-md">
-						Proceed with game
-					</button>
-				</form>
-			{/if}
-		</div>
-	{:else if state.status === "END"}
-		<div class="grid grid-rows-2 gap-1">
-			{#if state.winnerDisplayName === data.me.displayName}
-				<div>🎉 You won 🎉</div>
-			{:else}
-				<div>
-					📉 {state.winnerDisplayName} has won 📉
-				</div>
-			{/if}
-			<button
-				class="variant-ringed-error btn rounded"
-				on:click={createGame}
-				disabled={button_disabled}
-			>
-				PLAY AGAIN ?
-			</button>
-		</div>
-	{/if}
-</div>
 
 <Canvas frameloop="demand" debugFrameloop={false}>
 	<Text
 		text={paddleLeftDisplayName}
-		fontSize={100}
+		fontSize={60}
+		outlineColor="black"
+		outlineWidth={14}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}
 		font="/arcadeclassic.regular.ttf"
-		anchorX={-court.width / 2 + 400}
-		anchorY={court.height / 2 - 400}
+		anchorX={-court.width / 2 + 500 + paddleLeftDisplayName.length * 10}
+		anchorY={court.height / 2 - 550}
 	/>
 	<Text
 		text={paddleRightDisplayName}
-		fontSize={100}
+		fontSize={60}
+		outlineColor="black"
+		outlineWidth={14}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}
 		font="/arcadeclassic.regular.ttf"
-		anchorX={-court.width / 2 - 400}
-		anchorY={court.height / 2 - 400}
+		anchorX={-court.width / 2 - 400 + paddleRightDisplayName.length * 10}
+		anchorY={court.height / 2 - 550}
 	/>
 	<Text
 		text={paddleLeftScore.toString()}
-		fontSize={100}
+		outlineColor="black"
+		outlineWidth={20}
+		fontSize={80}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}
 		anchorX={-court.width / 2 + 400}
@@ -288,7 +188,9 @@
 	/>
 	<Text
 		text={paddleRightScore.toString()}
-		fontSize={100}
+		fontSize={80}
+		outlineColor="black"
+		outlineWidth={20}
 		up={[0, -1, 0]}
 		lookAt={[0, 0, -1]}
 		anchorX={-court.width / 2 - 400}
@@ -327,6 +229,110 @@
 			</fieldset>
 		</div>
 	</HTML>
+    <HTML position.x={court.width/2} position.y={court.height/2 + 150} center={true}>
+        {#if state.status !== "PLAY"}
+            <div style:font-family="ArcadeClassic" class="pt-16 h-64 w-64 flex flex-col place-items-center gap-2 p-3" >
+                {#if state.status === "PAUSE"}
+                    <div class="justify-self self-center">
+                        <div>
+                            Waiting for {state.pausingDisplayName}
+                        </div>
+                        <div class="justify-self-center">
+                            <ProgressRadial bind:value={progress} width="w-32" font={100}>
+                                {value}
+                            </ProgressRadial>
+                        </div>
+                    </div>
+                {:else if state.status === "BREAK"}
+                    <div class="grid grid-rows-2 gap-1">
+                        <div>READY ?</div>
+                        <div class="justify-self-center">
+                            <ProgressRadial bind:value={progress} width="w-32" font={100}>
+                                {value}
+                            </ProgressRadial>
+                        </div>
+                    </div>
+                {:else if state.status === "IDLE"}
+                    <button
+                        class="variant-ringed-primary btn rounded "
+                        on:click={createGame}
+                        disabled={button_disabled}
+                    >
+                        PLAY
+                    </button>
+                {:else if state.status === "QUEUE"}
+                        <button class="variant-ringed-error btn rounded" on:click={cancelGame}>CANCEL</button>
+                        <ProgressRadial width="w-16"/>
+                {:else if state.status === "INIT"}
+                    <div class="flex flex-col items-center gap-4">
+                        {#if state.hostIntraName === data.me.userName}
+                            <form
+                                on:submit|preventDefault={(e) => sendSettings(new FormData(e.currentTarget))}
+                                class="variant-filled-error grid grid-rows-4 relative items-center rounded-md p-6 outline outline-white"
+                            >
+                                <RangeSlider
+                                    name="initial_speed"
+                                    max={max_init_speed}
+                                    min={min_init_speed}
+                                    step={50}
+                                >
+                                    <div class="my-4 flex items-center justify-between">
+                                        <div class="font-bold">Initial speed</div>
+                                    </div>
+                                </RangeSlider>
+                                <RangeSlider
+                                    name="acceleration"
+                                    max={max_acceleration}
+                                    min={min_acceleration}
+                                    step={1}
+                                >
+                                    <div class="my-4 flex items-center justify-between">
+                                        <div class="font-bold">Acceleration</div>
+                                    </div>
+                                </RangeSlider>
+                                <label for="exponential_or_linear" class="mb-0">
+                                    Exponential acceleration?</label
+                                >
+                                <input
+                                    id="exponential_or_linear"
+                                    name="is-exponential"
+                                    type="checkbox"
+                                    class="checkbox mt- mt-00"
+                                />
+                                <button type="submit" class="variant-filled-warning btn rounded-md">
+                                    Proceed with game
+                                </button>
+                            </form>
+                        {:else}
+                            <div>Found Game</div>
+                            <div class="">
+                                <ProgressRadial bind:value={progress} width="w-32" font={100}>
+                                    {value}
+                                </ProgressRadial>
+                            </div>
+                        {/if}
+                    </div>
+                    {:else if state.status === "END"}
+                    <div class="grid grid-rows-2 gap-1 place-items-center">
+                        {#if state.winnerDisplayName === data.me.displayName}
+                            <div>🎉 You won 🎉</div>
+                        {:else}
+                            <div>
+                                📉 {state.winnerDisplayName} has won 📉
+                            </div>
+                        {/if}
+                        <button
+                            class="variant-ringed-error btn rounded"
+                            on:click={createGame}
+                            disabled={button_disabled}
+                        >
+                            PLAY AGAIN
+                        </button>
+                    </div>
+                {/if}
+            </div>
+        {/if}
+	</HTML>
 	<Pong
 		{court}
 		{ball_sz}
@@ -344,36 +350,3 @@
 		on:NONE={onNONE}
 	/>
 </Canvas>
-
-<style>
-	.menu-container {
-		display: grid;
-		position: absolute;
-		grid-template-rows: 100vh;
-		grid-template-columns: 100vw;
-	}
-
-	.menu-container > div,
-	button {
-		align-self: center;
-		font-family: "ArcadeClassic", monospace;
-		justify-self: center;
-		font-size: 3rem;
-	}
-
-	.spinner {
-		height: 0.6em;
-		width: 0.6em;
-		border: 1px solid;
-		border-radius: 50%;
-		border-top-color: transparent;
-		border-bottom-color: transparent;
-		align-self: center;
-		animation: spin 0.8s linear infinite;
-	}
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-</style>

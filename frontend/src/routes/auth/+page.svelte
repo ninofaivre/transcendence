@@ -8,6 +8,7 @@
 		PUBLIC_RANDOM_PHRASE,
 		PUBLIC_API42_OAUTH_URI,
 		PUBLIC_FRONTEND_URL,
+        PUBLIC_DEV_LOGIN
 	} from "$env/static/public"
 	import { page } from "$app/stores"
 	import { goto } from "$app/navigation"
@@ -100,7 +101,7 @@
 		</div>
 	</div>
 </div>
-{#if isProd == false}
+{#if isProd == false || PUBLIC_DEV_LOGIN === 'true'}
 	<form class="mt-28 sm:mx-auto sm:w-full sm:max-w-md" on:submit|preventDefault={devLogin}>
 		<div class="grid grid-rows-2 gap-2 rounded-lg bg-gray-50 p-8 sm:px-10">
 			<label class="label text-black" for="username">

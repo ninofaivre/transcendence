@@ -6,7 +6,7 @@ import { Response } from "express"
 import { EnvService } from "src/env/env.service"
 import { JwtAuthGuard, JwtAuthGuardBase, RefreshTokenGuard } from "./jwt-auth.guard"
 import { isContractError } from "contract"
-import { DevGuard } from "src/env/env.guards"
+import { DevGuard, EnvGuard } from "src/env/env.guards"
 import { PrismaService } from "src/prisma/prisma.service"
 import { EnrichedRequest } from "src/types"
 
@@ -32,7 +32,7 @@ export class AuthController {
 		})
 	}
 
-	@UseGuards(DevGuard)
+	@UseGuards(new EnvGuard('some', ['PUBLIC_MODE', 'DEV'], ['PUBLIC_DEV_LOGIN', true]))
 	@TsRestHandler(c.loginDev)
 	async loginDev(@Res({ passthrough: true }) res: Response) {
 		return tsRestHandler(c.loginDev, async ({ body: { username } }) => {

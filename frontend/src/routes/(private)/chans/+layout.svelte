@@ -68,6 +68,10 @@
 					goto("/chans")
 				}
 			}),
+			addListenerToEventSource($sse_store, "UPDATED_CHAN_INFO",  (new_data) => {
+				console.log("UPDATED_CHAN_INFO")
+                invalidate(":chans")
+			}),
 		)
 		return () => {
 			if (header) resizeObserver.unobserve(header as HTMLElement)

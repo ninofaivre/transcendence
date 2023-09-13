@@ -18,16 +18,16 @@
 
 	onMount(() => {
 		const destroyer = new Array(
-			addListenerToEventSource($sse_store, "CREATED_CHAN_ELEMENT", (new_data) => {
-				console.log("CREATED_CHAN_ELEMENT")
+			// addListenerToEventSource($sse_store, "CREATED_CHAN_ELEMENT", (new_data) => {
+			// 	console.log("CREATED_CHAN_ELEMENT")
 				// invalidate("app:chans")
 				// TODO: mark chan unread on new message ?
-			}),
-			addListenerToEventSource($sse_store, "UPDATED_CHAN_MESSAGE", (new_data) => {
-				console.log("UPDATED_CHAN_MESSAGE")
-				// invalidate("app:chans")
-				// TODO: mark chan unread on new message ?
-			}),
+			// }),
+			// addListenerToEventSource($sse_store, "UPDATED_CHAN_MESSAGE", (new_data) => {
+			// 	console.log("UPDATED_CHAN_MESSAGE")
+			// 	// invalidate("app:chans")
+			// 	// TODO: mark chan unread on new message ?
+			// }),
 		)
 		return () => {
 			destroyer.forEach((func: () => void) => func())

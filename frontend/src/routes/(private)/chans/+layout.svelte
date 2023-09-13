@@ -45,13 +45,13 @@
 			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (new_data) => {
 				console.log("KICKED_FROM_CHAN")
 				if (new_data.chanId === $page.params.chanId) {
-					data.chanList = data.chanList.filter((el) => el.id === new_data.chanId)
+                    invalidate("app:chans")
 				}
 			}),
 			addListenerToEventSource($sse_store!, "BANNED_FROM_CHAN", (new_data) => {
 				console.log("BANNED_FROM_CHAN")
 				if (new_data.chanId === $page.params.chanId) {
-					data.chanList = data.chanList.filter((el) => el.id === new_data.chanId)
+                    invalidate("app:chans")
 				}
 			}),
 			addListenerToEventSource($sse_store, "CREATED_CHAN", (new_data) => {

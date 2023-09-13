@@ -20,12 +20,12 @@
 		const destroyer = new Array(
 			addListenerToEventSource($sse_store, "CREATED_CHAN_ELEMENT", (new_data) => {
 				console.log("CREATED_CHAN_ELEMENT")
-				// invalidate(":chans")
+				// invalidate("app:chans")
 				// TODO: mark chan unread on new message ?
 			}),
 			addListenerToEventSource($sse_store, "UPDATED_CHAN_MESSAGE", (new_data) => {
 				console.log("UPDATED_CHAN_MESSAGE")
-				// invalidate(":chans")
+				// invalidate("app:chans")
 				// TODO: mark chan unread on new message ?
 			}),
 		)
@@ -57,7 +57,7 @@
 			if (ret.status != 201) checkError(ret, `invite ${r} to this channel`)
 			else {
 				makeToast(`Invited ${r} to this channel`)
-				invalidate(":chans:invitations") // Does this work ? TODO
+				invalidate("app:chans:invitations") // Does this work ? TODO
 			}
 		}
 	}

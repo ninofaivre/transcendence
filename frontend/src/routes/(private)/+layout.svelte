@@ -44,7 +44,7 @@
 			reload_img.set({ id: new_data.intraUserName, trigger: Date.now() })
 		}),
 		addListenerToEventSource($sse_store, "UPDATED_USER_DISPLAY_NAME", (new_data) => {
-			invalidate(":me")
+			invalidate("app:me")
 		}),
 	)
 	setContext("sse_store", sse_store)

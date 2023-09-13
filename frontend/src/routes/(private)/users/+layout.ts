@@ -6,7 +6,7 @@ import type { FriendInvitations } from "$types"
 export const load: LayoutLoad = async ({ depends }) => {
 	console.log("layout load function from users/ ")
 
-	depends(":friends:invitations")
+	depends("app:friends:invitations")
 	const friend_invitations = await client.invitations.friend.getFriendInvitations()
 
 	if (friend_invitations.status !== 200) {

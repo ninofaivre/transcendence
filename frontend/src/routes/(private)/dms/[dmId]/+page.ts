@@ -3,7 +3,7 @@ import { client } from "$clients"
 import { checkError } from "$lib/global"
 
 export const load = async ({ depends, params }: PageLoadEvent) => {
-	depends(`:dm:${params.dmId}`)
+	depends(`app:dm:${params.dmId}`)
 	const ret = await client.dms.getDmElements({
 		params: {
 			dmId: params.dmId,

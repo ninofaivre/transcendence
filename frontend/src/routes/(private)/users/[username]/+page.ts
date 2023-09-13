@@ -4,7 +4,7 @@ import { checkError } from "$lib/global"
 
 export const load: PageLoad = async ({ params, depends }) => {
 	console.log("[username] page load")
-	depends(":user")
+	depends("app:user")
 	const user = await client.users.getUser({
 		params: {
 			userName: params.username,

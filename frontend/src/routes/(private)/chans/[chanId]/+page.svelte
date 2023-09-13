@@ -165,8 +165,8 @@
 			addListenerToEventSource($sse_store!, "CREATED_CHAN_USER", (new_data) => {
 				console.log("Server message: New chan user", new_data)
 				if (new_data.chanId === $page.params.chanId) {
-					invalidate(":chans")
-					invalidate(":chan:" + new_data.chanId)
+					invalidate("app:chans")
+					invalidate("app:chan:" + new_data.chanId)
 				}
 			}),
 			addListenerToEventSource($sse_store!, "CREATED_CHAN_ELEMENT", (new_data) => {

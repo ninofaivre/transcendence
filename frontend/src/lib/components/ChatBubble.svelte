@@ -48,9 +48,10 @@
 	let menu = menu_init
 	const is_chan = isChan(discussion)
 	let isAdmin: boolean | undefined
+    let canTalk: boolean = true
 
 	$: {
-		if (is_chan) {
+		if (isChan(discussion)) {
 			const user = (discussion as Chan).users.find(({ name }) => {
 				return message.author === name
 			})
@@ -61,6 +62,7 @@
 				const canKick = user.myPermissionOver.includes("KICK")
 				const canBan = user.myPermissionOver.includes("BAN")
 				const canToggleAdminStatus = (discussion as Chan).ownerName === my_name
+                canTalk = discussion.selfPerms.includes("SEND_MESSAGE")
 				menu = menu_init
 				if (canMute) {
 					menu = [

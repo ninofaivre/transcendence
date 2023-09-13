@@ -44,9 +44,10 @@
 		const destroyer: (() => void)[] = new Array(
 			addListenerToEventSource($sse_store, "KICKED_FROM_CHAN", (new_data) => {
 				console.log("KICKED_FROM_CHAN")
+                invalidate("app:chans")
+                invalidate(`app:chan:${new_data.chanId}`)
 				if (new_data.chanId === $page.params.chanId) {
-                    invalidate("app:chans")
-                    invalidate(`app:chan:${new_data.chanId}`)
+					goto("/chans")
 				}
 			}),
 			addListenerToEventSource($sse_store!, "BANNED_FROM_CHAN", (new_data) => {

@@ -2,6 +2,7 @@
 	import type { GameSocket } from "$types"
 	import { ProgressRadial, type ModalSettings } from "@skeletonlabs/skeleton"
 	import type { Writable } from "svelte/store"
+	import type { LayoutData } from "../$types"
 	import { get } from "svelte/store"
 
 	import { PUBLIC_BACKEND_URL } from "$env/static/public"
@@ -17,6 +18,8 @@
 
 	import { sseId } from "$lib/stores"
 	import { addListenerToEventSource } from "$lib/global"
+
+    export let data: LayoutData
 
 	console.log("private layout init")
 	const modalStore = getModalStore()
@@ -44,7 +47,12 @@
 			reload_img.set({ id: new_data.intraUserName, trigger: Date.now() })
 		}),
 		addListenerToEventSource($sse_store, "UPDATED_USER_DISPLAY_NAME", (new_data) => {
-			invalidate("app:me")
+            // if (new_data.intraUserName === data.me.userName) {
+                invalidate("app:me")
+            // }
+            // else {
+                invalidate("app:chans")
+            // }
 		}),
 	)
 	setContext("sse_store", sse_store)

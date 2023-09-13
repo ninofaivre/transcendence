@@ -231,7 +231,7 @@
 	</HTML>
     <HTML position.x={court.width/2} position.y={court.height/2 + 150} center={true}>
         {#if state.status !== "PLAY"}
-            <div style:font-family="ArcadeClassic" class="pt-16 h-64 w-64 flex flex-col place-items-center gap-2 p-3" >
+            <div style:font-family="ArcadeClassic" class="pt-16 h-64 w-64 flex flex-col place-items-center gap-2 p-3 bg-surface-900 rounded" >
                 {#if state.status === "PAUSE"}
                     <div class="justify-self self-center">
                         <div>
@@ -268,7 +268,7 @@
                         {#if state.hostIntraName === data.me.userName}
                             <form
                                 on:submit|preventDefault={(e) => sendSettings(new FormData(e.currentTarget))}
-                                class="variant-filled-error grid grid-rows-4 relative items-center rounded-md p-6 outline outline-white"
+                                class="variant-filled-error grid grid-rows-4 relative items-center rounded-md p-6 outline outline-white bottom-24"
                             >
                                 <RangeSlider
                                     name="initial_speed"

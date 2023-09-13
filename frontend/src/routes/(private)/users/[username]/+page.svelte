@@ -30,9 +30,12 @@
 
 	let spin = false
 	let keep_loading = true
-    $: { data.me.userName === data.user.userName
-        goto("/myprofile")
+
+    $: {
+        if (data.me.userName === data.user.userName)
+            goto("/myprofile")
     }
+
 	const game_socket = getContext("game_socket")
 
 

@@ -55,7 +55,7 @@
 				return message.author === name
 			})
 			if (user) {
-				const isAdmin = user.roles.includes("ADMIN")
+				isAdmin = user.roles.includes("ADMIN")
 				const isMuted = user.myPermissionOver.includes("UNMUTE")
 				const canMute = user.myPermissionOver.includes("MUTE")
 				const canKick = user.myPermissionOver.includes("KICK")
@@ -204,7 +204,8 @@
 			} else {
 				makeToast(message.authorDisplayName + " lost Admin status")
 			}
-			invalidate("app:chan:" + $page.params.chanId)
+			// invalidate("app:chans")
+			// invalidate("app:chan:" + $page.params.chanId)
 		}
 	}
 

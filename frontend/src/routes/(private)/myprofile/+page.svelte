@@ -41,15 +41,13 @@
 		})
 		let fetchMethod = twoFA ? client.users.enable2FA : client.users.disable2FA
 		if (code) {
-			if (twoFA) {
-				const ret = await fetchMethod({
-					body: { twoFAtoken: code },
-				})
-				if (ret.status !== 200) {
-					checkError(ret, `${twoFA ? "enable" : "disable"} 2FA`)
-					twoFA = !twoFA
-				}
-			}
+            const ret = await fetchMethod({
+                body: { twoFAtoken: code },
+            })
+            if (ret.status !== 200) {
+                checkError(ret, `${twoFA ? "enable" : "disable"} 2FA`)
+                twoFA = !twoFA
+            }
 		} else twoFA = !twoFA
 	}
 

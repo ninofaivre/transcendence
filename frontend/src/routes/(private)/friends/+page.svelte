@@ -213,17 +213,21 @@
 	</fieldset>
 </div>
 
-{#if friendTableSource.body.length > 0}
-	<div class="flex items-center justify-center">
-		<Table source={friendTableSource} interactive={true} on:selected={messageFriend} />
-	</div>
-{:else}
-	<div
-		class="variant-ringed-tertiary m-3 rounded-xl p-7 text-center text-xl font-bold text-gray-400"
-	>
-		No friendships yet
-	</div>
-{/if}
+<fieldset class="variant-ringed-tertiary m-3 rounded-xl p-7 text-gray-400"
+>
+    <legend class="variant-filled-tertiary px-3 rounded">
+        Friends
+    </legend>
+    {#if friendTableSource.body.length > 0}
+        <div class="flex items-center justify-center">
+            <Table source={friendTableSource} interactive={true} on:selected={messageFriend} />
+        </div>
+    {:else}
+        <div class="text-center text-xl">
+            No friendships yet
+        </div>
+    {/if}
+</fieldset>
 
 <style>
 </style>

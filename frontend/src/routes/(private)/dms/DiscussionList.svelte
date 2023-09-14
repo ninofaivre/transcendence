@@ -27,8 +27,8 @@
 					} else {
 						dot_to_update.style.visibility = "visible"
 						if (data.status === "GAME") {
-							dot_to_update.innerHTML = "&#127918" // 🎮
-							// dot_to_update.innerHTML = "&#127955" // 🏓
+							// dot_to_update.innerHTML = "&#127918" // 🎮
+							dot_to_update.innerHTML = "&#127955" // 🏓
 						} else if (data.status === "ONLINE" || data.status === "QUEUE") {
 							dot_to_update.innerHTML = "&#8226"
 						}

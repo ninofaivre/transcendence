@@ -223,7 +223,7 @@
             <Table source={friendTableSource} interactive={true} on:selected={messageFriend} />
         </div>
     {:else}
-        <div class="text-center text-xl">
+        <div class="text-center text-xl font-bold">
             No friendships yet
         </div>
     {/if}

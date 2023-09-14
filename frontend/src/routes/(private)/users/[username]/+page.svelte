@@ -167,7 +167,7 @@
 		})
 		if (ret.status != 201) checkError(ret, "block " + username)
 		else {
-			makeToast("Blocked " + username)
+			makeToast("Blocked " + data.user.displayName)
 			invalidate("app:user")
 		}
 	}
@@ -182,7 +182,7 @@
 		})
 		if (ret.status != 204) checkError(ret, "remove block over " + username)
 		else {
-			makeToast("Unblocked " + username)
+			makeToast("Unblocked " + data.user.displayName)
 			invalidate("app:user")
 		}
 	}

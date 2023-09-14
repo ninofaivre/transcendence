@@ -15,8 +15,10 @@
 	import { page } from "$app/stores"
 	import { Paginator } from "@skeletonlabs/skeleton"
 	import { goto, invalidate } from "$app/navigation"
-	import { getContext } from "svelte"
+	import { getContext, onDestroy } from "svelte"
 	import ProfilePicture from "$components/ProfilePicture.svelte"
+	import type { Writable } from "svelte/store"
+	import { addListenerToEventSource } from "$lib/global"
 
 	export let data: PageData
 
@@ -31,13 +33,11 @@
 	let spin = false
 	let keep_loading = true
 
-    $: {
-        if (data.me.userName === data.user.userName)
-            goto("/myprofile")
-    }
+	$: {
+		if (data.me.userName === data.user.userName) goto("/myprofile")
+	}
 
 	const game_socket = getContext("game_socket")
-
 
 	async function askFriend() {
 		const ret = await client.invitations.friend.createFriendInvitation({
@@ -204,6 +204,17 @@
 			} else invalidate("app:friends:invitations")
 		}
 	}
+
+	let sse_store: Writable<EventSource> = getContext("sse_store")
+	const destroy_me = new Array(
+		addListenerToEventSource($sse_store, "BLOCKED_USER", () => {
+			invalidate("app:user")
+		}),
+		addListenerToEventSource($sse_store, "UNBLOCKED_USER", () => {
+			invalidate("app:user")
+		}),
+	)
+	onDestroy(() => destroy_me.forEach((func) => func()))
 </script>
 
 <!-- Container -->

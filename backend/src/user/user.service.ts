@@ -264,8 +264,12 @@ export class UserService {
 			data: dto,
 			select: {
                 ...this.myProfileSelect,
-                chans: {
-                    select: { users: { select: { name: true } } }
+                chanDiscussionElement: {
+                    select: {
+                        chan: {
+                            select: { users: { select: { name: true } } }
+                        }
+                    }
                 },
                 friend: { select: { requestedUserName: true } },
                 friendOf: { select: { requestingUserName: true } },
@@ -288,7 +292,7 @@ export class UserService {
         if (isContractError(updatedMe))
             return updatedMe
 
-        const toNotify = updatedMe.chans.flatMap(({ users }) => users.map(({ name }) => name))
+        const toNotify = updatedMe.chanDiscussionElement.flatMap(({ chan }) => chan.users.map(({ name }) => name))
             .concat(
                 updatedMe.friend.map(({ requestedUserName }) => requestedUserName),
                 updatedMe.friendOf.map(({ requestingUserName }) => requestingUserName),
@@ -509,14 +513,20 @@ export class UserService {
             profilePicture: true,
             directMessage: { select: { requestedUserName: true } },
             directMessageOf: { select: { requestingUserName: true } },
-            chans: { select: { users: { select: { name: true } } } }
+            chanDiscussionElement: {
+                select: {
+                    chan: {
+                        select: { users: { select: { name: true } } }
+                    }
+                }
+            },
         })
         if (!user)
             return contractErrors.NotFoundUserForValidToken(username)
-        const toNotify = user.directMessage.map(dm => dm.requestedUserName)
+        const toNotify = user.chanDiscussionElement.flatMap(({ chan }) => chan.users.map(({ name }) => name))
             .concat(
                 user.directMessageOf.map(dm => dm.requestingUserName),
-                user.chans.flatMap(chan => chan.users.map(user => user.name)),
+                user.directMessage.map(dm => dm.requestedUserName),
                 [username]
             )
         const { profilePicture: profilePictureFileName } = user
@@ -599,13 +609,13 @@ export class UserService {
         if (username === blockedUserName)
             return contractErrors.ForbiddenSelfOperation('to block')
         const user = await this.getUserByName(blockedUserName, {
-            blockedUser: {
-                where: { blockedUserName: username },
+            blockedByUser: {
+                where: { blockingUserName: username },
                 select: { id: true }
             }})
         if (!user)
             return contractErrors.NotFoundUser(blockedUserName)
-        if (user.blockedUser.length)
+        if (user.blockedByUser.length)
             return contractErrors.UserAlreadyBlocked(blockedUserName)
         await Promise.all([
             this.prisma.directMessage.updateMany({

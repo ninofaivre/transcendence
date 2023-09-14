@@ -23,6 +23,9 @@
             addListenerToEventSource($sse_store, "CREATED_FRIEND_INVITATION", () => {
                 invalidate("app:friends:invitations")
             }),
+            addListenerToEventSource($sse_store, "CREATED_FRIEND_INVITATION", () => {
+                invalidate("app:friends:invitations")
+            }),
             addListenerToEventSource($sse_store, "CREATED_CHAN_INVITATION", () => {
                 invalidate("app:chans:invitations")
             }),
@@ -30,6 +33,9 @@
                 invalidate("app:chans:invitations")
             }),
             addListenerToEventSource($sse_store, "CREATED_FRIENDSHIP", () => {
+                invalidate("app:friends")
+            }),
+            addListenerToEventSource($sse_store, "DELETED_FRIENDSHIP", () => {
                 invalidate("app:friends")
             }),
 		)

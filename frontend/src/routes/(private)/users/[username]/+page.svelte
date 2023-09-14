@@ -213,6 +213,9 @@
 		addListenerToEventSource($sse_store, "UNBLOCKED_USER", () => {
 			invalidate("app:user")
 		}),
+		addListenerToEventSource($sse_store, "UPDATED_FRIEND_INVITATION_STATUS", () => {
+			invalidate("app:user")
+		}),
 	)
 	onDestroy(() => destroy_me.forEach((func) => func()))
 </script>

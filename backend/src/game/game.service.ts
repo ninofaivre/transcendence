@@ -252,6 +252,7 @@ class Ball extends GameObject {
     }
 
     private set position(newPosition: Position) {
+        // console.log("balle nouvelle position :", newPosition)
         this._position = newPosition
         if (this.doesBallCollideWithLeftRightWalls(this.getRect())) {
             const scorer = (this.doesBallCollideWithLeftWall(this.getRect()))
@@ -303,6 +304,7 @@ class Ball extends GameObject {
         this.direction = this.getRandomDirection()
         this.passedPaddleLine = false
         this.speed = this.baseSpeed
+        console.log("reset de ball, nouvelle position :", this.position)
     }
 
     private getNextPositionWithoutCollision(dist: number) {
@@ -410,6 +412,9 @@ class Ball extends GameObject {
     }
 
     public update(deltaTime: number) {
+        if (deltaTime > 100) {
+            console.log("Ball deltaTime :", deltaTime)
+        }
         this.move(this.speed * deltaTime)
         if (this.speedIncrType === 'linear')
             this.speed += this.linearSpeedIncr * deltaTime
@@ -424,12 +429,22 @@ class Game {
 
     public readonly id: string;
 
-    private lastUpdateTime: number | null = null
+    private _lastUpdateTime: number | null = null
+    // private lastUpdateTime: number | null = null
+    private set lastUpdateTime (arg: number | null) {
+        console.log("setter last updateTime :", arg)
+        this._lastUpdateTime = arg
+    }
+
+    private get lastUpdateTime () {
+        return this._lastUpdateTime
+    }
+
     private _status: Extract<
             GameStatus['status'],
             "INIT" | "BREAK" | "PAUSE" | "PLAY" | "END"
         > = 'INIT';
-    private readonly maxScore: number = 2
+    private readonly maxScore: number = 10
     public startTimeout = Date.now();
     private readonly isCustomGame: boolean;
 
@@ -452,8 +467,10 @@ class Game {
 
     public set status(newStatus: typeof this._status) {
         this._status = newStatus
-        if (this._status !== 'PLAY')
-            this.lastUpdateTime = null
+        if (this._status !== 'PLAY') {
+            console.log("Game viens de mettre last update time à null")
+            setTimeout(() => { this.lastUpdateTime = null }, 1000)
+        }
         switch(newStatus) {
             case 'INIT': {
                 this.emitGamePositions()
@@ -723,6 +740,9 @@ class Game {
         if (this.lastUpdateTime) {
             const deltaTime = currentTime - this.lastUpdateTime
             this.callOnAllGameObjects("update", deltaTime)
+        }
+        else {
+            console.log("je suis dans update lastUpdateTime était bien à null")
         }
         this.emitGamePositions()
         this.lastUpdateTime = currentTime

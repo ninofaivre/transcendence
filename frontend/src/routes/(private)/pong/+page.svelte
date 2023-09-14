@@ -73,11 +73,10 @@
 	function handleGameStatus(payload: GameStatus) {
 		console.log("pong gameStatus :", payload)
 		state = payload
-		if (payload.status === "INIT" || payload.status === "RECONNECT") {
-			;({ paddleLeftDisplayName, paddleRightDisplayName } = payload)
-			;({ paddleLeftScore, paddleRightScore } = payload)
-			if (payload.status === "RECONNECT") return
-		}
+		if (payload.status === "INIT" || payload.status === "RECONNECT")
+			({ paddleLeftDisplayName, paddleRightDisplayName } = payload)
+        if (payload.status === "INIT" || payload.status === "BREAK" || payload.status === "RECONNECT")
+			({ paddleLeftScore, paddleRightScore } = payload)
 		if (payload.status === "INIT" || payload.status === "BREAK" || payload.status === "PAUSE") {
 			initSpin(payload.timeout, payload.status)
 			return

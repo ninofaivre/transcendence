@@ -30,7 +30,7 @@
 			2FA code
 			<input
 				bind:value={input}
-				type="number"
+				type="text"
 				name="username"
 				class="input"
 				autocomplete="on"

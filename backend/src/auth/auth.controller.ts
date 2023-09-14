@@ -43,7 +43,7 @@ export class AuthController {
 						data: {
 							name: username,
 							intraUserName: username,
-							displayName: `displayName_${username}`,
+							displayName: `displayName ${username}`,
 						},
 						select: {
 							name: true,
@@ -51,7 +51,7 @@ export class AuthController {
 							displayName: true,
 						},
 					})
-					.catch(() => contractErrors.UserAlreadyExist(`displayName_${username}`))
+					.catch(() => contractErrors.UserAlreadyExist(`displayName ${username}`))
 				if (isContractError(res)) return res
 				const { name, ...rest } = res
 				user = { ...rest, username: name }

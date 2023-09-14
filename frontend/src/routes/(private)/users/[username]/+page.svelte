@@ -221,9 +221,11 @@
 		}),
 		addListenerToEventSource($sse_store, "CREATED_FRIENDSHIP", () => {
 			invalidate("app:user")
+			invalidate("app:friends")
 		}),
 		addListenerToEventSource($sse_store, "DELETED_FRIENDSHIP", () => {
 			invalidate("app:user")
+			invalidate("app:friends")
 		}),
 		addListenerToEventSource($sse_store, "BLOCKED_BY_USER", () => {
 			invalidate("app:user")

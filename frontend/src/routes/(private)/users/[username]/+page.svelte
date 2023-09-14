@@ -225,6 +225,12 @@
 		addListenerToEventSource($sse_store, "DELETED_FRIENDSHIP", () => {
 			invalidate("app:user")
 		}),
+		addListenerToEventSource($sse_store, "BLOCKED_BY_USER", () => {
+			invalidate("app:user")
+		}),
+		addListenerToEventSource($sse_store, "UNBLOCKED_BY_USER", () => {
+			invalidate("app:user")
+		}),
 	)
 	onDestroy(() => destroy_me.forEach((func) => func()))
 </script>

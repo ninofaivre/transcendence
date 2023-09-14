@@ -50,10 +50,12 @@
 					goto("/chans")
 				}
 			}),
-			addListenerToEventSource($sse_store!, "BANNED_FROM_CHAN", (new_data) => {
+			addListenerToEventSource($sse_store!, "BANNED_FROM_CHAN", async (new_data) => {
 				console.log("BANNED_FROM_CHAN")
+				await invalidate("app:chans")
+				// await invalidate(`app:chan:${new_data.chanId}`)
 				if (new_data.chanId === $page.params.chanId) {
-                    invalidate("app:chans")
+					goto("/chans")
 				}
 			}),
 			addListenerToEventSource($sse_store, "CREATED_CHAN", (new_data) => {

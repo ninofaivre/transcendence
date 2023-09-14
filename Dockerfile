@@ -15,6 +15,7 @@ RUN pnpm run build
 
 FROM base
 
+RUN mkdir /app/backend/pictures
 COPY --from=prod-deps /app/node_modules /app/node_modules
 
 COPY --from=build /app/contract/dist /app/contract/dist

@@ -47,7 +47,6 @@
 				await invalidate("app:chans")
 				await invalidate(`app:chan:${new_data.chanId}`)
 				if (new_data.chanId === $page.params.chanId) {
-                    alert("coucou")
 					goto("/chans")
 				}
 			}),
